@@ -134,6 +134,7 @@ function loadStructure (input) {
   pocketOpacityRange.value = 0
   cartoonCheckbox.checked = false
   backboneCheckbox.checked = true
+  hydrogenCheckbox.checked = true
   hydrophobicCheckbox.checked = false
   hydrogenBondCheckbox.checked = true
   weakHydrogenBondCheckbox.checked = false
@@ -454,6 +455,22 @@ var backboneCheckbox = createElement('input', {
 addElement(backboneCheckbox)
 addElement(createElement('span', {
   innerText: 'backbone'
+}, { top: getTopPosition(), left: '32px', color: 'grey' }))
+
+var hydrogenCheckbox = createElement('input', {
+  type: 'checkbox',
+  checked: true,
+  onchange: function (e) {
+    if (e.target.checked) {
+      struc.setSelection('*')
+    } else {
+      struc.setSelection('not _H')
+    }
+  }
+}, { top: getTopPosition(20), left: '12px' })
+addElement(hydrogenCheckbox)
+addElement(createElement('span', {
+  innerText: 'hydrogen'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var sidechainAttachedCheckbox = createElement('input', {
