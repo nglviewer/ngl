@@ -61,7 +61,7 @@ class MouseActions {
    * @return {undefined}
    */
   static isolevelScroll (stage: Stage, delta: number) {
-    const d = Math.sign(delta) / 5
+    const d = Math.sign(delta) / 10
     stage.eachRepresentation((reprElem, comp) => {
       if (reprElem.repr instanceof SurfaceRepresentation) {
         const p = reprElem.getParameters() as any  // TODO
