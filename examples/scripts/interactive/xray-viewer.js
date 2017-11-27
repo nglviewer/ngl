@@ -44,6 +44,24 @@ function createFileButton (label, properties, style) {
   return button
 }
 
+var scroll2fofc, scrollFofc
+
+function isolevelScroll (stage, delta) {
+  const d = Math.sign(delta) / 10
+  stage.eachRepresentation(function (reprElem, comp) {
+    if (scroll2fofc && reprElem === surf2fofc) {
+      var p = reprElem.getParameters()
+      reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
+    }
+    if (scrollFofc && (reprElem === surfFofc || reprElem === surfFofcNeg)) {
+      var p = reprElem.getParameters()
+      reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
+    }
+  })
+}
+
+stage.mouseControls.add('scroll', isolevelScroll)
+
 var struc
 function loadStructure (input) {
   struc = undefined
@@ -85,6 +103,7 @@ function load2fofc (input) {
     isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
     boxSizeRange.value = 10
     scrollSelect.value = '2fofc'
+    scroll2fofc = true
     if (surfFofc) {
       isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
       surfFofc.setParameters({ isolevel: 3, boxSize: 10, contour: true, isolevelScroll: false })
@@ -97,7 +116,7 @@ function load2fofc (input) {
       useWorker: false,
       contour: true,
       opaqueBack: false,
-      isolevelScroll: true
+      isolevelScroll: false
     })
   })
 }
@@ -109,9 +128,10 @@ function loadFofc (input) {
     isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
     boxSizeRange.value = 10
     scrollSelect.value = '2fofc'
+    scrollFofc = false
     if (surf2fofc) {
       isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
-      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10, contour: true, isolevelScroll: true })
+      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10, contour: true, isolevelScroll: false })
     }
     surfFofc = o.addRepresentation('surface', {
       color: 'lightgreen',
@@ -337,17 +357,14 @@ var scrollSelect = createSelect([
   onchange: function (e) {
     var v = e.target.value
     if (v === '2fofc') {
-      surf2fofc.setParameters({ isolevelScroll: true })
-      surfFofc.setParameters({ isolevelScroll: false })
-      surfFofcNeg.setParameters({ isolevelScroll: false })
+      scroll2fofc = true
+      scrollFofc = false
     } else if (v === 'fofc') {
-      surf2fofc.setParameters({ isolevelScroll: false })
-      surfFofc.setParameters({ isolevelScroll: true })
-      surfFofcNeg.setParameters({ isolevelScroll: true })
+      scroll2fofc = false
+      scrollFofc = true
     } else if (v === 'both') {
-      surf2fofc.setParameters({ isolevelScroll: true })
-      surfFofc.setParameters({ isolevelScroll: true })
-      surfFofcNeg.setParameters({ isolevelScroll: true })
+      scroll2fofc = true
+      scrollFofc = true
     }
   }
 }, { top: '306px', left: '12px' })
