@@ -27,8 +27,6 @@ class KeyBehavior {
     // ensure the domElement is focusable
     this.domElement.setAttribute('tabIndex', '-1')
     this.domElement.style.outline = 'none'
-    // this.domElement.autofocus = true
-    this.domElement.focus()
 
     this._focusDomElement = this._focusDomElement.bind(this)
     this._onKeydown = this._onKeydown.bind(this)
