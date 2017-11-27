@@ -56350,8 +56350,6 @@ var KeyBehavior = function KeyBehavior (stage) {
   // ensure the domElement is focusable
   this.domElement.setAttribute('tabIndex', '-1');
   this.domElement.style.outline = 'none';
-  this.domElement.autofocus = true;
-  this.domElement.focus();
 
   this._focusDomElement = this._focusDomElement.bind(this);
   this._onKeydown = this._onKeydown.bind(this);
@@ -101231,7 +101229,7 @@ var MdsrvDatasource = (function (Datasource$$1) {
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.6";
+var version$1 = "1.0.0-beta.7";
 
 /**
  * @file Version
