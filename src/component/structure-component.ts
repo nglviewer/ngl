@@ -10,6 +10,7 @@ import { ComponentRegistry } from '../globals'
 import { defaults, createRingBuffer, RingBuffer, createSimpleDict, SimpleDict } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
+import RepresentationCollection from './representation-collection'
 import TrajectoryElement from './trajectory-element'
 import RepresentationElement from './representation-element'
 import { makeTrajectory } from '../trajectory/trajectory-utils'
@@ -68,6 +69,8 @@ class StructureComponent extends Component {
   angleRepresentation: RepresentationElement
   dihedralRepresentation: RepresentationElement
 
+  measureRepresentations: RepresentationCollection
+
   constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, structure, Object.assign({ name: structure.name }, params))
 
@@ -116,6 +119,13 @@ class StructureComponent extends Component {
     this.dihedralRepresentation = this.addRepresentation(
       'dihedral', Object.assign({ planeVisible: false }, measurementParams), true
     )
+
+    this.measureRepresentations = new RepresentationCollection([
+      this.spacefillRepresentation,
+      this.distanceRepresentation,
+      this.angleRepresentation,
+      this.dihedralRepresentation
+    ])
   }
 
   /**
@@ -188,11 +198,7 @@ class StructureComponent extends Component {
     this.reprList.forEach((repr: any) => {  // TODO
       repr.build()
     })
-
-    this.spacefillRepresentation.build(undefined)
-    this.distanceRepresentation.build(undefined)
-    this.angleRepresentation.build(undefined)
-    this.dihedralRepresentation.build(undefined)
+    this.measureRepresentations.build()
   }
 
   /**
@@ -200,9 +206,14 @@ class StructureComponent extends Component {
    * @return {undefined}
    */
   rebuildTrajectories () {
-    this.trajList.slice().forEach(trajComp => {
+    this.trajList.forEach(trajComp => {
       trajComp.trajectory.setStructure(this.structureView)
     })
+  }
+
+  updateRepresentations (what: any) {
+    super.updateRepresentations(what)
+    this.measureRepresentations.update(what)
   }
 
   addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
@@ -251,11 +262,7 @@ class StructureComponent extends Component {
 
     this.trajList.length = 0
     this.structure.dispose()
-
-    this.spacefillRepresentation.dispose()
-    this.distanceRepresentation.dispose()
-    this.angleRepresentation.dispose()
-    this.dihedralRepresentation.dispose()
+    this.measureRepresentations.dispose()
 
     super.dispose()
   }

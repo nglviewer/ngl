@@ -25,6 +25,14 @@ class RepresentationCollection extends Collection<RepresentationElement> {
   setColor (color: number|string|Color) {
     return this.forEach((repr) => repr.setColor(color))
   }
+
+  update (what: any) {
+    return this.forEach((repr) => repr.update(what))
+  }
+
+  build (params?: any) {
+    return this.forEach((repr) => repr.build(params))
+  }
 }
 
 export default RepresentationCollection
