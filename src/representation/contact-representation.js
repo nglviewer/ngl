@@ -58,6 +58,9 @@ class ContactRepresentation extends StructureRepresentation {
       maxHbondDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
+      maxHbondSulfurDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
       maxHbondAccAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
@@ -125,6 +128,7 @@ class ContactRepresentation extends StructureRepresentation {
 
     this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
     this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
+    this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1)
     this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 60)
     this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
     this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 45)
@@ -151,6 +155,7 @@ class ContactRepresentation extends StructureRepresentation {
     const params = {
       maxHydrophobicDist: this.maxHydrophobicDist,
       maxHbondDist: this.maxHbondDist,
+      maxHbondSulfurDist: this.maxHbondSulfurDist,
       maxHbondAccAngle: this.maxHbondAccAngle,
       maxHbondDonAngle: this.maxHbondDonAngle,
       maxHbondAccDihedral: this.maxHbondAccDihedral,

@@ -47,14 +47,14 @@ function createFileButton (label, properties, style) {
 var scroll2fofc, scrollFofc
 
 function isolevelScroll (stage, delta) {
-  const d = Math.sign(delta) / 10
+  var d = Math.sign(delta) / 10
   stage.eachRepresentation(function (reprElem, comp) {
+    var p
     if (scroll2fofc && reprElem === surf2fofc) {
-      var p = reprElem.getParameters()
+      p = reprElem.getParameters()
       reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
-    }
-    if (scrollFofc && (reprElem === surfFofc || reprElem === surfFofcNeg)) {
-      var p = reprElem.getParameters()
+    } else if (scrollFofc && (reprElem === surfFofc || reprElem === surfFofcNeg)) {
+      p = reprElem.getParameters()
       reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
     }
   })

@@ -183,6 +183,7 @@ function getHydrogenBondType (ap1: AtomProxy, ap2: AtomProxy) {
 
 export interface HydrogenBondParams {
   maxHbondDist?: number
+  maxHbondSulfurDist?: number
   maxHbondAccAngle?: number
   maxHbondDonAngle?: number
   maxHbondAccDihedral?: number
@@ -196,10 +197,14 @@ export interface HydrogenBondParams {
  */
 export function addHydrogenBonds (structure: Structure, contacts: Contacts, params: HydrogenBondParams = {}) {
   const maxHbondDist = defaults(params.maxHbondDist, ContactDefaultParams.maxHbondDist)
+  const maxHbondSulfurDist = defaults(params.maxHbondSulfurDist, ContactDefaultParams.maxHbondSulfurDist)
   const maxHbondAccAngle = degToRad(defaults(params.maxHbondAccAngle, ContactDefaultParams.maxHbondAccAngle))
   const maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle))
   const maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral))
   const maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral))
+
+  const maxDist = Math.max(maxHbondDist, maxHbondSulfurDist)
+  const maxHbondDistSq = maxHbondDist * maxHbondDist
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -212,7 +217,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const acceptor = structure.getAtomProxy()
 
   for (let i = 0; i < n; ++i) {
-    spatialHash.eachWithin(x[i], y[i], z[i], maxHbondDist, (j, dSq) => {
+    spatialHash.eachWithin(x[i], y[i], z[i], maxDist, (j, dSq) => {
       if (j <= i) return
 
       const ti = types[ i ]
@@ -227,6 +232,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       acceptor.index = atomSets[ k ][ 0 ]
 
       if (invalidAtomContact(donor, acceptor)) return
+      if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq) return
 
       const donorAngle = calcMinAngle(donor, acceptor)
       if (donorAngle !== undefined) {

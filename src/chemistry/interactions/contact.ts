@@ -53,6 +53,7 @@ export const enum ContactType {
 export const ContactDefaultParams = {
   maxHydrophobicDist: 4.0,
   maxHbondDist: 3.5,
+  maxHbondSulfurDist: 4.1,
   maxHbondAccAngle: 60,
   maxHbondDonAngle: 45,
   maxHbondAccDihedral: 45,
