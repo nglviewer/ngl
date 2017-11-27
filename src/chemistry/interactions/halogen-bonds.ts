@@ -65,6 +65,10 @@ export interface HalogenBondsParams {
   maxHalogenBondAngle?: number
 }
 
+// http://www.pnas.org/content/101/48/16789.full
+const OptimalHalogenAngle = degToRad(165)
+const OptimalAcceptorAngle = degToRad(120)
+
 /**
  * All pairs of halogen donor and acceptor atoms
  */
@@ -91,9 +95,14 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       if (!isHalogenBond(types[ i ], types[ j ])) return
 
       const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
-      const angle = calcMinAngle(halogen, acceptor)
-      if (angle === undefined) return  // Angle must be defined
-      if (Math.PI - angle > maxHalogenBondAngle) return
+
+      const halogenAngle = calcMinAngle(halogen, acceptor)
+      if (halogenAngle === undefined) return  // Angle must be defined
+      if (OptimalHalogenAngle - halogenAngle > maxHalogenBondAngle) return
+
+      const acceptorAngle = calcMinAngle(acceptor, halogen)
+      if (acceptorAngle === undefined) return  // Angle must be defined
+      if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle) return
 
       featureSet.setBits(i, j)
       contactStore.addContact(i, j, ContactType.HalogenBond)
