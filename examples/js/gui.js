@@ -1290,7 +1290,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     assembly.setValue(component.parameters.defaultAssembly)
   })
 
-    // Selection
+  // Selection
 
   container.add(
     new UI.SelectionPanel(component.selection)
@@ -1298,7 +1298,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       .setInputWidth('214px')
   )
 
-    // Export PDB
+  // Export PDB
 
   var pdb = new UI.Button('export').onClick(function () {
     var pdbWriter = new NGL.PdbWriter(component.structure)
@@ -1306,7 +1306,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     componentPanel.setMenuDisplay('none')
   })
 
-    // Add representation
+  // Add representation
 
   var repr = new UI.Select()
     .setColor('#444')
@@ -1323,7 +1323,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       componentPanel.setMenuDisplay('none')
     })
 
-    // Assembly
+  // Assembly
 
   var assembly = new UI.Select()
     .setColor('#444')
@@ -1343,7 +1343,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       componentPanel.setMenuDisplay('none')
     })
 
-    // Open trajectory
+  // Open trajectory
 
   var trajExt = []
   NGL.ParserRegistry.getTrajectoryExtensions().forEach(function (ext) {
@@ -1373,7 +1373,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     componentPanel.setMenuDisplay('none')
   })
 
-    // Import remote trajectory
+  // Import remote trajectory
 
   var remoteTraj = new UI.Button('import').onClick(function () {
     componentPanel.setMenuDisplay('none')
@@ -1408,7 +1408,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       .attach()
   })
 
-    // Superpose
+  // Superpose
 
   function setSuperposeOptions () {
     var superposeOptions = { '': '[ structure ]' }
@@ -1445,6 +1445,12 @@ NGL.StructureComponentWidget = function (component, stage) {
     q.multiply(component.quaternion.clone().inverse())
     stage.animationControls.rotate(q)
     stage.animationControls.move(component.getCenter())
+  })
+
+  // Measurements removal
+
+  var removeMeasurements = new UI.Button('remove').onClick(function () {
+    component.removeAllMeasurements()
   })
 
   // Annotations visibility
@@ -1507,7 +1513,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       component.setRotation(q)
     })
 
-    // Scale
+  // Scale
 
   var scale = new UI.Number(1)
     .setRange(0.01, 100)
@@ -1515,7 +1521,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       component.setScale(scale.getValue())
     })
 
-    // Matrix
+  // Matrix
 
   signals.matrixChanged.add(function () {
     position.setValue(component.position)
@@ -1523,7 +1529,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     scale.setValue(component.scale.x)
   })
 
-    // Component panel
+  // Component panel
 
   var componentPanel = new UI.ComponentPanel(component)
     .setDisplay('inline-block')
@@ -1540,6 +1546,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     )
     .addMenuEntry('Trajectory', traj)
     .addMenuEntry('Principal axes', alignAxes)
+    .addMenuEntry('Measurements', removeMeasurements)
     .addMenuEntry('Annotations', annotationButtons)
     .addMenuEntry('Validation', vali)
     .addMenuEntry('Position', position)

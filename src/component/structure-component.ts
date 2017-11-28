@@ -332,26 +332,28 @@ class StructureComponent extends Component {
   measurePick (atom: AtomProxy) {
     const pickCount = this.pickBuffer.count
 
-    if (this.lastPick === atom.index && pickCount >= 2) {
-      const atomList = this.pickBuffer.data
-      const atomListSorted = this.pickBuffer.data.sort()
-      if (this.pickDict.has(atomListSorted)) {
-        this.pickDict.del(atomListSorted)
-      } else {
-        this.pickDict.add(atomListSorted, atomList)
-      }
-      if (pickCount === 2) {
-        this.distanceRepresentation.setParameters({
-          atomPair: this.pickDict.values.filter(l => l.length === 2)
-        })
-      } else if (pickCount === 3) {
-        this.angleRepresentation.setParameters({
-          atomTriple: this.pickDict.values.filter(l => l.length === 3)
-        })
-      } else if (pickCount === 4) {
-        this.dihedralRepresentation.setParameters({
-          atomQuad: this.pickDict.values.filter(l => l.length === 4)
-        })
+    if (this.lastPick === atom.index && pickCount >= 1) {
+      if (pickCount > 1) {
+        const atomList = this.pickBuffer.data
+        const atomListSorted = this.pickBuffer.data.sort()
+        if (this.pickDict.has(atomListSorted)) {
+          this.pickDict.del(atomListSorted)
+        } else {
+          this.pickDict.add(atomListSorted, atomList)
+        }
+        if (pickCount === 2) {
+          this.distanceRepresentation.setParameters({
+            atomPair: this.pickDict.values.filter(l => l.length === 2)
+          })
+        } else if (pickCount === 3) {
+          this.angleRepresentation.setParameters({
+            atomTriple: this.pickDict.values.filter(l => l.length === 3)
+          })
+        } else if (pickCount === 4) {
+          this.dihedralRepresentation.setParameters({
+            atomQuad: this.pickDict.values.filter(l => l.length === 4)
+          })
+        }
       }
       this.pickBuffer.clear()
       this.lastPick = undefined
@@ -371,6 +373,13 @@ class StructureComponent extends Component {
     this.spacefillRepresentation.setSelection('none')
   }
 
+  measureBuild () {
+    const md = this.measureData()
+    this.distanceRepresentation.setParameters({ atomPair: md.distance })
+    this.angleRepresentation.setParameters({ atomTriple: md.angle })
+    this.dihedralRepresentation.setParameters({ atomQuad: md.dihedral })
+  }
+
   measureUpdate () {
     const radiusData: { [k: number]: number } = {}
     this.pickBuffer.data.forEach(ai => {
@@ -380,6 +389,56 @@ class StructureComponent extends Component {
     this.spacefillRepresentation.setSelection('@' + this.pickBuffer.data.join(','))
     this.spacefillRepresentation.setParameters({ radiusData })
   }
+
+  measureData () {
+    const pv = this.pickDict.values
+    return {
+      distance: pv.filter(l => l.length === 2),
+      angle: pv.filter(l => l.length === 3),
+      dihedral: pv.filter(l => l.length === 4)
+    }
+  }
+
+  /**
+   * Remove all measurements, optionally limit to distance, angle or dihedral
+   */
+  removeAllMeasurements (type?: MeasurementFlags) {
+    const pd = this.pickDict
+    const pv = pd.values
+    const remove = function (len: number) {
+      pv.filter(l => l.length === len).forEach(l => pd.del(l.slice().sort()))
+    }
+    if (!type || type & MeasurementFlags.Distance) remove(2)
+    if (!type || type & MeasurementFlags.Angle) remove(3)
+    if (!type || type & MeasurementFlags.Dihedral) remove(4)
+    this.measureBuild()
+  }
+
+  /**
+   * Remove a measurement given as a pair, triple, quad of atom indices
+   */
+  removeMeasurement (atomList: number[]) {
+    this.pickDict.del(atomList.slice().sort())
+    this.measureBuild()
+  }
+
+  /**
+   * Add a measurement given as a pair, triple, quad of atom indices
+   */
+  addMeasurement (atomList: number[]) {
+    if (atomList.length < 2 || atomList.length > 4) return
+    const atomListSorted = atomList.slice().sort()
+    if (!this.pickDict.has(atomListSorted)) {
+      this.pickDict.add(atomListSorted, atomList)
+    }
+    this.measureBuild()
+  }
+}
+
+const enum MeasurementFlags {
+  Distance = 0x1,
+  Angle = 0x2,
+  Dihedral = 0x4
 }
 
 ComponentRegistry.add('structure', StructureComponent)
