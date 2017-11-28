@@ -463,7 +463,9 @@ class Stage {
 
     const onErrorFn = (e: Error|string) => {
       this.tasks.decrement()
-      this.log(`error loading file: '${e}'`)
+      const errorMsg = `error loading file: '${e}'`
+      this.log(errorMsg)
+      throw errorMsg  // throw so it can be catched
     }
 
     const ext = defaults(p.ext, getFileInfo(path).ext)
@@ -497,7 +499,9 @@ class Stage {
       },
       (error: Error|string) => {
         this.tasks.decrement()
-        this.log(`errored script '${name}' "${error}"`)
+        const errorMsg = `errored script '${name}' "${error}"`
+        this.log(errorMsg)
+        throw errorMsg  // throw so it can be catched
       }
     )
   }
