@@ -9,7 +9,9 @@ import {
   Box3, Vector3, Matrix4, Color,
   WebGLRenderer, WebGLRenderTarget,
   NearestFilter, LinearFilter, AdditiveBlending,
-  RGBAFormat, FloatType, HalfFloatType, UnsignedByteType,
+  RGBAFormat, FloatType,
+  // HalfFloatType,
+  UnsignedByteType,
   ShaderMaterial,
   PlaneGeometry,
   Scene, Mesh, Group,
@@ -24,7 +26,7 @@ import '../shader/Quad.vert'
 import '../shader/Quad.frag'
 
 import {
-  Debug, Log, WebglErrorMessage,
+  Debug, Log, WebglErrorMessage, Browser,
   setExtensionFragDepth, SupportsReadPixelsFloat, setSupportsReadPixelsFloat
 } from '../globals.js'
 import { degToRad } from '../math/math-utils.js'
@@ -165,7 +167,7 @@ function Viewer (idOrElement) {
   let rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup
   initScene()
 
-  let renderer, supportsHalfFloat
+  let renderer  // , supportsHalfFloat
   let pickingTarget, sampleTarget, holdTarget
   let compositeUniforms, compositeMaterial, compositeCamera, compositeScene
   if (initRenderer() === false) {
@@ -276,10 +278,12 @@ function Viewer (idOrElement) {
     renderer.extensions.get('OES_element_index_uint')
 
     setSupportsReadPixelsFloat(
-      (renderer.extensions.get('OES_texture_float') &&
-        renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (renderer.extensions.get('OES_texture_float') &&
-        testTextureSupport(gl, gl.FLOAT))
+      Browser !== 'Safari' && (
+        (renderer.extensions.get('OES_texture_float') &&
+          renderer.extensions.get('WEBGL_color_buffer_float')) ||
+        (renderer.extensions.get('OES_texture_float') &&
+          testTextureSupport(gl, gl.FLOAT))
+      )
     )
 
     container.appendChild(renderer.domElement)
@@ -290,10 +294,10 @@ function Viewer (idOrElement) {
     // picking texture
 
     renderer.extensions.get('OES_texture_float')
-    supportsHalfFloat = (
-      renderer.extensions.get('OES_texture_half_float') &&
-      testTextureSupport(gl, 0x8D61)
-    )
+    // supportsHalfFloat = (
+    //   renderer.extensions.get('OES_texture_half_float') &&
+    //   testTextureSupport(gl, 0x8D61)
+    // )
     renderer.extensions.get('WEBGL_color_buffer_float')
 
     pickingTarget = new WebGLRenderTarget(
@@ -331,9 +335,11 @@ function Viewer (idOrElement) {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: supportsHalfFloat ? HalfFloatType : (
-          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        )
+        type: UnsignedByteType
+        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
+        // type: supportsHalfFloat ? HalfFloatType : (
+        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        // )
       }
     )
 

@@ -66,9 +66,15 @@ function SpatialHash (atomStore, boundingBox) {
     }
   }
 
-    //
-
   function within (x, y, z, r) {
+    const result = []
+
+    eachWithin(x, y, z, r, atomIndex => result.push(atomIndex))
+
+    return result
+  }
+
+  function eachWithin (x, y, z, r, callback) {
     var rSq = r * r
 
     var loX = Math.max(0, (x - r - minX) >> exp)
@@ -99,9 +105,8 @@ function SpatialHash (atomStore, boundingBox) {
               var dy = yArray[ atomIndex ] - y
               var dz = zArray[ atomIndex ] - z
 
-              if (dx * dx + dy * dy + dz * dz <= rSq) {
-                result.push(atomIndex)
-              }
+              const dSq = dx * dx + dy * dy + dz * dz
+              if (dSq <= rSq) callback(atomIndex, dSq)
             }
           }
         }
@@ -111,9 +116,10 @@ function SpatialHash (atomStore, boundingBox) {
     return result
   }
 
-    // API
+  // API
 
   this.within = within
+  this.eachWithin = eachWithin
 }
 
 export default SpatialHash

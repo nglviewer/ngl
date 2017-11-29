@@ -44464,6 +44464,7 @@ function getFileInfo (file) {
     path = file;
   }
   var queryIndex = path.lastIndexOf('?');
+  var query = queryIndex !== -1 ? path.substring(queryIndex) : '';
   path = path.substring(0, queryIndex === -1 ? path.length : queryIndex);
 
   var name = path.replace(/^.*[\\/]/, '');
@@ -44498,7 +44499,8 @@ function getFileInfo (file) {
     'dir': dir,
     'compressed': compressed,
     'protocol': protocol,
-    'src': file
+    'src': file,
+    'query': query
   }
 }
 
@@ -44758,7 +44760,7 @@ var Registry = function Registry (name) {
   this._dict = {};
 };
 
-var prototypeAccessors = { names: {} };
+var prototypeAccessors = { names: { configurable: true } };
 
 Registry.prototype.add = function add (key, value) {
   this._dict[ toLowerCaseString(key) ] = value;
@@ -49027,7 +49029,7 @@ var Selection = function Selection (string) {
   this.setString(string);
 };
 
-var prototypeAccessors$1 = { type: {} };
+var prototypeAccessors$1 = { type: { configurable: true } };
 
 prototypeAccessors$1.type.get = function () { return 'selection' };
 
@@ -49559,6 +49561,21 @@ WorkerRegistry$1.prototype.get = function get (name) {
 var Browser = getBrowser();
 
 /**
+ * Flag indicating support for the 'passive' option for event handler
+ * @type {Boolean}
+ */
+var SupportsPassiveEventHandler = false;
+try {
+  // Test via a getter in the options object to see if the passive property is accessed
+  var opts = Object.defineProperty({}, 'passive', {
+    get: function () {
+      SupportsPassiveEventHandler = true;
+    }
+  });
+  window.addEventListener('test', null, opts);
+} catch (e) {}
+
+/**
  * Flag indicating a mobile browser
  * @type {Boolean}
  */
@@ -49641,7 +49658,7 @@ var Streamer = function Streamer (src, params) {
   }
 };
 
-var prototypeAccessors$2 = { type: {},__srcName: {} };
+var prototypeAccessors$2 = { type: { configurable: true },__srcName: { configurable: true } };
 
 prototypeAccessors$2.type.get = function () { return '' };
 
@@ -49851,7 +49868,7 @@ var FileStreamer = (function (Streamer$$1) {
   FileStreamer.prototype = Object.create( Streamer$$1 && Streamer$$1.prototype );
   FileStreamer.prototype.constructor = FileStreamer;
 
-  var prototypeAccessors = { type: {},__srcName: {} };
+  var prototypeAccessors = { type: { configurable: true },__srcName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'file' };
 
@@ -49931,7 +49948,7 @@ var NetworkStreamer = (function (Streamer$$1) {
   NetworkStreamer.prototype = Object.create( Streamer$$1 && Streamer$$1.prototype );
   NetworkStreamer.prototype.constructor = NetworkStreamer;
 
-  var prototypeAccessors = { type: {},__srcName: {} };
+  var prototypeAccessors = { type: { configurable: true },__srcName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'network' };
 
@@ -50144,7 +50161,7 @@ var Script = function Script (functionBody, name, path) {
   }
 };
 
-var prototypeAccessors$3 = { type: {} };
+var prototypeAccessors$3 = { type: { configurable: true } };
 
 /**
  * Object type
@@ -50354,7 +50371,7 @@ function autoLoad (file, params) {
  */
 var Writer = function Writer () {};
 
-var prototypeAccessors$4 = { mimeType: {},defaultName: {},defaultExt: {} };
+var prototypeAccessors$4 = { mimeType: { configurable: true },defaultName: { configurable: true },defaultExt: { configurable: true } };
 
 prototypeAccessors$4.mimeType.get = function () {};
 
@@ -50638,7 +50655,7 @@ var PdbWriter = (function (Writer$$1) {
   PdbWriter.prototype = Object.create( Writer$$1 && Writer$$1.prototype );
   PdbWriter.prototype.constructor = PdbWriter;
 
-  var prototypeAccessors = { mimeType: {},defaultName: {},defaultExt: {} };
+  var prototypeAccessors = { mimeType: { configurable: true },defaultName: { configurable: true },defaultExt: { configurable: true } };
 
   prototypeAccessors.mimeType.get = function () { return 'text/plain' };
   prototypeAccessors.defaultName.get = function () { return 'structure' };
@@ -50765,7 +50782,7 @@ var SdfWriter = (function (Writer$$1) {
   SdfWriter.prototype = Object.create( Writer$$1 && Writer$$1.prototype );
   SdfWriter.prototype.constructor = SdfWriter;
 
-  var prototypeAccessors = { idString: {},titleString: {},countsString: {},chargeLines: {} };
+  var prototypeAccessors = { idString: { configurable: true },titleString: { configurable: true },countsString: { configurable: true },chargeLines: { configurable: true } };
 
   prototypeAccessors.idString.get = function () {
     return this.structure.id
@@ -51430,7 +51447,7 @@ var StlWriter = (function (Writer$$1) {
   StlWriter.prototype = Object.create( Writer$$1 && Writer$$1.prototype );
   StlWriter.prototype.constructor = StlWriter;
 
-  var prototypeAccessors = { mimeType: {},defaultName: {},defaultExt: {} };
+  var prototypeAccessors = { mimeType: { configurable: true },defaultName: { configurable: true },defaultExt: { configurable: true } };
 
   prototypeAccessors.mimeType.get = function () { return 'application/vnd.ms-pki.stl' };
   prototypeAccessors.defaultName.get = function () { return 'surface' };
@@ -51974,6 +51991,8 @@ TiledRenderer.prototype.constructor = TiledRenderer;
  */
 
 var TwoPI = 2 * Math.PI;
+
+var RAD2DEG$1 = 180 / Math.PI;
 
 /**
  * @file Array Utils
@@ -52768,7 +52787,7 @@ function Viewer (idOrElement) {
   var rotationGroup, translationGroup, modelGroup, pickingGroup, backgroundGroup, helperGroup;
   initScene();
 
-  var renderer, supportsHalfFloat;
+  var renderer;  // , supportsHalfFloat
   var pickingTarget, sampleTarget, holdTarget;
   var compositeUniforms, compositeMaterial, compositeCamera, compositeScene;
   if (initRenderer() === false) {
@@ -52879,10 +52898,12 @@ function Viewer (idOrElement) {
     renderer.extensions.get('OES_element_index_uint');
 
     setSupportsReadPixelsFloat(
-      (renderer.extensions.get('OES_texture_float') &&
-        renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (renderer.extensions.get('OES_texture_float') &&
-        testTextureSupport(gl, gl.FLOAT))
+      Browser !== 'Safari' && (
+        (renderer.extensions.get('OES_texture_float') &&
+          renderer.extensions.get('WEBGL_color_buffer_float')) ||
+        (renderer.extensions.get('OES_texture_float') &&
+          testTextureSupport(gl, gl.FLOAT))
+      )
     );
 
     container.appendChild(renderer.domElement);
@@ -52893,10 +52914,10 @@ function Viewer (idOrElement) {
     // picking texture
 
     renderer.extensions.get('OES_texture_float');
-    supportsHalfFloat = (
-      renderer.extensions.get('OES_texture_half_float') &&
-      testTextureSupport(gl, 0x8D61)
-    );
+    // supportsHalfFloat = (
+    //   renderer.extensions.get('OES_texture_half_float') &&
+    //   testTextureSupport(gl, 0x8D61)
+    // )
     renderer.extensions.get('WEBGL_color_buffer_float');
 
     pickingTarget = new WebGLRenderTarget(
@@ -52934,9 +52955,11 @@ function Viewer (idOrElement) {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: supportsHalfFloat ? HalfFloatType : (
-          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        )
+        type: UnsignedByteType
+        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
+        // type: supportsHalfFloat ? HalfFloatType : (
+        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        // )
       }
     );
 
@@ -53855,6 +53878,7 @@ var MouseObserver = function MouseObserver (domElement, params) {
   this.doubleClickSpeed = defaults(p.doubleClickSpeed, 500);
 
   this.domElement = domElement;
+  this.domElement.style.touchAction = 'none';
 
   /**
    * Position on page
@@ -53961,7 +53985,7 @@ var MouseObserver = function MouseObserver (domElement, params) {
   this.prevClickCP = new Vector2();
 };
 
-var prototypeAccessors$5 = { key: {} };
+var prototypeAccessors$5 = { key: { configurable: true } };
 
 prototypeAccessors$5.key.get = function () {
   var key = 0;
@@ -54292,7 +54316,7 @@ var TrackballControls = function TrackballControls (stage, params) {
   this.controls = stage.viewerControls;
 };
 
-var prototypeAccessors$6 = { component: {},atom: {} };
+var prototypeAccessors$6 = { component: { configurable: true },atom: { configurable: true } };
 
 prototypeAccessors$6.component.get = function () {
   return this.stage.transformComponent
@@ -54453,7 +54477,7 @@ var PickingProxy = function PickingProxy (pickingData, stage) {
   this.mouse = stage.mouseObserver;
 };
 
-var prototypeAccessors$7 = { type: {},altKey: {},ctrlKey: {},metaKey: {},shiftKey: {},canvasPosition: {},component: {},object: {},position: {},closestBondAtom: {},arrow: {},atom: {},axes: {},bond: {},box: {},cone: {},clash: {},contact: {},cylinder: {},distance: {},ellipsoid: {},octahedron: {},mesh: {},slice: {},sphere: {},tetrahedron: {},torus: {},surface: {},unitcell: {},unknown: {},volume: {} };
+var prototypeAccessors$7 = { type: { configurable: true },altKey: { configurable: true },ctrlKey: { configurable: true },metaKey: { configurable: true },shiftKey: { configurable: true },canvasPosition: { configurable: true },component: { configurable: true },object: { configurable: true },position: { configurable: true },closestBondAtom: { configurable: true },arrow: { configurable: true },atom: { configurable: true },axes: { configurable: true },bond: { configurable: true },box: { configurable: true },cone: { configurable: true },clash: { configurable: true },contact: { configurable: true },cylinder: { configurable: true },distance: { configurable: true },ellipsoid: { configurable: true },octahedron: { configurable: true },mesh: { configurable: true },slice: { configurable: true },sphere: { configurable: true },tetrahedron: { configurable: true },torus: { configurable: true },surface: { configurable: true },unitcell: { configurable: true },unknown: { configurable: true },volume: { configurable: true } };
 
 /**
  * Kind of the picked data
@@ -54756,7 +54780,7 @@ var ViewerControls = function ViewerControls (stage) {
   };
 };
 
-var prototypeAccessors$8 = { position: {},rotation: {} };
+var prototypeAccessors$8 = { position: { configurable: true },rotation: { configurable: true } };
 
 /**
  * scene center position
@@ -54953,7 +54977,7 @@ var Animation = function Animation (duration, controls) {
   var ref;
 };
 
-var prototypeAccessors$10 = { done: {},paused: {} };
+var prototypeAccessors$10 = { done: { configurable: true },paused: { configurable: true } };
 
   /**
    * True when animation has finished
@@ -55291,7 +55315,7 @@ var AnimationList = function AnimationList (list) {
   this._resolveList = [];
 };
 
-var prototypeAccessors$1$1 = { done: {} };
+var prototypeAccessors$1$1 = { done: { configurable: true } };
 
   /**
    * True when all animations have finished
@@ -55352,7 +55376,7 @@ var AnimationControls = function AnimationControls (stage) {
   this.finishedList = [];
 };
 
-var prototypeAccessors$9 = { paused: {} };
+var prototypeAccessors$9 = { paused: { configurable: true } };
 
   /**
    * True when all animations are paused
@@ -56316,6 +56340,8 @@ AnimationBehavior.prototype.dispose = function dispose () {
  * @private
  */
 
+var passive = SupportsPassiveEventHandler ? { passive: true } : false;
+
 var KeyBehavior = function KeyBehavior (stage) {
   this.stage = stage;
   this.controls = stage.keyControls;
@@ -56324,8 +56350,6 @@ var KeyBehavior = function KeyBehavior (stage) {
   // ensure the domElement is focusable
   this.domElement.setAttribute('tabIndex', '-1');
   this.domElement.style.outline = 'none';
-  this.domElement.autofocus = true;
-  this.domElement.focus();
 
   this._focusDomElement = this._focusDomElement.bind(this);
   this._onKeydown = this._onKeydown.bind(this);
@@ -56333,7 +56357,7 @@ var KeyBehavior = function KeyBehavior (stage) {
   this._onKeypress = this._onKeypress.bind(this);
 
   this.domElement.addEventListener('mousedown', this._focusDomElement);
-  this.domElement.addEventListener('touchstart', this._focusDomElement);
+  this.domElement.addEventListener('touchstart', this._focusDomElement, passive);
   this.domElement.addEventListener('keydown', this._onKeydown);
   this.domElement.addEventListener('keyup', this._onKeyup);
   this.domElement.addEventListener('keypress', this._onKeypress);
@@ -56373,7 +56397,7 @@ KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
 
 KeyBehavior.prototype.dispose = function dispose () {
   this.domElement.removeEventListener('mousedown', this._focusDomElement);
-  this.domElement.removeEventListener('touchstart', this._focusDomElement);
+  this.domElement.removeEventListener('touchstart', this._focusDomElement, passive);
   this.domElement.removeEventListener('keydown', this._onKeypress);
   this.domElement.removeEventListener('keyup', this._onKeypress);
   this.domElement.removeEventListener('keypress', this._onKeypress);
@@ -56543,7 +56567,7 @@ var ComponentControls = function ComponentControls (component) {
   };
 };
 
-var prototypeAccessors$12 = { position: {},rotation: {} };
+var prototypeAccessors$12 = { position: { configurable: true },rotation: { configurable: true } };
 
 /**
  * component center position
@@ -56706,16 +56730,32 @@ function v3cross (out, a, b) {
   out[2] = ax * by - ay * bx;
 }
 
+function v3dot (a, b) {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
 function v3sub (out, a, b) {
   out[0] = a[0] - b[0];
   out[1] = a[1] - b[1];
   out[2] = a[2] - b[2];
 }
 
+function v3add (out, a, b) {
+  out[0] = a[0] + b[0];
+  out[1] = a[1] + b[1];
+  out[2] = a[2] + b[2];
+}
+
 function v3fromArray (out, array, offset) {
   out[0] = array[offset];
   out[1] = array[offset + 1];
   out[2] = array[offset + 2];
+}
+
+function v3toArray (input, array, offset) {
+  array[offset] = input[0];
+  array[offset + 1] = input[1];
+  array[offset + 2] = input[2];
 }
 
 function v3length (a) {
@@ -56793,7 +56833,7 @@ var tmpVec = new Vector3();
  */
 var Primitive = function Primitive () {};
 
-var staticAccessors = { Picker: {},Buffer: {} };
+var staticAccessors = { Picker: { configurable: true },Buffer: { configurable: true } };
 
 staticAccessors.Picker.get = function () { return PickerRegistry.get(this.type) };
 staticAccessors.Buffer.get = function () { return BufferRegistry.get(this.type) };
@@ -56901,7 +56941,7 @@ var SpherePrimitive = (function (Primitive) {
   SpherePrimitive.prototype = Object.create( Primitive && Primitive.prototype );
   SpherePrimitive.prototype.constructor = SpherePrimitive;
 
-  var staticAccessors$1 = { type: {},fields: {} };
+  var staticAccessors$1 = { type: { configurable: true },fields: { configurable: true } };
 
   staticAccessors$1.type.get = function () { return 'sphere' };
 
@@ -56938,7 +56978,7 @@ var BoxPrimitive = (function (SpherePrimitive) {
   BoxPrimitive.prototype = Object.create( SpherePrimitive && SpherePrimitive.prototype );
   BoxPrimitive.prototype.constructor = BoxPrimitive;
 
-  var staticAccessors$2 = { type: {},fields: {} };
+  var staticAccessors$2 = { type: { configurable: true },fields: { configurable: true } };
 
   staticAccessors$2.type.get = function () { return 'box' };
 
@@ -56969,7 +57009,7 @@ var OctahedronPrimitive = (function (BoxPrimitive) {
   OctahedronPrimitive.prototype = Object.create( BoxPrimitive && BoxPrimitive.prototype );
   OctahedronPrimitive.prototype.constructor = OctahedronPrimitive;
 
-  var staticAccessors$3 = { type: {} };
+  var staticAccessors$3 = { type: { configurable: true } };
 
   staticAccessors$3.type.get = function () { return 'octahedron' };
 
@@ -56990,7 +57030,7 @@ var TetrahedronPrimitive = (function (BoxPrimitive) {
   TetrahedronPrimitive.prototype = Object.create( BoxPrimitive && BoxPrimitive.prototype );
   TetrahedronPrimitive.prototype.constructor = TetrahedronPrimitive;
 
-  var staticAccessors$4 = { type: {} };
+  var staticAccessors$4 = { type: { configurable: true } };
 
   staticAccessors$4.type.get = function () { return 'tetrahedron' };
 
@@ -57011,7 +57051,7 @@ var CylinderPrimitive = (function (Primitive) {
   CylinderPrimitive.prototype = Object.create( Primitive && Primitive.prototype );
   CylinderPrimitive.prototype.constructor = CylinderPrimitive;
 
-  var staticAccessors$5 = { type: {},fields: {} };
+  var staticAccessors$5 = { type: { configurable: true },fields: { configurable: true } };
 
   staticAccessors$5.type.get = function () { return 'cylinder' };
 
@@ -57052,7 +57092,7 @@ var ArrowPrimitive = (function (CylinderPrimitive) {
   ArrowPrimitive.prototype = Object.create( CylinderPrimitive && CylinderPrimitive.prototype );
   ArrowPrimitive.prototype.constructor = ArrowPrimitive;
 
-  var staticAccessors$6 = { type: {} };
+  var staticAccessors$6 = { type: { configurable: true } };
 
   staticAccessors$6.type.get = function () { return 'arrow' };
 
@@ -57073,7 +57113,7 @@ var ConePrimitive = (function (CylinderPrimitive) {
   ConePrimitive.prototype = Object.create( CylinderPrimitive && CylinderPrimitive.prototype );
   ConePrimitive.prototype.constructor = ConePrimitive;
 
-  var staticAccessors$7 = { type: {} };
+  var staticAccessors$7 = { type: { configurable: true } };
 
   staticAccessors$7.type.get = function () { return 'cone' };
 
@@ -57094,7 +57134,7 @@ var EllipsoidPrimitive = (function (SpherePrimitive) {
   EllipsoidPrimitive.prototype = Object.create( SpherePrimitive && SpherePrimitive.prototype );
   EllipsoidPrimitive.prototype.constructor = EllipsoidPrimitive;
 
-  var staticAccessors$8 = { type: {},fields: {} };
+  var staticAccessors$8 = { type: { configurable: true },fields: { configurable: true } };
 
   staticAccessors$8.type.get = function () { return 'ellipsoid' };
 
@@ -57125,7 +57165,7 @@ var TorusPrimitive = (function (EllipsoidPrimitive) {
   TorusPrimitive.prototype = Object.create( EllipsoidPrimitive && EllipsoidPrimitive.prototype );
   TorusPrimitive.prototype.constructor = TorusPrimitive;
 
-  var staticAccessors$9 = { type: {} };
+  var staticAccessors$9 = { type: { configurable: true } };
 
   staticAccessors$9.type.get = function () { return 'torus' };
 
@@ -57146,7 +57186,7 @@ var TextPrimitive = (function (SpherePrimitive) {
   TextPrimitive.prototype = Object.create( SpherePrimitive && SpherePrimitive.prototype );
   TextPrimitive.prototype.constructor = TextPrimitive;
 
-  var staticAccessors$10 = { type: {},fields: {} };
+  var staticAccessors$10 = { type: { configurable: true },fields: { configurable: true } };
 
   staticAccessors$10.type.get = function () { return 'text' };
 
@@ -57244,7 +57284,7 @@ var ShapePicker = (function (Picker) {
   ShapePicker.prototype = Object.create( Picker && Picker.prototype );
   ShapePicker.prototype.constructor = ShapePicker;
 
-  var prototypeAccessors = { primitive: {},data: {},type: {} };
+  var prototypeAccessors = { primitive: { configurable: true },data: { configurable: true },type: { configurable: true } };
 
   prototypeAccessors.primitive.get = function () {};
 
@@ -57275,7 +57315,7 @@ var CylinderPicker = (function (ShapePicker) {
   CylinderPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   CylinderPicker.prototype.constructor = CylinderPicker;
 
-  var prototypeAccessors$1 = { primitive: {} };
+  var prototypeAccessors$1 = { primitive: { configurable: true } };
 
   prototypeAccessors$1.primitive.get = function () { return CylinderPrimitive };
 
@@ -57293,7 +57333,7 @@ var ArrowPicker = (function (ShapePicker) {
   ArrowPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   ArrowPicker.prototype.constructor = ArrowPicker;
 
-  var prototypeAccessors$2 = { primitive: {} };
+  var prototypeAccessors$2 = { primitive: { configurable: true } };
 
   prototypeAccessors$2.primitive.get = function () { return ArrowPrimitive };
 
@@ -57312,7 +57352,7 @@ var AtomPicker = (function (Picker) {
   AtomPicker.prototype = Object.create( Picker && Picker.prototype );
   AtomPicker.prototype.constructor = AtomPicker;
 
-  var prototypeAccessors$3 = { type: {},data: {} };
+  var prototypeAccessors$3 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$3.type.get = function () { return 'atom' };
   prototypeAccessors$3.data.get = function () { return this.structure };
@@ -57340,7 +57380,7 @@ var AxesPicker = (function (Picker) {
   AxesPicker.prototype = Object.create( Picker && Picker.prototype );
   AxesPicker.prototype.constructor = AxesPicker;
 
-  var prototypeAccessors$4 = { type: {},data: {} };
+  var prototypeAccessors$4 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$4.type.get = function () { return 'axes' };
   prototypeAccessors$4.data.get = function () { return this.axes };
@@ -57371,7 +57411,7 @@ var BondPicker = (function (Picker) {
   BondPicker.prototype = Object.create( Picker && Picker.prototype );
   BondPicker.prototype.constructor = BondPicker;
 
-  var prototypeAccessors$5 = { type: {},data: {} };
+  var prototypeAccessors$5 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$5.type.get = function () { return 'bond' };
   prototypeAccessors$5.data.get = function () { return this.structure };
@@ -57404,7 +57444,7 @@ var ContactPicker = (function (BondPicker) {
   ContactPicker.prototype = Object.create( BondPicker && BondPicker.prototype );
   ContactPicker.prototype.constructor = ContactPicker;
 
-  var prototypeAccessors$6 = { type: {} };
+  var prototypeAccessors$6 = { type: { configurable: true } };
 
   prototypeAccessors$6.type.get = function () { return 'contact' };
 
@@ -57422,7 +57462,7 @@ var ConePicker = (function (ShapePicker) {
   ConePicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   ConePicker.prototype.constructor = ConePicker;
 
-  var prototypeAccessors$7 = { primitive: {} };
+  var prototypeAccessors$7 = { primitive: { configurable: true } };
 
   prototypeAccessors$7.primitive.get = function () { return ConePrimitive };
 
@@ -57442,7 +57482,7 @@ var ClashPicker = (function (Picker) {
   ClashPicker.prototype = Object.create( Picker && Picker.prototype );
   ClashPicker.prototype.constructor = ClashPicker;
 
-  var prototypeAccessors$8 = { type: {},data: {} };
+  var prototypeAccessors$8 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$8.type.get = function () { return 'clash' };
   prototypeAccessors$8.data.get = function () { return this.validation };
@@ -57484,7 +57524,7 @@ var DistancePicker = (function (BondPicker) {
   DistancePicker.prototype = Object.create( BondPicker && BondPicker.prototype );
   DistancePicker.prototype.constructor = DistancePicker;
 
-  var prototypeAccessors$9 = { type: {} };
+  var prototypeAccessors$9 = { type: { configurable: true } };
 
   prototypeAccessors$9.type.get = function () { return 'distance' };
 
@@ -57502,7 +57542,7 @@ var EllipsoidPicker = (function (ShapePicker) {
   EllipsoidPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   EllipsoidPicker.prototype.constructor = EllipsoidPicker;
 
-  var prototypeAccessors$10 = { primitive: {} };
+  var prototypeAccessors$10 = { primitive: { configurable: true } };
 
   prototypeAccessors$10.primitive.get = function () { return EllipsoidPrimitive };
 
@@ -57520,7 +57560,7 @@ var OctahedronPicker = (function (ShapePicker) {
   OctahedronPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   OctahedronPicker.prototype.constructor = OctahedronPicker;
 
-  var prototypeAccessors$11 = { primitive: {} };
+  var prototypeAccessors$11 = { primitive: { configurable: true } };
 
   prototypeAccessors$11.primitive.get = function () { return OctahedronPrimitive };
 
@@ -57538,7 +57578,7 @@ var BoxPicker = (function (ShapePicker) {
   BoxPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   BoxPicker.prototype.constructor = BoxPicker;
 
-  var prototypeAccessors$12 = { primitive: {} };
+  var prototypeAccessors$12 = { primitive: { configurable: true } };
 
   prototypeAccessors$12.primitive.get = function () { return BoxPrimitive };
 
@@ -57556,7 +57596,7 @@ var IgnorePicker = (function (Picker) {
   IgnorePicker.prototype = Object.create( Picker && Picker.prototype );
   IgnorePicker.prototype.constructor = IgnorePicker;
 
-  var prototypeAccessors$13 = { type: {} };
+  var prototypeAccessors$13 = { type: { configurable: true } };
 
   prototypeAccessors$13.type.get = function () { return 'ignore' };
 
@@ -57575,7 +57615,7 @@ var MeshPicker = (function (ShapePicker) {
   MeshPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   MeshPicker.prototype.constructor = MeshPicker;
 
-  var prototypeAccessors$14 = { type: {} };
+  var prototypeAccessors$14 = { type: { configurable: true } };
 
   prototypeAccessors$14.type.get = function () { return 'mesh' };
 
@@ -57609,7 +57649,7 @@ var SpherePicker = (function (ShapePicker) {
   SpherePicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   SpherePicker.prototype.constructor = SpherePicker;
 
-  var prototypeAccessors$15 = { primitive: {} };
+  var prototypeAccessors$15 = { primitive: { configurable: true } };
 
   prototypeAccessors$15.primitive.get = function () { return SpherePrimitive };
 
@@ -57628,7 +57668,7 @@ var SurfacePicker = (function (Picker) {
   SurfacePicker.prototype = Object.create( Picker && Picker.prototype );
   SurfacePicker.prototype.constructor = SurfacePicker;
 
-  var prototypeAccessors$16 = { type: {},data: {} };
+  var prototypeAccessors$16 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$16.type.get = function () { return 'surface' };
   prototypeAccessors$16.data.get = function () { return this.surface };
@@ -57658,7 +57698,7 @@ var TetrahedronPicker = (function (ShapePicker) {
   TetrahedronPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   TetrahedronPicker.prototype.constructor = TetrahedronPicker;
 
-  var prototypeAccessors$17 = { primitive: {} };
+  var prototypeAccessors$17 = { primitive: { configurable: true } };
 
   prototypeAccessors$17.primitive.get = function () { return TetrahedronPrimitive };
 
@@ -57676,7 +57716,7 @@ var TorusPicker = (function (ShapePicker) {
   TorusPicker.prototype = Object.create( ShapePicker && ShapePicker.prototype );
   TorusPicker.prototype.constructor = TorusPicker;
 
-  var prototypeAccessors$18 = { primitive: {} };
+  var prototypeAccessors$18 = { primitive: { configurable: true } };
 
   prototypeAccessors$18.primitive.get = function () { return TorusPrimitive };
 
@@ -57696,7 +57736,7 @@ var UnitcellPicker = (function (Picker) {
   UnitcellPicker.prototype = Object.create( Picker && Picker.prototype );
   UnitcellPicker.prototype.constructor = UnitcellPicker;
 
-  var prototypeAccessors$19 = { type: {},data: {} };
+  var prototypeAccessors$19 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$19.type.get = function () { return 'unitcell' };
   prototypeAccessors$19.data.get = function () { return this.unitcell };
@@ -57726,7 +57766,7 @@ var UnknownPicker = (function (Picker) {
   UnknownPicker.prototype = Object.create( Picker && Picker.prototype );
   UnknownPicker.prototype.constructor = UnknownPicker;
 
-  var prototypeAccessors$20 = { type: {} };
+  var prototypeAccessors$20 = { type: { configurable: true } };
 
   prototypeAccessors$20.type.get = function () { return 'unknown' };
 
@@ -57745,7 +57785,7 @@ var VolumePicker = (function (Picker) {
   VolumePicker.prototype = Object.create( Picker && Picker.prototype );
   VolumePicker.prototype.constructor = VolumePicker;
 
-  var prototypeAccessors$21 = { type: {},data: {} };
+  var prototypeAccessors$21 = { type: { configurable: true },data: { configurable: true } };
 
   prototypeAccessors$21.type.get = function () { return 'volume' };
   prototypeAccessors$21.data.get = function () { return this.volume };
@@ -57784,7 +57824,7 @@ var SlicePicker = (function (VolumePicker) {
   SlicePicker.prototype = Object.create( VolumePicker && VolumePicker.prototype );
   SlicePicker.prototype.constructor = SlicePicker;
 
-  var prototypeAccessors$22 = { type: {} };
+  var prototypeAccessors$22 = { type: { configurable: true } };
 
   prototypeAccessors$22.type.get = function () { return 'slice' };
 
@@ -59755,9 +59795,15 @@ function SpatialHash (atomStore, boundingBox) {
     }
   }
 
-    //
-
   function within (x, y, z, r) {
+    var result = [];
+
+    eachWithin(x, y, z, r, function (atomIndex) { return result.push(atomIndex); });
+
+    return result
+  }
+
+  function eachWithin (x, y, z, r, callback) {
     var rSq = r * r;
 
     var loX = Math.max(0, (x - r - minX) >> exp);
@@ -59788,9 +59834,8 @@ function SpatialHash (atomStore, boundingBox) {
               var dy = yArray[ atomIndex ] - y;
               var dz = zArray[ atomIndex ] - z;
 
-              if (dx * dx + dy * dy + dz * dz <= rSq) {
-                result.push(atomIndex);
-              }
+              var dSq = dx * dx + dy * dy + dz * dz;
+              if (dSq <= rSq) { callback(atomIndex, dSq); }
             }
           }
         }
@@ -59800,9 +59845,10 @@ function SpatialHash (atomStore, boundingBox) {
     return result
   }
 
-    // API
+  // API
 
   this.within = within;
+  this.eachWithin = eachWithin;
 }
 
 /**
@@ -61375,7 +61421,7 @@ var Surface = function Surface (name, path, data) {
   }
 };
 
-var prototypeAccessors$16 = { type: {} };
+var prototypeAccessors$16 = { type: { configurable: true } };
 
 prototypeAccessors$16.type.get = function () { return 'Surface' };
 
@@ -61638,7 +61684,7 @@ var Volume = function Volume (name, path, data, nx, ny, nz, atomindex) {
   this.setData(data, nx, ny, nz, atomindex);
 };
 
-var prototypeAccessors$15 = { type: {},position: {},min: {},max: {},sum: {},mean: {},rms: {} };
+var prototypeAccessors$15 = { type: { configurable: true },position: { configurable: true },min: { configurable: true },max: { configurable: true },sum: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
 
 prototypeAccessors$15.type.get = function () { return 'Volume' };
 
@@ -62037,7 +62083,7 @@ var FilteredVolume = function FilteredVolume (volume, minValue, maxValue, outsid
   this.setFilter(minValue, maxValue, outside);
 };
 
-var prototypeAccessors$14 = { header: {},matrix: {},normalMatrix: {},inverseMatrix: {},center: {},boundingBox: {},min: {},max: {},mean: {},rms: {} };
+var prototypeAccessors$14 = { header: { configurable: true },matrix: { configurable: true },normalMatrix: { configurable: true },inverseMatrix: { configurable: true },center: { configurable: true },boundingBox: { configurable: true },min: { configurable: true },max: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
 
 prototypeAccessors$14.header.get = function () { return this.volume.header };
 prototypeAccessors$14.matrix.get = function () { return this.volume.matrix };
@@ -62439,7 +62485,7 @@ var BondStore = (function (Store$$1) {
   BondStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   BondStore.prototype.constructor = BondStore;
 
-  var prototypeAccessors = { _defaultFields: {} };
+  var prototypeAccessors = { _defaultFields: { configurable: true } };
 
   prototypeAccessors._defaultFields.get = function () {
     return [
@@ -62500,7 +62546,7 @@ var AtomStore = (function (Store$$1) {
   AtomStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   AtomStore.prototype.constructor = AtomStore;
 
-  var prototypeAccessors = { _defaultFields: {} };
+  var prototypeAccessors = { _defaultFields: { configurable: true } };
 
   prototypeAccessors._defaultFields.get = function () {
     return [
@@ -62549,7 +62595,7 @@ var ResidueStore = (function (Store$$1) {
   ResidueStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ResidueStore.prototype.constructor = ResidueStore;
 
-  var prototypeAccessors = { _defaultFields: {} };
+  var prototypeAccessors = { _defaultFields: { configurable: true } };
 
   prototypeAccessors._defaultFields.get = function () {
     return [
@@ -62605,7 +62651,7 @@ var ChainStore = (function (Store$$1) {
   ChainStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ChainStore.prototype.constructor = ChainStore;
 
-  var prototypeAccessors = { _defaultFields: {} };
+  var prototypeAccessors = { _defaultFields: { configurable: true } };
 
   prototypeAccessors._defaultFields.get = function () {
     return [
@@ -62688,7 +62734,7 @@ var ModelStore = (function (Store$$1) {
   ModelStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
   ModelStore.prototype.constructor = ModelStore;
 
-  var prototypeAccessors = { _defaultFields: {} };
+  var prototypeAccessors = { _defaultFields: { configurable: true } };
 
   prototypeAccessors._defaultFields.get = function () {
     return [
@@ -64163,7 +64209,7 @@ var Assembly = function Assembly (name) {
   this.partList = [];
 };
 
-var prototypeAccessors$17 = { type: {} };
+var prototypeAccessors$17 = { type: { configurable: true } };
 
 prototypeAccessors$17.type.get = function () { return 'Assembly' };
 
@@ -64284,7 +64330,7 @@ var AssemblyPart = function AssemblyPart (matrixList, chainList) {
   this.chainList = chainList || [];
 };
 
-var prototypeAccessors$1$2 = { type: {} };
+var prototypeAccessors$1$2 = { type: { configurable: true } };
 
 prototypeAccessors$1$2.type.get = function () { return 'AssemblyPart' };
 
@@ -64996,6 +65042,24 @@ function calculateBondsBetween (structure, onlyAddBackbone, useExistingBonds) {
   });
 
   structure.atomSetDict.backbone = backboneAtomSet;
+
+  if (!onlyAddBackbone) {
+    if (Debug) { Log.time('calculateBondsBetween inter'); }
+    var spatialHash = structure.spatialHash;
+    structure.eachResidue(function (rp) {
+      if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
+        rp.eachAtom(function (ap) {
+          spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
+            ap2.index = idx;
+            if (ap.residueIndex !== ap2.residueIndex) {
+              bondStore.addBondIfConnected(ap, ap2, 1);  // assume single bond
+            }
+          });
+        });
+      }
+    });
+    if (Debug) { Log.timeEnd('calculateBondsBetween inter'); }
+  }
 
   if (Debug) { Log.timeEnd('calculateBondsBetween'); }
 }
@@ -65885,7 +65949,7 @@ var BondProxy = function BondProxy (structure, index) {
   this._ap3 = this.structure.getAtomProxy();
 };
 
-var prototypeAccessors$18 = { atom1: {},atom2: {},atomIndex1: {},atomIndex2: {},bondOrder: {} };
+var prototypeAccessors$18 = { atom1: { configurable: true },atom2: { configurable: true },atomIndex1: { configurable: true },atomIndex2: { configurable: true },bondOrder: { configurable: true } };
 
 /**
  * @type {AtomProxy}
@@ -66062,7 +66126,7 @@ var AtomProxy = function AtomProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$19 = { bondHash: {},entity: {},entityIndex: {},modelIndex: {},chainIndex: {},residue: {},residueIndex: {},sstruc: {},inscode: {},resno: {},chainname: {},chainid: {},residueType: {},atomType: {},residueAtomOffset: {},resname: {},hetero: {},atomname: {},element: {},vdw: {},covalent: {},x: {},y: {},z: {},serial: {},bfactor: {},occupancy: {},altloc: {},partialCharge: {},formalCharge: {} };
+var prototypeAccessors$19 = { bondHash: { configurable: true },entity: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },chainIndex: { configurable: true },residue: { configurable: true },residueIndex: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },resno: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },residueType: { configurable: true },atomType: { configurable: true },residueAtomOffset: { configurable: true },resname: { configurable: true },hetero: { configurable: true },atomname: { configurable: true },element: { configurable: true },vdw: { configurable: true },covalent: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true },serial: { configurable: true },bfactor: { configurable: true },occupancy: { configurable: true },altloc: { configurable: true },partialCharge: { configurable: true },formalCharge: { configurable: true } };
 
 /**
  * @type {BondHash}
@@ -66789,7 +66853,7 @@ var ResidueProxy = function ResidueProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$20 = { entity: {},entityIndex: {},chain: {},chainIndex: {},atomOffset: {},atomCount: {},atomEnd: {},modelIndex: {},chainname: {},chainid: {},resno: {},sstruc: {},inscode: {},residueType: {},resname: {},hetero: {},moleculeType: {},backboneType: {},backboneStartType: {},backboneEndType: {},traceAtomIndex: {},direction1AtomIndex: {},direction2AtomIndex: {},backboneStartAtomIndex: {},backboneEndAtomIndex: {},rungEndAtomIndex: {} };
+var prototypeAccessors$20 = { entity: { configurable: true },entityIndex: { configurable: true },chain: { configurable: true },chainIndex: { configurable: true },atomOffset: { configurable: true },atomCount: { configurable: true },atomEnd: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },resno: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },residueType: { configurable: true },resname: { configurable: true },hetero: { configurable: true },moleculeType: { configurable: true },backboneType: { configurable: true },backboneStartType: { configurable: true },backboneEndType: { configurable: true },traceAtomIndex: { configurable: true },direction1AtomIndex: { configurable: true },direction2AtomIndex: { configurable: true },backboneStartAtomIndex: { configurable: true },backboneEndAtomIndex: { configurable: true },rungEndAtomIndex: { configurable: true } };
 
 /**
  * Entity
@@ -67292,7 +67356,7 @@ var Polymer = function Polymer (structure, residueIndexStart, residueIndexEnd) {
   // console.log( this.qualifiedName(), this );
 };
 
-var prototypeAccessors$22 = { chainIndex: {},modelIndex: {},chainname: {} };
+var prototypeAccessors$22 = { chainIndex: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true } };
 
 prototypeAccessors$22.chainIndex.get = function () {
   return this.residueStore.chainIndex[ this.residueIndexStart ]
@@ -67519,7 +67583,7 @@ var ChainProxy = function ChainProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$21 = { entity: {},model: {},entityIndex: {},modelIndex: {},residueOffset: {},residueCount: {},residueEnd: {},atomOffset: {},atomEnd: {},atomCount: {},chainname: {},chainid: {} };
+var prototypeAccessors$21 = { entity: { configurable: true },model: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },residueOffset: { configurable: true },residueCount: { configurable: true },residueEnd: { configurable: true },atomOffset: { configurable: true },atomEnd: { configurable: true },atomCount: { configurable: true },chainname: { configurable: true },chainid: { configurable: true } };
 
 /**
  * Entity
@@ -67759,7 +67823,7 @@ ChainProxy.prototype.eachPolymer = function eachPolymer (callback, selection) {
   }
 
   if (rNextIndex - rStartIndex > 1) {
-    if (this.structure.getResidueProxy(rStartIndex).backboneStartType) {
+    if (this.structure.getResidueProxy(rStartIndex).backboneEndType) {
       // console.log("FOO3",rStartIndex, rNextIndex)
       callback(new Polymer(structure, rStartIndex, rNextIndex));
     }
@@ -67825,7 +67889,7 @@ var ModelProxy = function ModelProxy (structure, index) {
   this.index = index;
 };
 
-var prototypeAccessors$23 = { chainOffset: {},chainCount: {},residueOffset: {},atomOffset: {},chainEnd: {},residueEnd: {},atomEnd: {},residueCount: {},atomCount: {} };
+var prototypeAccessors$23 = { chainOffset: { configurable: true },chainCount: { configurable: true },residueOffset: { configurable: true },atomOffset: { configurable: true },chainEnd: { configurable: true },residueEnd: { configurable: true },atomEnd: { configurable: true },residueCount: { configurable: true },atomCount: { configurable: true } };
 
 prototypeAccessors$23.chainOffset.get = function () {
   return this.modelStore.chainOffset[ this.index ]
@@ -68037,7 +68101,7 @@ var Structure = function Structure (name, path) {
   this.init(name, path);
 };
 
-var prototypeAccessors$13 = { type: {} };
+var prototypeAccessors$13 = { type: { configurable: true } };
 
 Structure.prototype.init = function init (name, path) {
   this.name = name;
@@ -69037,12 +69101,21 @@ Object.defineProperties( Structure.prototype, prototypeAccessors$13 );
 var Superposition = function Superposition (atoms1, atoms2) {
   // allocate & init data structures
 
-  var n;
+  var n1;
   if (typeof atoms1.eachAtom === 'function') {
-    n = atoms1.atomCount;
+    n1 = atoms1.atomCount;
   } else if (atoms1 instanceof Float32Array) {
-    n = atoms1.length / 3;
+    n1 = atoms1.length / 3;
   }
+
+  var n2;
+  if (typeof atoms2.eachAtom === 'function') {
+    n2 = atoms2.atomCount;
+  } else if (atoms1 instanceof Float32Array) {
+    n2 = atoms2.length / 3;
+  }
+
+  var n = Math.min(n1, n2);
 
   var coords1 = new Matrix(3, n);
   var coords2 = new Matrix(3, n);
@@ -69063,8 +69136,8 @@ var Superposition = function Superposition (atoms1, atoms2) {
 
   // prep coords
 
-  this.prepCoords(atoms1, coords1);
-  this.prepCoords(atoms2, coords2);
+  this.prepCoords(atoms1, coords1, n);
+  this.prepCoords(atoms2, coords2, n);
 
   // superpose
 
@@ -69096,20 +69169,23 @@ Superposition.prototype._superpose = function _superpose (coords1, coords2) {
   }
 };
 
-Superposition.prototype.prepCoords = function prepCoords (atoms, coords) {
+Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
   var i = 0;
+  var n3 = n * 3;
   var cd = coords.data;
 
   if (typeof atoms.eachAtom === 'function') {
     atoms.eachAtom(function (a) {
-      cd[ i + 0 ] = a.x;
-      cd[ i + 1 ] = a.y;
-      cd[ i + 2 ] = a.z;
+      if (i < n3) {
+        cd[ i + 0 ] = a.x;
+        cd[ i + 1 ] = a.y;
+        cd[ i + 2 ] = a.z;
 
-      i += 3;
+        i += 3;
+      }
     });
   } else if (atoms instanceof Float32Array) {
-    cd.set(atoms);
+    cd.set(atoms.subarray(0, n3));
   } else {
     Log.warn('prepCoords: input type unknown');
   }
@@ -69130,7 +69206,7 @@ Superposition.prototype.transform = function transform (atoms) {
 
   // prep coords
 
-  this.prepCoords(atoms, coords);
+  this.prepCoords(atoms, coords, n);
 
   // do transform
 
@@ -69223,7 +69299,7 @@ var TrajectoryPlayer = function TrajectoryPlayer (traj, params) {
   this._animate = this._animate.bind(this);
 };
 
-var prototypeAccessors$25 = { isRunning: {} };
+var prototypeAccessors$25 = { isRunning: { configurable: true } };
 
 prototypeAccessors$25.isRunning.get = function () { return this._run };
 
@@ -69620,7 +69696,7 @@ var Trajectory = function Trajectory (trajPath, structure, params) {
   this._currentFrame = -1;
 };
 
-var prototypeAccessors$24 = { frameCount: {},currentFrame: {} };
+var prototypeAccessors$24 = { frameCount: { configurable: true },currentFrame: { configurable: true } };
 
 /**
  * Number of frames in the trajectory
@@ -70153,7 +70229,7 @@ var Buffer$1 = function Buffer (data, params) {
   this.makeWireframeGeometry();
 };
 
-var prototypeAccessors$27 = { parameters: {},matrix: {},transparent: {},size: {},attributeSize: {},pickable: {},dynamic: {},vertexShader: {},fragmentShader: {} };
+var prototypeAccessors$27 = { parameters: { configurable: true },matrix: { configurable: true },transparent: { configurable: true },size: { configurable: true },attributeSize: { configurable: true },pickable: { configurable: true },dynamic: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
 prototypeAccessors$27.parameters.get = function () {
   return {
@@ -70884,7 +70960,7 @@ var MeshBuffer = (function (Buffer) {
   MeshBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   MeshBuffer.prototype.constructor = MeshBuffer;
 
-  var prototypeAccessors = { vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.vertexShader.get = function () { return 'Mesh.vert' };
   prototypeAccessors.fragmentShader.get = function () { return 'Mesh.frag' };
@@ -70949,7 +71025,7 @@ var Shape$1 = function Shape$$1 (name, params) {
   });
 };
 
-var prototypeAccessors$26 = { center: {},type: {} };
+var prototypeAccessors$26 = { center: { configurable: true },type: { configurable: true } };
 
 /**
  * Add a buffer
@@ -71966,7 +72042,7 @@ var SurfaceBuffer = (function (MeshBuffer$$1) {
   SurfaceBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
   SurfaceBuffer.prototype.constructor = SurfaceBuffer;
 
-  var prototypeAccessors = { isSurface: {} };
+  var prototypeAccessors = { isSurface: { configurable: true } };
 
   prototypeAccessors.isSurface.get = function () { return true };
 
@@ -72044,7 +72120,7 @@ var DoubleSidedBuffer = function DoubleSidedBuffer (buffer) {
   this.backBuffer = backBuffer;
 };
 
-var prototypeAccessors$28 = { matrix: {},pickable: {} };
+var prototypeAccessors$28 = { matrix: { configurable: true },pickable: { configurable: true } };
 
 prototypeAccessors$28.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
@@ -72154,7 +72230,7 @@ var ContourBuffer = (function (Buffer) {
   ContourBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   ContourBuffer.prototype.constructor = ContourBuffer;
 
-  var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { isLine: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.isLine.get = function () { return true };
   prototypeAccessors.vertexShader.get = function () { return 'Line.vert' };
@@ -72580,7 +72656,7 @@ var GeometryBuffer = (function (MeshBuffer$$1) {
   GeometryBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
   GeometryBuffer.prototype.constructor = GeometryBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   GeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform () {};
 
@@ -72767,7 +72843,7 @@ var MappedBuffer = (function (Buffer) {
   MappedBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   MappedBuffer.prototype.constructor = MappedBuffer;
 
-  var prototypeAccessors = { attributeSize: {},indexSize: {},mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
+  var prototypeAccessors = { attributeSize: { configurable: true },indexSize: { configurable: true },mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
 
   prototypeAccessors.attributeSize.get = function () {
     return this.size * this.mappingSize
@@ -72931,7 +73007,7 @@ var MappedQuadBuffer = (function (MappedBuffer$$1) {
   MappedQuadBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
   MappedQuadBuffer.prototype.constructor = MappedQuadBuffer;
 
-  var prototypeAccessors = { mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
+  var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
 
   prototypeAccessors.mapping.get = function () { return mapping };
   prototypeAccessors.mappingIndices.get = function () { return mappingIndices };
@@ -72982,7 +73058,7 @@ var SphereImpostorBuffer = (function (MappedQuadBuffer$$1) {
   SphereImpostorBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
   SphereImpostorBuffer.prototype.constructor = SphereImpostorBuffer;
 
-  var prototypeAccessors = { isImpostor: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { isImpostor: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.isImpostor.get = function () { return true };
   prototypeAccessors.vertexShader.get = function () { return 'SphereImpostor.vert' };
@@ -73112,7 +73188,7 @@ var PointBuffer = (function (Buffer) {
   PointBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   PointBuffer.prototype.constructor = PointBuffer;
 
-  var prototypeAccessors = { parameters: {},isPoint: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { parameters: { configurable: true },isPoint: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.parameters.get = function () {
     return Object.assign.call(this, {
@@ -73589,7 +73665,7 @@ var ImageBuffer = (function (Buffer) {
   ImageBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   ImageBuffer.prototype.constructor = ImageBuffer;
 
-  var prototypeAccessors = { parameters: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { parameters: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.parameters.get = function () {
     return Object.assign.call(this, {
@@ -74118,7 +74194,7 @@ var StructureRepresentation = (function (Representation$$1) {
   StructureRepresentation.prototype = Object.create( Representation$$1 && Representation$$1.prototype );
   StructureRepresentation.prototype.constructor = StructureRepresentation;
 
-  var prototypeAccessors = { defaultScale: {} };
+  var prototypeAccessors = { defaultScale: { configurable: true } };
 
   prototypeAccessors.defaultScale.get = function () {
     return {
@@ -74456,7 +74532,7 @@ var CylinderGeometryBuffer = (function (GeometryBuffer$$1) {
   CylinderGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   CylinderGeometryBuffer.prototype.constructor = CylinderGeometryBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   CylinderGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     eye.fromArray(this._from, i3);
@@ -74550,7 +74626,7 @@ var MappedAlignedBoxBuffer = (function (MappedBuffer$$1) {
   MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
   MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
 
-  var prototypeAccessors = { mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
+  var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
 
   prototypeAccessors.mapping.get = function () { return mapping$1 };
   prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1 };
@@ -74610,7 +74686,7 @@ var CylinderImpostorBuffer = (function (MappedAlignedBoxBuffer$$1) {
   CylinderImpostorBuffer.prototype = Object.create( MappedAlignedBoxBuffer$$1 && MappedAlignedBoxBuffer$$1.prototype );
   CylinderImpostorBuffer.prototype.constructor = CylinderImpostorBuffer;
 
-  var prototypeAccessors = { parameters: {},isImpostor: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { parameters: { configurable: true },isImpostor: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.parameters.get = function () {
     return Object.assign.call(this, {
@@ -74708,7 +74784,7 @@ var LineBuffer = (function (Buffer) {
   LineBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   LineBuffer.prototype.constructor = LineBuffer;
 
-  var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { isLine: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   LineBuffer.prototype.setAttributes = function setAttributes (data) {
     var position1, position2, color, color2;
@@ -75110,7 +75186,7 @@ var Component = function Component (stage, params) {
   this.controls = new ComponentControls(this);
 };
 
-var prototypeAccessors$11 = { type: {} };
+var prototypeAccessors$11 = { type: { configurable: true } };
 
 prototypeAccessors$11.type.get = function () { return 'component' };
 
@@ -75479,7 +75555,7 @@ var RepresentationComponent = (function (Component$$1) {
   RepresentationComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   RepresentationComponent.prototype.constructor = RepresentationComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
     /**
      * Component type
@@ -78767,7 +78843,7 @@ var ScriptComponent = (function (Component$$1) {
   ScriptComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   ScriptComponent.prototype.constructor = ScriptComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'script' };
 
@@ -78837,7 +78913,7 @@ var ShapeComponent = (function (Component$$1) {
   ShapeComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   ShapeComponent.prototype.constructor = ShapeComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
     /**
      * Component type
@@ -78969,7 +79045,7 @@ var TrajectoryComponent = (function (Component$$1) {
   TrajectoryComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   TrajectoryComponent.prototype.constructor = TrajectoryComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   /**
    * Component type
@@ -79048,7 +79124,7 @@ var FramesTrajectory = (function (Trajectory$$1) {
   FramesTrajectory.prototype = Object.create( Trajectory$$1 && Trajectory$$1.prototype );
   FramesTrajectory.prototype.constructor = FramesTrajectory;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'frames' };
 
@@ -79142,7 +79218,7 @@ var StructureTrajectory = (function (Trajectory$$1) {
   StructureTrajectory.prototype = Object.create( Trajectory$$1 && Trajectory$$1.prototype );
   StructureTrajectory.prototype.constructor = StructureTrajectory;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'structure' };
 
@@ -79235,7 +79311,7 @@ var RemoteTrajectory = (function (Trajectory$$1) {
   RemoteTrajectory.prototype = Object.create( Trajectory$$1 && Trajectory$$1.prototype );
   RemoteTrajectory.prototype.constructor = RemoteTrajectory;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'remote' };
 
@@ -79433,7 +79509,7 @@ var StructureView = (function (Structure$$1) {
   StructureView.prototype = Object.create( Structure$$1 && Structure$$1.prototype );
   StructureView.prototype.constructor = StructureView;
 
-  var prototypeAccessors = { type: {},name: {},path: {},title: {},id: {},atomSetDict: {},biomolDict: {},entityList: {},unitcell: {},frames: {},boxes: {},validation: {},bondStore: {},backboneBondStore: {},rungBondStore: {},atomStore: {},residueStore: {},chainStore: {},modelStore: {},atomMap: {},residueMap: {},bondHash: {},spatialHash: {} };
+  var prototypeAccessors = { type: { configurable: true },name: { configurable: true },path: { configurable: true },title: { configurable: true },id: { configurable: true },atomSetDict: { configurable: true },biomolDict: { configurable: true },entityList: { configurable: true },unitcell: { configurable: true },frames: { configurable: true },boxes: { configurable: true },validation: { configurable: true },bondStore: { configurable: true },backboneBondStore: { configurable: true },rungBondStore: { configurable: true },atomStore: { configurable: true },residueStore: { configurable: true },chainStore: { configurable: true },modelStore: { configurable: true },atomMap: { configurable: true },residueMap: { configurable: true },bondHash: { configurable: true },spatialHash: { configurable: true } };
 
   StructureView.prototype.init = function init () {};
 
@@ -79682,7 +79758,7 @@ var StructureComponent = (function (Component$$1) {
   StructureComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   StructureComponent.prototype.constructor = StructureComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   /**
    * Component type
@@ -79932,7 +80008,7 @@ var SurfaceComponent = (function (Component$$1) {
   SurfaceComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   SurfaceComponent.prototype.constructor = SurfaceComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
     /**
      * Component type
@@ -80002,7 +80078,7 @@ var VolumeComponent = (function (Component$$1) {
   VolumeComponent.prototype = Object.create( Component$$1 && Component$$1.prototype );
   VolumeComponent.prototype.constructor = VolumeComponent;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
     /**
      * Component type
@@ -80042,6 +80118,1374 @@ var VolumeComponent = (function (Component$$1) {
 }(Component));
 
 ComponentRegistry.add('volume', VolumeComponent);
+
+/**
+ * @file Measurement Representation
+ * @private
+ */
+/**
+ * Measurement representation parameter object.
+ * @typedef {Object} MeasurementRepresentationParameters - measurement representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ *
+ * @property {Float} labelSize - size of the distance label
+ * @property {Color} labelColor - color of the distance label
+ * @property {Boolean} labelVisible - visibility of the distance label
+ * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
+ */
+
+/**
+ * Measurement representation
+ */
+var MeasurementRepresentation = (function (StructureRepresentation$$1) {
+  function MeasurementRepresentation (structure, viewer, params) {
+    StructureRepresentation$$1.call(this, structure, viewer, params);
+
+    this.n = 0; // Subclass create sets value
+    this.parameters = Object.assign({
+
+      labelVisible: {
+        type: 'boolean'
+      },
+      labelSize: {
+        type: 'number', precision: 3, max: 10.0, min: 0.001
+      },
+      labelColor: {
+        type: 'color'
+      },
+      labelFontFamily: {
+        type: 'select',
+        options: {
+          'sans-serif': 'sans-serif',
+          'monospace': 'monospace',
+          'serif': 'serif'
+        },
+        buffer: 'fontFamily'
+      },
+      labelFontStyle: {
+        type: 'select',
+        options: {
+          'normal': 'normal',
+          'italic': 'italic'
+        },
+        buffer: 'fontStyle'
+      },
+      labelFontWeight: {
+        type: 'select',
+        options: {
+          'normal': 'normal',
+          'bold': 'bold'
+        },
+        buffer: 'fontWeight'
+      },
+      labelsdf: {
+        type: 'boolean', buffer: 'sdf'
+      },
+      labelXOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'xOffset'
+      },
+      labelYOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'yOffset'
+      },
+      labelZOffset: {
+        type: 'number', precision: 1, max: 20, min: -20, buffer: 'zOffset'
+      },
+      labelAttachment: {
+        type: 'select',
+        options: {
+          'bottom-left': 'bottom-left',
+          'bottom-center': 'bottom-center',
+          'bottom-right': 'bottom-right',
+          'middle-left': 'middle-left',
+          'middle-center': 'middle-center',
+          'middle-right': 'middle-right',
+          'top-left': 'top-left',
+          'top-center': 'top-center',
+          'top-right': 'top-right'
+        },
+        rebuild: true
+      },
+      labelBorder: {
+        type: 'boolean', buffer: 'showBorder'
+      },
+      labelBorderColor: {
+        type: 'color', buffer: 'borderColor'
+      },
+      labelBorderWidth: {
+        type: 'number', precision: 2, max: 0.3, min: 0, buffer: 'borderWidth'
+      },
+      labelBackground: {
+        type: 'boolean', rebuild: true
+      },
+      labelBackgroundColor: {
+        type: 'color', buffer: 'backgroundColor'
+      },
+      labelBackgroundMargin: {
+        type: 'number', precision: 2, max: 2, min: 0, rebuild: true
+      },
+      labelBackgroundOpacity: {
+        type: 'range', step: 0.01, max: 1, min: 0, buffer: 'backgroundOpacity'
+      }
+    }, this.parameters, {
+      flatShaded: null,
+      assembly: null
+    });
+  }
+
+  if ( StructureRepresentation$$1 ) MeasurementRepresentation.__proto__ = StructureRepresentation$$1;
+  MeasurementRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+  MeasurementRepresentation.prototype.constructor = MeasurementRepresentation;
+
+  MeasurementRepresentation.prototype.init = function init (params) {
+    var p = params || {};
+    this.labelVisible = defaults(p.labelVisible, true);
+    this.labelSize = defaults(p.labelSize, 2.0);
+    this.labelColor = defaults(p.labelColor, 0xFFFFFF);
+    this.labelFontFamily = defaults(p.labelFontFamily, 'sans-serif');
+    this.labelFontStyle = defaults(p.labelFontstyle, 'normal');
+    this.labelFontWeight = defaults(p.labelFontWeight, 'bold');
+    this.labelsdf = defaults(p.labelsdf, Browser === 'Chrome');
+    this.labelXOffset = defaults(p.labelXOffset, 0.0);
+    this.labelYOffset = defaults(p.labelYOffset, 0.0);
+    this.labelZOffset = defaults(p.labelZOffset, 0.5);
+    this.labelAttachment = defaults(p.labelAttachment, 'bottom-left');
+    this.labelBorder = defaults(p.labelBorder, false);
+    this.labelBorderColor = defaults(p.labelBorderColor, 'lightgrey');
+    this.labelBorderWidth = defaults(p.labelBorderWidth, 0.15);
+    this.labelBackground = defaults(p.labelBackground, false);
+    this.labelBackgroundColor = defaults(p.labelBackgroundColor, 'lightgrey');
+    this.labelBackgroundMargin = defaults(p.labelBackgroundMargin, 0.5);
+    this.labelBackgroundOpacity = defaults(p.labelBackgroundOpacity, 1.0);
+
+    StructureRepresentation$$1.prototype.init.call(this, p);
+  };
+
+  // All measurements need to rebuild on position change
+  MeasurementRepresentation.prototype.update = function update (what) {
+    if (what.position) {
+      this.build();
+    } else {
+      StructureRepresentation$$1.prototype.update.call(this, what);
+    }
+  };
+
+  MeasurementRepresentation.prototype.updateData = function updateData (what, data) {
+    var textData = {};
+    if (what.labelSize) {
+      textData.size = uniformArray(this.n, this.labelSize);
+    }
+
+    if (what.labelColor) {
+      var c = new Color(this.labelColor);
+      textData.color = uniformArray3(this.n, c.r, c.g, c.b);
+    }
+
+    this.textBuffer.setAttributes(textData);
+  };
+
+  MeasurementRepresentation.prototype.setParameters = function setParameters (params) {
+    var rebuild = false;
+    var what = {};
+
+    if (params && params.labelSize) {
+      what.labelSize = true;
+    }
+
+    if (params && (params.labelColor || params.labelColor === 0x000000)) {
+      what.labelColor = true;
+    }
+
+    StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
+
+    if (params && params.opacity !== undefined) {
+      this.textBuffer.setParameters(
+        {opacity: 1.0}); // Don't allow opaque labels?
+    }
+
+    if (params && params.labelVisible !== undefined) {
+      this.setVisibility(this.visible);
+    }
+
+    return this
+  };
+
+  MeasurementRepresentation.prototype.setVisibility = function setVisibility (value, noRenderRequest) {
+    StructureRepresentation$$1.prototype.setVisibility.call(this, value, true);
+    if (this.textBuffer) {
+      this.textBuffer.setVisibility(
+        this.labelVisible && this.visible
+      );
+    }
+
+    if (!noRenderRequest) { this.viewer.requestRender(); }
+
+    return this
+  };
+
+  MeasurementRepresentation.prototype.getLabelBufferParams = function getLabelBufferParams (params) {
+    return StructureRepresentation$$1.prototype.getBufferParams.call(this, Object.assign({
+      fontFamily: this.labelFontFamily,
+      fontStyle: this.labelFontStyle,
+      fontWeight: this.labelFontWeight,
+      sdf: this.labelsdf,
+      xOffset: this.labelXOffset,
+      yOffset: this.labelYOffset,
+      zOffset: this.labelZOffset,
+      attachment: this.labelAttachment,
+      showBorder: this.labelBorder,
+      borderColor: this.labelBorderColor,
+      borderWidth: this.labelBorderWidth,
+      showBackground: this.labelBackground,
+      backgroundColor: this.labelBackgroundColor,
+      backgroundMargin: this.labelBackgroundMargin,
+      backgroundOpacity: this.labelBackgroundOpacity,
+      visible: this.labelVisible
+    }, params, {
+      opacity: 1.0 // Force labels at 100% opacity
+    }))
+  };
+
+  return MeasurementRepresentation;
+}(StructureRepresentation));
+
+/**
+ * MeasurementRepresentations take atom[Pair|Triple|Quad] parameters.
+ *
+ * Parses nested array of either integer atom indices or selection
+ * expressions into a flat array of coordinates.
+ *
+ * NB: Unlike previous version, this peeks at first entry to determine
+ * if atoms are given by int index or selection expression. It cannot
+ * cope with mixtures
+ *
+ * @param  {Structure} sview The structure to which the atoms refer
+ * @param  {Array} atoms Nested array of atom pairs|triples|quads as
+ *   Integer indices or selection expressions
+ * @return {Float32Array} Flattened array of position coordinates
+ */
+function parseNestedAtoms (sview, atoms) {
+  var ap = sview.getAtomProxy();
+  var sele = new Selection();
+
+  var nSets = atoms.length;
+  if (nSets === 0) { return new Float32Array(0) }
+
+  // Peek-ahead at first item to determine order and parse mode
+  var order = atoms[ 0 ].length;
+  var seleMode = !(Number.isInteger(atoms[ 0 ][ 0 ]));
+
+  var a = new Float32Array(nSets * order * 3);
+
+  var p = 0;
+  atoms.forEach(function (group) {
+    var _break = false;
+    for (var j = 0; j < order; j++) {
+      if (seleMode) {
+        sele.setString(group[ j ]);
+        var atomIndices = sview.getAtomIndices(sele);
+        if (atomIndices.length) {
+          ap.index = atomIndices[ 0 ];
+        } else {
+          _break = true;
+          break
+        }
+      } else {
+        ap.index = group[ j ];
+      }
+      var offset = p + j * 3;
+      a[ offset++ ] = ap.x;
+      a[ offset++ ] = ap.y;
+      a[ offset++ ] = ap.z;
+    }
+    if (!_break) { p += 3 * order; }
+  });
+
+  return a.subarray(0, p)
+}
+
+/* out = v1 * cos(angle) + v2 * sin(angle) */
+function calcArcPoint (out, center, v1, v2, angle) {
+  var x = Math.cos(angle);
+  var y = Math.sin(angle);
+  out[ 0 ] = center[ 0 ] + v1[ 0 ] * x + v2[ 0 ] * y;
+  out[ 1 ] = center[ 1 ] + v1[ 1 ] * x + v2[ 1 ] * y;
+  out[ 2 ] = center[ 2 ] + v1[ 2 ] * x + v2[ 2 ] * y;
+}
+
+ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
+
+ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\nuniform float opacity;\nuniform bool showBorder;\nuniform vec3 borderColor;\nuniform float borderWidth;\nuniform vec3 backgroundColor;\nuniform float backgroundOpacity;\nuniform float nearClip;\nuniform float clipRadius;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\nconst vec3 vColor = vec3( 0.0 );\n#else\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#endif\n#ifdef SDF\nconst float smoothness = 16.0;\n#else\nconst float smoothness = 256.0;\n#endif\nconst float gamma = 2.2;\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\nif( texCoord.x > 1.0 ){\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\n}else{\nfloat sdf = texture2D( fontTexture, texCoord ).a;\nif( showBorder ) sdf += borderWidth;\nfloat w = clamp(\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n0.0,\n0.5\n);\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\na = pow( a, 1.0 / gamma );\nif( a < 0.2 ) discard;\na *= opacity;\nvec3 outgoingLight = vColor;\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\noutgoingLight = borderColor;\n}\ngl_FragColor = vec4( outgoingLight, a );\n}\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
+
+/**
+ * @file Text Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+var TextAtlasCache = {};
+
+function getTextAtlas (params) {
+  var hash = JSON.stringify(params);
+  if (TextAtlasCache[ hash ] === undefined) {
+    TextAtlasCache[ hash ] = new TextAtlas(params);
+  }
+  return TextAtlasCache[ hash ]
+}
+
+var TextAtlas = function TextAtlas (params) {
+      // adapted from https://github.com/unconed/mathbox
+      // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+
+  var p = Object.assign({}, params);
+
+  this.font = defaults(p.font, [ 'sans-serif' ]);
+  this.size = defaults(p.size, 36);
+  this.style = defaults(p.style, 'normal');
+  this.variant = defaults(p.variant, 'normal');
+  this.weight = defaults(p.weight, 'normal');
+  this.outline = defaults(p.outline, 0);
+  this.width = defaults(p.width, 2048);
+  this.height = defaults(p.height, 2048);
+
+  this.gamma = 1;
+  if (typeof navigator !== 'undefined') {
+    var ua = navigator.userAgent;
+    if (ua.match(/Chrome/) && ua.match(/OS X/)) {
+      this.gamma = 0.5;
+    }
+  }
+
+  this.mapped = {};
+  this.scratchW = 0;
+  this.scratchH = 0;
+  this.currentX = 0;
+  this.currentY = 0;
+
+  this.build();
+  this.populate();
+
+  this.texture = new CanvasTexture(this.canvas2);
+  this.texture.flipY = false;
+  this.texture.needsUpdate = true;
+};
+
+TextAtlas.prototype.build = function build () {
+      // Prepare line-height with room for outline and descenders/ascenders
+  var lineHeight = this.size + 2 * this.outline + Math.round(this.size / 4);
+  var maxWidth = this.width / 4;
+
+      // Prepare scratch canvas
+  var canvas = document.createElement('canvas');
+  canvas.width = maxWidth;
+  canvas.height = lineHeight;
+
+  var ctx = canvas.getContext('2d');
+  ctx.font = this.style + ' ' + this.variant + ' ' + this.weight + ' ' + this.size + 'px ' + this.font;
+  ctx.fillStyle = '#FF0000';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  ctx.lineJoin = 'round';
+
+  var colors = [];
+  var dilate = this.outline * 3;
+  for (var i = 0; i < dilate; ++i) {
+          // 8 rgb levels = 1 step = .5 pixel increase
+    var val = Math.max(0, -i * 8 + 128 - (!i) * 8);
+    var hex = ('00' + val.toString(16)).slice(-2);
+    colors.push('#' + hex + hex + hex);
+  }
+  var scratch = new Uint8Array(maxWidth * lineHeight * 2);
+
+  this.canvas = canvas;
+  this.context = ctx;
+  this.lineHeight = lineHeight;
+  this.maxWidth = maxWidth;
+  this.colors = colors;
+  this.scratch = scratch;
+
+  this.data = new Uint8Array(this.width * this.height * 4);
+
+  this.canvas2 = document.createElement('canvas');
+  this.canvas2.width = this.width;
+  this.canvas2.height = this.height;
+  this.context2 = this.canvas2.getContext('2d');
+};
+
+TextAtlas.prototype.map = function map (text) {
+  if (this.mapped[ text ] === undefined) {
+    this.draw(text);
+
+    if (this.currentX + this.scratchW > this.width) {
+      this.currentX = 0;
+      this.currentY += this.scratchH;
+    }
+    if (this.currentY + this.scratchH > this.height) {
+      console.warn('canvas to small');
+    }
+
+    this.mapped[ text ] = {
+      x: this.currentX,
+      y: this.currentY,
+      w: this.scratchW,
+      h: this.scratchH
+    };
+
+    this.context2.drawImage(
+              this.canvas,
+              0, 0,
+              this.scratchW, this.scratchH,
+              this.currentX, this.currentY,
+              this.scratchW, this.scratchH
+          );
+
+    this.currentX += this.scratchW;
+  }
+
+  return this.mapped[ text ]
+};
+
+TextAtlas.prototype.get = function get (text) {
+  return this.mapped[ text ] || this.placeholder
+};
+
+TextAtlas.prototype.draw = function draw (text) {
+  var h = this.lineHeight;
+  var o = this.outline;
+  var ctx = this.context;
+  var dst = this.scratch;
+  var max = this.maxWidth;
+  var colors = this.colors;
+
+      // Bottom aligned, take outline into account
+  var x = o;
+  var y = h - this.outline;
+
+      // Measure text
+  var m = ctx.measureText(text);
+  var w = Math.min(max, Math.ceil(m.width + 2 * x + 1));
+
+      // Clear scratch area
+  ctx.clearRect(0, 0, w, h);
+
+  var i, il, j, imageData, data;
+
+  if (this.outline === 0) {
+    ctx.fillText(text, x, y);
+    imageData = ctx.getImageData(0, 0, w, h);
+    data = imageData.data;
+
+    j = 3;// Skip to alpha channel
+    for (i = 0, il = data.length / 4; i < il; ++i) {
+      dst[ i ] = data[ j ];
+      j += 4;
+    }
+  } else {
+    ctx.globalCompositeOperation = 'source-over';
+          // Draw strokes of decreasing width to create
+          // nested outlines (absolute distance)
+    for (i = o + 1; i > 0; --i) {
+              // Eliminate odd strokes once past > 1px,
+              // don't need the detail
+      j = i > 1 ? i * 2 - 2 : i;
+      ctx.strokeStyle = colors[ j - 1 ];
+      ctx.lineWidth = j;
+      ctx.strokeText(text, x, y);
+    }
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = '#FF00FF';
+    ctx.fillText(text, x, y);
+    imageData = ctx.getImageData(0, 0, w, h);
+    data = imageData.data;
+
+    j = 0;
+    var gamma = this.gamma;
+    for (i = 0, il = data.length / 4; i < il; ++i) {
+              // Get value + mask
+      var a = data[ j ];
+      var mask = a ? data[ j + 1 ] / a : 1;
+      if (gamma === 0.5) {
+        mask = Math.sqrt(mask);
+      }
+      mask = Math.min(1, Math.max(0, mask));
+
+              // Blend between positive/outside and negative/inside
+      var b = 256 - a;
+      var c = b + (a - b) * mask;
+
+              // Clamp (slight expansion to hide errors around the transition)
+      dst[ i ] = Math.max(0, Math.min(255, c + 2));
+      data[ j + 3 ] = dst[ i ];
+      j += 4;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  this.scratchW = w;
+  this.scratchH = h;
+};
+
+TextAtlas.prototype.populate = function populate () {
+    var this$1 = this;
+
+      // Replacement Character
+  this.placeholder = this.map(String.fromCharCode(0xFFFD));
+
+      // Basic Latin
+  for (var i = 0x0000; i < 0x007F; ++i) {
+    this$1.map(String.fromCharCode(i));
+  }
+
+      // Latin-1 Supplement
+  for (var i$1 = 0x0080; i$1 < 0x00FF; ++i$1) {
+    this$1.map(String.fromCharCode(i$1));
+  }
+
+      // Greek and Coptic
+  for (var i$2 = 0x0370; i$2 < 0x03FF; ++i$2) {
+    this$1.map(String.fromCharCode(i$2));
+  }
+
+      // Cyrillic
+  for (var i$3 = 0x0400; i$3 < 0x04FF; ++i$3) {
+    this$1.map(String.fromCharCode(i$3));
+  }
+
+      // Angstrom Sign
+  this.map(String.fromCharCode(0x212B));
+};
+
+/**
+ * Text buffer parameter object.
+ * @typedef {Object} TextBufferParameters - text buffer parameters
+ *
+ * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
+ * @property {Integer} clipNear - position of camera near/front clipping plane
+ *                                in percent of scene bounding box
+ * @property {String} labelType - type of the label, one of:
+ *                                 "atomname", "atomindex", "occupancy", "bfactor",
+ *                                 "serial", "element", "atom", "resname", "resno",
+ *                                 "res", "text", "qualified". When set to "text", the
+ *                                 `labelText` list is used.
+ * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
+ *                                   to take effect
+ * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
+ * @property {String} fontStyle - font style, "normal" or "italic"
+ * @property {String} fontWeight - font weight, "normal" or "bold"
+ * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
+ * @property {Float} xOffset - offset in x-direction
+ * @property {Float} yOffset - offset in y-direction
+ * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
+ * @property {String} attachment - attachment of the label, one of:
+ *                                 "bottom-left", "bottom-center", "bottom-right",
+ *                                 "middle-left", "middle-center", "middle-right",
+ *                                 "top-left", "top-center", "top-right"
+ * @property {Boolean} showBorder - show border/outline
+ * @property {Color} borderColor - color of the border/outline
+ * @property {Float} borderWidth - width of the border/outline
+ * @property {Boolean} showBackground - show background rectangle
+ * @property {Color} backgroundColor - color of the background
+ * @property {Float} backgroundMargin - width of the background
+ * @property {Float} backgroundOpacity - opacity of the background
+ */
+
+/**
+ * Text buffer. Renders screen-aligned text strings.
+ *
+ * @example
+ * var textBuffer = new TextBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     size: new Float32Array( [ 2 ] ),
+ *     text: [ "Hello" ]
+ * } );
+ */
+var TextBuffer = (function (MappedQuadBuffer$$1) {
+  function TextBuffer (data, params) {
+    var d = data || {};
+    var p = params || {};
+
+    p.forceTransparent = true;
+
+    var n = d.position.length / 3;
+    var charCount = 0;
+    for (var i = 0; i < n; ++i) {
+      charCount += d.text[ i ].length;
+    }
+
+    var count = charCount;
+    if (p.showBackground) { count += n; }
+
+    MappedQuadBuffer$$1.call(this, {
+      position: new Float32Array(count * 3),
+      color: new Float32Array(count * 3),
+      picking: new IgnorePicker()
+    }, p);
+
+    this.fontFamily = defaults(p.fontFamily, 'sans-serif');
+    this.fontStyle = defaults(p.fontStyle, 'normal');
+    this.fontWeight = defaults(p.fontWeight, 'bold');
+    this.fontSize = defaults(p.fontSize, 48);
+    this.sdf = defaults(p.sdf, Browser === 'Chrome');
+    this.xOffset = defaults(p.xOffset, 0.0);
+    this.yOffset = defaults(p.yOffset, 0.0);
+    this.zOffset = defaults(p.zOffset, 0.5);
+    this.attachment = defaults(p.attachment, 'bottom-left');
+    this.showBorder = defaults(p.showBorder, false);
+    this.borderColor = defaults(p.borderColor, 'lightgrey');
+    this.borderWidth = defaults(p.borderWidth, 0.15);
+    this.showBackground = defaults(p.showBackground, false);
+    this.backgroundColor = defaults(p.backgroundColor, 'lightgrey');
+    this.backgroundMargin = defaults(p.backgroundMargin, 0.5);
+    this.backgroundOpacity = defaults(p.backgroundOpacity, 1.0);
+
+    this.text = d.text;
+    this.positionCount = n;
+
+    this.addUniforms({
+      'fontTexture': { value: null },
+      'xOffset': { value: this.xOffset },
+      'yOffset': { value: this.yOffset },
+      'zOffset': { value: this.zOffset },
+      'ortho': { value: false },
+      'showBorder': { value: this.showBorder },
+      'borderColor': { value: new Color(this.borderColor) },
+      'borderWidth': { value: this.borderWidth },
+      'backgroundColor': { value: new Color(this.backgroundColor) },
+      'backgroundOpacity': { value: this.backgroundOpacity }
+    });
+
+    this.addAttributes({
+      'inputTexCoord': { type: 'v2', value: null },
+      'inputSize': { type: 'f', value: null }
+    });
+
+    this.setAttributes(data);
+
+    this.makeTexture();
+    this.makeMapping();
+  }
+
+  if ( MappedQuadBuffer$$1 ) TextBuffer.__proto__ = MappedQuadBuffer$$1;
+  TextBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
+  TextBuffer.prototype.constructor = TextBuffer;
+
+  var prototypeAccessors = { parameters: { configurable: true },wireframe: { configurable: true },isText: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
+
+  prototypeAccessors.parameters.get = function () {
+    return Object.assign.call(this, {
+
+      fontFamily: { uniform: true },
+      fontStyle: { uniform: true },
+      fontWeight: { uniform: true },
+      fontSize: { uniform: true },
+      sdf: { updateShader: true, uniform: true },
+      xOffset: { uniform: true },
+      yOffset: { uniform: true },
+      zOffset: { uniform: true },
+      showBorder: { uniform: true },
+      borderColor: { uniform: true },
+      borderWidth: { uniform: true },
+      backgroundColor: { uniform: true },
+      backgroundOpacity: { uniform: true }
+
+    }, MappedQuadBuffer$$1.prototype.parameters, {
+
+      flatShaded: undefined
+
+    })
+  };
+
+  TextBuffer.prototype.makeMaterial = function makeMaterial () {
+    MappedQuadBuffer$$1.prototype.makeMaterial.call(this);
+
+    var tex = this.texture;
+
+    var m = this.material;
+    m.extensions.derivatives = true;
+    m.lights = false;
+    m.uniforms.fontTexture.value = tex;
+    m.needsUpdate = true;
+
+    var wm = this.wireframeMaterial;
+    wm.extensions.derivatives = true;
+    wm.lights = false;
+    wm.uniforms.fontTexture.value = tex;
+    wm.needsUpdate = true;
+
+    var pm = this.pickingMaterial;
+    pm.extensions.derivatives = true;
+    pm.lights = false;
+    pm.uniforms.fontTexture.value = tex;
+    pm.needsUpdate = true;
+  };
+
+  TextBuffer.prototype.setAttributes = function setAttributes (data) {
+    var this$1 = this;
+
+    var position, size, color;
+    var aPosition, inputSize, aColor;
+
+    var text = this.text;
+    var attributes = this.geometry.attributes;
+
+    if (data.position) {
+      position = data.position;
+      aPosition = attributes.position.array;
+      attributes.position.needsUpdate = true;
+    }
+
+    if (data.size) {
+      size = data.size;
+      inputSize = attributes.inputSize.array;
+      attributes.inputSize.needsUpdate = true;
+    }
+
+    if (data.color) {
+      color = data.color;
+      aColor = attributes.color.array;
+      attributes.color.needsUpdate = true;
+    }
+
+    var n = this.positionCount;
+
+    var j, o;
+    var iCharAll = 0;
+    var txt, iChar, nChar;
+
+    for (var v = 0; v < n; ++v) {
+      o = 3 * v;
+      txt = text[ v ];
+      nChar = txt.length;
+      if (this$1.showBackground) { nChar += 1; }
+
+      for (iChar = 0; iChar < nChar; ++iChar, ++iCharAll) {
+        for (var m = 0; m < 4; m++) {
+          j = iCharAll * 4 * 3 + (3 * m);
+
+          if (position) {
+            aPosition[ j ] = position[ o ];
+            aPosition[ j + 1 ] = position[ o + 1 ];
+            aPosition[ j + 2 ] = position[ o + 2 ];
+          }
+
+          if (size) {
+            inputSize[ (iCharAll * 4) + m ] = size[ v ];
+          }
+
+          if (color) {
+            aColor[ j ] = color[ o ];
+            aColor[ j + 1 ] = color[ o + 1 ];
+            aColor[ j + 2 ] = color[ o + 2 ];
+          }
+        }
+      }
+    }
+  };
+
+  TextBuffer.prototype.makeTexture = function makeTexture () {
+    this.textAtlas = getTextAtlas({
+      font: [ this.fontFamily ],
+      style: this.fontStyle,
+      weight: this.fontWeight,
+      size: this.fontSize,
+      outline: this.sdf ? 5 : 0
+    });
+
+    this.texture = this.textAtlas.texture;
+  };
+
+  TextBuffer.prototype.makeMapping = function makeMapping () {
+    var this$1 = this;
+
+    var ta = this.textAtlas;
+    var text = this.text;
+    var attachment = this.attachment;
+    var margin = (ta.lineHeight * this.backgroundMargin * 0.1) - 10;
+
+    var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
+    var inputMapping = this.geometry.attributes.mapping.array;
+
+    var n = this.positionCount;
+    var iCharAll = 0;
+    var c, i, txt, xadvance, iChar, nChar, xShift, yShift;
+
+    for (var v = 0; v < n; ++v) {
+      txt = text[ v ];
+      xadvance = 0;
+      nChar = txt.length;
+
+            // calculate width
+      for (iChar = 0; iChar < nChar; ++iChar) {
+        c = ta.get(txt[ iChar ]);
+        xadvance += c.w - 2 * ta.outline;
+      }
+
+            // attachment
+      if (attachment.startsWith('top')) {
+        yShift = ta.lineHeight / 1.25;
+      } else if (attachment.startsWith('middle')) {
+        yShift = ta.lineHeight / 2.5;
+      } else {
+        yShift = 0;  // "bottom"
+      }
+      if (attachment.endsWith('right')) {
+        xShift = xadvance;
+      } else if (attachment.endsWith('center')) {
+        xShift = xadvance / 2;
+      } else {
+        xShift = 0;  // "left"
+      }
+      xShift += ta.outline;
+      yShift += ta.outline;
+
+            // background
+      if (this$1.showBackground) {
+        i = iCharAll * 2 * 4;
+        inputMapping[ i + 0 ] = -ta.lineHeight / 6 - xShift - margin;  // top left
+        inputMapping[ i + 1 ] = ta.lineHeight - yShift + margin;
+        inputMapping[ i + 2 ] = -ta.lineHeight / 6 - xShift - margin;  // bottom left
+        inputMapping[ i + 3 ] = 0 - yShift - margin;
+        inputMapping[ i + 4 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin;  // top right
+        inputMapping[ i + 5 ] = ta.lineHeight - yShift + margin;
+        inputMapping[ i + 6 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin;  // bottom right
+        inputMapping[ i + 7 ] = 0 - yShift - margin;
+        inputTexCoord[ i + 0 ] = 10;
+        inputTexCoord[ i + 2 ] = 10;
+        inputTexCoord[ i + 4 ] = 10;
+        inputTexCoord[ i + 6 ] = 10;
+        iCharAll += 1;
+      }
+
+      xadvance = 0;
+
+      for (iChar = 0; iChar < nChar; ++iChar, ++iCharAll) {
+        c = ta.get(txt[ iChar ]);
+        i = iCharAll * 2 * 4;
+
+        inputMapping[ i + 0 ] = xadvance - xShift;  // top left
+        inputMapping[ i + 1 ] = c.h - yShift;
+        inputMapping[ i + 2 ] = xadvance - xShift;  // bottom left
+        inputMapping[ i + 3 ] = 0 - yShift;
+        inputMapping[ i + 4 ] = xadvance + c.w - xShift;  // top right
+        inputMapping[ i + 5 ] = c.h - yShift;
+        inputMapping[ i + 6 ] = xadvance + c.w - xShift;  // bottom right
+        inputMapping[ i + 7 ] = 0 - yShift;
+
+        var texWidth = ta.width;
+        var texHeight = ta.height;
+
+        var texCoords = [
+          c.x / texWidth, c.y / texHeight,             // top left
+          c.x / texWidth, (c.y + c.h) / texHeight,       // bottom left
+          (c.x + c.w) / texWidth, c.y / texHeight,       // top right
+          (c.x + c.w) / texWidth, (c.y + c.h) / texHeight  // bottom right
+        ];
+        inputTexCoord.set(texCoords, i);
+
+        xadvance += c.w - 2 * ta.outline;
+      }
+    }
+
+    this.geometry.attributes.inputTexCoord.needsUpdate = true;
+    this.geometry.attributes.mapping.needsUpdate = true;
+  };
+
+  TextBuffer.prototype.getDefines = function getDefines (type) {
+    var defines = MappedQuadBuffer$$1.prototype.getDefines.call(this, type);
+
+    if (this.sdf) {
+      defines.SDF = 1;
+    }
+
+    return defines
+  };
+
+  TextBuffer.prototype.setUniforms = function setUniforms (data) {
+    if (data && (
+                data.fontFamily !== undefined ||
+                data.fontStyle !== undefined ||
+                data.fontWeight !== undefined ||
+                data.fontSize !== undefined ||
+                data.sdf !== undefined
+            )
+        ) {
+      this.makeTexture();
+      this.makeMapping();
+      this.texture.needsUpdate = true;
+      data.fontTexture = this.texture;
+    }
+
+    MappedQuadBuffer$$1.prototype.setUniforms.call(this, data);
+  };
+
+  prototypeAccessors.wireframe.set = function (value) {};
+  prototypeAccessors.wireframe.get = function () { return false };
+
+  prototypeAccessors.isText.get = function () { return true };
+  prototypeAccessors.vertexShader.get = function () { return 'SDFFont.vert' };
+  prototypeAccessors.fragmentShader.get = function () { return 'SDFFont.frag' };
+
+  Object.defineProperties( TextBuffer.prototype, prototypeAccessors );
+
+  return TextBuffer;
+}(MappedQuadBuffer));
+
+BufferRegistry.add('text', TextBuffer);
+
+ShaderRegistry.add('shader/WideLine.vert', "\nuniform float nearClip;\nuniform vec3 clipCenter;\nuniform float linewidth;\nuniform vec2 resolution;\nuniform mat4 projectionMatrixInverse;\nattribute vec2 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\n#ifdef PICKING\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\nattribute vec3 color2;\nvarying vec3 vColor;\nvarying vec3 vColor2;\nvarying float flag;\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\nvoid trimSegment( const in vec4 start, inout vec4 end ) {\nfloat a = projectionMatrix[ 2 ][ 2 ]; float b = projectionMatrix[ 3 ][ 2 ]; float nearEstimate = - 0.5 * b / a;\nfloat alpha = ( nearEstimate - start.z ) / ( end.z - start.z );\nend.xyz = mix( start.xyz, end.xyz, alpha );\n}\nvoid main() {\nfloat aspect = resolution.x / resolution.y;\n#ifdef PICKING\nvPickingColor = unpackColor( primitiveId );\n#else\nflag = mapping.y;\nvColor = color;\nvColor2 = color2;\n#endif\nvec4 start = modelViewMatrix * vec4( position1, 1.0 );\nvec4 end = modelViewMatrix * vec4( position2, 1.0 );\nbool perspective = ( projectionMatrix[ 2 ][ 3 ] == -1.0 ); if ( perspective ) {\nif ( start.z < 0.0 && end.z >= 0.0 ) {\ntrimSegment( start, end );\n} else if ( end.z < 0.0 && start.z >= 0.0 ) {\ntrimSegment( end, start );\n}\n}\nvec4 clipStart = projectionMatrix * start;\nvec4 clipEnd = projectionMatrix * end;\nvec2 ndcStart = clipStart.xy / clipStart.w;\nvec2 ndcEnd = clipEnd.xy / clipEnd.w;\nvec2 dir = ndcEnd - ndcStart;\ndir.x *= aspect;\ndir = normalize( dir );\nvec2 offset = vec2( dir.y, - dir.x );\ndir.x /= aspect;\noffset.x /= aspect;\nif ( mapping.x < 0.0 ) offset *= - 1.0;\noffset *= linewidth;\noffset /= resolution.y;\nvec4 clip = ( mapping.y < 0.5 ) ? clipStart : clipEnd;\noffset *= clip.w;\nclip.xy += offset;\ngl_Position = clip;\n#ifndef PICKING\nvViewPosition = ( projectionMatrixInverse * clip ).xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
+
+ShaderRegistry.add('shader/WideLine.frag', "uniform vec3 diffuse;\nuniform float opacity;\nuniform float nearClip;\nuniform float clipRadius;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#ifdef PICKING\nuniform float objectId;\nvarying vec3 vPickingColor;\n#else\n#include common\n#include fog_pars_fragment\nvarying vec3 vViewPosition;\nvarying vec3 vColor;\nvarying vec3 vColor2;\nvarying float flag;\n#endif\nvoid main() {\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( PICKING )\nif( opacity < 0.7 )\ndiscard;\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\nvec3 outgoingLight = vec3( 0.0 );\nvec4 diffuseColor = vec4( diffuse, 1.0 );\nif ( flag < 0.0 ) {\ndiffuseColor.rgb *= vColor;\n} else {\ndiffuseColor.rgb *= vColor2;\n}\n#include alphatest_fragment\noutgoingLight = diffuseColor.rgb;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
+
+/**
+ * @file Wide Line Buffer
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+
+/**
+ * Wide Line buffer. Draws lines with a fixed width in pixels.
+ *
+ * @example
+ * var lineBuffer = new WideLineBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 1, 1, 1 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ])
+ * });
+ */
+var WideLineBuffer = (function (MappedQuadBuffer$$1) {
+  function WideLineBuffer (data, params) {
+    MappedQuadBuffer$$1.call(this, data, params);
+
+    var p = params || {};
+
+    this.linewidth = defaults(p.linewidth, 2);
+
+    this.addUniforms({
+      'linewidth': { value: this.linewidth },
+      'resolution': { value: new Vector2() },
+      'projectionMatrixInverse': { value: new Matrix4() }
+    });
+
+    this.addAttributes({
+      'position1': { type: 'v3', value: null },
+      'position2': { type: 'v3', value: null },
+      'color2': { type: 'c', value: null }
+    });
+
+    this.setAttributes(data);
+    this.makeMapping();
+  }
+
+  if ( MappedQuadBuffer$$1 ) WideLineBuffer.__proto__ = MappedQuadBuffer$$1;
+  WideLineBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
+  WideLineBuffer.prototype.constructor = WideLineBuffer;
+
+  var prototypeAccessors = { parameters: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
+
+  prototypeAccessors.parameters.get = function () {
+    return Object.assign.call(this, {
+
+      linewidth: { uniform: true }
+
+    }, MappedQuadBuffer$$1.prototype.parameters)
+  };
+
+  prototypeAccessors.vertexShader.get = function () { return 'WideLine.vert' };
+  prototypeAccessors.fragmentShader.get = function () { return 'WideLine.frag' };
+
+  Object.defineProperties( WideLineBuffer.prototype, prototypeAccessors );
+
+  return WideLineBuffer;
+}(MappedQuadBuffer));
+
+/**
+ * @file Angle Representation
+ * @private
+ */
+/**
+ * @typedef {Object} AngleRepresentationParameters - angle representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ * @mixes MeasurementRepresentationParameters
+ *
+ * @property {String} atomTriple - list of triplets of selection strings
+ *                                 or atom indices
+ * @property {Boolean} vectorVisible - Indicate the 3 points for each angle by drawing lines 1-2-3
+ * @property {Boolean} arcVisible - Show the arc outline for each angle
+ * @property {Number}  lineOpacity - opacity for the line part of the representation
+ * @property {Number} linewidth - width for line part of representation
+ * @property {Boolean} sectorVisible - Show the filled arc for each angle
+ */
+
+/**
+ * Angle representation object
+ *
+ * Reperesentation consists of four parts, visibility can be set for each
+ * label - the text label with the angle size
+ * vectors - lines joining the three points
+ * sector - triangles representing the angle
+ * arc - line bordering the sector
+ *
+ * @param {Structure} structure - the structure to measure angles in
+ * @param {Viewer} viewer - a viewer object
+ * @param {AngleRepresentationParameters} params - angle representation parameters
+ */
+var AngleRepresentation = (function (MeasurementRepresentation$$1) {
+  function AngleRepresentation (structure, viewer, params) {
+    MeasurementRepresentation$$1.call(this, structure, viewer, params);
+
+    this.type = 'angle';
+
+    this.parameters = Object.assign({
+      atomTriple: {
+        type: 'hidden', rebuild: true
+      },
+      vectorVisible: {
+        type: 'boolean', default: true
+      },
+      arcVisible: {
+        type: 'boolean', default: true
+      },
+      lineOpacity: {
+        type: 'range', min: 0.0, max: 1.0, step: 0.01
+      },
+      linewidth: {
+        type: 'number', precision: 2, max: 10.0, min: 0.5
+      },
+      sectorVisible: {
+        type: 'boolean', default: true
+      }
+    }, this.parameters);
+
+    this.init(params);
+  }
+
+  if ( MeasurementRepresentation$$1 ) AngleRepresentation.__proto__ = MeasurementRepresentation$$1;
+  AngleRepresentation.prototype = Object.create( MeasurementRepresentation$$1 && MeasurementRepresentation$$1.prototype );
+  AngleRepresentation.prototype.constructor = AngleRepresentation;
+
+  AngleRepresentation.prototype.init = function init (params) {
+    var p = params || {};
+    p.side = defaults(p.side, 'double');
+    p.opacity = defaults(p.opacity, 0.5);
+
+    this.atomTriple = defaults(p.atomTriple, []);
+    this.arcVisible = defaults(p.arcVisible, true);
+    this.lineOpacity = defaults(p.lineOpacity, 1.0);
+    this.linewidth = defaults(p.linewidth, 2.0);
+    this.sectorVisible = defaults(p.sectorVisible, true);
+    this.vectorVisible = defaults(p.vectorVisible, true);
+
+    MeasurementRepresentation$$1.prototype.init.call(this, p);
+  };
+
+  AngleRepresentation.prototype.create = function create () {
+    if (this.structureView.atomCount === 0) { return }
+    var atomPosition = atomTriplePositions(this.structureView, this.atomTriple);
+    var angleData = getAngleData(atomPosition);
+    var n = this.n = angleData.labelPosition.length / 3;
+
+    var labelColor = new Color(this.labelColor);
+
+    // Create buffers
+    this.textBuffer = new TextBuffer({
+      position: angleData.labelPosition,
+      size: uniformArray(n, this.labelSize),
+      color: uniformArray3(n, labelColor.r, labelColor.g, labelColor.b),
+      text: angleData.labelText
+    }, this.getLabelBufferParams());
+
+    var c = new Color(this.colorValue);
+
+    this.vectorBuffer = new WideLineBuffer({
+      position1: angleData.vectorPosition1,
+      position2: angleData.vectorPosition2,
+      color: uniformArray3(2 * n, c.r, c.g, c.b),
+      color2: uniformArray3(2 * n, c.r, c.g, c.b)
+    }, this.getBufferParams({
+      linewidth: this.linewidth,
+      visible: this.vectorVisible // TODO: Expose as param
+    }));
+
+    this.arcLength = angleData.arcPosition1.length / 3;
+
+    this.arcBuffer = new WideLineBuffer({
+      position1: angleData.arcPosition1,
+      position2: angleData.arcPosition2,
+      color: uniformArray3(this.arcLength, c.r, c.g, c.b),
+      color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
+    }, this.getBufferParams({
+      linewidth: 2.0,
+      visible: this.arcVisible
+    }));
+
+    this.sectorLength = angleData.sectorPosition.length / 3;
+
+    this.sectorMeshBuffer = new MeshBuffer({
+      position: angleData.sectorPosition,
+      color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
+    }, this.getBufferParams({
+      visible: this.sectorVisible,
+      opacity: this.sectorOpacity
+    }));
+
+    this.sectorDoubleSidedBuffer = new DoubleSidedBuffer(this.sectorMeshBuffer);
+
+    this.dataList.push({
+      sview: this.structureView,
+      bufferList: [
+        this.textBuffer,
+        this.vectorBuffer,
+        this.arcBuffer,
+        this.sectorDoubleSidedBuffer ]
+    });
+  };
+
+  AngleRepresentation.prototype.updateData = function updateData (what, data) {
+    MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
+    var vectorData = {};
+    var arcData = {};
+    var sectorData = {};
+
+    if (what.color) {
+      var c = new Color(this.colorValue);
+      vectorData.color = vectorData.color2 = uniformArray3(this.n * 2, c.r, c.g, c.b);
+      arcData.color = arcData.color2 = uniformArray3(this.arcLength, c.r, c.g, c.b);
+      sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b);
+    }
+
+    // if (what.sectorOpacity) {
+    //   this.sectorMeshBuffer.opacity = what.sectorOpacity
+    // }
+
+    this.vectorBuffer.setAttributes(vectorData);
+    this.arcBuffer.setAttributes(arcData);
+    this.sectorMeshBuffer.setAttributes(sectorData);
+  };
+
+  AngleRepresentation.prototype.setParameters = function setParameters (params) {
+    var rebuild = false;
+    var what = {};
+
+    MeasurementRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
+
+    if (params && (
+      params.vectorVisible !== undefined ||
+      params.arcVisible !== undefined ||
+      params.sectorVisible !== undefined)) {
+      this.setVisibility(this.visible);
+    }
+
+    if (params && params.lineOpacity) {
+      this.vectorBuffer.setParameters(
+        {opacity: params.lineOpacity});
+      this.arcBuffer.setParameters(
+        {opacity: params.lineOpacity});
+    }
+
+    if (params && params.opacity !== undefined) {
+      this.vectorBuffer.setParameters(
+        {opacity: this.lineOpacity});
+      this.arcBuffer.setParameters(
+        {opacity: this.lineOpacity});
+    }
+
+    if (params && params.linewidth) {
+      this.vectorBuffer.setParameters({ linewidth: params.linewidth });
+      this.arcBuffer.setParameters({ linewidth: params.linewidth });
+    }
+
+    return this
+  };
+
+  AngleRepresentation.prototype.setVisibility = function setVisibility (value, noRenderRequest) {
+    MeasurementRepresentation$$1.prototype.setVisibility.call(this, value, true);
+
+    this.vectorBuffer.setVisibility(this.vectorVisible && this.visible);
+    this.arcBuffer.setVisibility(this.arcVisible && this.visible);
+    this.sectorDoubleSidedBuffer.setVisibility(this.sectorVisible && this.visible);
+
+    if (!noRenderRequest) { this.viewer.requestRender(); }
+
+    return this
+  };
+
+  return AngleRepresentation;
+}(MeasurementRepresentation));
+
+/**
+ * Ensure mid point does not coincide with first or second
+ * @param  {Float32Array} position 9*nAngle array of coordinates
+ * @return {Float32Array}          Filtered position array, may be shorter
+ */
+function validatePositions (position) {
+  var include = [];
+  var n = position.length / 9;
+  for (var i = 0; i < n; i++) {
+    // Check that first point not same as second and that second not same as third
+    var okay = true;
+    for (var j = i; j < i + 3; j += 3) {
+      if (position[j] === position[j + 3] &&
+        position[j + 1] === position[j + 4] &&
+        position[j + 2] === position[j + 5]) {
+        okay = false;
+      }
+    }
+    if (okay) { include.push(i); }
+  }
+  var outPosition = new Float32Array(include.length * 9);
+  var outIdx = 0;
+  include.forEach(function (i) {
+    copyArray(position, outPosition, i * 9, outIdx * 9, 9);
+    outIdx++;
+  });
+  return outPosition
+}
+
+function atomTriplePositions (sview, atomTriple) {
+  return validatePositions(parseNestedAtoms(sview, atomTriple))
+}
+
+/**
+ * Converts triple positions into data required to build various buffers.
+ */
+function getAngleData (position, params) {
+  params = params || {};
+  var angleStep = defaults(params.angleStep, Math.PI / 90);
+  var n = position.length / 9;
+  var angles = new Float32Array(n);
+  var labelPosition = new Float32Array(n * 3);
+  var labelText = new Array(n);
+
+  var vectorPosition1 = new Float32Array(n * 6); // Two lines per angle
+  var vectorPosition2 = new Float32Array(n * 6);
+
+  var arcPositionTmp1 = new Array(n); // Start points for arc lines
+  var arcPositionTmp2 = new Array(n); // End points for arc lines
+  var sectorPositionTmp = new Array(n); // Triangle points
+
+  var totalSegments = 0;
+
+  // Re-used vectors etc
+  var p1 = v3new(); // Positions of points for each angel
+  var p2 = v3new();
+  var p3 = v3new();
+  var v21 = v3new(); // Vectors
+  var v23 = v3new();
+  var cross = v3new(); // Cross product v21xv23
+  var cross2 = v3new(); // In-plane cross product v21 x (v21 x v23)
+  var labelTmp = v3new();
+  var arcPoint = v3new();
+
+  var loop = function ( i ) {
+    var p = 9 * i;
+    v3fromArray(p1, position, p);
+    v3fromArray(p2, position, p + 3);
+    v3fromArray(p3, position, p + 6);
+
+    var v = 6 * i;
+    v3toArray(p1, vectorPosition1, v);
+    v3toArray(p2, vectorPosition2, v);
+    v3toArray(p2, vectorPosition1, v + 3);
+    v3toArray(p3, vectorPosition2, v + 3);
+
+    v3sub(v21, p1, p2);
+    v3sub(v23, p3, p2);
+
+    v3normalize(v21, v21); // validatePositions ensures valid
+    v3normalize(v23, v23);
+
+    v3cross(cross, v21, v23);
+    var crossLength = v3length(cross);
+    var dot = v3dot(v21, v23);
+
+    var angle = angles[i] = Math.atan2(crossLength, dot);
+    labelText[i] = (RAD2DEG$1 * angle).toFixed(1) + String.fromCharCode(0x00B0);
+
+    if (v3length(cross) === 0.0) {
+      // Angle exactly 0/180, pick an arbitrary direction
+      cross[ 0 ] = 1.0;
+      cross[ 1 ] = 0.0;
+      cross[ 2 ] = 0.0;
+    }
+    v3cross(cross2, cross, v21);
+    v3normalize(cross2, cross2);
+
+    calcArcPoint(labelTmp, p2, v21, cross2, angle / 2.0);
+    // TODO: Scale label position?
+    v3toArray(labelTmp, labelPosition, 3 * i);
+
+    // Build the arc and sector
+
+    var nSegments = Math.ceil(angle / angleStep);
+    var sectorVertices = new Float32Array(nSegments * 9);
+    sectorPositionTmp[ i ] = sectorVertices;
+    var arcVertices1 = new Float32Array(nSegments * 3);
+    var arcVertices2 = new Float32Array(nSegments * 3);
+    arcPositionTmp1[ i ] = arcVertices1;
+    arcPositionTmp2[ i ] = arcVertices2;
+
+    v3add(arcPoint, p2, v21); // Our initial arc point
+
+    var appendArcSection = function (a, j) {
+      var si = j * 9;
+      var ai = j * 3;
+      v3toArray(p2, sectorVertices, si);
+      v3toArray(arcPoint, sectorVertices, si + 3);
+      v3toArray(arcPoint, arcVertices1, ai);
+
+      calcArcPoint(arcPoint, p2, v21, cross2, a);
+
+      v3toArray(arcPoint, sectorVertices, si + 6);
+      v3toArray(arcPoint, arcVertices2, ai);
+    };
+
+    var j = 0;
+    for (var a = angleStep; a < angle; a += angleStep) {
+      appendArcSection(a, j);
+      j++;
+    }
+    appendArcSection(angle, j);
+    totalSegments += nSegments;
+  };
+
+  for (var i = 0; i < n; i++) loop( i );
+
+  // Flatten nested arrays of arc/segment points
+  var arcSize = totalSegments * 3;
+  var sectorSize = totalSegments * 9;
+  var arcPosition1 = new Float32Array(arcSize);
+  var arcPosition2 = new Float32Array(arcSize);
+  var sectorPosition = new Float32Array(sectorSize);
+
+  var sectorOffset = 0;
+  var arcOffset = 0;
+  for (var i$1 = 0; i$1 < n; i$1++) {
+    var ap1 = arcPositionTmp1[ i$1 ];
+    var ap2 = arcPositionTmp2[ i$1 ];
+    copyArray(ap1, arcPosition1, 0, arcOffset, ap1.length);
+    copyArray(ap2, arcPosition2, 0, arcOffset, ap2.length);
+    arcOffset += ap1.length; // === ap2.length
+
+    var sp = sectorPositionTmp[ i$1 ];
+    copyArray(sp, sectorPosition, 0, sectorOffset, sp.length);
+    sectorOffset += sp.length;
+  }
+
+  return {
+    labelPosition: labelPosition,
+    labelText: labelText,
+    vectorPosition1: vectorPosition1,
+    vectorPosition2: vectorPosition2,
+    arcPosition1: arcPosition1,
+    arcPosition2: arcPosition2,
+    sectorPosition: sectorPosition
+  }
+}
+
+RepresentationRegistry.add('angle', AngleRepresentation);
 
 /**
  * @file Axes Representation
@@ -80299,73 +81743,6 @@ var AxesRepresentation = (function (StructureRepresentation$$1) {
 }(StructureRepresentation));
 
 RepresentationRegistry.add('axes', AxesRepresentation);
-
-ShaderRegistry.add('shader/WideLine.vert', "\nuniform float nearClip;\nuniform vec3 clipCenter;\nuniform float linewidth;\nuniform vec2 resolution;\nuniform mat4 projectionMatrixInverse;\nattribute vec2 mapping;\nattribute vec3 position1;\nattribute vec3 position2;\n#ifdef PICKING\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\nattribute vec3 color2;\nvarying vec3 vColor;\nvarying vec3 vColor2;\nvarying float flag;\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\nvoid trimSegment( const in vec4 start, inout vec4 end ) {\nfloat a = projectionMatrix[ 2 ][ 2 ]; float b = projectionMatrix[ 3 ][ 2 ]; float nearEstimate = - 0.5 * b / a;\nfloat alpha = ( nearEstimate - start.z ) / ( end.z - start.z );\nend.xyz = mix( start.xyz, end.xyz, alpha );\n}\nvoid main() {\nfloat aspect = resolution.x / resolution.y;\n#ifdef PICKING\nvPickingColor = unpackColor( primitiveId );\n#else\nflag = mapping.y;\nvColor = color;\nvColor2 = color2;\n#endif\nvec4 start = modelViewMatrix * vec4( position1, 1.0 );\nvec4 end = modelViewMatrix * vec4( position2, 1.0 );\nbool perspective = ( projectionMatrix[ 2 ][ 3 ] == -1.0 ); if ( perspective ) {\nif ( start.z < 0.0 && end.z >= 0.0 ) {\ntrimSegment( start, end );\n} else if ( end.z < 0.0 && start.z >= 0.0 ) {\ntrimSegment( end, start );\n}\n}\nvec4 clipStart = projectionMatrix * start;\nvec4 clipEnd = projectionMatrix * end;\nvec2 ndcStart = clipStart.xy / clipStart.w;\nvec2 ndcEnd = clipEnd.xy / clipEnd.w;\nvec2 dir = ndcEnd - ndcStart;\ndir.x *= aspect;\ndir = normalize( dir );\nvec2 offset = vec2( dir.y, - dir.x );\ndir.x /= aspect;\noffset.x /= aspect;\nif ( mapping.x < 0.0 ) offset *= - 1.0;\noffset *= linewidth;\noffset /= resolution.y;\nvec4 clip = ( mapping.y < 0.5 ) ? clipStart : clipEnd;\noffset *= clip.w;\nclip.xy += offset;\ngl_Position = clip;\n#ifndef PICKING\nvViewPosition = ( projectionMatrixInverse * clip ).xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
-
-ShaderRegistry.add('shader/WideLine.frag', "uniform vec3 diffuse;\nuniform float opacity;\nuniform float nearClip;\nuniform float clipRadius;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#ifdef PICKING\nuniform float objectId;\nvarying vec3 vPickingColor;\n#else\n#include common\n#include fog_pars_fragment\nvarying vec3 vViewPosition;\nvarying vec3 vColor;\nvarying vec3 vColor2;\nvarying float flag;\n#endif\nvoid main() {\n#include nearclip_fragment\n#include radiusclip_fragment\n#if defined( PICKING )\nif( opacity < 0.7 )\ndiscard;\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\nvec3 outgoingLight = vec3( 0.0 );\nvec4 diffuseColor = vec4( diffuse, 1.0 );\nif ( flag < 0.0 ) {\ndiffuseColor.rgb *= vColor;\n} else {\ndiffuseColor.rgb *= vColor2;\n}\n#include alphatest_fragment\noutgoingLight = diffuseColor.rgb;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a * opacity );\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
-
-/**
- * @file Wide Line Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-
-/**
- * Wide Line buffer. Draws lines with a fixed width in pixels.
- *
- * @example
- * var lineBuffer = new WideLineBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 1, 1, 1 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ])
- * });
- */
-var WideLineBuffer = (function (MappedQuadBuffer$$1) {
-  function WideLineBuffer (data, params) {
-    MappedQuadBuffer$$1.call(this, data, params);
-
-    var p = params || {};
-
-    this.linewidth = defaults(p.linewidth, 2);
-
-    this.addUniforms({
-      'linewidth': { value: this.linewidth },
-      'resolution': { value: new Vector2() },
-      'projectionMatrixInverse': { value: new Matrix4() }
-    });
-
-    this.addAttributes({
-      'position1': { type: 'v3', value: null },
-      'position2': { type: 'v3', value: null },
-      'color2': { type: 'c', value: null }
-    });
-
-    this.setAttributes(data);
-    this.makeMapping();
-  }
-
-  if ( MappedQuadBuffer$$1 ) WideLineBuffer.__proto__ = MappedQuadBuffer$$1;
-  WideLineBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
-  WideLineBuffer.prototype.constructor = WideLineBuffer;
-
-  var prototypeAccessors = { parameters: {},vertexShader: {},fragmentShader: {} };
-
-  prototypeAccessors.parameters.get = function () {
-    return Object.assign.call(this, {
-
-      linewidth: { uniform: true }
-
-    }, MappedQuadBuffer$$1.prototype.parameters)
-  };
-
-  prototypeAccessors.vertexShader.get = function () { return 'WideLine.vert' };
-  prototypeAccessors.fragmentShader.get = function () { return 'WideLine.frag' };
-
-  Object.defineProperties( WideLineBuffer.prototype, prototypeAccessors );
-
-  return WideLineBuffer;
-}(MappedQuadBuffer));
 
 /**
  * @file Ball And Stick Representation
@@ -81122,10 +82499,10 @@ function Spline$1 (polymer, params) {
   this.subdiv = p.subdiv || 1;
   this.smoothSheet = p.smoothSheet || false;
 
-  if (isNaN(p.tension)) {
+  if (!p.tension) {
     this.tension = this.polymer.isNucleic() ? 0.5 : 0.9;
   } else {
-    this.tension = p.tension || 0.5;
+    this.tension = p.tension;
   }
 
   this.interpolator = new Interpolator(this.subdiv, this.tension);
@@ -82304,625 +83681,447 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
 
 RepresentationRegistry.add('contact', ContactRepresentation);
 
-ShaderRegistry.add('shader/SDFFont.vert', "uniform float nearClip;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec3 pos = position;\nif( ortho ){\npos += normalize( cameraPosition ) * _zOffset;\n}\nvec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( !ortho ){\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
-
-ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\nuniform float opacity;\nuniform bool showBorder;\nuniform vec3 borderColor;\nuniform float borderWidth;\nuniform vec3 backgroundColor;\nuniform float backgroundOpacity;\nuniform float nearClip;\nuniform float clipRadius;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\nconst vec3 vColor = vec3( 0.0 );\n#else\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#endif\n#ifdef SDF\nconst float smoothness = 16.0;\n#else\nconst float smoothness = 256.0;\n#endif\nconst float gamma = 2.2;\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\nif( texCoord.x > 1.0 ){\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\n}else{\nfloat sdf = texture2D( fontTexture, texCoord ).a;\nif( showBorder ) sdf += borderWidth;\nfloat w = clamp(\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n0.0,\n0.5\n);\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\na = pow( a, 1.0 / gamma );\nif( a < 0.2 ) discard;\na *= opacity;\nvec3 outgoingLight = vColor;\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\noutgoingLight = borderColor;\n}\ngl_FragColor = vec4( outgoingLight, a );\n}\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
-
 /**
- * @file Text Buffer
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @fileOverview  Dihedral Representation
  * @private
  */
+/**
+ * @typedef {Object} DihedralRepresentationParameters - dihedral representation parameters
+ * @mixes RepresentationParameters
+ * @mixes StructureRepresentationParameters
+ * @mixes MeasurementRepresentationParameters
+ *
+ * @property {String} atomQuad - list of quadruplets of selection strings
+ *                               or atom indices
+ * @property {Number} lineOpacity - Opacity for the line part of the representation
+ * @property {Boolean} lineVisible - Display the line part of the representation
+ * @property {Number} linewidth - width for line part of representation
+ * @property {Boolean} planeVisible - Display the two planes corresponding to dihedral
+ * @property {Boolean} sectorVisible - Display the filled arc for each angle
+ */
 
-var TextAtlasCache = {};
+/**
+ * Dihedral representation object
+ *
+ * Reperesentation consists of three parts, visibility can be set for each
+ * label - text label indicating dihedral angle
+ * line - line indicating four positions that define the dihedral
+ * sector - filled arc section
+ *
+ * @param {Structure} structure - the structure to measure angles in
+ * @param {Viewer} viewer - a viewer object
+ * @param {AngleRepresentationParameters} params - angle representation parameters
+ */
+var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
+  function DihedralRepresentation (structure, viewer, params) {
+    MeasurementRepresentation$$1.call(this, structure, viewer, params);
 
-function getTextAtlas (params) {
-  var hash = JSON.stringify(params);
-  if (TextAtlasCache[ hash ] === undefined) {
-    TextAtlasCache[ hash ] = new TextAtlas(params);
+    this.type = 'dihedral';
+
+    this.parameters = Object.assign({
+      atomQuad: {
+        type: 'hidden', rebuild: true
+      },
+      lineOpacity: {
+        type: 'range', min: 0.0, max: 1.0, step: 0.01
+      },
+      lineVisible: {
+        type: 'boolean', default: true
+      },
+      linewidth: {
+        type: 'number', precision: 2, max: 10.0, min: 0.5
+      },
+      planeVisible: {
+        type: 'boolean', default: true
+      },
+      sectorVisible: {
+        type: 'boolean', default: true
+      }
+    }, this.parameters);
+
+    this.init(params);
   }
-  return TextAtlasCache[ hash ]
-}
 
-var TextAtlas = function TextAtlas (params) {
-      // adapted from https://github.com/unconed/mathbox
-      // MIT License Copyright (C) 2013+ Steven Wittens and contributors
+  if ( MeasurementRepresentation$$1 ) DihedralRepresentation.__proto__ = MeasurementRepresentation$$1;
+  DihedralRepresentation.prototype = Object.create( MeasurementRepresentation$$1 && MeasurementRepresentation$$1.prototype );
+  DihedralRepresentation.prototype.constructor = DihedralRepresentation;
 
-  var p = Object.assign({}, params);
+  DihedralRepresentation.prototype.init = function init (params) {
+    var p = params || {};
+    p.side = defaults(p.side, 'double');
+    p.opacity = defaults(p.opacity, 0.5);
 
-  this.font = defaults(p.font, [ 'sans-serif' ]);
-  this.size = defaults(p.size, 36);
-  this.style = defaults(p.style, 'normal');
-  this.variant = defaults(p.variant, 'normal');
-  this.weight = defaults(p.weight, 'normal');
-  this.outline = defaults(p.outline, 0);
-  this.width = defaults(p.width, 2048);
-  this.height = defaults(p.height, 2048);
+    this.atomQuad = defaults(p.atomQuad, []);
+    this.lineOpacity = defaults(p.lineOpacity, 1.0);
+    this.lineVisible = defaults(p.lineVisible, true);
+    this.linewidth = defaults(p.linewidth, 2.0);
+    this.planeVisible = defaults(p.planeVisible, true);
+    this.sectorVisible = defaults(p.sectorVisible, true);
 
-  this.gamma = 1;
-  if (typeof navigator !== 'undefined') {
-    var ua = navigator.userAgent;
-    if (ua.match(/Chrome/) && ua.match(/OS X/)) {
-      this.gamma = 0.5;
+    MeasurementRepresentation$$1.prototype.init.call(this, p);
+  };
+
+  DihedralRepresentation.prototype.create = function create () {
+    if (this.structureView.atomCount === 0) { return }
+    var atomPosition = parseNestedAtoms(this.structureView, this.atomQuad);
+    var dihedralData = getDihedralData(
+      atomPosition,
+      {planeVisible: this.planeVisible}
+    );
+
+    var n = this.n = dihedralData.labelText.length;
+
+    var labelColor = new Color(this.labelColor);
+
+    this.textBuffer = new TextBuffer({
+      position: dihedralData.labelPosition,
+      size: uniformArray(n, this.labelSize),
+      color: uniformArray3(n, labelColor.r, labelColor.g, labelColor.b),
+      text: dihedralData.labelText
+    }, this.getLabelBufferParams());
+
+    var c = new Color(this.colorValue);
+    this.lineLength = dihedralData.linePosition1.length / 3;
+    var lineColor = uniformArray3(this.lineLength, c.r, c.g, c.b);
+
+    this.lineBuffer = new WideLineBuffer({
+      position1: dihedralData.linePosition1,
+      position2: dihedralData.linePosition2,
+      color: lineColor,
+      color2: lineColor
+    }, this.getBufferParams({
+      linewidth: this.linewidth,
+      visible: this.lineVisible,
+      opacity: this.lineOpacity
+    }));
+
+    this.planeLength = dihedralData.planePosition.length / 3;
+    this.planeMeshBuffer = new MeshBuffer({
+      position: dihedralData.planePosition,
+      color: uniformArray3(this.planeLength, c.r, c.g, c.b)
+    }, this.getBufferParams({
+      visible: this.planeVisible
+    }));
+
+    this.planeDoubleSidedBuffer = new DoubleSidedBuffer(this.planeMeshBuffer);
+
+    this.sectorLength = dihedralData.sectorPosition.length / 3;
+    this.sectorMeshBuffer = new MeshBuffer({
+      position: dihedralData.sectorPosition,
+      color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
+    }, this.getBufferParams({
+      visible: this.sectorVisible
+    }));
+
+    this.sectorDoubleSidedBuffer = new DoubleSidedBuffer(this.sectorMeshBuffer);
+
+    this.dataList.push({
+      sview: this.structureView,
+      bufferList: [
+        this.textBuffer,
+        this.lineBuffer,
+        this.planeDoubleSidedBuffer,
+        this.sectorDoubleSidedBuffer
+      ]
+    });
+  };
+
+  DihedralRepresentation.prototype.updateData = function updateData (what, data) {
+    MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
+    var lineData = {};
+    var planeData = {};
+    var sectorData = {};
+
+    if (what.color) {
+      var c = new Color(this.colorValue);
+      lineData.color = lineData.color2 = uniformArray3(this.lineLength, c.r, c.g, c.b);
+      planeData.color = uniformArray3(this.planeLength, c.r, c.g, c.b);
+      sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b);
     }
-  }
 
-  this.mapped = {};
-  this.scratchW = 0;
-  this.scratchH = 0;
-  this.currentX = 0;
-  this.currentY = 0;
+    // if (what.sectorOpacity) {
+    //   this.sectorMeshBuffer.opacity = what.sectorOpacity
+    // }
 
-  this.build();
-  this.populate();
+    this.lineBuffer.setAttributes(lineData);
+    this.planeMeshBuffer.setAttributes(planeData);
+    this.sectorMeshBuffer.setAttributes(sectorData);
+  };
 
-  this.texture = new CanvasTexture(this.canvas2);
-  this.texture.flipY = false;
-  this.texture.needsUpdate = true;
-};
+  DihedralRepresentation.prototype.setParameters = function setParameters (params) {
+    var rebuild = false;
+    var what = {};
 
-TextAtlas.prototype.build = function build () {
-      // Prepare line-height with room for outline and descenders/ascenders
-  var lineHeight = this.size + 2 * this.outline + Math.round(this.size / 4);
-  var maxWidth = this.width / 4;
+    MeasurementRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
 
-      // Prepare scratch canvas
-  var canvas = document.createElement('canvas');
-  canvas.width = maxWidth;
-  canvas.height = lineHeight;
-
-  var ctx = canvas.getContext('2d');
-  ctx.font = this.style + ' ' + this.variant + ' ' + this.weight + ' ' + this.size + 'px ' + this.font;
-  ctx.fillStyle = '#FF0000';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  ctx.lineJoin = 'round';
-
-  var colors = [];
-  var dilate = this.outline * 3;
-  for (var i = 0; i < dilate; ++i) {
-          // 8 rgb levels = 1 step = .5 pixel increase
-    var val = Math.max(0, -i * 8 + 128 - (!i) * 8);
-    var hex = ('00' + val.toString(16)).slice(-2);
-    colors.push('#' + hex + hex + hex);
-  }
-  var scratch = new Uint8Array(maxWidth * lineHeight * 2);
-
-  this.canvas = canvas;
-  this.context = ctx;
-  this.lineHeight = lineHeight;
-  this.maxWidth = maxWidth;
-  this.colors = colors;
-  this.scratch = scratch;
-
-  this.data = new Uint8Array(this.width * this.height * 4);
-
-  this.canvas2 = document.createElement('canvas');
-  this.canvas2.width = this.width;
-  this.canvas2.height = this.height;
-  this.context2 = this.canvas2.getContext('2d');
-};
-
-TextAtlas.prototype.map = function map (text) {
-  if (this.mapped[ text ] === undefined) {
-    this.draw(text);
-
-    if (this.currentX + this.scratchW > this.width) {
-      this.currentX = 0;
-      this.currentY += this.scratchH;
-    }
-    if (this.currentY + this.scratchH > this.height) {
-      console.warn('canvas to small');
+    if (params && (
+      params.lineVisible !== undefined ||
+      params.sectorVisible !== undefined)) {
+      this.setVisibility(this.visible);
     }
 
-    this.mapped[ text ] = {
-      x: this.currentX,
-      y: this.currentY,
-      w: this.scratchW,
-      h: this.scratchH
+    if (params && params.lineOpacity) {
+      this.lineBuffer.setParameters(
+        {opacity: params.lineOpacity});
+    }
+
+    if (params && params.opacity !== undefined) {
+      this.lineBuffer.setParameters(
+        {opacity: this.lineOpacity});
+    }
+
+    if (params && params.linewidth) {
+      this.lineBuffer.setParameters({ linewidth: params.linewidth });
+    }
+
+    return this
+  };
+
+  DihedralRepresentation.prototype.setVisibility = function setVisibility (value, noRenderRequest) {
+    MeasurementRepresentation$$1.prototype.setVisibility.call(this, value, true);
+
+    this.lineBuffer.setVisibility(this.lineVisible && this.visible);
+    this.sectorDoubleSidedBuffer.setVisibility(this.sectorVisible && this.visible);
+
+    if (!noRenderRequest) { this.viewer.requestRender(); }
+
+    return this
+  };
+
+  return DihedralRepresentation;
+}(MeasurementRepresentation));
+
+/**
+ * Build the data required to create {Buffer} objects, given positions
+ * @param  {Float32Array} atomPosition 3*4*nDihedral array of coordinates
+ * @return {Object}              Arrays for building buffers
+ */
+function getDihedralData (position, params) {
+  params = params || {};
+  var angleStep = defaults(params.angleStep, Math.PI / 90);
+  var nPos = position.length;
+  var n = position.length / 12;
+  var angles = new Float32Array(n);
+  var labelPosition = new Float32Array(n * 3);
+  var labelText = new Array(n);
+
+  // Temporary arrays as don't know output length yet
+  var lineTmp1 = new Array(n);
+  var lineTmp2 = new Array(n);
+  var sectorTmp = new Array(n);
+  var planeTmp = new Array(n);
+
+  // Eventual sizes of output arrays
+  var totalLines = 0;
+  var totalSegments = 0;
+  var totalPlanes = 0;
+
+  var p1 = v3new();
+  var p2 = v3new();
+  var p3 = v3new();
+  var p4 = v3new();
+
+  var v21 = v3new();
+  var v23 = v3new();
+  var v34 = v3new();
+
+  var tmp = v3new();
+  var mid = v3new();
+  var inPlane1 = v3new();
+  var inPlane2 = v3new();
+  var start = v3new();
+  var end = v3new();
+
+  var cross = v3new();
+  var arcPoint = v3new();
+
+  var i = 0; // Actual output index (after skipping inappropriate)
+
+  var loop = function ( p ) {
+    v3fromArray(p1, position, p);
+    v3fromArray(p2, position, p + 3);
+    v3fromArray(p3, position, p + 6);
+    v3fromArray(p4, position, p + 9);
+
+    v3sub(v21, p1, p2);
+    v3sub(v23, p3, p2);
+    if (v3length(v23) === 0.0) {
+      return // Can't define axis
+    }
+
+    v3sub(v34, p4, p3);
+
+    v3multiplyScalar(tmp, v23, 0.5);
+    v3add(mid, p2, tmp);
+
+    v3normalize(v21, v21);
+    v3normalize(v23, v23);
+    v3normalize(v34, v34);
+
+    // Which side of plane are p1, p4?
+    v3sub(tmp, p1, mid);
+    var improperStart = v3dot(tmp, v23) > 0.0;
+    v3sub(tmp, p4, mid);
+    var improperEnd = v3dot(tmp, v23) < 0.0;
+
+    // Calculate vectors perp to v23 (lying in plane (1,2,3) and (2,3,4))
+    v3multiplyScalar(tmp, v23, v3dot(v23, v21));
+    v3sub(inPlane1, v21, tmp);
+
+    v3multiplyScalar(tmp, v23, v3dot(v23, v34));
+    v3sub(inPlane2, v34, tmp);
+
+    if (v3length(inPlane1) === 0.0 || v3length(inPlane2) === 0.0) {
+      return // Indeterminate angle
+    }
+
+    v3normalize(inPlane1, inPlane1);
+    v3normalize(inPlane2, inPlane2);
+
+    // Can use acos as normalized and non-zero
+    var angle = angles[ i ] = Math.acos(v3dot(inPlane1, inPlane2));
+    labelText[ i ] = (RAD2DEG$1 * angle).toFixed(1) + String.fromCharCode(0x00B0);
+
+    v3cross(cross, inPlane1, v23);
+    v3normalize(cross, cross);
+    if (v3dot(cross, inPlane2) < 0.0) {
+      v3negate(cross, cross); // Ensure cp faces correct way
+    }
+
+    calcArcPoint(tmp, mid, inPlane1, cross, angle / 2.0);
+    v3toArray(tmp, labelPosition, 3 * i);
+
+    var nSegments = Math.ceil(angle / angleStep);
+    var nLines = nSegments + 2;
+
+    var line1 = new Float32Array(nLines * 3);
+    var line2 = new Float32Array(nLines * 3);
+    var sector = new Float32Array(nSegments * 9);
+    var plane = new Float32Array(36);
+
+    lineTmp1[ i ] = line1;
+    lineTmp2[ i ] = line2;
+    sectorTmp[ i ] = sector;
+    planeTmp[ i ] = plane;
+
+    // Start points for lines/planes depend on whether improper:
+    if (improperStart) { // We'll start on the v3->1 line (tmp)
+      v3sub(tmp, p1, p3);
+      v3normalize(tmp, tmp);
+      v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp));
+      v3add(start, start, p3);
+    } else { // start on the 2->1 line
+      v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21));
+      v3add(start, start, p2);
+    }
+
+    if (improperEnd) { // Finish on 2->4 line
+      v3sub(tmp, p4, p2);
+      v3normalize(tmp, tmp);
+      v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp));
+      v3add(end, end, p2);
+    } else { // end on the 3->4 line
+      v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34));
+      v3add(end, end, p3);
+    }
+
+    v3add(arcPoint, mid, inPlane1);
+
+    v3toArray(start, line1, 0);
+    v3toArray(arcPoint, line2, 0);
+
+    // Construct plane at start
+    v3toArray(start, plane, 0);
+    v3toArray(arcPoint, plane, 3);
+    v3toArray(improperStart ? p3 : p2, plane, 6);
+    v3toArray(improperStart ? p3 : p2, plane, 9);
+    v3toArray(arcPoint, plane, 12);
+    v3toArray(mid, plane, 15);
+
+    var appendArcSection = function (a, j) {
+      var si = j * 9;
+      var ai = j * 3;
+      v3toArray(mid, sector, si);
+      v3toArray(arcPoint, sector, si + 3);
+      v3toArray(arcPoint, line1, ai);
+
+      calcArcPoint(arcPoint, mid, inPlane1, cross, a);
+
+      v3toArray(arcPoint, sector, si + 6);
+      v3toArray(arcPoint, line2, ai);
     };
 
-    this.context2.drawImage(
-              this.canvas,
-              0, 0,
-              this.scratchW, this.scratchH,
-              this.currentX, this.currentY,
-              this.scratchW, this.scratchH
-          );
-
-    this.currentX += this.scratchW;
-  }
-
-  return this.mapped[ text ]
-};
-
-TextAtlas.prototype.get = function get (text) {
-  return this.mapped[ text ] || this.placeholder
-};
-
-TextAtlas.prototype.draw = function draw (text) {
-  var h = this.lineHeight;
-  var o = this.outline;
-  var ctx = this.context;
-  var dst = this.scratch;
-  var max = this.maxWidth;
-  var colors = this.colors;
-
-      // Bottom aligned, take outline into account
-  var x = o;
-  var y = h - this.outline;
-
-      // Measure text
-  var m = ctx.measureText(text);
-  var w = Math.min(max, Math.ceil(m.width + 2 * x + 1));
-
-      // Clear scratch area
-  ctx.clearRect(0, 0, w, h);
-
-  var i, il, j, imageData, data;
-
-  if (this.outline === 0) {
-    ctx.fillText(text, x, y);
-    imageData = ctx.getImageData(0, 0, w, h);
-    data = imageData.data;
-
-    j = 3;// Skip to alpha channel
-    for (i = 0, il = data.length / 4; i < il; ++i) {
-      dst[ i ] = data[ j ];
-      j += 4;
+    var j = 0;
+    for (var a = angleStep; a < angle; a += angleStep) {
+      appendArcSection(a, j++);
     }
-  } else {
-    ctx.globalCompositeOperation = 'source-over';
-          // Draw strokes of decreasing width to create
-          // nested outlines (absolute distance)
-    for (i = o + 1; i > 0; --i) {
-              // Eliminate odd strokes once past > 1px,
-              // don't need the detail
-      j = i > 1 ? i * 2 - 2 : i;
-      ctx.strokeStyle = colors[ j - 1 ];
-      ctx.lineWidth = j;
-      ctx.strokeText(text, x, y);
+    appendArcSection(angle, j++);
+
+    // Add final line: tmp vector holds the end point:
+    if (improperEnd) {
+      v3sub(tmp, p4, p2);
+      v3normalize(tmp, tmp);
+      v3add(tmp, tmp, p2);
+    } else {
+      v3add(tmp, p3, v34);
     }
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = '#FF00FF';
-    ctx.fillText(text, x, y);
-    imageData = ctx.getImageData(0, 0, w, h);
-    data = imageData.data;
+    v3toArray(arcPoint, line1, j * 3);
+    v3toArray(tmp, line2, j * 3);
 
-    j = 0;
-    var gamma = this.gamma;
-    for (i = 0, il = data.length / 4; i < il; ++i) {
-              // Get value + mask
-      var a = data[ j ];
-      var mask = a ? data[ j + 1 ] / a : 1;
-      if (gamma === 0.5) {
-        mask = Math.sqrt(mask);
-      }
-      mask = Math.min(1, Math.max(0, mask));
+    // Construc plane at end
+    v3toArray(end, plane, 18);
+    v3toArray(arcPoint, plane, 21);
+    v3toArray(improperEnd ? p2 : p3, plane, 24);
+    v3toArray(improperEnd ? p2 : p3, plane, 27);
+    v3toArray(arcPoint, plane, 30);
+    v3toArray(mid, plane, 33);
 
-              // Blend between positive/outside and negative/inside
-      var b = 256 - a;
-      var c = b + (a - b) * mask;
-
-              // Clamp (slight expansion to hide errors around the transition)
-      dst[ i ] = Math.max(0, Math.min(255, c + 2));
-      data[ j + 3 ] = dst[ i ];
-      j += 4;
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-  this.scratchW = w;
-  this.scratchH = h;
-};
-
-TextAtlas.prototype.populate = function populate () {
-    var this$1 = this;
-
-      // Replacement Character
-  this.placeholder = this.map(String.fromCharCode(0xFFFD));
-
-      // Basic Latin
-  for (var i = 0x0000; i < 0x007F; ++i) {
-    this$1.map(String.fromCharCode(i));
-  }
-
-      // Latin-1 Supplement
-  for (var i$1 = 0x0080; i$1 < 0x00FF; ++i$1) {
-    this$1.map(String.fromCharCode(i$1));
-  }
-
-      // Greek and Coptic
-  for (var i$2 = 0x0370; i$2 < 0x03FF; ++i$2) {
-    this$1.map(String.fromCharCode(i$2));
-  }
-
-      // Cyrillic
-  for (var i$3 = 0x0400; i$3 < 0x04FF; ++i$3) {
-    this$1.map(String.fromCharCode(i$3));
-  }
-
-      // Angstrom Sign
-  this.map(String.fromCharCode(0x212B));
-};
-
-/**
- * Text buffer parameter object.
- * @typedef {Object} TextBufferParameters - text buffer parameters
- *
- * @property {Float} opacity - translucency: 1 is fully opaque, 0 is fully transparent
- * @property {Integer} clipNear - position of camera near/front clipping plane
- *                                in percent of scene bounding box
- * @property {String} labelType - type of the label, one of:
- *                                 "atomname", "atomindex", "occupancy", "bfactor",
- *                                 "serial", "element", "atom", "resname", "resno",
- *                                 "res", "text", "qualified". When set to "text", the
- *                                 `labelText` list is used.
- * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
- *                                   to take effect
- * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
- * @property {String} fontStyle - font style, "normal" or "italic"
- * @property {String} fontWeight - font weight, "normal" or "bold"
- * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
- * @property {Float} xOffset - offset in x-direction
- * @property {Float} yOffset - offset in y-direction
- * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
- * @property {String} attachment - attachment of the label, one of:
- *                                 "bottom-left", "bottom-center", "bottom-right",
- *                                 "middle-left", "middle-center", "middle-right",
- *                                 "top-left", "top-center", "top-right"
- * @property {Boolean} showBorder - show border/outline
- * @property {Color} borderColor - color of the border/outline
- * @property {Float} borderWidth - width of the border/outline
- * @property {Boolean} showBackground - show background rectangle
- * @property {Color} backgroundColor - color of the background
- * @property {Float} backgroundMargin - width of the background
- * @property {Float} backgroundOpacity - opacity of the background
- */
-
-/**
- * Text buffer. Renders screen-aligned text strings.
- *
- * @example
- * var textBuffer = new TextBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     size: new Float32Array( [ 2 ] ),
- *     text: [ "Hello" ]
- * } );
- */
-var TextBuffer = (function (MappedQuadBuffer$$1) {
-  function TextBuffer (data, params) {
-    var d = data || {};
-    var p = params || {};
-
-    p.forceTransparent = true;
-
-    var n = d.position.length / 3;
-    var charCount = 0;
-    for (var i = 0; i < n; ++i) {
-      charCount += d.text[ i ].length;
-    }
-
-    var count = charCount;
-    if (p.showBackground) { count += n; }
-
-    MappedQuadBuffer$$1.call(this, {
-      position: new Float32Array(count * 3),
-      color: new Float32Array(count * 3),
-      picking: new IgnorePicker()
-    }, p);
-
-    this.fontFamily = defaults(p.fontFamily, 'sans-serif');
-    this.fontStyle = defaults(p.fontStyle, 'normal');
-    this.fontWeight = defaults(p.fontWeight, 'bold');
-    this.fontSize = defaults(p.fontSize, 48);
-    this.sdf = defaults(p.sdf, Browser === 'Chrome');
-    this.xOffset = defaults(p.xOffset, 0.0);
-    this.yOffset = defaults(p.yOffset, 0.0);
-    this.zOffset = defaults(p.zOffset, 0.5);
-    this.attachment = defaults(p.attachment, 'bottom-left');
-    this.showBorder = defaults(p.showBorder, false);
-    this.borderColor = defaults(p.borderColor, 'lightgrey');
-    this.borderWidth = defaults(p.borderWidth, 0.15);
-    this.showBackground = defaults(p.showBackground, false);
-    this.backgroundColor = defaults(p.backgroundColor, 'lightgrey');
-    this.backgroundMargin = defaults(p.backgroundMargin, 0.5);
-    this.backgroundOpacity = defaults(p.backgroundOpacity, 1.0);
-
-    this.text = d.text;
-    this.positionCount = n;
-
-    this.addUniforms({
-      'fontTexture': { value: null },
-      'xOffset': { value: this.xOffset },
-      'yOffset': { value: this.yOffset },
-      'zOffset': { value: this.zOffset },
-      'ortho': { value: false },
-      'showBorder': { value: this.showBorder },
-      'borderColor': { value: new Color(this.borderColor) },
-      'borderWidth': { value: this.borderWidth },
-      'backgroundColor': { value: new Color(this.backgroundColor) },
-      'backgroundOpacity': { value: this.backgroundOpacity }
-    });
-
-    this.addAttributes({
-      'inputTexCoord': { type: 'v2', value: null },
-      'inputSize': { type: 'f', value: null }
-    });
-
-    this.setAttributes(data);
-
-    this.makeTexture();
-    this.makeMapping();
-  }
-
-  if ( MappedQuadBuffer$$1 ) TextBuffer.__proto__ = MappedQuadBuffer$$1;
-  TextBuffer.prototype = Object.create( MappedQuadBuffer$$1 && MappedQuadBuffer$$1.prototype );
-  TextBuffer.prototype.constructor = TextBuffer;
-
-  var prototypeAccessors = { parameters: {},wireframe: {},isText: {},vertexShader: {},fragmentShader: {} };
-
-  prototypeAccessors.parameters.get = function () {
-    return Object.assign.call(this, {
-
-      fontFamily: { uniform: true },
-      fontStyle: { uniform: true },
-      fontWeight: { uniform: true },
-      fontSize: { uniform: true },
-      sdf: { updateShader: true, uniform: true },
-      xOffset: { uniform: true },
-      yOffset: { uniform: true },
-      zOffset: { uniform: true },
-      showBorder: { uniform: true },
-      borderColor: { uniform: true },
-      borderWidth: { uniform: true },
-      backgroundColor: { uniform: true },
-      backgroundOpacity: { uniform: true }
-
-    }, MappedQuadBuffer$$1.prototype.parameters, {
-
-      flatShaded: undefined
-
-    })
+    totalLines += nLines * 3;
+    totalSegments += nSegments * 9;
+    totalPlanes += 36;
+    i += 1;
   };
 
-  TextBuffer.prototype.makeMaterial = function makeMaterial () {
-    MappedQuadBuffer$$1.prototype.makeMaterial.call(this);
+  for (var p = 0; p < nPos; p += 12) loop( p );
 
-    var tex = this.texture;
+  var nSuccess = i;
 
-    var m = this.material;
-    m.extensions.derivatives = true;
-    m.lights = false;
-    m.uniforms.fontTexture.value = tex;
-    m.needsUpdate = true;
+  var linePosition1 = new Float32Array(totalLines);
+  var linePosition2 = new Float32Array(totalLines);
+  var sectorPosition = new Float32Array(totalSegments);
+  var planePosition = new Float32Array(totalPlanes);
 
-    var wm = this.wireframeMaterial;
-    wm.extensions.derivatives = true;
-    wm.lights = false;
-    wm.uniforms.fontTexture.value = tex;
-    wm.needsUpdate = true;
+  var lineOffset = 0;
+  var sectorOffset = 0;
+  var planeOffset = 0;
 
-    var pm = this.pickingMaterial;
-    pm.extensions.derivatives = true;
-    pm.lights = false;
-    pm.uniforms.fontTexture.value = tex;
-    pm.needsUpdate = true;
-  };
+  for (var i$1 = 0; i$1 < nSuccess; i$1++) {
+    var lp1 = lineTmp1[ i$1 ];
+    var lp2 = lineTmp2[ i$1 ];
+    var sp = sectorTmp[ i$1 ];
+    var pp = planeTmp[ i$1 ];
 
-  TextBuffer.prototype.setAttributes = function setAttributes (data) {
-    var this$1 = this;
+    copyArray(lp1, linePosition1, 0, lineOffset, lp1.length);
+    copyArray(lp2, linePosition2, 0, lineOffset, lp2.length);
+    copyArray(sp, sectorPosition, 0, sectorOffset, sp.length);
+    copyArray(pp, planePosition, 0, planeOffset, pp.length);
 
-    var position, size, color;
-    var aPosition, inputSize, aColor;
+    lineOffset += lp1.length;
+    sectorOffset += sp.length;
+    planeOffset += pp.length;
+  }
 
-    var text = this.text;
-    var attributes = this.geometry.attributes;
+  return {
+    labelPosition: labelPosition.subarray(0, nSuccess * 3),
+    labelText: labelText.slice(0, nSuccess),
+    linePosition1: linePosition1,
+    linePosition2: linePosition2,
+    planePosition: planePosition,
+    sectorPosition: sectorPosition
+  }
+}
 
-    if (data.position) {
-      position = data.position;
-      aPosition = attributes.position.array;
-      attributes.position.needsUpdate = true;
-    }
-
-    if (data.size) {
-      size = data.size;
-      inputSize = attributes.inputSize.array;
-      attributes.inputSize.needsUpdate = true;
-    }
-
-    if (data.color) {
-      color = data.color;
-      aColor = attributes.color.array;
-      attributes.color.needsUpdate = true;
-    }
-
-    var n = this.positionCount;
-
-    var j, o;
-    var iCharAll = 0;
-    var txt, iChar, nChar;
-
-    for (var v = 0; v < n; ++v) {
-      o = 3 * v;
-      txt = text[ v ];
-      nChar = txt.length;
-      if (this$1.showBackground) { nChar += 1; }
-
-      for (iChar = 0; iChar < nChar; ++iChar, ++iCharAll) {
-        for (var m = 0; m < 4; m++) {
-          j = iCharAll * 4 * 3 + (3 * m);
-
-          if (position) {
-            aPosition[ j ] = position[ o ];
-            aPosition[ j + 1 ] = position[ o + 1 ];
-            aPosition[ j + 2 ] = position[ o + 2 ];
-          }
-
-          if (size) {
-            inputSize[ (iCharAll * 4) + m ] = size[ v ];
-          }
-
-          if (color) {
-            aColor[ j ] = color[ o ];
-            aColor[ j + 1 ] = color[ o + 1 ];
-            aColor[ j + 2 ] = color[ o + 2 ];
-          }
-        }
-      }
-    }
-  };
-
-  TextBuffer.prototype.makeTexture = function makeTexture () {
-    this.textAtlas = getTextAtlas({
-      font: [ this.fontFamily ],
-      style: this.fontStyle,
-      weight: this.fontWeight,
-      size: this.fontSize,
-      outline: this.sdf ? 5 : 0
-    });
-
-    this.texture = this.textAtlas.texture;
-  };
-
-  TextBuffer.prototype.makeMapping = function makeMapping () {
-    var this$1 = this;
-
-    var ta = this.textAtlas;
-    var text = this.text;
-    var attachment = this.attachment;
-    var margin = (ta.lineHeight * this.backgroundMargin * 0.1) - 10;
-
-    var inputTexCoord = this.geometry.attributes.inputTexCoord.array;
-    var inputMapping = this.geometry.attributes.mapping.array;
-
-    var n = this.positionCount;
-    var iCharAll = 0;
-    var c, i, txt, xadvance, iChar, nChar, xShift, yShift;
-
-    for (var v = 0; v < n; ++v) {
-      txt = text[ v ];
-      xadvance = 0;
-      nChar = txt.length;
-
-            // calculate width
-      for (iChar = 0; iChar < nChar; ++iChar) {
-        c = ta.get(txt[ iChar ]);
-        xadvance += c.w - 2 * ta.outline;
-      }
-
-            // attachment
-      if (attachment.startsWith('top')) {
-        yShift = ta.lineHeight / 1.25;
-      } else if (attachment.startsWith('middle')) {
-        yShift = ta.lineHeight / 2.5;
-      } else {
-        yShift = 0;  // "bottom"
-      }
-      if (attachment.endsWith('right')) {
-        xShift = xadvance;
-      } else if (attachment.endsWith('center')) {
-        xShift = xadvance / 2;
-      } else {
-        xShift = 0;  // "left"
-      }
-      xShift += ta.outline;
-      yShift += ta.outline;
-
-            // background
-      if (this$1.showBackground) {
-        i = iCharAll * 2 * 4;
-        inputMapping[ i + 0 ] = -ta.lineHeight / 6 - xShift - margin;  // top left
-        inputMapping[ i + 1 ] = ta.lineHeight - yShift + margin;
-        inputMapping[ i + 2 ] = -ta.lineHeight / 6 - xShift - margin;  // bottom left
-        inputMapping[ i + 3 ] = 0 - yShift - margin;
-        inputMapping[ i + 4 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin;  // top right
-        inputMapping[ i + 5 ] = ta.lineHeight - yShift + margin;
-        inputMapping[ i + 6 ] = xadvance + ta.lineHeight / 6 - xShift + 2 * ta.outline + margin;  // bottom right
-        inputMapping[ i + 7 ] = 0 - yShift - margin;
-        inputTexCoord[ i + 0 ] = 10;
-        inputTexCoord[ i + 2 ] = 10;
-        inputTexCoord[ i + 4 ] = 10;
-        inputTexCoord[ i + 6 ] = 10;
-        iCharAll += 1;
-      }
-
-      xadvance = 0;
-
-      for (iChar = 0; iChar < nChar; ++iChar, ++iCharAll) {
-        c = ta.get(txt[ iChar ]);
-        i = iCharAll * 2 * 4;
-
-        inputMapping[ i + 0 ] = xadvance - xShift;  // top left
-        inputMapping[ i + 1 ] = c.h - yShift;
-        inputMapping[ i + 2 ] = xadvance - xShift;  // bottom left
-        inputMapping[ i + 3 ] = 0 - yShift;
-        inputMapping[ i + 4 ] = xadvance + c.w - xShift;  // top right
-        inputMapping[ i + 5 ] = c.h - yShift;
-        inputMapping[ i + 6 ] = xadvance + c.w - xShift;  // bottom right
-        inputMapping[ i + 7 ] = 0 - yShift;
-
-        var texWidth = ta.width;
-        var texHeight = ta.height;
-
-        var texCoords = [
-          c.x / texWidth, c.y / texHeight,             // top left
-          c.x / texWidth, (c.y + c.h) / texHeight,       // bottom left
-          (c.x + c.w) / texWidth, c.y / texHeight,       // top right
-          (c.x + c.w) / texWidth, (c.y + c.h) / texHeight  // bottom right
-        ];
-        inputTexCoord.set(texCoords, i);
-
-        xadvance += c.w - 2 * ta.outline;
-      }
-    }
-
-    this.geometry.attributes.inputTexCoord.needsUpdate = true;
-    this.geometry.attributes.mapping.needsUpdate = true;
-  };
-
-  TextBuffer.prototype.getDefines = function getDefines (type) {
-    var defines = MappedQuadBuffer$$1.prototype.getDefines.call(this, type);
-
-    if (this.sdf) {
-      defines.SDF = 1;
-    }
-
-    return defines
-  };
-
-  TextBuffer.prototype.setUniforms = function setUniforms (data) {
-    if (data && (
-                data.fontFamily !== undefined ||
-                data.fontStyle !== undefined ||
-                data.fontWeight !== undefined ||
-                data.fontSize !== undefined ||
-                data.sdf !== undefined
-            )
-        ) {
-      this.makeTexture();
-      this.makeMapping();
-      this.texture.needsUpdate = true;
-      data.fontTexture = this.texture;
-    }
-
-    MappedQuadBuffer$$1.prototype.setUniforms.call(this, data);
-  };
-
-  prototypeAccessors.wireframe.set = function (value) {};
-  prototypeAccessors.wireframe.get = function () { return false };
-
-  prototypeAccessors.isText.get = function () { return true };
-  prototypeAccessors.vertexShader.get = function () { return 'SDFFont.vert' };
-  prototypeAccessors.fragmentShader.get = function () { return 'SDFFont.frag' };
-
-  Object.defineProperties( TextBuffer.prototype, prototypeAccessors );
-
-  return TextBuffer;
-}(MappedQuadBuffer));
-
-BufferRegistry.add('text', TextBuffer);
+RepresentationRegistry.add('dihedral', DihedralRepresentation);
 
 /**
  * @file Distance Representation
@@ -82935,11 +84134,8 @@ BufferRegistry.add('text', TextBuffer);
  * @typedef {Object} DistanceRepresentationParameters - distance representation parameters
  * @mixes RepresentationParameters
  * @mixes StructureRepresentationParameters
+ * @mixes MeasurementRepresentationParameters
  *
- * @property {Float} labelSize - size of the distance label
- * @property {Color} labelColor - color of the distance label
- * @property {Boolean} labelVisible - visibility of the distance label
- * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
  * @property {String} labelUnit - distance unit (e.g. "angstrom" or "nm"). If set, a distance
  *                                symbol is appended to the label (i.e. 'nm' or '\u00C5'). In case of 'nm', the
  *                                distance value is computed in nanometers instead of Angstroms.
@@ -82955,26 +84151,14 @@ BufferRegistry.add('text', TextBuffer);
 /**
  * Distance representation
  */
-var DistanceRepresentation = (function (StructureRepresentation$$1) {
+var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
   function DistanceRepresentation (structure, viewer, params) {
-    StructureRepresentation$$1.call(this, structure, viewer, params);
+    MeasurementRepresentation$$1.call(this, structure, viewer, params);
 
     this.type = 'distance';
 
     this.parameters = Object.assign({
 
-      labelSize: {
-        type: 'number', precision: 3, max: 10.0, min: 0.001
-      },
-      labelColor: {
-        type: 'color'
-      },
-      labelVisible: {
-        type: 'boolean'
-      },
-      labelZOffset: {
-        type: 'number', precision: 1, max: 20, min: -20, buffer: 'zOffset'
-      },
       labelUnit: {
         type: 'select',
         rebuild: true,
@@ -82986,34 +84170,23 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
       radialSegments: true,
       disableImpostor: true
 
-    }, this.parameters, {
-      flatShaded: null,
-      assembly: null
-    });
+    }, this.parameters);
 
     this.init(params);
   }
 
-  if ( StructureRepresentation$$1 ) DistanceRepresentation.__proto__ = StructureRepresentation$$1;
-  DistanceRepresentation.prototype = Object.create( StructureRepresentation$$1 && StructureRepresentation$$1.prototype );
+  if ( MeasurementRepresentation$$1 ) DistanceRepresentation.__proto__ = MeasurementRepresentation$$1;
+  DistanceRepresentation.prototype = Object.create( MeasurementRepresentation$$1 && MeasurementRepresentation$$1.prototype );
   DistanceRepresentation.prototype.constructor = DistanceRepresentation;
 
   DistanceRepresentation.prototype.init = function init (params) {
     var p = params || {};
     p.radius = defaults(p.radius, 0.15);
 
-    this.fontFamily = defaults(p.fontFamily, 'sans-serif');
-    this.fontStyle = defaults(p.fontStyle, 'normal');
-    this.fontWeight = defaults(p.fontWeight, 'bold');
-    this.sdf = defaults(p.sdf, Browser !== 'Firefox');  // FIXME
-    this.labelSize = defaults(p.labelSize, 2.0);
-    this.labelColor = defaults(p.labelColor, 0xFFFFFF);
-    this.labelVisible = defaults(p.labelVisible, true);
-    this.labelZOffset = defaults(p.labelZOffset, 0.5);
     this.labelUnit = defaults(p.labelUnit, '');
     this.atomPair = defaults(p.atomPair, []);
 
-    StructureRepresentation$$1.prototype.init.call(this, p);
+    MeasurementRepresentation$$1.prototype.init.call(this, p);
   };
 
   DistanceRepresentation.prototype.getDistanceData = function getDistanceData (sview, atomPair) {
@@ -83119,15 +84292,7 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
         color: uniformArray3(n, c.r, c.g, c.b),
         text: distanceData.text
       },
-      this.getBufferParams({
-        fontFamily: this.fontFamily,
-        fontStyle: this.fontStyle,
-        fontWeight: this.fontWeight,
-        sdf: this.sdf,
-        zOffset: this.labelZOffset,
-        opacity: 1.0,
-        visible: this.labelVisible
-      })
+      this.getLabelBufferParams()
     );
 
     var bondParams = {
@@ -83154,14 +84319,6 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
       position: distanceData.position,
       bufferList: [ this.textBuffer, this.cylinderBuffer ]
     });
-  };
-
-  DistanceRepresentation.prototype.update = function update (what) {
-    if (what.position) {
-      this.build();
-    } else {
-      StructureRepresentation$$1.prototype.update.call(this, what);
-    }
   };
 
   DistanceRepresentation.prototype.updateData = function updateData (what, data) {
@@ -83197,43 +84354,8 @@ var DistanceRepresentation = (function (StructureRepresentation$$1) {
     this.cylinderBuffer.setAttributes(cylinderData);
   };
 
-  DistanceRepresentation.prototype.setVisibility = function setVisibility (value, noRenderRequest) {
-    StructureRepresentation$$1.prototype.setVisibility.call(this, value, true);
-
-    if (this.textBuffer) {
-      this.textBuffer.setVisibility(
-        this.labelVisible && this.visible
-      );
-    }
-
-    if (!noRenderRequest) { this.viewer.requestRender(); }
-
-    return this
-  };
-
-  DistanceRepresentation.prototype.setParameters = function setParameters (params) {
-    var rebuild = false;
-    var what = {};
-
-    if (params && params.labelSize) {
-      what.labelSize = true;
-    }
-
-    if (params && (params.labelColor || params.labelColor === 0x000000)) {
-      what.labelColor = true;
-    }
-
-    StructureRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
-
-    if (params && params.labelVisible !== undefined) {
-      this.setVisibility(this.visible);
-    }
-
-    return this
-  };
-
   return DistanceRepresentation;
-}(StructureRepresentation));
+}(MeasurementRepresentation));
 
 RepresentationRegistry.add('distance', DistanceRepresentation);
 
@@ -83272,7 +84394,7 @@ var VectorBuffer = (function (Buffer) {
   VectorBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   VectorBuffer.prototype.constructor = VectorBuffer;
 
-  var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { isLine: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   VectorBuffer.prototype.setAttributes = function setAttributes (data) {
     var attributes = this.geometry.attributes;
@@ -83534,7 +84656,7 @@ var MappedBoxBuffer = (function (MappedBuffer$$1) {
   MappedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
   MappedBoxBuffer.prototype.constructor = MappedBoxBuffer;
 
-  var prototypeAccessors = { mapping: {},mappingIndices: {},mappingIndicesSize: {},mappingType: {},mappingSize: {},mappingItemSize: {} };
+  var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
 
   prototypeAccessors.mapping.get = function () { return mapping$2 };
   prototypeAccessors.mappingIndices.get = function () { return mappingIndices$2 };
@@ -83600,7 +84722,7 @@ var HyperballStickImpostorBuffer = (function (MappedBoxBuffer$$1) {
   HyperballStickImpostorBuffer.prototype = Object.create( MappedBoxBuffer$$1 && MappedBoxBuffer$$1.prototype );
   HyperballStickImpostorBuffer.prototype.constructor = HyperballStickImpostorBuffer;
 
-  var prototypeAccessors = { parameters: {},isImpostor: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { parameters: { configurable: true },isImpostor: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   prototypeAccessors.parameters.get = function () {
     return Object.assign.call(this, {
@@ -86490,7 +87612,7 @@ var RibbonBuffer = (function (MeshBuffer$$1) {
   RibbonBuffer.prototype = Object.create( MeshBuffer$$1 && MeshBuffer$$1.prototype );
   RibbonBuffer.prototype.constructor = RibbonBuffer;
 
-  var prototypeAccessors = { vertexShader: {} };
+  var prototypeAccessors = { vertexShader: { configurable: true } };
 
   RibbonBuffer.prototype.setAttributes = function setAttributes (data) {
     var n4 = this.size;
@@ -87140,7 +88262,7 @@ var TraceBuffer = (function (Buffer) {
   TraceBuffer.prototype = Object.create( Buffer && Buffer.prototype );
   TraceBuffer.prototype.constructor = TraceBuffer;
 
-  var prototypeAccessors = { isLine: {},vertexShader: {},fragmentShader: {} };
+  var prototypeAccessors = { isLine: { configurable: true },vertexShader: { configurable: true },fragmentShader: { configurable: true } };
 
   TraceBuffer.prototype.setAttributes = function setAttributes (data) {
     var position, color;
@@ -87626,7 +88748,7 @@ var ConeGeometryBuffer = (function (GeometryBuffer$$1) {
   ConeGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   ConeGeometryBuffer.prototype.constructor = ConeGeometryBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   ConeGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     eye$1.fromArray(this._position1, i3);
@@ -87765,7 +88887,7 @@ var ArrowBuffer = function ArrowBuffer (data, params) {
   this.picking = d.picking;
 };
 
-var prototypeAccessors$29 = { matrix: {},pickable: {} };
+var prototypeAccessors$29 = { matrix: { configurable: true },pickable: { configurable: true } };
 
 prototypeAccessors$29.matrix.set = function (m) {
   Buffer$1.prototype.setMatrix.call(this, m);
@@ -87930,7 +89052,7 @@ var BoxBuffer = (function (GeometryBuffer$$1) {
   BoxBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   BoxBuffer.prototype.constructor = BoxBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   BoxBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     target$2.fromArray(this._heightAxis, i3);
@@ -87996,7 +89118,7 @@ var EllipsoidGeometryBuffer = (function (GeometryBuffer$$1) {
   EllipsoidGeometryBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   EllipsoidGeometryBuffer.prototype.constructor = EllipsoidGeometryBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   EllipsoidGeometryBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     target$3.fromArray(this._majorAxis, i3);
@@ -88083,7 +89205,7 @@ var OctahedronBuffer = (function (GeometryBuffer$$1) {
   OctahedronBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   OctahedronBuffer.prototype.constructor = OctahedronBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   OctahedronBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     target$4.fromArray(this._heightAxis, i3);
@@ -88148,7 +89270,7 @@ var TetrahedronBuffer = (function (GeometryBuffer$$1) {
   TetrahedronBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   TetrahedronBuffer.prototype.constructor = TetrahedronBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   TetrahedronBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     target$5.fromArray(this._heightAxis, i3);
@@ -88218,7 +89340,7 @@ var TorusBuffer = (function (GeometryBuffer$$1) {
   TorusBuffer.prototype = Object.create( GeometryBuffer$$1 && GeometryBuffer$$1.prototype );
   TorusBuffer.prototype.constructor = TorusBuffer;
 
-  var prototypeAccessors = { updateNormals: {} };
+  var prototypeAccessors = { updateNormals: { configurable: true } };
 
   TorusBuffer.prototype.applyPositionTransform = function applyPositionTransform (matrix, i, i3) {
     target$6.fromArray(this._majorAxis, i3);
@@ -88262,7 +89384,7 @@ var Parser = function Parser (streamer, params) {
   this.path = defaults(p.path, '');
 };
 
-var prototypeAccessors$30 = { type: {},__objName: {},isBinary: {},isJson: {},isXml: {} };
+var prototypeAccessors$30 = { type: { configurable: true },__objName: { configurable: true },isBinary: { configurable: true },isJson: { configurable: true },isXml: { configurable: true } };
 
 prototypeAccessors$30.type.get = function () { return '' };
 prototypeAccessors$30.__objName.get = function () { return '' };
@@ -88437,7 +89559,7 @@ var StructureParser = (function (Parser$$1) {
   StructureParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   StructureParser.prototype.constructor = StructureParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'structure' };
   prototypeAccessors.__objName.get = function () { return 'structure' };
@@ -88484,7 +89606,7 @@ var Entity = function Entity (structure, index, description, type, chainIndexLis
   });
 };
 
-var prototypeAccessors$31 = { type: {} };
+var prototypeAccessors$31 = { type: { configurable: true } };
 
 prototypeAccessors$31.type.get = function () { return 'Entity' };
 
@@ -88779,7 +89901,7 @@ var PdbParser = (function (StructureParser$$1) {
   PdbParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   PdbParser.prototype.constructor = PdbParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'pdb' };
 
@@ -88962,7 +90084,7 @@ var PdbParser = (function (StructureParser$$1) {
             }
             hetero = (line[ 0 ] === 'H') ? 1 : 0;
             chainname = line[ 21 ].trim();
-            resno = parseInt(line.substr(22, 4), resnoRadix) || 1;
+            resno = parseInt(line.substr(22, 4), resnoRadix);
             if (hex && resno === 9999) {
               resnoRadix = 16;
             }
@@ -90081,7 +91203,7 @@ var CifParser = (function (StructureParser$$1) {
   CifParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   CifParser.prototype.constructor = CifParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'cif' };
 
@@ -90557,7 +91679,7 @@ var GroParser = (function (StructureParser$$1) {
   GroParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   GroParser.prototype.constructor = GroParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'gro' };
 
@@ -91503,7 +92625,7 @@ var MmtfParser = (function (StructureParser$$1) {
   MmtfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   MmtfParser.prototype.constructor = MmtfParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'mmtf' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -91889,7 +93011,7 @@ var Mol2Parser = (function (StructureParser$$1) {
   Mol2Parser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   Mol2Parser.prototype.constructor = Mol2Parser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'mol2' };
 
@@ -92083,7 +93205,7 @@ var PqrParser = (function (PdbParser$$1) {
   PqrParser.prototype = Object.create( PdbParser$$1 && PdbParser$$1.prototype );
   PqrParser.prototype.constructor = PqrParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'pqr' };
 
@@ -92111,7 +93233,7 @@ var SdfParser = (function (StructureParser$$1) {
   SdfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   SdfParser.prototype.constructor = SdfParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'sdf' };
 
@@ -92303,7 +93425,7 @@ var PrmtopParser = (function (StructureParser$$1) {
   PrmtopParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   PrmtopParser.prototype.constructor = PrmtopParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'prmtop' };
 
@@ -92537,7 +93659,7 @@ var PsfParser = (function (StructureParser$$1) {
   PsfParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   PsfParser.prototype.constructor = PsfParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'psf' };
 
@@ -92699,7 +93821,7 @@ var TopParser = (function (StructureParser$$1) {
   TopParser.prototype = Object.create( StructureParser$$1 && StructureParser$$1.prototype );
   TopParser.prototype.constructor = TopParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'top' };
 
@@ -92892,7 +94014,7 @@ var Frames = function Frames (name, path) {
   this.deltaTime = 1;
 };
 
-var prototypeAccessors$32 = { type: {} };
+var prototypeAccessors$32 = { type: { configurable: true } };
 
 prototypeAccessors$32.type.get = function () { return 'Frames' };
 
@@ -92915,7 +94037,7 @@ var TrajectoryParser = (function (Parser$$1) {
   TrajectoryParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   TrajectoryParser.prototype.constructor = TrajectoryParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'trajectory' };
   prototypeAccessors.__objName.get = function () { return 'frames' };
@@ -92942,7 +94064,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
   DcdParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   DcdParser.prototype.constructor = DcdParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'dcd' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -93614,7 +94736,7 @@ var NetcdfReader = function NetcdfReader (data) {
   this.buffer = buffer;
 };
 
-var prototypeAccessors$33 = { version: {},recordDimension: {},dimensions: {},globalAttributes: {},variables: {} };
+var prototypeAccessors$33 = { version: { configurable: true },recordDimension: { configurable: true },dimensions: { configurable: true },globalAttributes: { configurable: true },variables: { configurable: true } };
 
 /**
  * @return {string} - Version for the NetCDF format
@@ -93730,7 +94852,7 @@ var NctrajParser = (function (TrajectoryParser$$1) {
   NctrajParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   NctrajParser.prototype.constructor = NctrajParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'nctraj' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -93797,7 +94919,7 @@ var TrrParser = (function (TrajectoryParser$$1) {
   TrrParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   TrrParser.prototype.constructor = TrrParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'trr' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -94060,7 +95182,7 @@ var XtcParser = (function (TrajectoryParser$$1) {
   XtcParser.prototype = Object.create( TrajectoryParser$$1 && TrajectoryParser$$1.prototype );
   XtcParser.prototype.constructor = XtcParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'xtc' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -94334,7 +95456,7 @@ var VolumeParser = (function (Parser$$1) {
   VolumeParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   VolumeParser.prototype.constructor = VolumeParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'volume' };
   prototypeAccessors.__objName.get = function () { return 'volume' };
@@ -94375,7 +95497,7 @@ var CubeParser = (function (VolumeParser$$1) {
   CubeParser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   CubeParser.prototype.constructor = CubeParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'cube' };
 
@@ -94483,7 +95605,7 @@ var Dsn6Parser = (function (VolumeParser$$1) {
   Dsn6Parser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   Dsn6Parser.prototype.constructor = Dsn6Parser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'dsn6' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -94705,7 +95827,7 @@ var DxParser = (function (VolumeParser$$1) {
   DxParser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   DxParser.prototype.constructor = DxParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'dx' };
 
@@ -94853,7 +95975,7 @@ var DxbinParser = (function (DxParser$$1) {
   DxbinParser.prototype = Object.create( DxParser$$1 && DxParser$$1.prototype );
   DxbinParser.prototype.constructor = DxbinParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'dxbin' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -94904,7 +96026,7 @@ var MrcParser = (function (VolumeParser$$1) {
   MrcParser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   MrcParser.prototype.constructor = MrcParser;
 
-  var prototypeAccessors = { type: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'mrc' };
   prototypeAccessors.isBinary.get = function () { return true };
@@ -95165,7 +96287,7 @@ var XplorParser = (function (VolumeParser$$1) {
   XplorParser.prototype = Object.create( VolumeParser$$1 && VolumeParser$$1.prototype );
   XplorParser.prototype.constructor = XplorParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'xplor' };
 
@@ -95335,7 +96457,7 @@ var SurfaceParser = (function (Parser$$1) {
   SurfaceParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   SurfaceParser.prototype.constructor = SurfaceParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'surface' };
   prototypeAccessors.__objName.get = function () { return 'surface' };
@@ -95709,7 +96831,7 @@ var ObjParser = (function (SurfaceParser$$1) {
   ObjParser.prototype = Object.create( SurfaceParser$$1 && SurfaceParser$$1.prototype );
   ObjParser.prototype.constructor = ObjParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'obj' };
 
@@ -96112,7 +97234,7 @@ var PlyParser = (function (SurfaceParser$$1) {
   PlyParser.prototype = Object.create( SurfaceParser$$1 && SurfaceParser$$1.prototype );
   PlyParser.prototype.constructor = PlyParser;
 
-  var prototypeAccessors = { type: {} };
+  var prototypeAccessors = { type: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'ply' };
 
@@ -96158,7 +97280,7 @@ var CsvParser = (function (Parser$$1) {
   CsvParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   CsvParser.prototype.constructor = CsvParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'csv' };
   prototypeAccessors.__objName.get = function () { return 'table' };
@@ -96221,7 +97343,7 @@ var JsonParser = (function (Parser$$1) {
   JsonParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   JsonParser.prototype.constructor = JsonParser;
 
-  var prototypeAccessors = { type: {},__objName: {},isJson: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true },isJson: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'json' };
   prototypeAccessors.__objName.get = function () { return 'json' };
@@ -96265,7 +97387,7 @@ var MsgpackParser = (function (Parser$$1) {
   MsgpackParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   MsgpackParser.prototype.constructor = MsgpackParser;
 
-  var prototypeAccessors = { type: {},__objName: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'msgpack' };
   prototypeAccessors.__objName.get = function () { return 'msgpack' };
@@ -96309,7 +97431,7 @@ var NetcdfParser = (function (Parser$$1) {
   NetcdfParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   NetcdfParser.prototype.constructor = NetcdfParser;
 
-  var prototypeAccessors = { type: {},__objName: {},isBinary: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true },isBinary: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'netcdf' };
   prototypeAccessors.__objName.get = function () { return 'netcdf' };
@@ -96353,7 +97475,7 @@ var TextParser = (function (Parser$$1) {
   TextParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   TextParser.prototype.constructor = TextParser;
 
-  var prototypeAccessors = { type: {},__objName: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'text' };
   prototypeAccessors.__objName.get = function () { return 'text' };
@@ -96503,7 +97625,7 @@ var XmlParser = (function (Parser$$1) {
   XmlParser.prototype = Object.create( Parser$$1 && Parser$$1.prototype );
   XmlParser.prototype.constructor = XmlParser;
 
-  var prototypeAccessors = { type: {},__objName: {},isXml: {} };
+  var prototypeAccessors = { type: { configurable: true },__objName: { configurable: true },isXml: { configurable: true } };
 
   prototypeAccessors.type.get = function () { return 'xml' };
   prototypeAccessors.__objName.get = function () { return 'xml' };
@@ -96641,7 +97763,7 @@ var Validation = function Validation (name, path) {
   this.clashSele = 'NONE';
 };
 
-var prototypeAccessors$34 = { type: {} };
+var prototypeAccessors$34 = { type: { configurable: true } };
 
 prototypeAccessors$34.type.get = function () { return 'validation' };
 
@@ -96856,7 +97978,7 @@ var ValidationParser = (function (XmlParser$$1) {
   ValidationParser.prototype = Object.create( XmlParser$$1 && XmlParser$$1.prototype );
   ValidationParser.prototype.constructor = ValidationParser;
 
-  var prototypeAccessors = { __objName: {},isXml: {} };
+  var prototypeAccessors = { __objName: { configurable: true },isXml: { configurable: true } };
 
   prototypeAccessors.__objName.get = function () { return 'validation' };
   prototypeAccessors.isXml.get = function () { return true };
@@ -100082,17 +101204,17 @@ var MdsrvDatasource = (function (Datasource$$1) {
 
   MdsrvDatasource.prototype.getUrl = function getUrl (src) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'file/' + info.path
+    return this.baseUrl + 'file/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getCountUrl = function getCountUrl (src) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/numframes/' + info.path
+    return this.baseUrl + 'traj/numframes/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getFrameUrl = function getFrameUrl (src, frameIndex) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path
+    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path + info.query
   };
 
   MdsrvDatasource.prototype.getFrameParams = function getFrameParams (src, atomIndices) {
@@ -100101,13 +101223,13 @@ var MdsrvDatasource = (function (Datasource$$1) {
 
   MdsrvDatasource.prototype.getPathUrl = function getPathUrl (src, atomIndex) {
     var info = getFileInfo(src);
-    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path
+    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path + info.query
   };
 
   return MdsrvDatasource;
 }(Datasource));
 
-var version$1 = "1.0.0-beta.1";
+var version$1 = "1.0.0-beta.7";
 
 /**
  * @file Version
@@ -100156,5 +101278,5 @@ if (typeof window !== 'undefined' && !window.Promise) {
   window.Promise = Promise$1;
 }
 
-export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
+export { Version, Debug, setDebug, ScriptExtensions, DatasourceRegistry, DecompressorRegistry, StaticDatasource, MdsrvDatasource, ParserRegistry, autoLoad, RepresentationRegistry, ColormakerRegistry, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, superpose, Superposition, guessElement, flatten, Queue, Counter, throttle, download, getQuery, getDataInfo, getFileInfo, uniqueArray, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, LeftMouseButton, MiddleMouseButton, RightMouseButton, MouseActions, KeyActions, Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color };
 //# sourceMappingURL=ngl.esm.js.map

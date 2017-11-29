@@ -217,6 +217,7 @@ function getFileInfo (file) {
     path = file
   }
   var queryIndex = path.lastIndexOf('?')
+  var query = queryIndex !== -1 ? path.substring(queryIndex) : ''
   path = path.substring(0, queryIndex === -1 ? path.length : queryIndex)
 
   var name = path.replace(/^.*[\\/]/, '')
@@ -251,7 +252,8 @@ function getFileInfo (file) {
     'dir': dir,
     'compressed': compressed,
     'protocol': protocol,
-    'src': file
+    'src': file,
+    'query': query
   }
 }
 

@@ -387,10 +387,10 @@ function Spline (polymer, params) {
   this.subdiv = p.subdiv || 1
   this.smoothSheet = p.smoothSheet || false
 
-  if (isNaN(p.tension)) {
+  if (!p.tension) {
     this.tension = this.polymer.isNucleic() ? 0.5 : 0.9
   } else {
-    this.tension = p.tension || 0.5
+    this.tension = p.tension
   }
 
   this.interpolator = new Interpolator(this.subdiv, this.tension)

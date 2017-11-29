@@ -30,17 +30,17 @@ class MdsrvDatasource extends Datasource {
 
   getUrl (src) {
     const info = getFileInfo(src)
-    return this.baseUrl + 'file/' + info.path
+    return this.baseUrl + 'file/' + info.path + info.query
   }
 
   getCountUrl (src) {
     const info = getFileInfo(src)
-    return this.baseUrl + 'traj/numframes/' + info.path
+    return this.baseUrl + 'traj/numframes/' + info.path + info.query
   }
 
   getFrameUrl (src, frameIndex) {
     const info = getFileInfo(src)
-    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path
+    return this.baseUrl + 'traj/frame/' + frameIndex + '/' + info.path + info.query
   }
 
   getFrameParams (src, atomIndices) {
@@ -49,7 +49,7 @@ class MdsrvDatasource extends Datasource {
 
   getPathUrl (src, atomIndex) {
     const info = getFileInfo(src)
-    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path
+    return this.baseUrl + 'traj/path/' + atomIndex + '/' + info.path + info.query
   }
 }
 

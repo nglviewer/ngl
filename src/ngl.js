@@ -30,6 +30,7 @@ import RepresentationCollection from './component/representation-collection.js'
 import Assembly from './symmetry/assembly.js'
 import TrajectoryPlayer from './trajectory/trajectory-player.js'
 import { superpose } from './align/align-utils.js'
+import Superposition from './align/superposition.js'
 import { guessElement } from './structure/structure-utils.js'
 
 import {
@@ -76,12 +77,14 @@ import './component/volume-component.js'
 
 //
 
+import './representation/angle-representation.js'
 import './representation/axes-representation.js'
 import './representation/backbone-representation.js'
 import './representation/ballandstick-representation.js'
 import './representation/base-representation.js'
 import './representation/cartoon-representation.js'
 import './representation/contact-representation.js'
+import './representation/dihedral-representation.js'
 import './representation/distance-representation.js'
 import './representation/helixorient-representation.js'
 import './representation/hyperball-representation.js'
@@ -220,6 +223,7 @@ export {
   TrajectoryPlayer,
 
   superpose,
+  Superposition,
   guessElement,
 
   flatten,
