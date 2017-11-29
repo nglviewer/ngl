@@ -54824,7 +54824,7 @@ ViewerControls.prototype.zoom = function zoom (delta) {
  * @return {undefined}
  */
 ViewerControls.prototype.distance = function distance (z) {
-    this.viewer.camera.position.z = z;
+    this.viewer.camera.position.z = Math.min(-1, z);
     this.viewer.updateZoom();
     this.changed();
 };
@@ -59392,7 +59392,7 @@ var ContactDefaultParams = {
     refineSaltBridges: true
 };
 function invalidAtomContact(ap1, ap2) {
-    return (ap1.modelIndex !== ap2.modelIndex ||
+    return ap1.structure === ap2.structure && (ap1.modelIndex !== ap2.modelIndex ||
         ap1.residueIndex === ap2.residueIndex ||
         (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc));
 }
@@ -78219,10 +78219,10 @@ var MeasurementRepresentation = (function (StructureRepresentation$$1) {
     };
     MeasurementRepresentation.prototype.updateData = function updateData (what, data) {
         var textData = {};
-        if (what.labelSize) {
+        if (!what || what.labelSize) {
             textData.size = uniformArray(this.n, this.labelSize);
         }
-        if (what.labelColor) {
+        if (!what || what.labelColor) {
             var c = new Color(this.labelColor);
             textData.color = uniformArray3(this.n, c.r, c.g, c.b);
         }
@@ -81644,7 +81644,7 @@ function getDihedralData(position, params) {
         calcArcPoint(tmp, mid, inPlane1, cross, angle / 2.0);
         v3toArray(tmp, labelPosition, 3 * i);
         var nSegments = Math.ceil(angle / angleStep);
-        var nLines = nSegments + 2;
+        var nLines = nSegments + 4; // 4 straight lines plus segment edge
         var line1 = new Float32Array(nLines * 3);
         var line2 = new Float32Array(nLines * 3);
         var sector = new Float32Array(nSegments * 9);
@@ -81675,8 +81675,10 @@ function getDihedralData(position, params) {
             v3add(end, end, p3);
         }
         v3add(arcPoint, mid, inPlane1);
-        v3toArray(start, line1, 0);
-        v3toArray(arcPoint, line2, 0);
+        v3toArray(p1, line1, 0);
+        v3toArray(start, line2, 0);
+        v3toArray(start, line1, 3);
+        v3toArray(arcPoint, line2, 3);
         // Construct plane at start
         v3toArray(start, plane, 0);
         v3toArray(arcPoint, plane, 3);
@@ -81686,7 +81688,7 @@ function getDihedralData(position, params) {
         v3toArray(mid, plane, 15);
         var appendArcSection = function (a, j) {
             var si = j * 9;
-            var ai = (j + 1) * 3; // Lines offset by 1 due to first leg
+            var ai = (j + 2) * 3; // Lines offset by 1 due to first two straight sections
             v3toArray(mid, sector, si);
             v3toArray(arcPoint, sector, si + 3);
             v3toArray(arcPoint, line1, ai);
@@ -81699,8 +81701,10 @@ function getDihedralData(position, params) {
             appendArcSection(a, j++);
         }
         appendArcSection(angle, j++);
-        v3toArray(arcPoint, line1, (nLines - 1) * 3);
-        v3toArray(end, line2, (nLines - 1) * 3);
+        v3toArray(arcPoint, line1, (nLines - 2) * 3);
+        v3toArray(end, line2, (nLines - 2) * 3);
+        v3toArray(end, line1, (nLines - 1) * 3);
+        v3toArray(p4, line2, (nLines - 1) * 3);
         // Construct plane at end
         v3toArray(end, plane, 18);
         v3toArray(arcPoint, plane, 21);
@@ -81777,10 +81781,16 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
         MeasurementRepresentation$$1.call(this, structure, viewer, params);
         this.type = 'distance';
         this.parameters = Object.assign({
+            radialSegments: true,
+            openEnded: true,
+            disableImpostor: true,
             labelUnit: {
                 type: 'select',
                 rebuild: true,
                 options: { '': '', angstrom: 'angstrom', nm: 'nm' }
+            },
+            useCylinder: {
+                type: 'boolean', rebuild: true
             },
             atomPair: {
                 type: 'hidden', rebuild: true
@@ -81795,7 +81805,10 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
     DistanceRepresentation.prototype.init = function init (params) {
         var p = params || {};
         p.linewidth = defaults(p.linewidth, 5.0);
+        p.radiusType = defaults(p.radiusType, 'size');
+        p.radiusSize = defaults(p.radiusSize, 0.2);
         this.labelUnit = defaults(p.labelUnit, '');
+        this.useCylinder = defaults(p.useCylinder, false);
         this.atomPair = defaults(p.atomPair, []);
         MeasurementRepresentation$$1.prototype.init.call(this, p);
     };
@@ -81886,58 +81899,61 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
             bondSet: distanceData.bondSet,
             bondStore: distanceData.bondStore
         };
-        var bondData = this.getBondData(this.structureView, { position: true, color: true, picking: true }, bondParams);
-        this.lineBuffer = new WideLineBuffer(getFixedLengthDashData(bondData), this.getBufferParams({
-            linewidth: this.linewidth,
-            visible: this.lineVisible,
-            opacity: this.lineOpacity
-        }));
+        var bondData = this.getBondData(this.structureView, { position: true, color: true, picking: true, radius: this.useCylinder }, bondParams);
+        if (this.useCylinder) {
+            this.distanceBuffer = new CylinderBuffer(bondData, this.getBufferParams({
+                openEnded: this.openEnded,
+                radialSegments: this.radialSegments,
+                disableImpostor: this.disableImpostor,
+                dullInterior: true
+            }));
+        }
+        else {
+            this.distanceBuffer = new WideLineBuffer(getFixedLengthDashData(bondData), this.getBufferParams({
+                linewidth: this.linewidth,
+                visible: this.lineVisible,
+                opacity: this.lineOpacity
+            }));
+        }
         this.dataList.push({
             sview: this.structureView,
             bondSet: distanceData.bondSet,
             bondStore: distanceData.bondStore,
             position: distanceData.position,
-            bufferList: [this.textBuffer, this.lineBuffer]
+            bufferList: [this.textBuffer, this.distanceBuffer]
         });
     };
     DistanceRepresentation.prototype.updateData = function updateData (what, data) {
+        MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
         var bondParams = {
             bondSet: data.bondSet,
             bondStore: data.bondStore
         };
         var bondData = this.getBondData(data.sview, what, bondParams);
-        var lineData = {};
-        var textData = {};
-        var n = this.atomPair.length;
-        if (what.labelSize) {
-            textData.size = uniformArray(n, this.labelSize);
+        var distanceData = {};
+        if (!what || what.color) {
+            distanceData.color = bondData.color;
+            distanceData.color2 = bondData.color2;
         }
-        if (what.labelColor) {
-            var c = new Color(this.labelColor);
-            textData.color = uniformArray3(n, c.r, c.g, c.b);
+        if (!what || what.radius) {
+            distanceData.radius = bondData.radius;
         }
-        if (what.color) {
-            lineData.color = bondData.color;
-            lineData.color2 = bondData.color2;
-        }
-        if (what.radius || what.scale) {
-            lineData.radius = bondData.radius;
-        }
-        this.textBuffer.setAttributes(textData);
-        this.lineBuffer.setAttributes(lineData);
+        this.distanceBuffer.setAttributes(distanceData);
     };
     DistanceRepresentation.prototype.setParameters = function setParameters (params) {
         var rebuild = false;
         var what = {};
         MeasurementRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
-        if (params && params.lineOpacity) {
-            this.lineBuffer.setParameters({ opacity: params.lineOpacity });
-        }
-        if (params && params.opacity !== undefined) {
-            this.lineBuffer.setParameters({ opacity: this.lineOpacity });
-        }
-        if (params && params.linewidth) {
-            this.lineBuffer.setParameters({ linewidth: params.linewidth });
+        if (!this.useCylinder) {
+            if (params && params.lineOpacity) {
+                this.distanceBuffer.setParameters({ opacity: params.lineOpacity });
+            }
+            if (params && params.opacity !== undefined) {
+                this.distanceBuffer.setParameters({ opacity: this.lineOpacity });
+            }
+            if (params && params.linewidth) {
+                this.distanceBuffer.setParameters({ linewidth: params.linewidth });
+            }
         }
         return this;
     };
@@ -96585,7 +96601,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev0.0";
+var version$1 = "2.0.0-dev.1";
 
 /**
  * @file Version
