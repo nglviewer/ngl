@@ -157,7 +157,7 @@ class ViewerControls {
    * @return {undefined}
    */
   distance (z: number) {
-    this.viewer.camera.position.z = z
+    this.viewer.camera.position.z = Math.min(-1, z)
     this.viewer.updateZoom()
     this.changed()
   }
