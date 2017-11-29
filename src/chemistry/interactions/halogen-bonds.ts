@@ -12,7 +12,7 @@ import {
   addAtom, addFeature, createFeatureState,
 } from './features'
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
-import { calcMinAngle } from '../geometry'
+import { calcAngles } from '../geometry'
 
 const halBondElements = [17, 35, 53, 85]
 
@@ -98,13 +98,17 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
 
       const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
 
-      const halogenAngle = calcMinAngle(halogen, acceptor)
-      if (halogenAngle === undefined) return  // Angle must be defined
-      if (OptimalHalogenAngle - halogenAngle > maxHalogenBondAngle) return
+      const halogenAngles = calcAngles(halogen, acceptor)
+      if (halogenAngles.length !== 1) return  // Singly bonded halogen only
+      if (OptimalHalogenAngle - halogenAngles[0] > maxHalogenBondAngle) return
 
-      const acceptorAngle = calcMinAngle(acceptor, halogen)
-      if (acceptorAngle === undefined) return  // Angle must be defined
-      if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle) return
+      const acceptorAngles = calcAngles(acceptor, halogen)
+      if (acceptorAngles.length === 0) return  // Angle must be defined
+      let reject = false
+      acceptorAngles.forEach(acceptorAngle => {
+        if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle) reject = true
+      })
+      if (reject) return
 
       featureSet.setBits(i, j)
       contactStore.addContact(i, j, ContactType.HalogenBond)
