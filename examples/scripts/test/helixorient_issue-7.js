@@ -1,6 +1,6 @@
 
 stage.loadFile('data://4YVS.cif', {
-  assembly: 'AU',
+  defaultAssembly: 'AU',
   sele: '86-100:H'
 }).then(function (o) {
   o.addRepresentation('helixorient')

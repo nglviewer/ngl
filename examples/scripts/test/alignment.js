@@ -2,7 +2,7 @@
 Promise.all([
 
   stage.loadFile('data://3dqb.pdb', {
-    assembly: 'AU'
+    defaultAssembly: 'AU'
   }).then(function (o) {
     o.addRepresentation('cartoon', { color: 'lightgreen' })
     o.addRepresentation('ball+stick', { sele: 'hetero', color: 'lightgreen' })
