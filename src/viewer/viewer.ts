@@ -1124,7 +1124,7 @@ export default class Viewer {
       // The following equation varies the sampleWeight per sample
       // so that it is uniformly distributed across a range of values
       // whose rounding errors cancel each other out.
-      const uniformCenteredDistribution = (-0.5 + (i + 0.5) / offsetList.length)
+      const uniformCenteredDistribution = -0.5 + (i + 0.5) / offsetList.length
       sampleWeight += roundingRange * uniformCenteredDistribution
       this.compositeUniforms.scale.value = sampleWeight
 
@@ -1137,9 +1137,8 @@ export default class Viewer {
     this.compositeUniforms.scale.value = 1.0
     this.compositeUniforms.tForeground.value = this.holdTarget.texture
 
+    this.camera.clearViewOffset()
     this.renderer.render(this.compositeScene, this.compositeCamera, null!, true)
-
-    this.camera.view = null!  // TODO
   }
 
   render (picking = false) {
