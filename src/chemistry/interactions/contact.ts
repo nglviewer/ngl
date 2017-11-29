@@ -71,7 +71,7 @@ export const ContactDefaultParams = {
 }
 
 export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy) {
-  return (
+  return ap1.structure === ap2.structure && (
     ap1.modelIndex !== ap2.modelIndex ||
     ap1.residueIndex === ap2.residueIndex ||
     (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc)
