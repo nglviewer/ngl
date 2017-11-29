@@ -17,6 +17,7 @@ import Selection from '../selection/selection.js'
 import BondStore from '../store/bond-store.js'
 import TextBuffer from '../buffer/text-buffer.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
+import CylinderBuffer from '../buffer/cylinder-buffer.js'
 import { getFixedLengthDashData } from '../geometry/dash'
 
 /**
@@ -62,10 +63,16 @@ class DistanceRepresentation extends MeasurementRepresentation {
     this.type = 'distance'
 
     this.parameters = Object.assign({
+      radialSegments: true,
+      openEnded: true,
+      disableImpostor: true,
       labelUnit: {
         type: 'select',
         rebuild: true,
         options: { '': '', angstrom: 'angstrom', nm: 'nm' }
+      },
+      useCylinder: {
+        type: 'boolean', rebuild: true
       },
       atomPair: {
         type: 'hidden', rebuild: true
@@ -78,8 +85,11 @@ class DistanceRepresentation extends MeasurementRepresentation {
   init (params) {
     var p = params || {}
     p.linewidth = defaults(p.linewidth, 5.0)
+    p.radiusType = defaults(p.radiusType, 'size')
+    p.radiusSize = defaults(p.radiusSize, 0.2)
 
     this.labelUnit = defaults(p.labelUnit, '')
+    this.useCylinder = defaults(p.useCylinder, false)
     this.atomPair = defaults(p.atomPair, [])
 
     super.init(p)
@@ -195,59 +205,61 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
     var bondData = this.getBondData(
       this.structureView,
-      { position: true, color: true, picking: true },
+      { position: true, color: true, picking: true, radius: this.useCylinder },
       bondParams
     )
 
-    this.lineBuffer = new WideLineBuffer(
-      getFixedLengthDashData(bondData),
-      this.getBufferParams({
-        linewidth: this.linewidth,
-        visible: this.lineVisible,
-        opacity: this.lineOpacity
-      })
-    )
+    if (this.useCylinder) {
+      this.distanceBuffer = new CylinderBuffer(
+        bondData,
+        this.getBufferParams({
+          openEnded: this.openEnded,
+          radialSegments: this.radialSegments,
+          disableImpostor: this.disableImpostor,
+          dullInterior: true
+        })
+      )
+    } else {
+      this.distanceBuffer = new WideLineBuffer(
+        getFixedLengthDashData(bondData),
+        this.getBufferParams({
+          linewidth: this.linewidth,
+          visible: this.lineVisible,
+          opacity: this.lineOpacity
+        })
+      )
+    }
 
     this.dataList.push({
       sview: this.structureView,
       bondSet: distanceData.bondSet,
       bondStore: distanceData.bondStore,
       position: distanceData.position,
-      bufferList: [ this.textBuffer, this.lineBuffer ]
+      bufferList: [ this.textBuffer, this.distanceBuffer ]
     })
   }
 
   updateData (what, data) {
+    super.updateData(what, data)
+
     var bondParams = {
       bondSet: data.bondSet,
       bondStore: data.bondStore
     }
 
     var bondData = this.getBondData(data.sview, what, bondParams)
-    var lineData = {}
-    var textData = {}
-    var n = this.atomPair.length
+    var distanceData = {}
 
-    if (what.labelSize) {
-      textData.size = uniformArray(n, this.labelSize)
+    if (!what || what.color) {
+      distanceData.color = bondData.color
+      distanceData.color2 = bondData.color2
     }
 
-    if (what.labelColor) {
-      var c = new Color(this.labelColor)
-      textData.color = uniformArray3(n, c.r, c.g, c.b)
+    if (!what || what.radius) {
+      distanceData.radius = bondData.radius
     }
 
-    if (what.color) {
-      lineData.color = bondData.color
-      lineData.color2 = bondData.color2
-    }
-
-    if (what.radius || what.scale) {
-      lineData.radius = bondData.radius
-    }
-
-    this.textBuffer.setAttributes(textData)
-    this.lineBuffer.setAttributes(lineData)
+    this.distanceBuffer.setAttributes(distanceData)
   }
 
   setParameters (params) {
@@ -256,16 +268,16 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
     super.setParameters(params, what, rebuild)
 
-    if (params && params.lineOpacity) {
-      this.lineBuffer.setParameters({ opacity: params.lineOpacity })
-    }
-
-    if (params && params.opacity !== undefined) {
-      this.lineBuffer.setParameters({ opacity: this.lineOpacity })
-    }
-
-    if (params && params.linewidth) {
-      this.lineBuffer.setParameters({ linewidth: params.linewidth })
+    if (!this.useCylinder) {
+      if (params && params.lineOpacity) {
+        this.distanceBuffer.setParameters({ opacity: params.lineOpacity })
+      }
+      if (params && params.opacity !== undefined) {
+        this.distanceBuffer.setParameters({ opacity: this.lineOpacity })
+      }
+      if (params && params.linewidth) {
+        this.distanceBuffer.setParameters({ linewidth: params.linewidth })
+      }
     }
 
     return this

@@ -168,11 +168,11 @@ class MeasurementRepresentation extends StructureRepresentation {
 
   updateData (what, data) {
     const textData = {}
-    if (what.labelSize) {
+    if (!what || what.labelSize) {
       textData.size = uniformArray(this.n, this.labelSize)
     }
 
-    if (what.labelColor) {
+    if (!what || what.labelColor) {
       const c = new Color(this.labelColor)
       textData.color = uniformArray3(this.n, c.r, c.g, c.b)
     }
