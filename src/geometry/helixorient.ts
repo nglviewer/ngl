@@ -30,7 +30,7 @@ class Helixorient {
 
   getCenterIterator (smooth = 0) {
     const center = this.getPosition().center
-    const n = center.length / 3
+    const size = center.length / 3
 
     let i = 0
     let j = -1
@@ -49,12 +49,12 @@ class Helixorient {
     }
 
     function get (idx: number) {
-      idx = Math.min(n - 1, Math.max(0, idx))
+      idx = Math.min(size - 1, Math.max(0, idx))
       const v = cache[ i % 4 ]
       const idx3 = 3 * idx
       v.fromArray(center as any, idx3)  // TODO
       if (smooth) {
-        const w = Math.min(smooth, idx, n - idx - 1)
+        const w = Math.min(smooth, idx, size - idx - 1)
         for (let k = 1; k <= w; ++k) {
           const l = k * 3
           const t = (w + 1 - k) / (w + 1)
@@ -75,12 +75,7 @@ class Helixorient {
       j = -1
     }
 
-    return {
-      size: n,
-      next: next,
-      get: get,
-      reset: reset
-    }
+    return { size, next, get, reset }
   }
 
   getColor (params: { scheme: string } & ColormakerParameters) {
@@ -91,15 +86,15 @@ class Helixorient {
 
     const col = new Float32Array(n * 3)
 
-    var p = params || {}
+    const p = params || {}
     p.structure = structure
 
-    var colormaker = ColormakerRegistry.getScheme(p)
+    const colormaker = ColormakerRegistry.getScheme(p)
 
-    var rp = structure.getResidueProxy()
-    var ap = structure.getAtomProxy()
+    const rp = structure.getResidueProxy()
+    const ap = structure.getAtomProxy()
 
-    for (var i = 0; i < n; ++i) {
+    for (let i = 0; i < n; ++i) {
       rp.index = residueIndexStart + i
       ap.index = rp.traceAtomIndex
 
@@ -148,9 +143,7 @@ class Helixorient {
       size[ i ] = radiusFactory.atomRadius(ap)
     }
 
-    return {
-      'size': size
-    }
+    return { size }
   }
 
   getPosition () {
