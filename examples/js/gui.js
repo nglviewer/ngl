@@ -610,7 +610,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
   }
 
   stage.signals.fullscreenChanged.add(function (isFullscreen) {
-    var icon = menuConfig[ 3 ].children[ 0 ]
+    var icon = menuConfig[ 6 ].children[ 0 ]
     if (isFullscreen) {
       icon.switchClass('compress', 'expand')
     } else {
@@ -618,7 +618,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     }
   })
 
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var createDivider = UI.MenubarHelper.createDivider
@@ -646,7 +646,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
 }
 
 NGL.MenubarExamplesWidget = function (stage) {
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var optionsPanel = UI.MenubarHelper.createOptionsPanel([])
@@ -706,13 +706,13 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
       .setWidgetPosition( 50, 80 )
   }
 
-    // export image
+  // export image
 
   var preferencesWidget = new NGL.PreferencesWidget(stage, preferences)
     .setDisplay('none')
     .attach()
 
-    // overview
+  // overview
 
   var overviewWidget = new NGL.OverviewWidget(stage, preferences)
     .setDisplay('none')
@@ -722,7 +722,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     onOverviewOptionClick()
   }
 
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var createDivider = UI.MenubarHelper.createDivider
