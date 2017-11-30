@@ -58544,6 +58544,7 @@ function addChargedContacts(structure, contacts, params) {
     var maxPiStackingAngle = defaults(params.maxPiStackingAngle, ContactDefaultParams.maxPiStackingAngle);
     var maxCationPiDist = defaults(params.maxCationPiDist, ContactDefaultParams.maxCationPiDist);
     var maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset);
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var maxDistance = Math.max(maxSaltBridgeDist + 2, maxPiStackingDist, maxCationPiDist);
     // const maxSaltBridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
     var maxPiStackingDistSq = maxPiStackingDist * maxPiStackingDist;
@@ -58608,7 +58609,7 @@ function addChargedContacts(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2))
+            if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
             var ti = types[i];
             var tj = types[j];
@@ -58816,6 +58817,7 @@ function addHydrogenBonds(structure, contacts, params) {
     var maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle));
     var maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral));
     var maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral));
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var maxDist = Math.max(maxHbondDist, maxHbondSulfurDist);
     var maxHbondDistSq = maxHbondDist * maxHbondDist;
     var features = contacts.features;
@@ -58847,7 +58849,7 @@ function addHydrogenBonds(structure, contacts, params) {
             var k = ref[1];
             donor.index = atomSets[l][0];
             acceptor.index = atomSets[k][0];
-            if (invalidAtomContact(donor, acceptor))
+            if (invalidAtomContact(donor, acceptor, masterIdx))
                 { return; }
             if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq)
                 { return; }
@@ -59035,6 +59037,7 @@ function addMetalComplexation(structure, contacts, params) {
     if ( params === void 0 ) params = {};
 
     var maxMetalDist = defaults(params.maxMetalDist, ContactDefaultParams.maxMetalDist);
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var features = contacts.features;
     var spatialHash = contacts.spatialHash;
     var contactStore = contacts.contactStore;
@@ -59054,7 +59057,7 @@ function addMetalComplexation(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2))
+            if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
             if (isMetalComplex(types[i], types[j])) {
                 featureSet.setBits(i, j);
@@ -59101,6 +59104,7 @@ function addHydrophobicContacts(structure, contacts, params) {
     if ( params === void 0 ) params = {};
 
     var maxHydrophobicDist = defaults(params.maxHydrophobicDist, ContactDefaultParams.maxHydrophobicDist);
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var features = contacts.features;
     var spatialHash = contacts.spatialHash;
     var contactStore = contacts.contactStore;
@@ -59120,7 +59124,7 @@ function addHydrophobicContacts(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2))
+            if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
             if (isHydrophobicContact(types[i], types[j])) {
                 featureSet.setBits(i, j);
@@ -59187,6 +59191,7 @@ function addHalogenBonds(structure, contacts, params) {
 
     var maxHalogenBondDist = defaults(params.maxHalogenBondDist, ContactDefaultParams.maxHalogenBondDist);
     var maxHalogenBondAngle = degToRad(defaults(params.maxHalogenBondAngle, ContactDefaultParams.maxHalogenBondAngle));
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var features = contacts.features;
     var spatialHash = contacts.spatialHash;
     var contactStore = contacts.contactStore;
@@ -59206,7 +59211,7 @@ function addHalogenBonds(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2))
+            if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
             if (!isHalogenBond(types[i], types[j]))
                 { return; }
@@ -59389,10 +59394,15 @@ var ContactDefaultParams = {
     maxHalogenBondDist: 4.0,
     maxHalogenBondAngle: 30,
     maxMetalDist: 3.0,
-    refineSaltBridges: true
+    refineSaltBridges: true,
+    masterModelIndex: -1
 };
-function invalidAtomContact(ap1, ap2) {
-    return ap1.structure === ap2.structure && (ap1.modelIndex !== ap2.modelIndex ||
+function isMasterContact(ap1, ap2, masterIdx) {
+    return ((ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
+        (ap2.modelIndex === masterIdx && ap1.modelIndex !== masterIdx));
+}
+function invalidAtomContact(ap1, ap2, masterIdx) {
+    return !isMasterContact(ap1, ap2, masterIdx) && (ap1.modelIndex !== ap2.modelIndex ||
         ap1.residueIndex === ap2.residueIndex ||
         (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc));
 }
@@ -67301,6 +67311,120 @@ AssemblyPart.prototype.getInstanceList = function getInstanceList () {
 Object.defineProperties( AssemblyPart.prototype, prototypeAccessors$1$2 );
 
 /**
+ * @file Structure Builder
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+var StructureBuilder = function StructureBuilder(structure) {
+    this.structure = structure;
+    this.currentModelindex = null;
+    this.currentChainid = null;
+    this.currentResname = null;
+    this.currentResno = null;
+    this.currentInscode = null;
+    this.currentHetero = null;
+    this.previousResname = '';
+    this.previousHetero = null;
+    this.ai = -1;
+    this.ri = -1;
+    this.ci = -1;
+    this.mi = -1;
+};
+StructureBuilder.prototype.addResidueType = function addResidueType (ri) {
+    var atomStore = this.structure.atomStore;
+    var residueStore = this.structure.residueStore;
+    var residueMap = this.structure.residueMap;
+    var count = residueStore.atomCount[ri];
+    var offset = residueStore.atomOffset[ri];
+    var atomTypeIdList = new Array(count);
+    for (var i = 0; i < count; ++i) {
+        atomTypeIdList[i] = atomStore.atomTypeId[offset + i];
+    }
+    residueStore.residueTypeId[ri] = residueMap.add(this.previousResname, atomTypeIdList, this.previousHetero // TODO
+    );
+};
+StructureBuilder.prototype.addAtom = function addAtom (modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode) {
+    var atomStore = this.structure.atomStore;
+    var residueStore = this.structure.residueStore;
+    var chainStore = this.structure.chainStore;
+    var modelStore = this.structure.modelStore;
+    var addModel = false;
+    var addChain = false;
+    var addResidue = false;
+    if (this.currentModelindex !== modelindex) {
+        addModel = true;
+        addChain = true;
+        addResidue = true;
+        this.mi += 1;
+        this.ci += 1;
+        this.ri += 1;
+    }
+    else if (this.currentChainid !== chainid) {
+        addChain = true;
+        addResidue = true;
+        this.ci += 1;
+        this.ri += 1;
+    }
+    else if (this.currentResno !== resno || this.currentResname !== resname || this.currentInscode !== inscode) {
+        addResidue = true;
+        this.ri += 1;
+    }
+    this.ai += 1;
+    if (addModel) {
+        modelStore.growIfFull();
+        modelStore.chainOffset[this.mi] = this.ci;
+        modelStore.chainCount[this.mi] = 0;
+        modelStore.count += 1;
+        chainStore.modelIndex[this.ci] = this.mi;
+    }
+    if (addChain) {
+        chainStore.growIfFull();
+        chainStore.setChainname(this.ci, chainname);
+        chainStore.setChainid(this.ci, chainid);
+        chainStore.residueOffset[this.ci] = this.ri;
+        chainStore.residueCount[this.ci] = 0;
+        chainStore.count += 1;
+        chainStore.modelIndex[this.ci] = this.mi;
+        modelStore.chainCount[this.mi] += 1;
+        residueStore.chainIndex[this.ri] = this.ci;
+    }
+    if (addResidue) {
+        this.previousResname = this.currentResname;
+        this.previousHetero = this.currentHetero;
+        if (this.ri > 0)
+            { this.addResidueType(this.ri - 1); }
+        residueStore.growIfFull();
+        residueStore.resno[this.ri] = resno;
+        if (sstruc !== undefined) {
+            residueStore.sstruc[this.ri] = sstruc.charCodeAt(0);
+        }
+        if (inscode !== undefined) {
+            residueStore.inscode[this.ri] = inscode.charCodeAt(0);
+        }
+        residueStore.atomOffset[this.ri] = this.ai;
+        residueStore.atomCount[this.ri] = 0;
+        residueStore.count += 1;
+        residueStore.chainIndex[this.ri] = this.ci;
+        chainStore.residueCount[this.ci] += 1;
+    }
+    atomStore.count += 1;
+    atomStore.residueIndex[this.ai] = this.ri;
+    residueStore.atomCount[this.ri] += 1;
+    this.currentModelindex = modelindex;
+    this.currentChainid = chainid;
+    this.currentResname = resname;
+    this.currentResno = resno;
+    this.currentInscode = inscode;
+    this.currentHetero = hetero;
+};
+StructureBuilder.prototype.finalize = function finalize () {
+    this.previousResname = this.currentResname;
+    this.previousHetero = this.currentHetero;
+    if (this.ri > -1)
+        { this.addResidueType(this.ri); }
+};
+
+/**
  * @file Structure Utils
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -68102,7 +68226,7 @@ function guessElement(atomName) {
  * @return {undefined}
  */
 function assignResidueTypeBonds(structure) {
-    // if( Debug ) Log.time( "assignResidueTypeBonds" );
+    // if( Debug ) Log.time( "assignResidueTypeBonds" )
     var bondHash = structure.bondHash; // TODO
     var countArray = bondHash.countArray;
     var offsetArray = bondHash.offsetArray;
@@ -68145,7 +68269,44 @@ function assignResidueTypeBonds(structure) {
             bondOrders: bondOrders
         };
     });
-    // if( Debug ) Log.timeEnd( "assignResidueTypeBonds" );
+    // if( Debug ) Log.timeEnd( "assignResidueTypeBonds" )
+}
+function concatStructures(name) {
+    var structures = [], len = arguments.length - 1;
+    while ( len-- > 0 ) structures[ len ] = arguments[ len + 1 ];
+
+    if (Debug)
+        { Log.time("concatStructures"); }
+    var s = new Structure(name, '');
+    var sb = new StructureBuilder(s);
+    var atomStore = s.atomStore;
+    var atomMap = s.atomMap;
+    atomStore.addField('formalCharge', 1, 'int8');
+    atomStore.addField('partialCharge', 1, 'float32');
+    var idx = 0;
+    var modelCount = 0;
+    structures.forEach(function (structure) {
+        structure.eachAtom(function (a) {
+            atomStore.growIfFull();
+            atomStore.atomTypeId[idx] = atomMap.add(a.atomname);
+            atomStore.x[idx] = a.x;
+            atomStore.y[idx] = a.y;
+            atomStore.z[idx] = a.z;
+            atomStore.serial[idx] = a.serial;
+            atomStore.formalCharge[idx] = a.formalCharge;
+            atomStore.partialCharge[idx] = a.partialCharge;
+            sb.addAtom(a.modelIndex + modelCount, a.chainname, a.chainid, a.resname, a.resno, a.hetero === 1, a.sstruc, a.inscode);
+            idx += 1;
+        });
+        modelCount += structure.modelStore.count;
+    });
+    sb.finalize();
+    s.finalizeAtoms();
+    calculateBonds(s); // TODO use bonds from input structures
+    s.finalizeBonds();
+    if (Debug)
+        { Log.timeEnd("concatStructures"); }
+    return s;
 }
 
 /**
@@ -81301,6 +81462,9 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             refineSaltBridges: {
                 type: 'boolean', rebuild: true
             },
+            masterModelIndex: {
+                type: 'integer', max: 1000, min: -1, rebuild: true
+            },
             radialSegments: true,
             disableImpostor: true
         }, this.parameters);
@@ -81340,6 +81504,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30);
         this.maxMetalDist = defaults(p.maxMetalDist, 3.0);
         this.refineSaltBridges = defaults(p.refineSaltBridges, true);
+        this.masterModelIndex = defaults(p.masterModelIndex, -1);
         StructureRepresentation$$1.prototype.init.call(this, p);
     };
     ContactRepresentation.prototype.getAtomRadius = function getAtomRadius () {
@@ -81363,7 +81528,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxHalogenBondDist: this.maxHalogenBondDist,
             maxHalogenBondAngle: this.maxHalogenBondAngle,
             maxMetalDist: this.maxMetalDist,
-            refineSaltBridges: this.refineSaltBridges
+            refineSaltBridges: this.refineSaltBridges,
+            masterModelIndex: this.masterModelIndex
         };
         var dataParams = {
             hydrogenBond: this.hydrogenBond,
@@ -86107,120 +86273,6 @@ Parser.prototype._afterParse = function _afterParse () {
 };
 
 Object.defineProperties( Parser.prototype, prototypeAccessors$31 );
-
-/**
- * @file Structure Builder
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-var StructureBuilder = function StructureBuilder(structure) {
-    this.structure = structure;
-    this.currentModelindex = null;
-    this.currentChainid = null;
-    this.currentResname = null;
-    this.currentResno = null;
-    this.currentInscode = null;
-    this.currentHetero = null;
-    this.previousResname = '';
-    this.previousHetero = null;
-    this.ai = -1;
-    this.ri = -1;
-    this.ci = -1;
-    this.mi = -1;
-};
-StructureBuilder.prototype.addResidueType = function addResidueType (ri) {
-    var atomStore = this.structure.atomStore;
-    var residueStore = this.structure.residueStore;
-    var residueMap = this.structure.residueMap;
-    var count = residueStore.atomCount[ri];
-    var offset = residueStore.atomOffset[ri];
-    var atomTypeIdList = new Array(count);
-    for (var i = 0; i < count; ++i) {
-        atomTypeIdList[i] = atomStore.atomTypeId[offset + i];
-    }
-    residueStore.residueTypeId[ri] = residueMap.add(this.previousResname, atomTypeIdList, this.previousHetero // TODO
-    );
-};
-StructureBuilder.prototype.addAtom = function addAtom (modelindex, chainname, chainid, resname, resno, hetero, sstruc, inscode) {
-    var atomStore = this.structure.atomStore;
-    var residueStore = this.structure.residueStore;
-    var chainStore = this.structure.chainStore;
-    var modelStore = this.structure.modelStore;
-    var addModel = false;
-    var addChain = false;
-    var addResidue = false;
-    if (this.currentModelindex !== modelindex) {
-        addModel = true;
-        addChain = true;
-        addResidue = true;
-        this.mi += 1;
-        this.ci += 1;
-        this.ri += 1;
-    }
-    else if (this.currentChainid !== chainid) {
-        addChain = true;
-        addResidue = true;
-        this.ci += 1;
-        this.ri += 1;
-    }
-    else if (this.currentResno !== resno || this.currentResname !== resname || this.currentInscode !== inscode) {
-        addResidue = true;
-        this.ri += 1;
-    }
-    this.ai += 1;
-    if (addModel) {
-        modelStore.growIfFull();
-        modelStore.chainOffset[this.mi] = this.ci;
-        modelStore.chainCount[this.mi] = 0;
-        modelStore.count += 1;
-        chainStore.modelIndex[this.ci] = this.mi;
-    }
-    if (addChain) {
-        chainStore.growIfFull();
-        chainStore.setChainname(this.ci, chainname);
-        chainStore.setChainid(this.ci, chainid);
-        chainStore.residueOffset[this.ci] = this.ri;
-        chainStore.residueCount[this.ci] = 0;
-        chainStore.count += 1;
-        chainStore.modelIndex[this.ci] = this.mi;
-        modelStore.chainCount[this.mi] += 1;
-        residueStore.chainIndex[this.ri] = this.ci;
-    }
-    if (addResidue) {
-        this.previousResname = this.currentResname;
-        this.previousHetero = this.currentHetero;
-        if (this.ri > 0)
-            { this.addResidueType(this.ri - 1); }
-        residueStore.growIfFull();
-        residueStore.resno[this.ri] = resno;
-        if (sstruc !== undefined) {
-            residueStore.sstruc[this.ri] = sstruc.charCodeAt(0);
-        }
-        if (inscode !== undefined) {
-            residueStore.inscode[this.ri] = inscode.charCodeAt(0);
-        }
-        residueStore.atomOffset[this.ri] = this.ai;
-        residueStore.atomCount[this.ri] = 0;
-        residueStore.count += 1;
-        residueStore.chainIndex[this.ri] = this.ci;
-        chainStore.residueCount[this.ci] += 1;
-    }
-    atomStore.count += 1;
-    atomStore.residueIndex[this.ai] = this.ri;
-    residueStore.atomCount[this.ri] += 1;
-    this.currentModelindex = modelindex;
-    this.currentChainid = chainid;
-    this.currentResname = resname;
-    this.currentResno = resno;
-    this.currentInscode = inscode;
-    this.currentHetero = hetero;
-};
-StructureBuilder.prototype.finalize = function finalize () {
-    this.previousResname = this.currentResname;
-    this.previousHetero = this.currentHetero;
-    if (this.ri > -1)
-        { this.addResidueType(this.ri); }
-};
 
 /**
  * @file Structure Parser
@@ -96601,7 +96653,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.1";
+var version$1 = "2.0.0-dev.2";
 
 /**
  * @file Version
@@ -96633,5 +96685,5 @@ if (!window.Promise) {
     window.Promise = promise;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
