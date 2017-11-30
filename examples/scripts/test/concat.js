@@ -10,8 +10,14 @@ Promise.all([
   )
   var comp = stage.addComponentFromObject(cs)
   comp.addRepresentation('cartoon')
-  comp.addRepresentation('contact', { masterModelIndex: 0, hydrophobic: true })
-  comp.addRepresentation('ball+stick', { sele: 'RET and :A' })
+  comp.addRepresentation('contact', {
+    masterModelIndex: 0,
+    hydrophobic: true
+  })
+  comp.addRepresentation('ball+stick', {
+    sele: 'RET and :A',
+    multipleBond: 'symmetric'
+  })
   comp.autoView('RET and :A')
   stage.setFocus(95)
 })

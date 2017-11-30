@@ -992,7 +992,10 @@ export function concatStructures (name: string, ...structures: Structure[]) {
   atomStore.addField('formalCharge', 1, 'int8')
   atomStore.addField('partialCharge', 1, 'float32')
 
+  const atomIndexDict: { [k: number]: number } = {}
+
   let idx = 0
+  let atomCount = 0
   let modelCount = 0
   structures.forEach(structure => {
     structure.eachAtom(a => {
@@ -1017,15 +1020,35 @@ export function concatStructures (name: string, ...structures: Structure[]) {
         a.inscode
       )
 
+      atomIndexDict[a.index + atomCount] = idx
       idx += 1
     })
+    atomCount += structure.atomStore.count
     modelCount += structure.modelStore.count
   })
 
+  const bondStore = s.bondStore
+  const a1 = s.getAtomProxy()
+  const a2 = s.getAtomProxy()
+
+  atomCount = 0
+  structures.forEach(structure => {
+    structure.eachBond(b => {
+      a1.index = atomIndexDict[ b.atomIndex1 + atomCount ]
+      a2.index = atomIndexDict[ b.atomIndex2 + atomCount ]
+      bondStore.addBond(a1, a2, b.bondOrder)
+    })
+    atomCount += structure.atomStore.count
+  })
+
   sb.finalize()
+
+  calculateBondsBetween(s, true)  // calculate backbone bonds
+  calculateBondsWithin(s, true)  // calculate rung bonds
+
   s.finalizeAtoms()
-  calculateBonds(s)  // TODO use bonds from input structures
   s.finalizeBonds()
+  assignResidueTypeBonds(s)
 
   if( Debug ) Log.timeEnd( "concatStructures" )
 
