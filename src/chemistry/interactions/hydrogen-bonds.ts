@@ -186,8 +186,8 @@ export interface HydrogenBondParams {
   maxHbondSulfurDist?: number
   maxHbondAccAngle?: number
   maxHbondDonAngle?: number
-  maxHbondAccDihedral?: number
-  maxHbondDonDihedral?: number
+  maxHbondAccPlaneAngle?: number
+  maxHbondDonPlaneAngle?: number
   backboneHbond?: boolean
   waterHbond?: boolean
   masterModelIndex?: number
@@ -201,8 +201,8 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const maxHbondSulfurDist = defaults(params.maxHbondSulfurDist, ContactDefaultParams.maxHbondSulfurDist)
   const maxHbondAccAngle = degToRad(defaults(params.maxHbondAccAngle, ContactDefaultParams.maxHbondAccAngle))
   const maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle))
-  const maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral))
-  const maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral))
+  const maxHbondAccPlaneAngle = degToRad(defaults(params.maxHbondAccPlaneAngle, ContactDefaultParams.maxHbondAccPlaneAngle))
+  const maxHbondDonPlaneAngle = degToRad(defaults(params.maxHbondDonPlaneAngle, ContactDefaultParams.maxHbondDonPlaneAngle))
   const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const maxDist = Math.max(maxHbondDist, maxHbondSulfurDist)
@@ -244,7 +244,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(donor, acceptor)
-        if (outOfPlane !== undefined && outOfPlane > maxHbondDonDihedral) return
+        if (outOfPlane !== undefined && outOfPlane > maxHbondDonPlaneAngle) return
       }
 
       const acceptorAngles = calcAngles(acceptor, donor)
@@ -256,7 +256,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(acceptor, donor)
-        if (outOfPlane !== undefined && outOfPlane > maxHbondAccDihedral) return
+        if (outOfPlane !== undefined && outOfPlane > maxHbondAccPlaneAngle) return
       }
 
       featureSet.setBits(l, k)
