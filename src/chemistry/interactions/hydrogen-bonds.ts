@@ -8,7 +8,7 @@ import { degToRad } from '../../math/math-utils'
 import Structure from '../../structure/structure'
 import AtomProxy from '../../proxy/atom-proxy'
 import { valenceModel } from '../../structure/data'
-import { Angles, AtomGeometry, calcMinAngle, calcPlaneAngle } from '../geometry'
+import { Angles, AtomGeometry, calcAngles, calcPlaneAngle } from '../geometry'
 import {
   Features, FeatureType,
   addAtom, addFeature, createFeatureState,
@@ -236,22 +236,23 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       if (invalidAtomContact(donor, acceptor, masterIdx)) return
       if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq) return
 
-      const donorAngle = calcMinAngle(donor, acceptor)
-      if (donorAngle !== undefined) {
-        const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
-        if (Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle) return
-      }
+      const donorAngles = calcAngles(donor, acceptor)
+      const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
+      if (donorAngles.some(donorAngle => {
+        return Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle
+      })) return
 
       if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(donor, acceptor)
         if (outOfPlane !== undefined && outOfPlane > maxHbondDonDihedral) return
       }
 
-      const acceptorAngle = calcMinAngle(acceptor, donor)
-      if (acceptorAngle !== undefined) {
-        const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
-        if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHbondAccAngle) return
-      }
+      const acceptorAngles = calcAngles(acceptor, donor)
+      const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
+      if (acceptorAngles.some(acceptorAngle => {
+        // Do not limit large acceptor angles
+        return idealAcceptorAngle - acceptorAngle > maxHbondAccAngle
+      })) return
 
       if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(acceptor, donor)
