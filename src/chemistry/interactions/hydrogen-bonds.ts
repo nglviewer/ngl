@@ -237,12 +237,10 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq) return
 
       const donorAngles = calcAngles(donor, acceptor)
-      let reject = false
       const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)
-      donorAngles.forEach(donorAngle => {
-        if (Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle) reject = true
-      })
-      if (reject) return
+      if (donorAngles.some(donorAngle => {
+        return Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle
+      })) return
 
       if (idealGeometry[donor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(donor, acceptor)
@@ -251,10 +249,10 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       const acceptorAngles = calcAngles(acceptor, donor)
       const idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120)
-      acceptorAngles.forEach(acceptorAngle => {
-        if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHbondAccAngle) reject = true
-      })
-      if (reject) return
+      if (acceptorAngles.some(acceptorAngle => {
+        // Do not limit large acceptor angles
+        return idealAcceptorAngle - acceptorAngle > maxHbondAccAngle
+      })) return
 
       if (idealGeometry[acceptor.index] === AtomGeometry.Trigonal){
         const outOfPlane = calcPlaneAngle(acceptor, donor)

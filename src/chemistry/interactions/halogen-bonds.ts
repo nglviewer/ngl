@@ -99,16 +99,17 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
 
       const halogenAngles = calcAngles(halogen, acceptor)
-      if (halogenAngles.length !== 1) return  // Singly bonded halogen only
+      // Singly bonded halogen only (not bromide ion for example)
+      if (halogenAngles.length !== 1) return
       if (OptimalHalogenAngle - halogenAngles[0] > maxHalogenBondAngle) return
 
       const acceptorAngles = calcAngles(acceptor, halogen)
-      if (acceptorAngles.length === 0) return  // Angle must be defined
-      let reject = false
-      acceptorAngles.forEach(acceptorAngle => {
-        if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle) reject = true
-      })
-      if (reject) return
+      // Angle must be defined. Excludes water as acceptor. Debatable
+      if (acceptorAngles.length === 0) return
+      if (acceptorAngles.some(acceptorAngle => {
+        return (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle)
+      })) return
+
 
       featureSet.setBits(i, j)
       contactStore.addContact(i, j, ContactType.HalogenBond)
