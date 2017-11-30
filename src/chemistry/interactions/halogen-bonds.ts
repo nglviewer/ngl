@@ -61,8 +61,9 @@ function isHalogenBond (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface HalogenBondsParams {
-  maxHalogenBondDist?: number,
+  maxHalogenBondDist?: number
   maxHalogenBondAngle?: number
+  masterModelIndex?: number
 }
 
 // http://www.pnas.org/content/101/48/16789.full
@@ -75,6 +76,7 @@ const OptimalAcceptorAngle = degToRad(120)
 export function addHalogenBonds (structure: Structure, contacts: Contacts, params: HalogenBondsParams = {}) {
   const maxHalogenBondDist = defaults(params.maxHalogenBondDist, ContactDefaultParams.maxHalogenBondDist)
   const maxHalogenBondAngle = degToRad(defaults(params.maxHalogenBondAngle, ContactDefaultParams.maxHalogenBondAngle))
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -91,7 +93,7 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
       ap1.index = atomSets[ i ][ 0 ]
       ap2.index = atomSets[ j ][ 0 ]
 
-      if (invalidAtomContact(ap1, ap2)) return
+      if (invalidAtomContact(ap1, ap2, masterIdx)) return
       if (!isHalogenBond(types[ i ], types[ j ])) return
 
       const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]

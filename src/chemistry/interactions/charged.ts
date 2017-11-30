@@ -177,6 +177,7 @@ export interface ChargedContactsParams {
   maxPiStackingAngle?: number
   maxCationPiDist?: number
   maxCationPiOffset?: number
+  masterModelIndex?: number
 }
 
 export function addChargedContacts (structure: Structure, contacts: Contacts, params: ChargedContactsParams = {}) {
@@ -186,6 +187,7 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
   const maxPiStackingAngle = defaults(params.maxPiStackingAngle, ContactDefaultParams.maxPiStackingAngle)
   const maxCationPiDist = defaults(params.maxCationPiDist, ContactDefaultParams.maxCationPiDist)
   const maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset)
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const maxDistance = Math.max(maxSaltBridgeDist + 2, maxPiStackingDist, maxCationPiDist)
   // const maxSaltBridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
@@ -254,7 +256,7 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
       ap1.index = atomSets[ i ][ 0 ]
       ap2.index = atomSets[ j ][ 0 ]
 
-      if (invalidAtomContact(ap1, ap2)) return
+      if (invalidAtomContact(ap1, ap2, masterIdx)) return
 
       const ti = types[ i ]
       const tj = types[ j ]

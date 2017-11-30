@@ -13,6 +13,7 @@ import Kdtree from '../geometry/kdtree'
 import { getSymmetryOperations } from '../symmetry/symmetry-utils'
 import Assembly from '../symmetry/assembly'
 import Structure from '../structure/structure'
+import StructureBuilder from '../structure/structure-builder.js'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 
@@ -929,7 +930,7 @@ export function guessElement (atomName: string) {
  * @return {undefined}
  */
 export function assignResidueTypeBonds (structure: Structure) {
-  // if( Debug ) Log.time( "assignResidueTypeBonds" );
+  // if( Debug ) Log.time( "assignResidueTypeBonds" )
 
   const bondHash = structure.bondHash!  // TODO
   const countArray = bondHash.countArray
@@ -977,5 +978,56 @@ export function assignResidueTypeBonds (structure: Structure) {
     }
   })
 
-  // if( Debug ) Log.timeEnd( "assignResidueTypeBonds" );
+  // if( Debug ) Log.timeEnd( "assignResidueTypeBonds" )
+}
+
+export function concatStructures (name: string, ...structures: Structure[]) {
+  if( Debug ) Log.time( "concatStructures" )
+
+  const s = new Structure(name, '')
+  const sb = new StructureBuilder(s)
+
+  const atomStore = s.atomStore as any
+  const atomMap = s.atomMap
+  atomStore.addField('formalCharge', 1, 'int8')
+  atomStore.addField('partialCharge', 1, 'float32')
+
+  let idx = 0
+  let modelCount = 0
+  structures.forEach(structure => {
+    structure.eachAtom(a => {
+      atomStore.growIfFull()
+      atomStore.atomTypeId[ idx ] = atomMap.add(a.atomname)
+
+      atomStore.x[ idx ] = a.x
+      atomStore.y[ idx ] = a.y
+      atomStore.z[ idx ] = a.z
+      atomStore.serial[ idx ] = a.serial
+      atomStore.formalCharge[ idx ] = a.formalCharge
+      atomStore.partialCharge[ idx ] = a.partialCharge
+
+      sb.addAtom(
+        a.modelIndex + modelCount,
+        a.chainname,
+        a.chainid,
+        a.resname,
+        a.resno,
+        a.hetero === 1,
+        a.sstruc,
+        a.inscode
+      )
+
+      idx += 1
+    })
+    modelCount += structure.modelStore.count
+  })
+
+  sb.finalize()
+  s.finalizeAtoms()
+  calculateBonds(s)  // TODO use bonds from input structures
+  s.finalizeBonds()
+
+  if( Debug ) Log.timeEnd( "concatStructures" )
+
+  return s
 }

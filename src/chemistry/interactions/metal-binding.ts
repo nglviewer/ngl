@@ -158,6 +158,7 @@ function isMetalComplex (ti: FeatureType, tj: FeatureType) {
 
 export interface MetalComplexationParams {
   maxMetalDist?: number
+  masterModelIndex?: number
 }
 
 /**
@@ -165,6 +166,7 @@ export interface MetalComplexationParams {
  */
 export function addMetalComplexation (structure: Structure, contacts: Contacts, params: MetalComplexationParams = {}) {
   const maxMetalDist = defaults(params.maxMetalDist, ContactDefaultParams.maxMetalDist)
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -181,7 +183,7 @@ export function addMetalComplexation (structure: Structure, contacts: Contacts, 
       ap1.index = atomSets[ i ][ 0 ]
       ap2.index = atomSets[ j ][ 0 ]
 
-      if (invalidAtomContact(ap1, ap2)) return
+      if (invalidAtomContact(ap1, ap2, masterIdx)) return
 
       if (isMetalComplex(types[ i ], types[ j ])) {
         featureSet.setBits(i, j)

@@ -67,11 +67,19 @@ export const ContactDefaultParams = {
   maxHalogenBondDist: 4.0,
   maxHalogenBondAngle: 30,
   maxMetalDist: 3.0,
-  refineSaltBridges: true
+  refineSaltBridges: true,
+  masterModelIndex: -1
 }
 
-export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy) {
-  return ap1.structure === ap2.structure && (
+export function isMasterContact (ap1: AtomProxy, ap2: AtomProxy, masterIdx: number) {
+  return (
+    (ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
+    (ap2.modelIndex === masterIdx && ap1.modelIndex !== masterIdx)
+  )
+}
+
+export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy, masterIdx: number) {
+  return !isMasterContact(ap1, ap2, masterIdx) && (
     ap1.modelIndex !== ap2.modelIndex ||
     ap1.residueIndex === ap2.residueIndex ||
     (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc)

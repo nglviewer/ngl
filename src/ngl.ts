@@ -35,11 +35,9 @@ import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
 import Superposition from './align/superposition'
 export { superpose } from './align/align-utils'
-export { guessElement } from './structure/structure-utils'
+export { guessElement, concatStructures } from './structure/structure-utils'
 
-export {
-  flatten, throttle, download, getQuery, uniqueArray
-} from './utils'
+export { flatten, throttle, download, getQuery, uniqueArray } from './utils'
 import Queue from './utils/queue'
 import Counter from './utils/counter'
 

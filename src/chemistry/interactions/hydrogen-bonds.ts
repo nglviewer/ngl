@@ -190,6 +190,7 @@ export interface HydrogenBondParams {
   maxHbondDonDihedral?: number
   backboneHbond?: boolean
   waterHbond?: boolean
+  masterModelIndex?: number
 }
 
 /**
@@ -202,6 +203,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
   const maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle))
   const maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral))
   const maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral))
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const maxDist = Math.max(maxHbondDist, maxHbondSulfurDist)
   const maxHbondDistSq = maxHbondDist * maxHbondDist
@@ -231,7 +233,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       donor.index = atomSets[ l ][ 0 ]
       acceptor.index = atomSets[ k ][ 0 ]
 
-      if (invalidAtomContact(donor, acceptor)) return
+      if (invalidAtomContact(donor, acceptor, masterIdx)) return
       if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq) return
 
       const donorAngle = calcMinAngle(donor, acceptor)

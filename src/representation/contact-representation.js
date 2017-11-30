@@ -103,6 +103,9 @@ class ContactRepresentation extends StructureRepresentation {
       refineSaltBridges: {
         type: 'boolean', rebuild: true
       },
+      masterModelIndex: {
+        type: 'integer', max: 1000, min: -1, rebuild: true
+      },
 
       radialSegments: true,
       disableImpostor: true
@@ -143,6 +146,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
     this.refineSaltBridges = defaults(p.refineSaltBridges, true)
+    this.masterModelIndex = defaults(p.masterModelIndex, -1)
 
     super.init(p)
   }
@@ -169,7 +173,8 @@ class ContactRepresentation extends StructureRepresentation {
       maxHalogenBondDist: this.maxHalogenBondDist,
       maxHalogenBondAngle: this.maxHalogenBondAngle,
       maxMetalDist: this.maxMetalDist,
-      refineSaltBridges: this.refineSaltBridges
+      refineSaltBridges: this.refineSaltBridges,
+      masterModelIndex: this.masterModelIndex
     }
 
     const dataParams = {

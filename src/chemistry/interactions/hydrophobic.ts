@@ -38,6 +38,7 @@ function isHydrophobicContact (ti: FeatureType, tj: FeatureType) {
 
 export interface HydrophobicContactsParams {
   maxHydrophobicDist?: number
+  masterModelIndex?: number
 }
 
 /**
@@ -45,6 +46,7 @@ export interface HydrophobicContactsParams {
  */
 export function addHydrophobicContacts (structure: Structure, contacts: Contacts, params: HydrophobicContactsParams = {}) {
   const maxHydrophobicDist = defaults(params.maxHydrophobicDist, ContactDefaultParams.maxHydrophobicDist)
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
   const { features, spatialHash, contactStore, featureSet } = contacts
   const { types, centers, atomSets } = features
@@ -61,7 +63,7 @@ export function addHydrophobicContacts (structure: Structure, contacts: Contacts
       ap1.index = atomSets[ i ][ 0 ]
       ap2.index = atomSets[ j ][ 0 ]
 
-      if (invalidAtomContact(ap1, ap2)) return
+      if (invalidAtomContact(ap1, ap2, masterIdx)) return
 
       if (isHydrophobicContact(types[ i ], types[ j ])) {
         featureSet.setBits(i, j)
