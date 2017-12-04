@@ -49,12 +49,12 @@ export function createAdjacencyList (edges: Edges): AdjacencyList {
     const idx1 = nodeArray1[ i ]
     const idx2 = nodeArray2[ i ]
     let j1 = offsetArray[ idx1 ]
-    while (indexArray[ j1 ] !== -1) {
+    while (indexArray[ j1 ] !== -1 && j1 < bondCount2) {
       j1 += 1
     }
     indexArray[ j1 ] = i
     let j2 = offsetArray[ idx2 ]
-    while (indexArray[ j2 ] !== -1) {
+    while (indexArray[ j2 ] !== -1 && j2 < bondCount2) {
       j2 += 1
     }
     indexArray[ j2 ] = i
