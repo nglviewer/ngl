@@ -67,7 +67,7 @@ export interface HalogenBondsParams {
 }
 
 // http://www.pnas.org/content/101/48/16789.full
-const OptimalHalogenAngle = degToRad(165)
+const OptimalHalogenAngle = degToRad(180)
 const OptimalAcceptorAngle = degToRad(120)
 
 /**
