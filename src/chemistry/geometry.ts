@@ -48,24 +48,23 @@ export const Angles = new Map<AtomGeometry, number>([
 ])
 
 /**
- * Calculate the minimum angle x-1-2 where x is a heavy atom bonded to ap1.
+ * Calculate the angles x-1-2 for all x where x is a heavy atom bonded to ap1.
  * @param  {AtomProxy} ap1 First atom (angle centre)
  * @param  {AtomProxy} ap2 Second atom
- * @return {number|undefined}        Angle in radians, if it can be determined
+ * @return {number[]}        Angles in radians
  */
-export function calcMinAngle (ap1: AtomProxy, ap2: AtomProxy): number | undefined {
-  let angle: number | undefined
+export function calcAngles (ap1: AtomProxy, ap2: AtomProxy): number[] {
+  let angles: number[] = []
   const d1 = new Vector3()
   const d2 = new Vector3()
   d1.subVectors(ap2 as any, ap1 as any)
   ap1.eachBondedAtom( x => {
     if (x.number !== 1) {  // H
       d2.subVectors(x as any, ap1 as any)
-      const a = d1.angleTo(d2)
-      angle = angle ? Math.min(angle, a) : a
+      angles.push(d1.angleTo(d2))
     }
    })
-  return angle
+  return angles
 }
 
 /**

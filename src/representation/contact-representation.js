@@ -67,10 +67,10 @@ class ContactRepresentation extends StructureRepresentation {
       maxHbondDonAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
-      maxHbondAccDihedral: {
+      maxHbondAccPlaneAngle: {
         type: 'integer', max: 90, min: 0, rebuild: true
       },
-      maxHbondDonDihedral: {
+      maxHbondDonPlaneAngle: {
         type: 'integer', max: 90, min: 0, rebuild: true
       },
       maxPiStackingDist: {
@@ -132,10 +132,10 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
     this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
     this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1)
-    this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 60)
+    this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 45)
     this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
-    this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 45)
-    this.maxHbondDonDihedral = defaults(p.maxHbondDonDihedral, 45)
+    this.maxHbondAccPlaneAngle = defaults(p.maxHbondAccPlaneAngle, 90)
+    this.maxHbondDonPlaneAngle = defaults(p.maxHbondDonPlaneAngle, 30)
     this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5)
     this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0)
     this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
@@ -162,8 +162,8 @@ class ContactRepresentation extends StructureRepresentation {
       maxHbondSulfurDist: this.maxHbondSulfurDist,
       maxHbondAccAngle: this.maxHbondAccAngle,
       maxHbondDonAngle: this.maxHbondDonAngle,
-      maxHbondAccDihedral: this.maxHbondAccDihedral,
-      maxHbondDonDihedral: this.maxHbondDonDihedral,
+      maxHbondAccPlaneAngle: this.maxHbondAccPlaneAngle,
+      maxHbondDonPlaneAngle: this.maxHbondDonPlaneAngle,
       maxPiStackingDist: this.maxPiStackingDist,
       maxPiStackingOffset: this.maxPiStackingOffset,
       maxPiStackingAngle: this.maxPiStackingAngle,

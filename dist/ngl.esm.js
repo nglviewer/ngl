@@ -57944,24 +57944,23 @@ var Angles = new Map([
     [6 /* Octahedral */, degToRad(90)]
 ]);
 /**
- * Calculate the minimum angle x-1-2 where x is a heavy atom bonded to ap1.
+ * Calculate the angles x-1-2 for all x where x is a heavy atom bonded to ap1.
  * @param  {AtomProxy} ap1 First atom (angle centre)
  * @param  {AtomProxy} ap2 Second atom
- * @return {number|undefined}        Angle in radians, if it can be determined
+ * @return {number[]}        Angles in radians
  */
-function calcMinAngle(ap1, ap2) {
-    var angle;
+function calcAngles(ap1, ap2) {
+    var angles = [];
     var d1 = new Vector3();
     var d2 = new Vector3();
     d1.subVectors(ap2, ap1);
     ap1.eachBondedAtom(function (x) {
         if (x.number !== 1) {
             d2.subVectors(x, ap1);
-            var a = d1.angleTo(d2);
-            angle = angle ? Math.min(angle, a) : a;
+            angles.push(d1.angleTo(d2));
         }
     });
-    return angle;
+    return angles;
 }
 /**
  * Find two neighbours of ap1 to define a plane (if possible) and
@@ -58815,8 +58814,8 @@ function addHydrogenBonds(structure, contacts, params) {
     var maxHbondSulfurDist = defaults(params.maxHbondSulfurDist, ContactDefaultParams.maxHbondSulfurDist);
     var maxHbondAccAngle = degToRad(defaults(params.maxHbondAccAngle, ContactDefaultParams.maxHbondAccAngle));
     var maxHbondDonAngle = degToRad(defaults(params.maxHbondDonAngle, ContactDefaultParams.maxHbondDonAngle));
-    var maxHbondAccDihedral = degToRad(defaults(params.maxHbondAccDihedral, ContactDefaultParams.maxHbondAccDihedral));
-    var maxHbondDonDihedral = degToRad(defaults(params.maxHbondDonDihedral, ContactDefaultParams.maxHbondDonDihedral));
+    var maxHbondAccPlaneAngle = degToRad(defaults(params.maxHbondAccPlaneAngle, ContactDefaultParams.maxHbondAccPlaneAngle));
+    var maxHbondDonPlaneAngle = degToRad(defaults(params.maxHbondDonPlaneAngle, ContactDefaultParams.maxHbondDonPlaneAngle));
     var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
     var maxDist = Math.max(maxHbondDist, maxHbondSulfurDist);
     var maxHbondDistSq = maxHbondDist * maxHbondDist;
@@ -58853,26 +58852,27 @@ function addHydrogenBonds(structure, contacts, params) {
                 { return; }
             if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq)
                 { return; }
-            var donorAngle = calcMinAngle(donor, acceptor);
-            if (donorAngle !== undefined) {
-                var idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120);
-                if (Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle)
-                    { return; }
-            }
+            var donorAngles = calcAngles(donor, acceptor);
+            var idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120);
+            if (donorAngles.some(function (donorAngle) {
+                return Math.abs(idealDonorAngle - donorAngle) > maxHbondDonAngle;
+            }))
+                { return; }
             if (idealGeometry[donor.index] === 3 /* Trigonal */) {
                 var outOfPlane = calcPlaneAngle(donor, acceptor);
-                if (outOfPlane !== undefined && outOfPlane > maxHbondDonDihedral)
+                if (outOfPlane !== undefined && outOfPlane > maxHbondDonPlaneAngle)
                     { return; }
             }
-            var acceptorAngle = calcMinAngle(acceptor, donor);
-            if (acceptorAngle !== undefined) {
-                var idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120);
-                if (Math.abs(idealAcceptorAngle - acceptorAngle) > maxHbondAccAngle)
-                    { return; }
-            }
+            var acceptorAngles = calcAngles(acceptor, donor);
+            var idealAcceptorAngle = Angles.get(idealGeometry[acceptor.index]) || degToRad(120);
+            if (acceptorAngles.some(function (acceptorAngle) {
+                // Do not limit large acceptor angles
+                return idealAcceptorAngle - acceptorAngle > maxHbondAccAngle;
+            }))
+                { return; }
             if (idealGeometry[acceptor.index] === 3 /* Trigonal */) {
                 var outOfPlane$1 = calcPlaneAngle(acceptor, donor);
-                if (outOfPlane$1 !== undefined && outOfPlane$1 > maxHbondAccDihedral)
+                if (outOfPlane$1 !== undefined && outOfPlane$1 > maxHbondAccPlaneAngle)
                     { return; }
             }
             featureSet.setBits(l, k);
@@ -59218,15 +59218,19 @@ function addHalogenBonds(structure, contacts, params) {
             var ref = types[i] === 6 /* HalogenDonor */ ? [ap1, ap2] : [ap2, ap1];
             var halogen = ref[0];
             var acceptor = ref[1];
-            var halogenAngle = calcMinAngle(halogen, acceptor);
-            if (halogenAngle === undefined)
-                { return; } // Angle must be defined
-            if (OptimalHalogenAngle - halogenAngle > maxHalogenBondAngle)
+            var halogenAngles = calcAngles(halogen, acceptor);
+            // Singly bonded halogen only (not bromide ion for example)
+            if (halogenAngles.length !== 1)
                 { return; }
-            var acceptorAngle = calcMinAngle(acceptor, halogen);
-            if (acceptorAngle === undefined)
-                { return; } // Angle must be defined
-            if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle)
+            if (OptimalHalogenAngle - halogenAngles[0] > maxHalogenBondAngle)
+                { return; }
+            var acceptorAngles = calcAngles(acceptor, halogen);
+            // Angle must be defined. Excludes water as acceptor. Debatable
+            if (acceptorAngles.length === 0)
+                { return; }
+            if (acceptorAngles.some(function (acceptorAngle) {
+                return (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle);
+            }))
                 { return; }
             featureSet.setBits(i, j);
             contactStore.addContact(i, j, 5 /* HalogenBond */);
@@ -59381,10 +59385,10 @@ var ContactDefaultParams = {
     maxHydrophobicDist: 4.0,
     maxHbondDist: 3.5,
     maxHbondSulfurDist: 4.1,
-    maxHbondAccAngle: 60,
+    maxHbondAccAngle: 45,
     maxHbondDonAngle: 45,
-    maxHbondAccDihedral: 45,
-    maxHbondDonDihedral: 45,
+    maxHbondAccPlaneAngle: 90,
+    maxHbondDonPlaneAngle: 30,
     maxPiStackingDist: 5.5,
     maxPiStackingOffset: 2.0,
     maxPiStackingAngle: 30,
@@ -68283,7 +68287,9 @@ function concatStructures(name) {
     var atomMap = s.atomMap;
     atomStore.addField('formalCharge', 1, 'int8');
     atomStore.addField('partialCharge', 1, 'float32');
+    var atomIndexDict = {};
     var idx = 0;
+    var atomCount = 0;
     var modelCount = 0;
     structures.forEach(function (structure) {
         structure.eachAtom(function (a) {
@@ -68296,14 +68302,30 @@ function concatStructures(name) {
             atomStore.formalCharge[idx] = a.formalCharge;
             atomStore.partialCharge[idx] = a.partialCharge;
             sb.addAtom(a.modelIndex + modelCount, a.chainname, a.chainid, a.resname, a.resno, a.hetero === 1, a.sstruc, a.inscode);
+            atomIndexDict[a.index + atomCount] = idx;
             idx += 1;
         });
+        atomCount += structure.atomStore.count;
         modelCount += structure.modelStore.count;
     });
+    var bondStore = s.bondStore;
+    var a1 = s.getAtomProxy();
+    var a2 = s.getAtomProxy();
+    atomCount = 0;
+    structures.forEach(function (structure) {
+        structure.eachBond(function (b) {
+            a1.index = atomIndexDict[b.atomIndex1 + atomCount];
+            a2.index = atomIndexDict[b.atomIndex2 + atomCount];
+            bondStore.addBond(a1, a2, b.bondOrder);
+        });
+        atomCount += structure.atomStore.count;
+    });
     sb.finalize();
+    calculateBondsBetween(s, true); // calculate backbone bonds
+    calculateBondsWithin(s, true); // calculate rung bonds
     s.finalizeAtoms();
-    calculateBonds(s); // TODO use bonds from input structures
     s.finalizeBonds();
+    assignResidueTypeBonds(s);
     if (Debug)
         { Log.timeEnd("concatStructures"); }
     return s;
@@ -81426,10 +81448,10 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxHbondDonAngle: {
                 type: 'integer', max: 180, min: 0, rebuild: true
             },
-            maxHbondAccDihedral: {
+            maxHbondAccPlaneAngle: {
                 type: 'integer', max: 90, min: 0, rebuild: true
             },
-            maxHbondDonDihedral: {
+            maxHbondDonPlaneAngle: {
                 type: 'integer', max: 90, min: 0, rebuild: true
             },
             maxPiStackingDist: {
@@ -81490,10 +81512,10 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0);
         this.maxHbondDist = defaults(p.maxHbondDist, 3.5);
         this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1);
-        this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 60);
+        this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 45);
         this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45);
-        this.maxHbondAccDihedral = defaults(p.maxHbondAccDihedral, 45);
-        this.maxHbondDonDihedral = defaults(p.maxHbondDonDihedral, 45);
+        this.maxHbondAccPlaneAngle = defaults(p.maxHbondAccPlaneAngle, 90);
+        this.maxHbondDonPlaneAngle = defaults(p.maxHbondDonPlaneAngle, 30);
         this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5);
         this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0);
         this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30);
@@ -81517,8 +81539,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxHbondSulfurDist: this.maxHbondSulfurDist,
             maxHbondAccAngle: this.maxHbondAccAngle,
             maxHbondDonAngle: this.maxHbondDonAngle,
-            maxHbondAccDihedral: this.maxHbondAccDihedral,
-            maxHbondDonDihedral: this.maxHbondDonDihedral,
+            maxHbondAccPlaneAngle: this.maxHbondAccPlaneAngle,
+            maxHbondDonPlaneAngle: this.maxHbondDonPlaneAngle,
             maxPiStackingDist: this.maxPiStackingDist,
             maxPiStackingOffset: this.maxPiStackingOffset,
             maxPiStackingAngle: this.maxPiStackingAngle,
@@ -96653,7 +96675,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.2";
+var version$1 = "2.0.0-dev.3";
 
 /**
  * @file Version

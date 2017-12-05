@@ -12,7 +12,7 @@ import {
   addAtom, addFeature, createFeatureState,
 } from './features'
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
-import { calcMinAngle } from '../geometry'
+import { calcAngles } from '../geometry'
 
 const halBondElements = [17, 35, 53, 85]
 
@@ -67,7 +67,7 @@ export interface HalogenBondsParams {
 }
 
 // http://www.pnas.org/content/101/48/16789.full
-const OptimalHalogenAngle = degToRad(165)
+const OptimalHalogenAngle = degToRad(180)
 const OptimalAcceptorAngle = degToRad(120)
 
 /**
@@ -98,13 +98,18 @@ export function addHalogenBonds (structure: Structure, contacts: Contacts, param
 
       const [ halogen, acceptor ] = types[ i ] === FeatureType.HalogenDonor ? [ ap1, ap2 ] : [ ap2, ap1 ]
 
-      const halogenAngle = calcMinAngle(halogen, acceptor)
-      if (halogenAngle === undefined) return  // Angle must be defined
-      if (OptimalHalogenAngle - halogenAngle > maxHalogenBondAngle) return
+      const halogenAngles = calcAngles(halogen, acceptor)
+      // Singly bonded halogen only (not bromide ion for example)
+      if (halogenAngles.length !== 1) return
+      if (OptimalHalogenAngle - halogenAngles[0] > maxHalogenBondAngle) return
 
-      const acceptorAngle = calcMinAngle(acceptor, halogen)
-      if (acceptorAngle === undefined) return  // Angle must be defined
-      if (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle) return
+      const acceptorAngles = calcAngles(acceptor, halogen)
+      // Angle must be defined. Excludes water as acceptor. Debatable
+      if (acceptorAngles.length === 0) return
+      if (acceptorAngles.some(acceptorAngle => {
+        return (OptimalAcceptorAngle - acceptorAngle > maxHalogenBondAngle)
+      })) return
+
 
       featureSet.setBits(i, j)
       contactStore.addContact(i, j, ContactType.HalogenBond)

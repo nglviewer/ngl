@@ -1,23 +1,28 @@
 
 Promise.all([
-  stage.loadFile('data://1u19.pdb'),
-  stage.loadFile('data://1u19.pdb')
+  stage.loadFile('data://2vts-protein.pdb'),
+  stage.loadFile('data://2vts-docking.sdf')
 ]).then(function (ol) {
   var cs = NGL.concatStructures(
     'concat',
-    ol[ 0 ].structure.getView(new NGL.Selection(':A and not RET')),
-    ol[ 1 ].structure.getView(new NGL.Selection(':A and RET'))
+    ol[ 0 ].structure.getView(new NGL.Selection('not ligand')),
+    ol[ 1 ].structure.getView(new NGL.Selection(''))
   )
   var comp = stage.addComponentFromObject(cs)
   comp.addRepresentation('cartoon')
   comp.addRepresentation('contact', {
     masterModelIndex: 0,
-    hydrophobic: true
+    weakHydrogenBond: true,
+    maxHbondDonPlaneAngle: 35,
+    sele: '/0 or /2'
   })
-  comp.addRepresentation('ball+stick', {
-    sele: 'RET and :A',
-    multipleBond: 'symmetric'
+  comp.addRepresentation('licorice', {
+    sele: 'ligand and /2',
+    multipleBond: 'offset'
   })
-  comp.autoView('RET and :A')
+  comp.addRepresentation('line', {
+    sele: '/0'
+  })
+  comp.autoView('ligand')
   stage.setFocus(95)
 })
