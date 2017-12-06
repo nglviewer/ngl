@@ -1,16 +1,11 @@
-
-var d3 = window.d3 || {}
-
 // Handle window resizing
 window.addEventListener('resize', function () {
   stage.handleResize()
 }, false)
 
-d3.select('#viewport').append('div')
-  .style('position', 'absolute')
-  .style('top', '0')
-  .style('left', '20px')
-  .html('<div class="controls"><h3>Example Cross-Links over Human Serum Albumin</h3><p class="credit">Data courtesy of Adam Belsom, Rappsilber Lab</p><p>Cross-Link Quality Filter </p><span id="minValue"></span><input type="range" min="0" max="10" step="0.1" value="0" id="scoreSlider" class="mySlider"></input><span id="maxValue"></span></div>')
+var newDiv = document.getElementById('viewport').appendChild(document.createElement('div'))
+newDiv.setAttribute('style', 'position: absolute; top: 0; left: 20px')
+newDiv.innerHTML = '<div class="controls"><h3>Example Cross-Links over Human Serum Albumin</h3><p class="credit">Data courtessy of Adam Belsom, Rappsilber Lab</p><p>Cross-Link Quality Filter </p><span id="minValue"></span><input type="range" min="0" max="10" step="0.1" value="0" id="scoreSlider" class="mySlider"></input><span id="maxValue"></span></div>'
 
 // example crosslink data
 var links = [{
@@ -786,9 +781,15 @@ var initColourSchemes = function () {
         var score = origLink.data.score
         var col24bit = colCache[score]
         if (col24bit === undefined) {
-          var col3 = d3.rgb(scoreColourScale(score))
+          var i = score < valStops[1] ? 1 : 2
+          var pct = (score - valStops[i - 1]) / (valStops[i] - valStops[i - 1])
+          var col3 = {}
+          // aargh semi-colon needed at start of line
+          ;['r', 'g', 'b'].forEach(function (chan) {
+            col3[chan] = colStops[i - 1][chan] + (colStops[i][chan] - colStops[i - 1][chan]) * pct
+          })
           col24bit = col3 ? (col3.r << 16) + (col3.g << 8) + col3.b : 255
-          colCache[col3] = col24bit
+          colCache[score] = col24bit
         }
         return col24bit
       }
@@ -812,17 +813,24 @@ var makeAtomSelection = function (someLinks) {
 }
 
 // calculate extremes of score distribution for setting up initial slider and colour scale values
-var extremeScores = d3.extent(links, function (link) {
-  return link.data.score
+var min = Number.POSITIVE_INFINITY
+var max = Number.NEGATIVE_INFINITY
+links.forEach(function (link) {
+  var score = link.data.score
+  if (score !== undefined && score < min) { min = score }
+  if (score !== undefined && score > max) { max = score }
 })
-d3.select('#scoreSlider').property('min', extremeScores[0]).property('max', extremeScores[1] + 1)
-d3.select('#minValue').text(extremeScores[0])
-d3.select('#maxValue').text(extremeScores[1] + 1)
-var scoreColourScale = d3.scaleLinear().domain([extremeScores[0], d3.mean(extremeScores), extremeScores[1]]).range(['#008', '#8ff', '#ff0'])
+document.getElementById('scoreSlider').min = min
+document.getElementById('scoreSlider').max = max + 1
+document.getElementById('minValue').textContent = min
+document.getElementById('maxValue').textContent = max + 1
+
+var colStops = [{r: 0, g: 0, b: 128}, {r: 128, g: 255, b: 255}, {r: 255, g: 255, b: 0}]
+var valStops = [min, (min + max) / 2, max]
 
 // listener for dragging slider, filter out links with score values smaller than slider value
-d3.select('#scoreSlider').on('input', function () {
-  var val = +d3.event.target.value
+document.getElementById('scoreSlider').addEventListener('input', function (evt) {
+  var val = +evt.target.value
   var filteredLinks = links.filter(function (link) {
     return link.data.score >= val
   })
