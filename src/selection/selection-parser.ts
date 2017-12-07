@@ -139,7 +139,7 @@ function parseSele (string: string) {
 
     // handle keyword attributes
 
-    const keyword = kwd[ cu ]
+    const keyword = (kwd as any)[ cu ]
     if (keyword !== undefined) {
       pushRule({ keyword })
       continue

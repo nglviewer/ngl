@@ -4,32 +4,33 @@
  * @private
  */
 
-export const kwd: { [k: string]: number } = {
-  PROTEIN: 1,
-  NUCLEIC: 2,
-  RNA: 3,
-  DNA: 4,
-  POLYMER: 5,
-  WATER: 6,
-  HELIX: 7,
-  SHEET: 8,
-  TURN: 9,
-  BACKBONE: 10,
-  SIDECHAIN: 11,
-  ALL: 12,
-  HETERO: 13,
-  ION: 14,
-  SACCHARIDE: 15,
-  SUGAR: 15,
-  BONDED: 16,
-  RING: 17,
-  AROMATICRING: 18
+export enum kwd {
+  PROTEIN = 1,
+  NUCLEIC = 2,
+  RNA = 3,
+  DNA = 4,
+  POLYMER = 5,
+  WATER = 6,
+  HELIX = 7,
+  SHEET = 8,
+  TURN = 9,
+  BACKBONE = 10,
+  SIDECHAIN = 11,
+  ALL = 12,
+  HETERO = 13,
+  ION = 14,
+  SACCHARIDE = 15,
+  SUGAR = 15,
+  BONDED = 16,
+  RING = 17,
+  AROMATICRING = 18,
+  METAL = 19
 }
 
 export const SelectAllKeyword = [ '*', '', 'ALL' ]
 
 export const AtomOnlyKeywords = [
-  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING
+  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING, kwd.METAL
 ]
 
 export const ChainKeywords = [

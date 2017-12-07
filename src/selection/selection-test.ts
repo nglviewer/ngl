@@ -66,6 +66,7 @@ function atomTestFn (a: AtomProxy, s: SelectionRule) {
     if (s.keyword === kwd.TURN && !a.isTurn()) return false
     if (s.keyword === kwd.ION && !a.isIon()) return false
     if (s.keyword === kwd.SACCHARIDE && !a.isSaccharide()) return false
+    if (s.keyword === kwd.METAL && !a.isMetal()) return false
   }
 
   if (s.atomname !== undefined && s.atomname !== a.atomname) return false
