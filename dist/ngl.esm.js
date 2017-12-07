@@ -48879,30 +48879,32 @@ var signals_1 = signals.Signal;
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-var kwd = {
-    PROTEIN: 1,
-    NUCLEIC: 2,
-    RNA: 3,
-    DNA: 4,
-    POLYMER: 5,
-    WATER: 6,
-    HELIX: 7,
-    SHEET: 8,
-    TURN: 9,
-    BACKBONE: 10,
-    SIDECHAIN: 11,
-    ALL: 12,
-    HETERO: 13,
-    ION: 14,
-    SACCHARIDE: 15,
-    SUGAR: 15,
-    BONDED: 16,
-    RING: 17,
-    AROMATICRING: 18
-};
+var kwd;
+(function (kwd) {
+    kwd[kwd["PROTEIN"] = 1] = "PROTEIN";
+    kwd[kwd["NUCLEIC"] = 2] = "NUCLEIC";
+    kwd[kwd["RNA"] = 3] = "RNA";
+    kwd[kwd["DNA"] = 4] = "DNA";
+    kwd[kwd["POLYMER"] = 5] = "POLYMER";
+    kwd[kwd["WATER"] = 6] = "WATER";
+    kwd[kwd["HELIX"] = 7] = "HELIX";
+    kwd[kwd["SHEET"] = 8] = "SHEET";
+    kwd[kwd["TURN"] = 9] = "TURN";
+    kwd[kwd["BACKBONE"] = 10] = "BACKBONE";
+    kwd[kwd["SIDECHAIN"] = 11] = "SIDECHAIN";
+    kwd[kwd["ALL"] = 12] = "ALL";
+    kwd[kwd["HETERO"] = 13] = "HETERO";
+    kwd[kwd["ION"] = 14] = "ION";
+    kwd[kwd["SACCHARIDE"] = 15] = "SACCHARIDE";
+    kwd[kwd["SUGAR"] = 15] = "SUGAR";
+    kwd[kwd["BONDED"] = 16] = "BONDED";
+    kwd[kwd["RING"] = 17] = "RING";
+    kwd[kwd["AROMATICRING"] = 18] = "AROMATICRING";
+    kwd[kwd["METAL"] = 19] = "METAL";
+})(kwd || (kwd = {}));
 var SelectAllKeyword = ['*', '', 'ALL'];
 var AtomOnlyKeywords = [
-    kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING
+    kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING, kwd.METAL
 ];
 var ChainKeywords = [
     kwd.POLYMER, kwd.WATER
@@ -49374,6 +49376,8 @@ function atomTestFn(a, s) {
         if (s.keyword === kwd.ION && !a.isIon())
             { return false; }
         if (s.keyword === kwd.SACCHARIDE && !a.isSaccharide())
+            { return false; }
+        if (s.keyword === kwd.METAL && !a.isMetal())
             { return false; }
     }
     if (s.atomname !== undefined && s.atomname !== a.atomname)
@@ -57534,12 +57538,12 @@ function createAdjacencyList(edges) {
         var idx1 = nodeArray1[i$2];
         var idx2 = nodeArray2[i$2];
         var j1 = offsetArray[idx1];
-        while (indexArray[j1] !== -1) {
+        while (indexArray[j1] !== -1 && j1 < bondCount2) {
             j1 += 1;
         }
         indexArray[j1] = i$2;
         var j2 = offsetArray[idx2];
-        while (indexArray[j2] !== -1) {
+        while (indexArray[j2] !== -1 && j2 < bondCount2) {
             j2 += 1;
         }
         indexArray[j2] = i$2;
@@ -57874,8 +57878,9 @@ var ProteinBackboneAtoms = [
     'BB'
 ];
 var NucleicBackboneAtoms = [
-    'P', "O3'", "O5'", "C5'", "C4'", "C3'", 'OP1', 'OP2',
-    'O3*', 'O5*', 'C5*', 'C4*', 'C3*'
+    'P', 'OP1', 'OP2',
+    "O2'", "O3'", "O4'", "O5'", "C1'", "C2'", "C3'", "C4'", "C5'",
+    'O2*', 'O3*', 'O4*', 'O5*', 'C1*', 'C2*', 'C3*', 'C4*', 'C5*'
 ];
 var ResidueTypeAtoms = {};
 ResidueTypeAtoms[ProteinBackboneType] = {
@@ -58294,6 +58299,14 @@ function valenceModel(data) {
  */
 
 /**
+ * Nitrogen in an imide
+ */
+
+/**
+ * Nitrogen in an amide
+ */
+
+/**
  * Sulfur in a sulfonium group
  */
 
@@ -58320,6 +58333,10 @@ function isPhosphate(a) {
 }
 /**
  * Halogen with one bond to a carbon
+ */
+
+/**
+ * Carbon in a carbonyl/acyl group
  */
 
 /**
@@ -58370,16 +58387,6 @@ function isAcetamidine(a) {
         });
     }
     return terminalNitrogenCount === 2;
-}
-
-
-function hasAromaticNeighbour(a) {
-    var flag = false;
-    a.eachBondedAtom(function (bap) {
-        if (bap.aromatic)
-            { flag = true; }
-    });
-    return flag;
 }
 
 /**
@@ -58523,7 +58530,7 @@ function addAromaticRings(structure, features) {
         }
     });
 }
-function isSaltBridge(ti, tj) {
+function isIonicInteraction(ti, tj) {
     return ((ti === 2 /* NegativeCharge */ && tj === 1 /* PositiveCharge */) ||
         (ti === 1 /* PositiveCharge */ && tj === 2 /* NegativeCharge */));
 }
@@ -58537,14 +58544,14 @@ function isCationPi(ti, tj) {
 function addChargedContacts(structure, contacts, params) {
     if ( params === void 0 ) params = {};
 
-    var maxSaltBridgeDist = defaults(params.maxSaltBridgeDist, ContactDefaultParams.maxSaltBridgeDist);
+    var maxIonicDist = defaults(params.maxIonicDist, ContactDefaultParams.maxIonicDist);
     var maxPiStackingDist = defaults(params.maxPiStackingDist, ContactDefaultParams.maxPiStackingDist);
     var maxPiStackingOffset = defaults(params.maxPiStackingOffset, ContactDefaultParams.maxPiStackingOffset);
     var maxPiStackingAngle = defaults(params.maxPiStackingAngle, ContactDefaultParams.maxPiStackingAngle);
     var maxCationPiDist = defaults(params.maxCationPiDist, ContactDefaultParams.maxCationPiDist);
     var maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset);
     var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
-    var maxDistance = Math.max(maxSaltBridgeDist + 2, maxPiStackingDist, maxCationPiDist);
+    var maxDistance = Math.max(maxIonicDist + 2, maxPiStackingDist, maxCationPiDist);
     // const maxSaltBridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
     var maxPiStackingDistSq = maxPiStackingDist * maxPiStackingDist;
     var maxCationPiDistSq = maxCationPiDist * maxCationPiDist;
@@ -58612,9 +58619,9 @@ function addChargedContacts(structure, contacts, params) {
                 { return; }
             var ti = types[i];
             var tj = types[j];
-            if (isSaltBridge(ti, tj)) {
-                if (areAtomSetsWithinDist(atomSets[i], atomSets[j], maxSaltBridgeDist)) {
-                    add(i, j, 1 /* SaltBridge */);
+            if (isIonicInteraction(ti, tj)) {
+                if (areAtomSetsWithinDist(atomSets[i], atomSets[j], maxIonicDist)) {
+                    add(i, j, 1 /* IonicInteraction */);
                 }
             }
             else if (isPiStacking(ti, tj)) {
@@ -58676,7 +58683,8 @@ function addHydrogenDonors(structure, features) {
             addAtom(state, a);
             addFeature(features, state);
         }
-        else if (totalH[a.index] > 0 && (an === 7 || an === 8 || an === 16)) {
+        else if (totalH[a.index] > 0 &&
+            (an === 7 /* N */ || an === 8 /* O */ || an === 16 /* S */)) {
             addAtom(state, a);
             addFeature(features, state);
         }
@@ -58689,12 +58697,12 @@ function addWeakHydrogenDonors(structure, features) {
     var ref = valenceModel(structure.data);
     var totalH = ref.totalH;
     structure.eachAtom(function (a) {
-        if (a.number === 6 && // C
+        if (a.number === 6 /* C */ &&
             totalH[a.index] > 0 &&
             (a.bondToElementCount('N') > 0 ||
                 a.bondToElementCount('O') > 0 ||
                 inAromaticRingWithElectronNegativeElement(a))) {
-            var state = createFeatureState(11 /* WeakHydrogenDonor */);
+            var state = createFeatureState(9 /* WeakHydrogenDonor */);
             addAtom(state, a);
             addFeature(features, state);
         }
@@ -58715,7 +58723,7 @@ function inAromaticRingWithElectronNegativeElement(a) {
             hasElement = ring.some(function (idx) {
                 var atomTypeId = a.residueType.atomTypeIdList[idx];
                 var number = a.atomMap.get(atomTypeId).number;
-                return number === 7 || number === 8; // N, O
+                return number === 7 /* N */ || number === 8 /* O */;
             });
         }
     });
@@ -58732,12 +58740,12 @@ function addHydrogenAcceptors(structure, features) {
     structure.eachAtom(function (a) {
         var state = createFeatureState(5 /* HydrogenAcceptor */);
         var an = a.number;
-        if (an === 8) {
+        if (an === 8 /* O */) {
             // Basically assume all oxygen atoms are acceptors!
             addAtom(state, a);
             addFeature(features, state);
         }
-        else if (an === 7) {
+        else if (an === 7 /* N */) {
             if (isHistidineNitrogen(a)) {
                 // include both nitrogen atoms in histidine due to
                 // their often ambiguous protonation assignment
@@ -58790,8 +58798,8 @@ function isHydrogenBond(ti, tj) {
         (ti === 4 /* HydrogenDonor */ && tj === 5 /* HydrogenAcceptor */));
 }
 function isWeakHydrogenBond(ti, tj) {
-    return ((ti === 11 /* WeakHydrogenDonor */ && tj === 5 /* HydrogenAcceptor */) ||
-        (ti === 5 /* HydrogenAcceptor */ && tj === 11 /* WeakHydrogenDonor */));
+    return ((ti === 9 /* WeakHydrogenDonor */ && tj === 5 /* HydrogenAcceptor */) ||
+        (ti === 5 /* HydrogenAcceptor */ && tj === 9 /* WeakHydrogenDonor */));
 }
 function getHydrogenBondType(ap1, ap2) {
     if (isWaterHydrogenBond(ap1, ap2)) {
@@ -58843,14 +58851,14 @@ function addHydrogenBonds(structure, contacts, params) {
             var isWeak = isWeakHydrogenBond(ti, tj);
             if (!isWeak && !isHydrogenBond(ti, tj))
                 { return; }
-            var ref = types[j] === 5 /* HydrogenAcceptor */ ? [i, j] : [j, i];
+            var ref = tj === 5 /* HydrogenAcceptor */ ? [i, j] : [j, i];
             var l = ref[0];
             var k = ref[1];
             donor.index = atomSets[l][0];
             acceptor.index = atomSets[k][0];
             if (invalidAtomContact(donor, acceptor, masterIdx))
                 { return; }
-            if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq)
+            if (donor.number !== 16 /* S */ && acceptor.number !== 16 /* S */ && dSq > maxHbondDistSq)
                 { return; }
             var donorAngles = calcAngles(donor, acceptor);
             var idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120);
@@ -58888,147 +58896,185 @@ function addHydrogenBonds(structure, contacts, params) {
  * @file Metal Binding
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
+// import { hasAromaticNeighbour } from '../functional-groups'
+var IonicTypeMetals = [
+    3 /* LI */, 11 /* NA */, 19 /* K */, 37 /* RB */, 55 /* CS */,
+    12 /* MG */, 20 /* CA */, 38 /* SR */, 56 /* BA */, 13 /* AL */,
+    31 /* GA */, 49 /* IN */, 81 /* TL */, 21 /* SC */, 50 /* SN */,
+    82 /* PB */, 83 /* BI */, 51 /* SB */, 80 /* HG */
+];
 /**
- * Potential metal binding
+ * Metal binding partners (dative bond or ionic-type interaction)
  */
 function addMetalBinding(structure, features) {
-    var ref = valenceModel(structure.data);
-    var charge = ref.charge;
     structure.eachAtom(function (a) {
-        var state = createFeatureState(9 /* MetalBinding */);
-        var resname = a.resname;
-        var element = a.element;
-        var atomname = a.atomname;
+        var dative = false;
+        var ionic = false;
         if (a.isProtein()) {
             // main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids
-            if (element === 'O') {
-                if (['ASP', 'GLU', 'SER', 'THR', 'TYR'].includes(resname) && a.isSidechain()) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
+            if (a.number === 8 /* O */) {
+                if (['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN'].includes(a.resname) && a.isSidechain()) {
+                    dative = true;
+                    ionic = true;
                 }
                 else if (a.isBackbone()) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
+                    dative = true;
+                    ionic = true;
                 }
             }
-            else if (element === 'S' && resname === 'CYS') {
-                addAtom(state, a);
-                addFeature(features, state);
-                return;
+            else if (a.number === 16 /* S */ && a.resname === 'CYS') {
+                dative = true;
+                ionic = true;
             }
-            else if (element === 'N') {
-                if (resname === 'HIS' && a.isSidechain()) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
+            else if (a.number === 7 /* N */) {
+                if (a.resname === 'HIS' && a.isSidechain()) {
+                    dative = true;
                 }
             }
         }
         else if (a.isNucleic()) {
             // http://pubs.acs.org/doi/pdf/10.1021/acs.accounts.6b00253
             // http://onlinelibrary.wiley.com/doi/10.1002/anie.200900399/full
-            if ((['C', 'DC'].includes(resname) && ['O2', 'N3', 'N4', 'C5'].includes(atomname)) ||
-                (['T', 'DT'].includes(resname) && ['O2', 'N3', 'O4'].includes(atomname)) ||
-                (['U', 'DU'].includes(resname) && ['O2', 'N3', 'O4', 'C5'].includes(atomname)) ||
-                (['G', 'DG'].includes(resname) && ['N3', 'N7', 'O6'].includes(atomname)) ||
-                (['A', 'DA'].includes(resname) && ['N1', 'N7', 'N3'].includes(atomname))) {
-                addAtom(state, a);
-                addFeature(features, state);
-                return;
+            if (a.number === 8 /* O */ && a.isBackbone()) {
+                dative = true;
+                ionic = true;
             }
-            // TODO non-standard bases
+            else if (['N3', 'N4', 'N7'].includes(a.atomname)) {
+                dative = true;
+            }
+            else if (['O2', 'O4', 'O6'].includes(a.atomname)) {
+                dative = true;
+                ionic = true;
+            }
         }
         else if (!a.isPolymer()) {
-            // water oxygen, as well as oxygen from carboxylate, phosphoryl, phenolate, alcohol;
-            // nitrogen from imidazole; sulfur from thiolate
-            if (element === 'O') {
-                // Water oxygen
-                if (a.bondCount === 0 || a.isWater()) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
-                // Oxygen in alcohol (R-[O]-H)
-                if (a.bondCount === 2 && charge[a.index] || a.hasBondToElement('H')) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
-                // Phenolate oxygen
-                if (hasAromaticNeighbour(a) && !a.aromatic) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
-                // Carboxylic acid oxygen
-                if (a.bondToElementCount('C') === 1) {
-                    var flag = false;
-                    a.eachBondedAtom(function (ba) {
-                        if (ba.element === 'C' && ba.bondToElementCount('O') === 2 && ba.bondToElementCount('C') === 1) {
-                            flag = true;
-                        }
-                    });
-                    if (flag) {
-                        addAtom(state, a);
-                        addFeature(features, state);
-                        return;
-                    }
-                }
-                // Phosphoryl oxygen
-                if (a.bondToElementCount('P') === 1) {
-                    var flag$1 = false;
-                    a.eachBondedAtom(function (ba) {
-                        if (ba.element === 'P' && ba.bondToElementCount('O') >= 3) {
-                            flag$1 = true;
-                        }
-                    });
-                    if (flag$1) {
-                        addAtom(state, a);
-                        addFeature(features, state);
-                        return;
-                    }
-                }
+            if (a.isHalogen() || a.number === 8 /* O */ || a.number === 16 /* S */) {
+                dative = true;
+                ionic = true;
             }
-            else if (element === 'N') {
-                // Imidazole/pyrrole or similar
-                if (a.bondToElementCount('C') === 2) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
+            else if (a.number === 7 /* N */) {
+                dative = true;
             }
-            else if (element === 'S') {
-                // Thiolate
-                if (hasAromaticNeighbour(a) && !a.aromatic) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
-                // Sulfur in Iron sulfur cluster
-                var ironCount = a.bondToElementCount('FE');
-                if (ironCount > 0 && ironCount === a.bondCount) {
-                    addAtom(state, a);
-                    addFeature(features, state);
-                    return;
-                }
-            }
+        }
+        if (dative) {
+            var state = createFeatureState(11 /* DativeBondPartner */);
+            addAtom(state, a);
+            addFeature(features, state);
+        }
+        if (ionic) {
+            var state$1 = createFeatureState(10 /* IonicTypePartner */);
+            addAtom(state$1, a);
+            addFeature(features, state$1);
         }
     });
 }
+/**
+ * Metal Pi complexation partner
+ */
+// export function addMetalPiPartners (structure: Structure, features: Features) {
+//   const { charge } = valenceModel(structure.data)
+//   structure.eachAtom(a => {
+//     const state = createFeatureState(FeatureType.MetalPiPartner)
+//     const resname = a.resname
+//     const element = a.element
+//     const atomname = a.atomname
+//     if (!a.isPolymer()) {
+//       // water oxygen, as well as oxygen from carboxylate, phosphoryl, phenolate, alcohol;
+//       // nitrogen from imidazole; sulfur from thiolate
+//       if (element === 'O') {
+//         // Water oxygen
+//         if (a.bondCount === 0 || a.isWater()) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//         // Oxygen in alcohol (R-[O]-H)
+//         if (a.bondCount === 2 && charge[ a.index ] || a.hasBondToElement('H')) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//         // Phenolate oxygen
+//         if (hasAromaticNeighbour(a) && !a.aromatic) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//         // Carboxylic acid oxygen
+//         if (a.bondToElementCount('C') === 1) {
+//           let flag = false
+//           a.eachBondedAtom(ba => {
+//             if (ba.element === 'C' && ba.bondToElementCount('O') === 2 && ba.bondToElementCount('C') === 1) {
+//               flag = true
+//             }
+//           })
+//           if (flag) {
+//             addAtom(state, a)
+//             addFeature(features, state)
+//             return
+//           }
+//         }
+//         // Phosphoryl oxygen
+//         if (a.bondToElementCount('P') === 1) {
+//           let flag = false
+//           a.eachBondedAtom(ba => {
+//             if (ba.element === 'P' && ba.bondToElementCount('O') >= 3) {
+//               flag = true
+//             }
+//           })
+//           if (flag) {
+//             addAtom(state, a)
+//             addFeature(features, state)
+//             return
+//           }
+//         }
+//       } else if (element === 'N') {
+//         // Imidazole/pyrrole or similar
+//         if (a.bondToElementCount('C') === 2) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//       } else if (element === 'S') {
+//         // Thiolate
+//         if (hasAromaticNeighbour(a) && !a.aromatic) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//         // Sulfur in Iron sulfur cluster
+//         const ironCount = a.bondToElementCount('FE')
+//         if (ironCount > 0 && ironCount === a.bondCount) {
+//           addAtom(state, a)
+//           addFeature(features, state)
+//           return
+//         }
+//       }
+//     }
+//   })
+// }
 function addMetals(structure, features) {
     structure.eachAtom(function (a) {
-        if (a.isMetal()) {
-            var state = createFeatureState(8 /* Metal */);
+        if (a.isTransitionMetal() || a.number === 30 /* ZN */ || a.number === 48 /* CD */) {
+            var state = createFeatureState(12 /* TransitionMetal */);
             addAtom(state, a);
             addFeature(features, state);
+        }
+        else if (IonicTypeMetals.includes(a.number)) {
+            var state$1 = createFeatureState(13 /* IonicTypeMetal */);
+            addAtom(state$1, a);
+            addFeature(features, state$1);
         }
     });
 }
 function isMetalComplex(ti, tj) {
-    return ((ti === 8 /* Metal */ && tj === 9 /* MetalBinding */) ||
-        (ti === 9 /* MetalBinding */ && tj === 8 /* Metal */));
+    if (ti === 12 /* TransitionMetal */) {
+        return (tj === 11 /* DativeBondPartner */ ||
+            tj === 12 /* TransitionMetal */);
+    }
+    else if (ti === 13 /* IonicTypeMetal */) {
+        return (tj === 10 /* IonicTypePartner */);
+    }
 }
 /**
  * Metal complexes of metals and appropriate groups in protein and ligand, including water
@@ -59059,9 +59105,16 @@ function addMetalComplexation(structure, contacts, params) {
             ap2.index = atomSets[j][0];
             if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
-            if (isMetalComplex(types[i], types[j])) {
+            var m1 = ap1.isMetal();
+            var m2 = ap2.isMetal();
+            if (!m1 && !m2)
+                { return; }
+            var ref = m1 ? [types[i], types[j]] : [types[j], types[i]];
+            var ti = ref[0];
+            var tj = ref[1];
+            if (isMetalComplex(ti, tj)) {
                 featureSet.setBits(i, j);
-                contactStore.addContact(i, j, 7 /* MetalComplex */);
+                contactStore.addContact(i, j, 7 /* MetalCoordination */);
             }
         });
     };
@@ -59078,7 +59131,7 @@ function addMetalComplexation(structure, contacts, params) {
  */
 function addHydrophobic(structure, features) {
     structure.eachAtom(function (a) {
-        var state = createFeatureState(10 /* Hydrophobic */);
+        var state = createFeatureState(8 /* Hydrophobic */);
         var flag = false;
         if (a.number === 6) {
             flag = true;
@@ -59095,7 +59148,7 @@ function addHydrophobic(structure, features) {
     });
 }
 function isHydrophobicContact(ti, tj) {
-    return ti === 10 /* Hydrophobic */ && tj === 10 /* Hydrophobic */;
+    return ti === 8 /* Hydrophobic */ && tj === 8 /* Hydrophobic */;
 }
 /**
  * All contacts between carbon atoms that are only bonded to carbon or hydrogen
@@ -59181,7 +59234,7 @@ function isHalogenBond(ti, tj) {
         (ti === 6 /* HalogenDonor */ && tj === 7 /* HalogenAcceptor */));
 }
 // http://www.pnas.org/content/101/48/16789.full
-var OptimalHalogenAngle = degToRad(165);
+var OptimalHalogenAngle = degToRad(180); // adjusted from 165 to account for spherical statistics
 var OptimalAcceptorAngle = degToRad(120);
 /**
  * All pairs of halogen donor and acceptor atoms
@@ -59306,14 +59359,14 @@ function refineSaltBridges(structure, contacts) {
     var index1 = contactStore.index1;
     var index2 = contactStore.index2;
     var atomSets = features.atomSets;
-    var saltBridgeDict = {};
+    var ionicInteractionDict = {};
     var add = function (idx, i) {
-        if (!saltBridgeDict[idx])
-            { saltBridgeDict[idx] = []; }
-        saltBridgeDict[idx].push(i);
+        if (!ionicInteractionDict[idx])
+            { ionicInteractionDict[idx] = []; }
+        ionicInteractionDict[idx].push(i);
     };
     contactSet.forEach(function (i) {
-        if (type[i] !== 1 /* SaltBridge */)
+        if (type[i] !== 1 /* IonicInteraction */)
             { return; }
         atomSets[index1[i]].forEach(function (idx) { return add(idx, i); });
         atomSets[index2[i]].forEach(function (idx) { return add(idx, i); });
@@ -59321,13 +59374,13 @@ function refineSaltBridges(structure, contacts) {
     contactSet.forEach(function (i) {
         if (!isHydrogenBondType(type[i]))
             { return; }
-        var sbl1 = saltBridgeDict[atomSets[index1[i]][0]];
-        var sbl2 = saltBridgeDict[atomSets[index2[i]][0]];
-        if (!sbl1 || !sbl2)
+        var iil1 = ionicInteractionDict[atomSets[index1[i]][0]];
+        var iil2 = ionicInteractionDict[atomSets[index2[i]][0]];
+        if (!iil1 || !iil2)
             { return; }
-        var n = sbl1.length;
+        var n = iil1.length;
         for (var j = 0; j < n; ++j) {
-            if (sbl2.includes(sbl1[j])) {
+            if (iil2.includes(iil1[j])) {
                 contactSet.clear(i);
                 return;
             }
@@ -59375,7 +59428,47 @@ function refinePiStacking(structure, contacts) {
         }
     });
 }
-// TODO: refactor refineSaltBridges and refinePiStacking to be DRY
+/**
+ * Remove ionic interactions between groups that also form
+ * a metal coordination between each other
+ */
+function refineMetalCoordination(structure, contacts) {
+    var contactSet = contacts.contactSet;
+    var contactStore = contacts.contactStore;
+    var features = contacts.features;
+    var type = contactStore.type;
+    var index1 = contactStore.index1;
+    var index2 = contactStore.index2;
+    var atomSets = features.atomSets;
+    var ionicInteractionDict = {};
+    var add = function (idx, i) {
+        if (!ionicInteractionDict[idx])
+            { ionicInteractionDict[idx] = []; }
+        ionicInteractionDict[idx].push(i);
+    };
+    contactSet.forEach(function (i) {
+        if (type[i] !== 1 /* IonicInteraction */)
+            { return; }
+        atomSets[index1[i]].forEach(function (idx) { return add(idx, i); });
+        atomSets[index2[i]].forEach(function (idx) { return add(idx, i); });
+    });
+    contactSet.forEach(function (i) {
+        if (type[i] !== 7 /* MetalCoordination */)
+            { return; }
+        var iil1 = ionicInteractionDict[atomSets[index1[i]][0]];
+        var iil2 = ionicInteractionDict[atomSets[index2[i]][0]];
+        if (!iil1 || !iil2)
+            { return; }
+        var n = iil1.length;
+        for (var j = 0; j < n; ++j) {
+            if (iil2.includes(iil1[j])) {
+                contactSet.clear(iil1[j]);
+                return;
+            }
+        }
+    });
+}
+// TODO: refactor refineSaltBridges, refinePiStacking and refineMetalCoordination to be DRY
 
 /**
  * @file Contact
@@ -59393,8 +59486,8 @@ var ContactDefaultParams = {
     maxPiStackingOffset: 2.0,
     maxPiStackingAngle: 30,
     maxCationPiDist: 6.0,
-    maxCationPiOffset: 1.5,
-    maxSaltBridgeDist: 6.0,
+    maxCationPiOffset: 2.0,
+    maxIonicDist: 5.0,
     maxHalogenBondDist: 4.0,
     maxHalogenBondAngle: 30,
     maxMetalDist: 3.0,
@@ -59468,6 +59561,7 @@ function calculateContacts(structure, params) {
     if (params.refineSaltBridges)
         { refineSaltBridges(structure, frozenContacts); }
     refinePiStacking(structure, frozenContacts);
+    refineMetalCoordination(structure, frozenContacts);
     if (Debug)
         { Log.timeEnd('calculateContacts'); }
     return frozenContacts;
@@ -59482,10 +59576,10 @@ function contactTypeName(type) {
             return 'hydrophobic contact';
         case 5 /* HalogenBond */:
             return 'halogen bond';
-        case 1 /* SaltBridge */:
-            return 'salt bridge';
-        case 7 /* MetalComplex */:
-            return 'metal complexation';
+        case 1 /* IonicInteraction */:
+            return 'ionic interaction';
+        case 7 /* MetalCoordination */:
+            return 'metal coordination';
         case 2 /* CationPi */:
             return 'cation-pi interaction';
         case 3 /* PiStacking */:
@@ -59500,8 +59594,8 @@ var ContactDataDefaultParams = {
     hydrogenBond: true,
     hydrophobic: true,
     halogenBond: true,
-    saltBridge: true,
-    metalComplex: true,
+    ionicInteraction: true,
+    metalCoordination: true,
     cationPi: true,
     piStacking: true,
     weakHydrogenBond: true,
@@ -59520,9 +59614,9 @@ function contactColor(type) {
             return tmpColor$1.setHex(0x808080).toArray();
         case 5 /* HalogenBond */:
             return tmpColor$1.setHex(0x40FFBF).toArray();
-        case 1 /* SaltBridge */:
+        case 1 /* IonicInteraction */:
             return tmpColor$1.setHex(0xF0C814).toArray();
-        case 7 /* MetalComplex */:
+        case 7 /* MetalCoordination */:
             return tmpColor$1.setHex(0x8C4099).toArray();
         case 2 /* CationPi */:
             return tmpColor$1.setHex(0xFF8000).toArray();
@@ -59543,10 +59637,10 @@ function getContactData(contacts, structure, params) {
         { types.push(6 /* Hydrophobic */); }
     if (p.halogenBond)
         { types.push(5 /* HalogenBond */); }
-    if (p.saltBridge)
-        { types.push(1 /* SaltBridge */); }
-    if (p.metalComplex)
-        { types.push(7 /* MetalComplex */); }
+    if (p.ionicInteraction)
+        { types.push(1 /* IonicInteraction */); }
+    if (p.metalCoordination)
+        { types.push(7 /* MetalCoordination */); }
     if (p.cationPi)
         { types.push(2 /* CationPi */); }
     if (p.piStacking)
@@ -68069,9 +68163,11 @@ function calculateBondsBetween(structure, onlyAddBackbone, useExistingBonds) {
         structure.eachResidue(function (rp) {
             if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
                 rp.eachAtom(function (ap) {
+                    if (ap.isMetal())
+                        { return; }
                     spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
                         ap2.index = idx;
-                        if (ap.residueIndex !== ap2.residueIndex) {
+                        if (ap.residueIndex !== ap2.residueIndex && !ap2.isMetal()) {
                             bondStore.addBondIfConnected(ap, ap2, 1); // assume single bond
                         }
                     });
@@ -68914,11 +69010,11 @@ ResidueType.prototype.getBondReferenceAtomIndex = function getBondReferenceAtomI
 
 //
 var AromaticRingElements = [
-    5, 6, 7, 8,
-    14, 15, 16,
-    32, 33,
-    50, 51,
-    83 // Bi
+    5 /* B */, 6 /* C */, 7 /* N */, 8 /* O */,
+    14 /* SI */, 15 /* P */, 16 /* S */,
+    32 /* GE */, 33 /* AS */,
+    50 /* SN */, 51 /* SB */,
+    83 /* BI */
 ];
 var AromaticRingPlanarityThreshold = 0.05;
 function isRingAromatic(ring) {
@@ -81421,10 +81517,10 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             halogenBond: {
                 type: 'boolean', rebuild: true
             },
-            saltBridge: {
+            ionicInteraction: {
                 type: 'boolean', rebuild: true
             },
-            metalComplex: {
+            metalCoordination: {
                 type: 'boolean', rebuild: true
             },
             cationPi: {
@@ -81469,7 +81565,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxCationPiOffset: {
                 type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
             },
-            maxSaltbridgeDist: {
+            maxIonicDist: {
                 type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
             },
             maxHalogenBondDist: {
@@ -81505,8 +81601,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.backboneHydrogenBond = defaults(p.backboneHydrogenBond, false);
         this.hydrophobic = defaults(p.hydrophobic, false);
         this.halogenBond = defaults(p.halogenBond, true);
-        this.saltBridge = defaults(p.saltBridge, true);
-        this.metalComplex = defaults(p.metalComplex, true);
+        this.ionicInteraction = defaults(p.ionicInteraction, true);
+        this.metalCoordination = defaults(p.metalCoordination, true);
         this.cationPi = defaults(p.cationPi, true);
         this.piStacking = defaults(p.piStacking, true);
         this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0);
@@ -81520,8 +81616,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0);
         this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30);
         this.maxCationPiDist = defaults(p.maxCationPiDist, 6.0);
-        this.maxCationPiOffset = defaults(p.maxCationPiOffset, 1.5);
-        this.maxSaltbridgeDist = defaults(p.maxSaltbridgeDist, 4.0);
+        this.maxCationPiOffset = defaults(p.maxCationPiOffset, 2.0);
+        this.maxIonicDist = defaults(p.maxIonicDist, 5.0);
         this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5);
         this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30);
         this.maxMetalDist = defaults(p.maxMetalDist, 3.0);
@@ -81546,7 +81642,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxPiStackingAngle: this.maxPiStackingAngle,
             maxCationPiDist: this.maxCationPiDist,
             maxCationPiOffset: this.maxCationPiOffset,
-            maxSaltBridgeDist: this.maxSaltbridgeDist,
+            maxIonicDist: this.maxIonicDist,
             maxHalogenBondDist: this.maxHalogenBondDist,
             maxHalogenBondAngle: this.maxHalogenBondAngle,
             maxMetalDist: this.maxMetalDist,
@@ -81560,8 +81656,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             backboneHydrogenBond: this.backboneHydrogenBond,
             hydrophobic: this.hydrophobic,
             halogenBond: this.halogenBond,
-            saltBridge: this.saltBridge,
-            metalComplex: this.metalComplex,
+            ionicInteraction: this.ionicInteraction,
+            metalCoordination: this.metalCoordination,
             cationPi: this.cationPi,
             piStacking: this.piStacking,
             radius: this.radiusSize * this.radiusScale
@@ -96675,7 +96771,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.3";
+var version$1 = "2.0.0-dev.4";
 
 /**
  * @file Version
