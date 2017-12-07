@@ -1053,8 +1053,9 @@ export const ProteinBackboneAtoms = [
 ]
 
 export const NucleicBackboneAtoms = [
-  'P', "O3'", "O5'", "C5'", "C4'", "C3'", 'OP1', 'OP2',
-  'O3*', 'O5*', 'C5*', 'C4*', 'C3*'
+  'P', 'OP1', 'OP2',
+  "O2'", "O3'", "O4'", "O5'", "C1'", "C2'", "C3'", "C4'", "C5'",
+  'O2*', 'O3*', 'O4*', 'O5*', 'C1*', 'C2*', 'C3*', 'C4*', 'C5*'
 ]
 
 export const ResidueTypeAtoms: { [k: number]: { [k: string]: string|string[] } } = {}
