@@ -133,7 +133,7 @@ function loadStructure (input) {
   clipRadiusRange.value = 100
   pocketOpacityRange.value = 0
   cartoonCheckbox.checked = false
-  backboneCheckbox.checked = true
+  backboneCheckbox.checked = false
   hydrogenCheckbox.checked = true
   hydrophobicCheckbox.checked = false
   hydrogenBondCheckbox.checked = true
@@ -292,7 +292,6 @@ addElement(loadPdbidInput)
 
 function showFull () {
   ligandSelect.value = ''
-  backboneCheckbox.checked = true
 
   backboneRepr.setParameters({ radiusScale: 2 })
   backboneRepr.setVisibility(true)
@@ -329,6 +328,7 @@ function showLigand (sele) {
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
   backboneRepr.setParameters({ radiusScale: 0.2 })
+  backboneRepr.setVisibility(backboneCheckbox.checked)
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
@@ -447,7 +447,7 @@ addElement(createElement('span', {
 
 var backboneCheckbox = createElement('input', {
   type: 'checkbox',
-  checked: true,
+  checked: false,
   onchange: function (e) {
     backboneRepr.setVisibility(e.target.checked)
   }
