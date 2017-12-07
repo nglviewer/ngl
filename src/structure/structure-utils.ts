@@ -764,9 +764,10 @@ export function calculateBondsBetween (structure: Structure, onlyAddBackbone = f
     structure.eachResidue(function (rp) {
       if (rp.backboneType === UnknownBackboneType && !rp.isWater()) {
         rp.eachAtom(function (ap) {
+          if (ap.isMetal()) return
           spatialHash!.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {  // TODO
             ap2.index = idx
-            if (ap.residueIndex !== ap2.residueIndex) {
+            if (ap.residueIndex !== ap2.residueIndex && !ap2.isMetal()) {
               bondStore.addBondIfConnected(ap, ap2, 1)  // assume single bond
             }
           })
