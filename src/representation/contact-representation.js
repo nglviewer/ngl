@@ -141,7 +141,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
     this.maxCationPiDist = defaults(p.maxCationPiDist, 6.0)
     this.maxCationPiOffset = defaults(p.maxCationPiOffset, 2.0)
-    this.maxIonicDist = defaults(p.maxIonicDist, 4.0)
+    this.maxIonicDist = defaults(p.maxIonicDist, 5.0)
     this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5)
     this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
@@ -169,7 +169,7 @@ class ContactRepresentation extends StructureRepresentation {
       maxPiStackingAngle: this.maxPiStackingAngle,
       maxCationPiDist: this.maxCationPiDist,
       maxCationPiOffset: this.maxCationPiOffset,
-      maxIonicDist: this.maxSaltbridgeDist,
+      maxIonicDist: this.maxIonicDist,
       maxHalogenBondDist: this.maxHalogenBondDist,
       maxHalogenBondAngle: this.maxHalogenBondAngle,
       maxMetalDist: this.maxMetalDist,
