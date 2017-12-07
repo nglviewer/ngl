@@ -93,11 +93,11 @@ export function refineSaltBridges (structure: Structure, contacts: FrozenContact
   const { type, index1, index2 } = contactStore
   const { atomSets } = features
 
-  const saltBridgeDict: { [atomIndex: number]: number[] } = {}
+  const ionicInteractionDict: { [atomIndex: number]: number[] } = {}
 
   const add = function(idx: number, i: number) {
-    if (!saltBridgeDict[ idx ]) saltBridgeDict[ idx ] = []
-    saltBridgeDict[ idx ].push(i)
+    if (!ionicInteractionDict[ idx ]) ionicInteractionDict[ idx ] = []
+    ionicInteractionDict[ idx ].push(i)
   }
 
   contactSet.forEach(i => {
@@ -109,13 +109,13 @@ export function refineSaltBridges (structure: Structure, contacts: FrozenContact
   contactSet.forEach(i => {
     if (!isHydrogenBondType(type[ i ])) return
 
-    const sbl1 = saltBridgeDict[ atomSets[ index1[ i ] ][ 0 ] ]
-    const sbl2 = saltBridgeDict[ atomSets[ index2[ i ] ][ 0 ] ]
-    if (!sbl1 || !sbl2) return
+    const iil1 = ionicInteractionDict[ atomSets[ index1[ i ] ][ 0 ] ]
+    const iil2 = ionicInteractionDict[ atomSets[ index2[ i ] ][ 0 ] ]
+    if (!iil1 || !iil2) return
 
-    const n = sbl1.length
+    const n = iil1.length
     for (let j = 0; j < n; ++j) {
-      if (sbl2.includes(sbl1[j])) {
+      if (iil2.includes(iil1[j])) {
         contactSet.clear(i)
         return
       }
@@ -165,4 +165,43 @@ export function refinePiStacking (structure: Structure, contacts: FrozenContacts
   })
 }
 
-// TODO: refactor refineSaltBridges and refinePiStacking to be DRY
+/**
+ * Remove ionic interactions between groups that also form
+ * a metal coordination between each other
+ */
+export function refineMetalCoordination (structure: Structure, contacts: FrozenContacts) {
+  const { contactSet, contactStore, features } = contacts
+  const { type, index1, index2 } = contactStore
+  const { atomSets } = features
+
+  const ionicInteractionDict: { [atomIndex: number]: number[] } = {}
+
+  const add = function(idx: number, i: number) {
+    if (!ionicInteractionDict[ idx ]) ionicInteractionDict[ idx ] = []
+    ionicInteractionDict[ idx ].push(i)
+  }
+
+  contactSet.forEach(i => {
+    if (type[ i ] !== ContactType.IonicInteraction) return
+    atomSets[ index1[ i ] ].forEach(idx => add(idx, i))
+    atomSets[ index2[ i ] ].forEach(idx => add(idx, i))
+  })
+
+  contactSet.forEach(i => {
+    if (type[ i ] !== ContactType.MetalCoordination) return
+
+    const iil1 = ionicInteractionDict[ atomSets[ index1[ i ] ][ 0 ] ]
+    const iil2 = ionicInteractionDict[ atomSets[ index2[ i ] ][ 0 ] ]
+    if (!iil1 || !iil2) return
+
+    const n = iil1.length
+    for (let j = 0; j < n; ++j) {
+      if (iil2.includes(iil1[j])) {
+        contactSet.clear(iil1[j])
+        return
+      }
+    }
+  })
+}
+
+// TODO: refactor refineSaltBridges, refinePiStacking and refineMetalCoordination to be DRY

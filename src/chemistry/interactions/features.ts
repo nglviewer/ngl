@@ -21,10 +21,12 @@ export const enum FeatureType {
   HydrogenAcceptor = 5,
   HalogenDonor = 6,
   HalogenAcceptor = 7,
-  Metal = 8,
-  MetalBinding = 9,
-  Hydrophobic = 10,
-  WeakHydrogenDonor = 11
+  Hydrophobic = 8,
+  WeakHydrogenDonor = 9,
+  IonicTypePartner = 10,
+  DativeBondPartner = 11,
+  TransitionMetal = 12,
+  IonicTypeMetal = 13
 }
 
 export const enum FeatureGroup {

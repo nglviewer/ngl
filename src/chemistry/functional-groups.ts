@@ -4,6 +4,7 @@
  */
 
 import AtomProxy from '../proxy/atom-proxy'
+import { Elements } from '../structure/structure-constants'
 
 /**
  * Nitrogen in a quaternary amine
@@ -25,6 +26,36 @@ export function isTertiaryAmine (a: AtomProxy, idealValence: number) {
     a.bondCount >= 3 &&
     idealValence === 3
   )
+}
+
+/**
+ * Nitrogen in an imide
+ */
+export function isImide (a: AtomProxy) {
+  let flag = false
+  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount('H')) === 2) {
+    let carbonylCount = 0
+    a.eachBondedAtom(ba => {
+      if (isCarbonyl(ba)) ++carbonylCount
+    })
+    flag = carbonylCount === 2
+  }
+  return flag
+}
+
+/**
+ * Nitrogen in an amide
+ */
+export function isAmide (a: AtomProxy) {
+  let flag = false
+  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount('H')) === 2) {
+    let carbonylCount = 0
+    a.eachBondedAtom(ba => {
+      if (isCarbonyl(ba)) ++carbonylCount
+    })
+    flag = carbonylCount === 1
+  }
+  return flag
 }
 
 /**
@@ -77,6 +108,21 @@ export function isHalocarbon (a: AtomProxy) {
     a.bondCount === 1 &&
     a.bondToElementCount('C') === 1
   )
+}
+
+/**
+ * Carbon in a carbonyl/acyl group
+ */
+export function isCarbonyl (a: AtomProxy) {
+  let flag = false
+  if (a.number === Elements.C) {
+    a.eachBond(b => {
+      if (b.bondOrder === 2 && b.getOtherAtom(a).number === Elements.O) {
+        flag = true
+      }
+    })
+  }
+  return flag
 }
 
 /**
