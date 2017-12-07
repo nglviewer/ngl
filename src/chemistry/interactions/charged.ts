@@ -152,7 +152,7 @@ export function addAromaticRings (structure: Structure, features: Features) {
   })
 }
 
-function isSaltBridge (ti: FeatureType, tj: FeatureType) {
+function isIonicInteraction (ti: FeatureType, tj: FeatureType) {
   return (
     (ti === FeatureType.NegativeCharge && tj === FeatureType.PositiveCharge) ||
     (ti === FeatureType.PositiveCharge && tj === FeatureType.NegativeCharge)
@@ -171,7 +171,7 @@ function isCationPi (ti: FeatureType, tj: FeatureType) {
 }
 
 export interface ChargedContactsParams {
-  maxSaltBridgeDist?: number
+  maxIonicDist?: number
   maxPiStackingDist?: number
   maxPiStackingOffset?: number
   maxPiStackingAngle?: number
@@ -181,7 +181,7 @@ export interface ChargedContactsParams {
 }
 
 export function addChargedContacts (structure: Structure, contacts: Contacts, params: ChargedContactsParams = {}) {
-  const maxSaltBridgeDist = defaults(params.maxSaltBridgeDist, ContactDefaultParams.maxSaltBridgeDist)
+  const maxIonicDist = defaults(params.maxIonicDist, ContactDefaultParams.maxIonicDist)
   const maxPiStackingDist = defaults(params.maxPiStackingDist, ContactDefaultParams.maxPiStackingDist)
   const maxPiStackingOffset = defaults(params.maxPiStackingOffset, ContactDefaultParams.maxPiStackingOffset)
   const maxPiStackingAngle = defaults(params.maxPiStackingAngle, ContactDefaultParams.maxPiStackingAngle)
@@ -189,7 +189,7 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
   const maxCationPiOffset = defaults(params.maxCationPiOffset, ContactDefaultParams.maxCationPiOffset)
   const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
 
-  const maxDistance = Math.max(maxSaltBridgeDist + 2, maxPiStackingDist, maxCationPiDist)
+  const maxDistance = Math.max(maxIonicDist + 2, maxPiStackingDist, maxCationPiDist)
   // const maxSaltBridgeDistSq = maxSaltBridgeDist * maxSaltBridgeDist
   const maxPiStackingDistSq = maxPiStackingDist * maxPiStackingDist
   const maxCationPiDistSq = maxCationPiDist * maxCationPiDist
@@ -261,9 +261,9 @@ export function addChargedContacts (structure: Structure, contacts: Contacts, pa
       const ti = types[ i ]
       const tj = types[ j ]
 
-      if (isSaltBridge(ti, tj)) {
-        if (areAtomSetsWithinDist(atomSets[ i ], atomSets[ j ], maxSaltBridgeDist)) {
-          add(i, j, ContactType.SaltBridge)
+      if (isIonicInteraction(ti, tj)) {
+        if (areAtomSetsWithinDist(atomSets[ i ], atomSets[ j ], maxIonicDist)) {
+          add(i, j, ContactType.IonicInteraction)
         }
       } else if (isPiStacking(ti, tj)) {
         if (dSq <= maxPiStackingDistSq) {

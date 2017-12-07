@@ -38,13 +38,13 @@ export interface FrozenContacts extends Contacts {
 
 export const enum ContactType {
   Unknown = 0,
-  SaltBridge = 1,
+  IonicInteraction = 1,
   CationPi = 2,
   PiStacking = 3,
   HydrogenBond = 4,
   HalogenBond = 5,
   Hydrophobic = 6,
-  MetalComplex = 7,
+  MetalCoordination = 7,
   WeakHydrogenBond = 8,
   WaterHydrogenBond = 9,
   BackboneHydrogenBond = 10
@@ -62,8 +62,8 @@ export const ContactDefaultParams = {
   maxPiStackingOffset: 2.0,
   maxPiStackingAngle: 30,
   maxCationPiDist: 6.0,
-  maxSaltBridgeDist: 6.0,
   maxCationPiOffset: 2.0,
+  maxIonicDist: 6.0,
   maxHalogenBondDist: 4.0,
   maxHalogenBondAngle: 30,
   maxMetalDist: 3.0,
@@ -169,10 +169,10 @@ export function contactTypeName (type: ContactType) {
       return 'hydrophobic contact'
     case ContactType.HalogenBond:
       return 'halogen bond'
-    case ContactType.SaltBridge:
-      return 'salt bridge'
-    case ContactType.MetalComplex:
-      return 'metal complexation'
+    case ContactType.IonicInteraction:
+      return 'ionic interaction'
+    case ContactType.MetalCoordination:
+      return 'metal coordination'
     case ContactType.CationPi:
       return 'cation-pi interaction'
     case ContactType.PiStacking:
@@ -188,8 +188,8 @@ export const ContactDataDefaultParams = {
   hydrogenBond: true,
   hydrophobic: true,
   halogenBond: true,
-  saltBridge: true,
-  metalComplex: true,
+  ionicInteraction: true,
+  metalCoordination: true,
   cationPi: true,
   piStacking: true,
   weakHydrogenBond: true,
@@ -210,9 +210,9 @@ function contactColor (type: ContactType) {
       return tmpColor.setHex(0x808080).toArray()
     case ContactType.HalogenBond:
       return tmpColor.setHex(0x40FFBF).toArray()
-    case ContactType.SaltBridge:
+    case ContactType.IonicInteraction:
       return tmpColor.setHex(0xF0C814).toArray()
-    case ContactType.MetalComplex:
+    case ContactType.MetalCoordination:
       return tmpColor.setHex(0x8C4099).toArray()
     case ContactType.CationPi:
       return tmpColor.setHex(0xFF8000).toArray()
@@ -231,8 +231,8 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   if (p.hydrogenBond) types.push(ContactType.HydrogenBond)
   if (p.hydrophobic) types.push(ContactType.Hydrophobic)
   if (p.halogenBond) types.push(ContactType.HalogenBond)
-  if (p.saltBridge) types.push(ContactType.SaltBridge)
-  if (p.metalComplex) types.push(ContactType.MetalComplex)
+  if (p.ionicInteraction) types.push(ContactType.IonicInteraction)
+  if (p.metalCoordination) types.push(ContactType.MetalCoordination)
   if (p.cationPi) types.push(ContactType.CationPi)
   if (p.piStacking) types.push(ContactType.PiStacking)
   if (p.weakHydrogenBond) types.push(ContactType.WeakHydrogenBond)

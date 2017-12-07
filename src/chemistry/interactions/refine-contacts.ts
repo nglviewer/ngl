@@ -101,7 +101,7 @@ export function refineSaltBridges (structure: Structure, contacts: FrozenContact
   }
 
   contactSet.forEach(i => {
-    if (type[ i ] !== ContactType.SaltBridge) return
+    if (type[ i ] !== ContactType.IonicInteraction) return
     atomSets[ index1[ i ] ].forEach(idx => add(idx, i))
     atomSets[ index2[ i ] ].forEach(idx => add(idx, i))
   })

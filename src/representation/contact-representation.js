@@ -39,10 +39,10 @@ class ContactRepresentation extends StructureRepresentation {
       halogenBond: {
         type: 'boolean', rebuild: true
       },
-      saltBridge: {
+      ionicInteraction: {
         type: 'boolean', rebuild: true
       },
-      metalComplex: {
+      metalCoordination: {
         type: 'boolean', rebuild: true
       },
       cationPi: {
@@ -88,7 +88,7 @@ class ContactRepresentation extends StructureRepresentation {
       maxCationPiOffset: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxSaltbridgeDist: {
+      maxIonicDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
       maxHalogenBondDist: {
@@ -124,8 +124,8 @@ class ContactRepresentation extends StructureRepresentation {
     this.backboneHydrogenBond = defaults(p.backboneHydrogenBond, false)
     this.hydrophobic = defaults(p.hydrophobic, false)
     this.halogenBond = defaults(p.halogenBond, true)
-    this.saltBridge = defaults(p.saltBridge, true)
-    this.metalComplex = defaults(p.metalComplex, true)
+    this.ionicInteraction = defaults(p.ionicInteraction, true)
+    this.metalCoordination = defaults(p.metalCoordination, true)
     this.cationPi = defaults(p.cationPi, true)
     this.piStacking = defaults(p.piStacking, true)
 
@@ -140,8 +140,8 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0)
     this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
     this.maxCationPiDist = defaults(p.maxCationPiDist, 6.0)
-    this.maxSaltbridgeDist = defaults(p.maxSaltbridgeDist, 4.0)
     this.maxCationPiOffset = defaults(p.maxCationPiOffset, 2.0)
+    this.maxIonicDist = defaults(p.maxIonicDist, 4.0)
     this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5)
     this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
@@ -169,7 +169,7 @@ class ContactRepresentation extends StructureRepresentation {
       maxPiStackingAngle: this.maxPiStackingAngle,
       maxCationPiDist: this.maxCationPiDist,
       maxCationPiOffset: this.maxCationPiOffset,
-      maxSaltBridgeDist: this.maxSaltbridgeDist,
+      maxIonicDist: this.maxSaltbridgeDist,
       maxHalogenBondDist: this.maxHalogenBondDist,
       maxHalogenBondAngle: this.maxHalogenBondAngle,
       maxMetalDist: this.maxMetalDist,
@@ -184,8 +184,8 @@ class ContactRepresentation extends StructureRepresentation {
       backboneHydrogenBond: this.backboneHydrogenBond,
       hydrophobic: this.hydrophobic,
       halogenBond: this.halogenBond,
-      saltBridge: this.saltBridge,
-      metalComplex: this.metalComplex,
+      ionicInteraction: this.ionicInteraction,
+      metalCoordination: this.metalCoordination,
       cationPi: this.cationPi,
       piStacking: this.piStacking,
       radius: this.radiusSize * this.radiusScale
