@@ -314,6 +314,13 @@ var nciTests = JSON.parse(`
     "info": "ligand sulfonium, guanosine ring"
   },
   {
+    "pdbid": "3eqa",
+    "sele1": "LYS and 132:A.NZ",
+    "sele2": "((TRP and 144:A) or (TYR and (140:A or 74:A)) and aromaticRing",
+    "type": "cation-pi",
+    "info": "lysine, tryptophan and tyrosine rings"
+  },
+  {
     "pdbid": "1g54",
     "sele1": "FFB and 555:A and (.C15 or .C16 or .C17 or .C18 or .C19 or .C20)",
     "sele2": "PHE and 131:A and aromaticRing",
@@ -396,6 +403,69 @@ var nciTests = JSON.parse(`
     "sele2": "ASP and 235:A and (.OD1 or .OD2)",
     "type": "salt-bridge",
     "info": "ligand tertiary amine & weak hbonds, aspartate sidechain"
+  },
+  {
+    "pdbid": "1blu",
+    "sele1": "SF4 and 102:A.FE2",
+    "sele2": "CYS and 49:A.SG",
+    "type": "metal-coordination",
+    "info": "cysteine to iron-sulfur cluster"
+  },
+  {
+    "pdbid": "5vpw",
+    "sele1": "ICS and 602:A.MO1",
+    "sele2": "(HIS and 482:A.ND1) or (HCA and 601:A and (.O7 or .O6))",
+    "type": "metal-coordination",
+    "info": "molybdenum coordinated by histidine and ligand oxygens"
+  },
+  {
+    "pdbid": "5k5h",
+    "sele1": "[ZN] and 502:A.ZN",
+    "sele2": "(CYS and 381:A.SG) or (CYS and 384:A.SG) or (HIS and 397:A.NE2) or (HIS and 401:A.NE2)",
+    "type": "metal-coordination",
+    "info": "zink coordinated by histidine and cysteine"
+  },
+  {
+    "pdbid": "1n5w",
+    "sele1": "CUM and 3921:B.MO",
+    "sele2": "MCN and 3920:B and (.S7' or .S8')",
+    "type": "metal-coordination",
+    "info": "molybdenum coordinated by ligand sulfurs"
+  },
+  {
+    "pdbid": "1n5w",
+    "sele1": "CUM and 3921:B.CU",
+    "sele2": "(CYS and 388:B.SG) or (HOH and 4334:B.O)",
+    "type": "metal-coordination",
+    "info": "copper coordinated by water and cysteine sidechain"
+  },
+  {
+    "pdbid": "3hdi",
+    "sele1": "[CO] and 500:A.CO",
+    "sele2": "(GLU and 126:A and (.OE1 or .OE2)) or (HIS and 46:A.NE2) or (HIS and 50:A.NE2) or (ALA and 14:C.O)",
+    "type": "metal-coordination",
+    "info": "copper coordinated by backbone carbonyl, histidine and glutamate"
+  },
+  {
+    "pdbid": "1en7",
+    "sele1": "[CA] and 403:A.CA",
+    "sele2": "(HOH and 447:A.O) or (HOH and 450:A.O) or (ASN and 62:A.OD2) or (ASP and 40:A.OD1)",
+    "type": "metal-coordination",
+    "info": "calcium coordinated by water, aspartate and asparagine"
+  },
+  {
+    "pdbid": "5ph0",
+    "sele1": "[NI] and 402:A.NI",
+    "sele2": "(HOH and 598:A.O) or (HIS and 192:A.NE2) or (HIS and 280:A.NE2) or (GLU and 194:A.OE1) or (OGA and 404:A and (.O2' or .O1))",
+    "type": "metal-coordination",
+    "info": "nickel coordinated by ligand, water, glutamate and histidine"
+  },
+  {
+    "pdbid": "1rla",
+    "sele1": "[MN] and 500:A.MN",
+    "sele2": "(HOH and 502:A.O) or (HIS and 101:A.ND1) or (ASP and (124:A or 128:A or 232:A) and .OD2)",
+    "type": "metal-coordination",
+    "info": "manganase coordinated by water, aspartate and histidine"
   }
 ]
 `)
