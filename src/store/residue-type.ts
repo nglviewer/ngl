@@ -10,6 +10,7 @@ import PrincipalAxes from '../math/principal-axes'
 import { Matrix } from '../math/matrix-utils'
 import { calculateResidueBonds, ResidueBonds } from '../structure/structure-utils'
 import {
+  Elements,
   ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType, UnknownType,
   ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
   CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
@@ -578,11 +579,11 @@ export default class ResidueType {
 //
 
 const AromaticRingElements = [
-  5, 6, 7, 8,  // B, C, N, O
-  14, 15, 16,  // Si, P, S
-  32, 33,      // Ge, As
-  50, 51,      // Sn, Sb,
-  83           // Bi
+  Elements.B, Elements.C, Elements.N, Elements.O,
+  Elements.SI, Elements.P, Elements.S,
+  Elements.GE, Elements.AS,
+  Elements.SN, Elements.SB,
+  Elements.BI
 ]
 const AromaticRingPlanarityThreshold = 0.05
 

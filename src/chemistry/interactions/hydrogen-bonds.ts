@@ -8,6 +8,7 @@ import { degToRad } from '../../math/math-utils'
 import Structure from '../../structure/structure'
 import AtomProxy from '../../proxy/atom-proxy'
 import { valenceModel } from '../../structure/data'
+import { Elements } from '../../structure/structure-constants'
 import { Angles, AtomGeometry, calcAngles, calcPlaneAngle } from '../geometry'
 import {
   Features, FeatureType,
@@ -38,7 +39,10 @@ export function addHydrogenDonors (structure: Structure, features: Features) {
       // their often ambiguous protonation assignment
       addAtom(state, a)
       addFeature(features, state)
-    } else if (totalH[ a.index ] > 0 && (an === 7 || an === 8 || an === 16)) {  // N, O, S
+    } else if (
+      totalH[ a.index ] > 0 &&
+      (an === Elements.N || an === Elements.O || an === Elements.S)
+    ) {
       addAtom(state, a)
       addFeature(features, state)
     }
@@ -53,7 +57,7 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
 
   structure.eachAtom(a => {
     if (
-      a.number === 6 &&  // C
+      a.number === Elements.C &&
       totalH[ a.index ] > 0 &&
       (
         a.bondToElementCount('N') > 0 ||
@@ -82,7 +86,7 @@ function inAromaticRingWithElectronNegativeElement (a: AtomProxy) {
       hasElement = ring.some(idx => {
         const atomTypeId = a.residueType.atomTypeIdList[ idx ]
         const number = a.atomMap.get(atomTypeId).number
-        return number === 7 || number === 8  // N, O
+        return number === Elements.N || number === Elements.O
       })
     }
   })
@@ -100,11 +104,11 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
     const state = createFeatureState(FeatureType.HydrogenAcceptor)
 
     const an = a.number
-    if (an === 8) {  // O
+    if (an === Elements.O) {
       // Basically assume all oxygen atoms are acceptors!
       addAtom(state, a)
       addFeature(features, state)
-    }else if (an === 7) {  // N
+    }else if (an === Elements.N) {
       if (isHistidineNitrogen(a)) {
         // include both nitrogen atoms in histidine due to
         // their often ambiguous protonation assignment
@@ -228,13 +232,13 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       const isWeak = isWeakHydrogenBond(ti, tj)
       if (!isWeak && !isHydrogenBond(ti, tj)) return
 
-      const [ l, k ] = types[ j ] === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
+      const [ l, k ] = tj === FeatureType.HydrogenAcceptor ? [ i, j ] : [ j, i ]
 
       donor.index = atomSets[ l ][ 0 ]
       acceptor.index = atomSets[ k ][ 0 ]
 
       if (invalidAtomContact(donor, acceptor, masterIdx)) return
-      if (donor.number !== 16 && acceptor.number !== 16 && dSq > maxHbondDistSq) return
+      if (donor.number !== Elements.S && acceptor.number !== Elements.S && dSq > maxHbondDistSq) return
 
       const donorAngles = calcAngles(donor, acceptor)
       const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)

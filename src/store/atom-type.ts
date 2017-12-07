@@ -124,10 +124,10 @@ class AtomType {
   isTransitionMetal () {
     const no = this.number
     return (
-      (no >= 21 && no <=29) ||
-      (no >= 39 && no <=47) ||
-      (no >= 72 && no <=79) ||
-      (no >= 104 && no <=108)
+      (no >= 21 && no <= 29) ||
+      (no >= 39 && no <= 47) ||
+      (no >= 72 && no <= 79) ||
+      (no >= 104 && no <= 108)
     )
   }
 
@@ -136,11 +136,11 @@ class AtomType {
   }
 
   isLanthanide () {
-    return this.number >= 57 && this.number <=71
+    return this.number >= 57 && this.number <= 71
   }
 
   isActinide () {
-    return this.number >= 89 && this.number <=103
+    return this.number >= 89 && this.number <= 103
   }
 
 }
