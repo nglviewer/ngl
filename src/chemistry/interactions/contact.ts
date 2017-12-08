@@ -21,6 +21,7 @@ import { addMetalBinding, addMetals, addMetalComplexation } from './metal-bindin
 import { addHydrophobic, addHydrophobicContacts } from './hydrophobic'
 import { addHalogenAcceptors, addHalogenDonors, addHalogenBonds } from './halogen-bonds'
 import {
+  refineLineOfSight,
   refineHydrophobicContacts, refineSaltBridges, refinePiStacking, refineMetalCoordination
 } from './refine-contacts'
 
@@ -68,7 +69,8 @@ export const ContactDefaultParams = {
   maxHalogenBondAngle: 30,
   maxMetalDist: 3.0,
   refineSaltBridges: true,
-  masterModelIndex: -1
+  masterModelIndex: -1,
+  lineOfSightDistFactor: 1.0
 }
 
 export function isMasterContact (ap1: AtomProxy, ap2: AtomProxy, masterIdx: number) {
@@ -150,6 +152,7 @@ export function calculateContacts (structure: Structure, params = ContactDefault
 
   const frozenContacts = createFrozenContacts(contacts)
 
+  refineLineOfSight(structure, frozenContacts, params)
   refineHydrophobicContacts(structure, frozenContacts)
   if (params.refineSaltBridges) refineSaltBridges(structure, frozenContacts)
   refinePiStacking(structure, frozenContacts)

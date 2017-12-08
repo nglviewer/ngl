@@ -106,6 +106,9 @@ class ContactRepresentation extends StructureRepresentation {
       masterModelIndex: {
         type: 'integer', max: 1000, min: -1, rebuild: true
       },
+      lineOfSightDistFactor: {
+        type: 'number', precision: 1, max: 10, min: 0.0, rebuild: true
+      },
 
       radialSegments: true,
       disableImpostor: true
@@ -147,6 +150,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
     this.refineSaltBridges = defaults(p.refineSaltBridges, true)
     this.masterModelIndex = defaults(p.masterModelIndex, -1)
+    this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0)
 
     super.init(p)
   }
@@ -174,7 +178,8 @@ class ContactRepresentation extends StructureRepresentation {
       maxHalogenBondAngle: this.maxHalogenBondAngle,
       maxMetalDist: this.maxMetalDist,
       refineSaltBridges: this.refineSaltBridges,
-      masterModelIndex: this.masterModelIndex
+      masterModelIndex: this.masterModelIndex,
+      lineOfSightDistFactor: this.lineOfSightDistFactor
     }
 
     const dataParams = {

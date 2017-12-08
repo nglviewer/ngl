@@ -9,7 +9,7 @@ import Store, { StoreField } from './store'
 /**
  * Bond store
  */
-export default class BondStore extends Store {
+export default class ContactStore extends Store {
   index1: Uint32Array
   index2: Uint32Array
   type: Uint8Array

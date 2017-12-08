@@ -4,9 +4,66 @@
  * @private
  */
 
+import { Debug, Log } from '../../globals'
+import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
-import { FrozenContacts, ContactType } from './contact'
+import { Elements } from '../../structure/structure-constants'
+import { FrozenContacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
 import { FeatureType } from './features'
+
+export interface LineOfSightParams {
+  lineOfSightDistFactor?: number
+  masterModelIndex?: number
+}
+
+export function refineLineOfSight (structure: Structure, contacts: FrozenContacts, params: LineOfSightParams = {}) {
+  if (Debug) Log.time('refineLineOfSight')
+
+  const lineOfSightDistFactor = defaults(params.lineOfSightDistFactor, ContactDefaultParams.lineOfSightDistFactor)
+  const masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex)
+
+  const spatialHash = structure.spatialHash!
+  const { contactSet, contactStore, features } = contacts
+  const { index1, index2 } = contactStore
+  const { centers, atomSets } = features
+  const { x, y, z } = centers
+
+  const ac1 = structure.getAtomProxy()
+  const ac2 = structure.getAtomProxy()
+  const aw = structure.getAtomProxy()
+
+  const lineOfSightDist = 2 * lineOfSightDistFactor
+  const lineOfSightDistFactorSq = lineOfSightDistFactor * lineOfSightDistFactor
+
+  contactSet.forEach(i => {
+    const cx = ( x[ index1[ i ] ] + x[ index2[ i ] ] ) / 2
+    const cy = ( y[ index1[ i ] ] + y[ index2[ i ] ] ) / 2
+    const cz = ( z[ index1[ i ] ] + z[ index2[ i ] ] ) / 2
+
+    const as1 = atomSets[ index1[ i ] ]
+    const as2 = atomSets[ index2[ i ] ]
+
+    ac1.index = as1[ 0 ]
+    ac2.index = as2[ 0 ]
+
+    spatialHash.eachWithin(cx, cy, cz, lineOfSightDist, (j, dSq) => {
+      aw.index = j
+      if (
+        aw.number !== Elements.H &&
+        (aw.covalent * aw.covalent * lineOfSightDistFactorSq) > dSq &&
+        !invalidAtomContact(ac1, aw, masterIdx) &&
+        !invalidAtomContact(ac2, aw, masterIdx) &&
+        !as1.includes(j) &&
+        !as2.includes(j)
+      ) {
+        contactSet.clear(i)
+        console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName())
+      }
+    })
+  })
+
+  if (Debug) Log.timeEnd('refineLineOfSight')
+}
 
 /**
  * For atoms interacting with several atoms in the same residue
