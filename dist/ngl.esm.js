@@ -56988,14 +56988,14 @@ Store.prototype.dispose = function dispose () {
 /**
  * Bond store
  */
-var BondStore = (function (Store$$1) {
-    function BondStore () {
+var ContactStore = (function (Store$$1) {
+    function ContactStore () {
         Store$$1.apply(this, arguments);
     }
 
-    if ( Store$$1 ) BondStore.__proto__ = Store$$1;
-    BondStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
-    BondStore.prototype.constructor = BondStore;
+    if ( Store$$1 ) ContactStore.__proto__ = Store$$1;
+    ContactStore.prototype = Object.create( Store$$1 && Store$$1.prototype );
+    ContactStore.prototype.constructor = ContactStore;
 
     var prototypeAccessors = { _defaultFields: { configurable: true } };
 
@@ -57006,7 +57006,7 @@ var BondStore = (function (Store$$1) {
             ['type', 1, 'int8']
         ];
     };
-    BondStore.prototype.addContact = function addContact (index1, index2, type) {
+    ContactStore.prototype.addContact = function addContact (index1, index2, type) {
         this.growIfFull();
         var i = this.count;
         if (index1 < index2) {
@@ -57022,9 +57022,9 @@ var BondStore = (function (Store$$1) {
         this.count += 1;
     };
 
-    Object.defineProperties( BondStore.prototype, prototypeAccessors );
+    Object.defineProperties( ContactStore.prototype, prototypeAccessors );
 
-    return BondStore;
+    return ContactStore;
 }(Store));
 
 /**
@@ -59298,6 +59298,53 @@ function addHalogenBonds(structure, contacts, params) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+function refineLineOfSight(structure, contacts, params) {
+    if ( params === void 0 ) params = {};
+
+    if (Debug)
+        { Log.time('refineLineOfSight'); }
+    var lineOfSightDistFactor = defaults(params.lineOfSightDistFactor, ContactDefaultParams.lineOfSightDistFactor);
+    var masterIdx = defaults(params.masterModelIndex, ContactDefaultParams.masterModelIndex);
+    var spatialHash = structure.spatialHash;
+    var contactSet = contacts.contactSet;
+    var contactStore = contacts.contactStore;
+    var features = contacts.features;
+    var index1 = contactStore.index1;
+    var index2 = contactStore.index2;
+    var centers = features.centers;
+    var atomSets = features.atomSets;
+    var x = centers.x;
+    var y = centers.y;
+    var z = centers.z;
+    var ac1 = structure.getAtomProxy();
+    var ac2 = structure.getAtomProxy();
+    var aw = structure.getAtomProxy();
+    var lineOfSightDist = 2 * lineOfSightDistFactor;
+    var lineOfSightDistFactorSq = lineOfSightDistFactor * lineOfSightDistFactor;
+    contactSet.forEach(function (i) {
+        var cx = (x[index1[i]] + x[index2[i]]) / 2;
+        var cy = (y[index1[i]] + y[index2[i]]) / 2;
+        var cz = (z[index1[i]] + z[index2[i]]) / 2;
+        var as1 = atomSets[index1[i]];
+        var as2 = atomSets[index2[i]];
+        ac1.index = as1[0];
+        ac2.index = as2[0];
+        spatialHash.eachWithin(cx, cy, cz, lineOfSightDist, function (j, dSq) {
+            aw.index = j;
+            if (aw.number !== 1 /* H */ &&
+                (aw.covalent * aw.covalent * lineOfSightDistFactorSq) > dSq &&
+                !invalidAtomContact(ac1, aw, masterIdx) &&
+                !invalidAtomContact(ac2, aw, masterIdx) &&
+                !as1.includes(j) &&
+                !as2.includes(j)) {
+                contactSet.clear(i);
+                console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName());
+            }
+        });
+    });
+    if (Debug)
+        { Log.timeEnd('refineLineOfSight'); }
+}
 /**
  * For atoms interacting with several atoms in the same residue
  * only the one with the closest distance is kept.
@@ -59492,7 +59539,8 @@ var ContactDefaultParams = {
     maxHalogenBondAngle: 30,
     maxMetalDist: 3.0,
     refineSaltBridges: true,
-    masterModelIndex: -1
+    masterModelIndex: -1,
+    lineOfSightDistFactor: 1.0
 };
 function isMasterContact(ap1, ap2, masterIdx) {
     return ((ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
@@ -59507,7 +59555,7 @@ function createContacts(features) {
     var types = features.types;
     var centers = features.centers;
     var spatialHash = new SpatialHash(centers);
-    var contactStore = new BondStore();
+    var contactStore = new ContactStore();
     var featureSet = new BitArray(types.length, false);
     return { features: features, spatialHash: spatialHash, contactStore: contactStore, featureSet: featureSet };
 }
@@ -59557,6 +59605,7 @@ function calculateContacts(structure, params) {
     addHydrophobicContacts(structure, contacts, params);
     addHalogenBonds(structure, contacts, params);
     var frozenContacts = createFrozenContacts(contacts);
+    refineLineOfSight(structure, frozenContacts, params);
     refineHydrophobicContacts(structure, frozenContacts);
     if (params.refineSaltBridges)
         { refineSaltBridges(structure, frozenContacts); }
@@ -65070,7 +65119,7 @@ var BondHash = function BondHash(bondStore, atomCount) {
 /**
  * Bond store
  */
-var BondStore$1 = (function (Store$$1) {
+var BondStore = (function (Store$$1) {
     function BondStore () {
         Store$$1.apply(this, arguments);
     }
@@ -70394,9 +70443,9 @@ Structure.prototype.init = function init (name, path) {
     this.frames = [];
     this.boxes = [];
     this.validation = undefined;
-    this.bondStore = new BondStore$1(0);
-    this.backboneBondStore = new BondStore$1(0);
-    this.rungBondStore = new BondStore$1(0);
+    this.bondStore = new BondStore(0);
+    this.backboneBondStore = new BondStore(0);
+    this.rungBondStore = new BondStore(0);
     this.atomStore = new AtomStore(0);
     this.residueStore = new ResidueStore(0);
     this.chainStore = new ChainStore(0);
@@ -81583,6 +81632,9 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             masterModelIndex: {
                 type: 'integer', max: 1000, min: -1, rebuild: true
             },
+            lineOfSightDistFactor: {
+                type: 'number', precision: 1, max: 10, min: 0.0, rebuild: true
+            },
             radialSegments: true,
             disableImpostor: true
         }, this.parameters);
@@ -81623,6 +81675,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxMetalDist = defaults(p.maxMetalDist, 3.0);
         this.refineSaltBridges = defaults(p.refineSaltBridges, true);
         this.masterModelIndex = defaults(p.masterModelIndex, -1);
+        this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0);
         StructureRepresentation$$1.prototype.init.call(this, p);
     };
     ContactRepresentation.prototype.getAtomRadius = function getAtomRadius () {
@@ -81647,7 +81700,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             maxHalogenBondAngle: this.maxHalogenBondAngle,
             maxMetalDist: this.maxMetalDist,
             refineSaltBridges: this.refineSaltBridges,
-            masterModelIndex: this.masterModelIndex
+            masterModelIndex: this.masterModelIndex,
+            lineOfSightDistFactor: this.lineOfSightDistFactor
         };
         var dataParams = {
             hydrogenBond: this.hydrogenBond,
@@ -82102,7 +82156,7 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
         var position = new Float32Array(n * 3);
         var sele1 = new Selection();
         var sele2 = new Selection();
-        var bondStore = new BondStore$1();
+        var bondStore = new BondStore();
         var ap1 = sview.getAtomProxy();
         var ap2 = sview.getAtomProxy();
         var j = 0;
@@ -96771,7 +96825,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.4";
+var version$1 = "2.0.0-dev.5";
 
 /**
  * @file Version
