@@ -70,7 +70,7 @@ export const ContactDefaultParams = {
   maxMetalDist: 3.0,
   refineSaltBridges: true,
   masterModelIndex: -1,
-  lineOfSightDistFactor: 1.0
+  lineOfSightDistFactor: 1.5
 }
 
 export function isMasterContact (ap1: AtomProxy, ap2: AtomProxy, masterIdx: number) {
