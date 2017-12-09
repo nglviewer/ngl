@@ -59540,7 +59540,7 @@ var ContactDefaultParams = {
     maxMetalDist: 3.0,
     refineSaltBridges: true,
     masterModelIndex: -1,
-    lineOfSightDistFactor: 1.0
+    lineOfSightDistFactor: 1.5
 };
 function isMasterContact(ap1, ap2, masterIdx) {
     return ((ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
@@ -81675,7 +81675,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxMetalDist = defaults(p.maxMetalDist, 3.0);
         this.refineSaltBridges = defaults(p.refineSaltBridges, true);
         this.masterModelIndex = defaults(p.masterModelIndex, -1);
-        this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0);
+        this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.5);
         StructureRepresentation$$1.prototype.init.call(this, p);
     };
     ContactRepresentation.prototype.getAtomRadius = function getAtomRadius () {
@@ -96825,7 +96825,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.5";
+var version$1 = "2.0.0-dev.6";
 
 /**
  * @file Version
