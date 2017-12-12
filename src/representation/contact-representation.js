@@ -52,6 +52,10 @@ class ContactRepresentation extends StructureRepresentation {
         type: 'boolean', rebuild: true
       },
 
+      filterSele: {
+        type: 'text', rebuild: true
+      },
+
       maxHydrophobicDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
@@ -132,6 +136,8 @@ class ContactRepresentation extends StructureRepresentation {
     this.cationPi = defaults(p.cationPi, true)
     this.piStacking = defaults(p.piStacking, true)
 
+    this.filterSele = defaults(p.filterSele, '')
+
     this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
     this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
     this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1)
@@ -193,7 +199,8 @@ class ContactRepresentation extends StructureRepresentation {
       metalCoordination: this.metalCoordination,
       cationPi: this.cationPi,
       piStacking: this.piStacking,
-      radius: this.radiusSize * this.radiusScale
+      radius: this.radiusSize * this.radiusScale,
+      filterSele: this.filterSele
     }
 
     const contacts = calculateContacts(sview, params)

@@ -12,6 +12,7 @@ import AtomProxy from '../../proxy/atom-proxy'
 import SpatialHash from '../../geometry/spatial-hash'
 import ContactStore from '../../store/contact-store'
 import BitArray from '../../utils/bitarray'
+import Selection from '../../selection/selection'
 import { ContactPicker } from '../../utils/picker'
 import { createAdjacencyList, AdjacencyList } from '../../utils/adjacency-list'
 import { createFeatures, Features } from './features'
@@ -199,7 +200,8 @@ export const ContactDataDefaultParams = {
   weakHydrogenBond: true,
   waterHydrogenBond: true,
   backboneHydrogenBond: true,
-  radius: 1
+  radius: 1,
+  filterSele: ''
 }
 export type ContactDataParams = typeof ContactDataDefaultParams
 
@@ -244,7 +246,7 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   if (p.backboneHydrogenBond) types.push(ContactType.BackboneHydrogenBond)
 
   const { features, contactSet, contactStore } = contacts
-  const { centers } = features
+  const { centers, atomSets } = features
   const { x, y, z } = centers
   const { index1, index2, type } = contactStore
 
@@ -254,17 +256,28 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   const radius: number[] = []
   const picking: number[] = []
 
+  let filterSet: BitArray | undefined
+  if (p.filterSele) {
+    filterSet = structure.getAtomSet(new Selection(p.filterSele))
+  }
+
   contactSet.forEach(i => {
     const ti = type[ i ]
-    if (types.includes(ti)) {
-      const k = index1[i]
-      const l = index2[i]
-      position1.push(x[k], y[k], z[k])
-      position2.push(x[l], y[l], z[l])
-      color.push(...contactColor(ti))
-      radius.push(p.radius)
-      picking.push(i)
+    if (!types.includes(ti)) return
+
+    if (filterSet) {
+      const idx1 = atomSets[index1[i]][0]
+      const idx2 = atomSets[index2[i]][0]
+      if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2)) return
     }
+
+    const k = index1[i]
+    const l = index2[i]
+    position1.push(x[k], y[k], z[k])
+    position2.push(x[l], y[l], z[l])
+    color.push(...contactColor(ti))
+    radius.push(p.radius)
+    picking.push(i)
   })
 
   return {
