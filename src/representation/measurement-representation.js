@@ -195,7 +195,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     super.setParameters(params, what, rebuild)
 
     if (params && params.opacity !== undefined) {
-      this.textBuffer.setParameters({ opacity: 1.0 })  // only opaque labels
+      this.textBuffer.setParameters({ opacity: 1.0 }) // only opaque labels
     }
 
     if (params && params.labelVisible !== undefined) {
@@ -238,7 +238,7 @@ class MeasurementRepresentation extends StructureRepresentation {
       disablePicking: true,
       visible: this.labelVisible
     }, params, {
-      opacity: 1.0  // only opaque labels
+      opacity: 1.0 // only opaque labels
     }))
   }
 

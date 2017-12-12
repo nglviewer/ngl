@@ -16,17 +16,17 @@ import Selection from '../selection/selection.js'
  * Surface
  */
 class Surface {
-    /**
-     * @param {String} name - surface name
-     * @param {String} path - source path
-     * @param {Object} data - surface data
-     * @param {Float32Array} data.position - surface positions
-     * @param {Int32Array} data.index - surface indices
-     * @param {Float32Array} data.normal - surface normals
-     * @param {Float32Array} data.color - surface colors
-     * @param {Int32Array} data.atomindex - atom indices
-     * @param {boolean} data.contour - contour mode flag
-     */
+  /**
+   * @param {String} name - surface name
+   * @param {String} path - source path
+   * @param {Object} data - surface data
+   * @param {Float32Array} data.position - surface positions
+   * @param {Int32Array} data.index - surface indices
+   * @param {Float32Array} data.normal - surface normals
+   * @param {Float32Array} data.color - surface colors
+   * @param {Int32Array} data.atomindex - atom indices
+   * @param {boolean} data.contour - contour mode flag
+   */
   constructor (name, path, data) {
     this.name = name || ''
     this.path = path || ''
@@ -36,20 +36,20 @@ class Surface {
     this.boundingBox = new Box3()
 
     if (data instanceof Geometry ||
-            data instanceof BufferGeometry ||
-            data instanceof Group
-        ) {
-            // to be removed
+      data instanceof BufferGeometry ||
+      data instanceof Group
+    ) {
+      // to be removed
       this.fromGeometry(data)
     } else if (data) {
       this.set(
-                data.position,
-                data.index,
-                data.normal,
-                data.color,
-                data.atomindex,
-                data.contour
-            )
+        data.position,
+        data.index,
+        data.normal,
+        data.color,
+        data.atomindex,
+        data.contour
+      )
 
       this.boundingBox.setFromArray(data.position)
       this.boundingBox.getCenter(this.center)
@@ -58,36 +58,36 @@ class Surface {
 
   get type () { return 'Surface' }
 
-    /**
-     * set surface data
-     * @param {Float32Array} position - surface positions
-     * @param {Int32Array} index - surface indices
-     * @param {Float32Array} normal - surface normals
-     * @param {Float32Array} color - surface colors
-     * @param {Int32Array} atomindex - atom indices
-     * @param {boolean} contour - contour mode flag
-     * @return {undefined}
-     */
+  /**
+   * set surface data
+   * @param {Float32Array} position - surface positions
+   * @param {Int32Array} index - surface indices
+   * @param {Float32Array} normal - surface normals
+   * @param {Float32Array} color - surface colors
+   * @param {Int32Array} atomindex - atom indices
+   * @param {boolean} contour - contour mode flag
+   * @return {undefined}
+   */
   set (position, index, normal, color, atomindex, contour) {
-        /**
-         * @type {Float32Array}
-         */
+    /**
+     * @type {Float32Array}
+     */
     this.position = position
-        /**
-         * @type {Uint32Array|Uint16Array|undefined}
-         */
+    /**
+     * @type {Uint32Array|Uint16Array|undefined}
+     */
     this.index = index
-        /**
-         * @type {Float32Array|undefined}
-         */
+    /**
+     * @type {Float32Array|undefined}
+     */
     this.normal = normal
-        /**
-         * @type {Float32Array|undefined}
-         */
+    /**
+     * @type {Float32Array|undefined}
+     */
     this.color = color
-        /**
-         * @type {Int32Array|undefined}
-         */
+    /**
+     * @type {Int32Array|undefined}
+     */
     this.atomindex = atomindex
 
     this.size = position.length / 3
@@ -119,7 +119,7 @@ class Surface {
       const attr = geo.attributes
       const an = attr.normal ? attr.normal.array : false
 
-            // assume there are no normals if the first is zero
+      // assume there are no normals if the first is zero
       if (!an || (an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0)) {
         geo.computeVertexNormals()
       }
@@ -239,7 +239,7 @@ class Surface {
 
   dispose () {
 
-        //
+    //
 
   }
 }

@@ -103,7 +103,7 @@ class RibbonRepresentation extends StructureRepresentation {
             size: subSize.size,
             picking: subPick.picking
           },
-            this.getBufferParams()
+          this.getBufferParams()
         )
       )
     }, sview.getSelection())

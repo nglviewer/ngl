@@ -342,11 +342,11 @@ function getAllowedContours () {
 }
 
 function MarchingCubes (field, nx, ny, nz, atomindex) {
-    // Based on alteredq / http://alteredqualia.com/
-    // port of greggman's ThreeD version of marching cubes to Three.js
-    // http://webglsamples.googlecode.com/hg/blob/blob.html
-    //
-    // Adapted for NGL by Alexander Rose
+  // Based on alteredq / http://alteredqualia.com/
+  // port of greggman's ThreeD version of marching cubes to Three.js
+  // http://webglsamples.googlecode.com/hg/blob/blob.html
+  //
+  // Adapted for NGL by Alexander Rose
 
   var isolevel = 0
   var noNormals = false
@@ -375,13 +375,13 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
 
   var mx, my, mz
 
-    //
+  //
 
   this.triangulate = function (_isolevel, _noNormals, _box, _contour, _wrap) {
     isolevel = _isolevel
     contour = _contour
     wrap = _wrap
-        // Normals currently disabled in contour mode for performance (unused)
+    // Normals currently disabled in contour mode for performance (unused)
     noNormals = _noNormals || contour
 
     if (!noNormals && !normalCache) {
@@ -391,9 +391,9 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     var vIndexLength = contour ? n * 3 : n
 
     if (!vertexIndex || vertexIndex.length !== vIndexLength) {
-            // In contour mode we want all drawn edges parallel to one axis,
-            // so interpolation must be calculated in each dimension (rather
-            // than re-using a single interpolated vertex)
+      // In contour mode we want all drawn edges parallel to one axis,
+      // so interpolation must be calculated in each dimension (rather
+      // than re-using a single interpolated vertex)
       vertexIndex = new Int32Array(vIndexLength)
     }
 
@@ -409,9 +409,9 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       mz = nz * Math.ceil(Math.abs(min[ 2 ]) / nz)
 
       triangulate(
-                min[ 0 ], min[ 1 ], min[ 2 ],
-                max[ 0 ], max[ 1 ], max[ 2 ]
-            )
+        min[ 0 ], min[ 1 ], min[ 2 ],
+        max[ 0 ], max[ 1 ], max[ 2 ]
+      )
     } else {
       mx = my = mz = 0
 
@@ -552,7 +552,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
   }
 
   function polygonize (fx, fy, fz, q, edgeFilter) {
-        // cache indices
+    // cache indices
     var q1
     var qy
     var qz
@@ -598,7 +598,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     if (field6 < isolevel) cubeindex |= 128
     if (field7 < isolevel) cubeindex |= 64
 
-        // if cube is entirely in/out of the surface - bail, nothing to draw
+    // if cube is entirely in/out of the surface - bail, nothing to draw
 
     var bits = edgeTable[ cubeindex ]
     if (bits === 0) return 0
@@ -607,7 +607,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     var fy2 = fy + 1
     var fz2 = fz + 1
 
-        // top of the cube
+    // top of the cube
 
     if (bits & 1) {
       if (!noNormals) {
@@ -641,7 +641,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       VIntY(q, 3, fx, fy, fz, field0, field2)
     }
 
-        // bottom of the cube
+    // bottom of the cube
 
     if (bits & 16) {
       if (!noNormals) {
@@ -675,7 +675,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       VIntY(qz, 7, fx, fy, fz2, field4, field6)
     }
 
-        // vertical lines of the cube
+    // vertical lines of the cube
 
     if (bits & 256) {
       if (!noNormals) {
@@ -709,14 +709,14 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       VIntZ(qy, 11, fx, fy2, fz, field2, field6)
     }
 
-    var triIndex = cubeindex << 4  // re-purpose cubeindex into an offset into triTable
+    var triIndex = cubeindex << 4 // re-purpose cubeindex into an offset into triTable
 
     var e1
     var e2
     var e3
     var i = 0
 
-        // here is where triangles are created
+    // here is where triangles are created
 
     while (triTable[ triIndex + i ] !== -1) {
       e1 = triTable[ triIndex + i ]
@@ -737,7 +737,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
           indexArray[ icount++ ] = ilist[ e3 ]
         }
       } else {
-                // FIXME normals flipping (see above) and vertex order reversal
+        // FIXME normals flipping (see above) and vertex order reversal
         indexArray[ icount++ ] = ilist[ e2 ]
         indexArray[ icount++ ] = ilist[ e1 ]
         indexArray[ icount++ ] = ilist[ e3 ]
@@ -787,8 +787,8 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     var xBeg2, yBeg2, zBeg2, xEnd2, yEnd2, zEnd2
 
     if (!wrap) {
-            // init part of the vertexIndex
-            // (takes a significant amount of time to do for all)
+      // init part of the vertexIndex
+      // (takes a significant amount of time to do for all)
 
       xBeg2 = Math.max(0, xBeg - 2)
       yBeg2 = Math.max(0, yBeg - 2)
@@ -842,7 +842,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
 
     if (!wrap) {
-            // clip space where the isovalue is too low
+      // clip space where the isovalue is too low
 
       var __break
       var __xBeg = xBeg; var __yBeg = yBeg; var __zBeg = zBeg
@@ -944,7 +944,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
         if (__break) break
       }
 
-            //
+      //
 
       if (noNormals) {
         xBeg = Math.max(0, __xBeg - 1)
@@ -965,7 +965,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       }
     }
 
-        // polygonize part of the grid
+    // polygonize part of the grid
     var edgeFilter = 15
     for (z = zBeg; z < zEnd; ++z, edgeFilter &= ~4) {
       zOffset = zd * z

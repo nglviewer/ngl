@@ -10,20 +10,20 @@ import { computeBoundingBox } from '../math/vector-utils.js'
 import { getRadiusDict, getSurfaceGrid } from './surface-utils.js'
 
 function EDTSurface (coordList, radiusList, indexList) {
-    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
-    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
-    //
-    // Permission to use, copy, modify, and distribute this program for
-    // any purpose, with or without fee, is hereby granted, provided that
-    // the notices on the head, the reference information, and this
-    // copyright notice appear in all copies or substantial portions of
-    // the Software. It is provided "as is" without express or implied
-    // warranty.
-    //
-    // ported to JavaScript by biochem_fan (http://webglmol.sourceforge.jp/)
-    // refactored by dkoes (https://github.com/dkoes)
-    //
-    // adapted to NGL by Alexander Rose
+  // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+  // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+  //
+  // Permission to use, copy, modify, and distribute this program for
+  // any purpose, with or without fee, is hereby granted, provided that
+  // the notices on the head, the reference information, and this
+  // copyright notice appear in all copies or substantial portions of
+  // the Software. It is provided "as is" without express or implied
+  // warranty.
+  //
+  // ported to JavaScript by biochem_fan (http://webglmol.sourceforge.jp/)
+  // refactored by dkoes (https://github.com/dkoes)
+  //
+  // adapted to NGL by Alexander Rose
 
   var radiusDict = getRadiusDict(radiusList)
   var bbox = computeBoundingBox(coordList)
@@ -53,8 +53,8 @@ function EDTSurface (coordList, radiusList, indexList) {
     }
 
     var grid = getSurfaceGrid(
-            min, max, maxRadius, scaleFactor, btype ? probeRadius : 0
-        )
+      min, max, maxRadius, scaleFactor, btype ? probeRadius : 0
+    )
 
     pLength = grid.dim[0]
     pWidth = grid.dim[1]
@@ -64,7 +64,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     ptran = grid.tran
     scaleFactor = grid.scaleFactor
 
-        // boundingatom caches
+    // boundingatom caches
     depty = {}
     widxz = {}
     boundingatom(btype)
@@ -74,7 +74,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     if (_cutoff) {
       cutoff = _cutoff
     } else {
-            // cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
+      // cutoff = Math.max( 0.1, -1.2 + scaleFactor * probeRadius );
       cutoff = probeRadius / scaleFactor
     }
 
@@ -87,7 +87,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     }
   }
 
-    // constants for vpBits bitmasks
+  // constants for vpBits bitmasks
   var INOUT = 1
   var ISDONE = 2
   var ISBOUND = 4
@@ -131,7 +131,7 @@ function EDTSurface (coordList, radiusList, indexList) {
 
     marchingcubeinit(type)
 
-        // set atomindex in the volume data
+    // set atomindex in the volume data
     for (var i = 0, il = vpAtomID.length; i < il; ++i) {
       vpAtomID[ i ] = indexList[ vpAtomID[ i ] ]
     }
@@ -272,16 +272,16 @@ function EDTSurface (coordList, radiusList, indexList) {
                         }
                       }
                     }
-                  }// k
-                }// if
-              }// kk
-            }// jj
-          }// ii
-        }// if
+                  } // k
+                } // if
+              } // kk
+            } // jj
+          } // ii
+        } // if
 
         nind++
-      }// j
-    }// i
+      } // j
+    } // i
   }
 
   function fillvoxels (btype) {
@@ -379,23 +379,23 @@ function EDTSurface (coordList, radiusList, indexList) {
                         vpAtomID[ index ] = idx
                       }
                     }
-                  }// k
-                }// if
-              }// kk
-            }// jj
-          }// ii
-        }// if
+                  } // k
+                } // if
+              } // kk
+            } // jj
+          } // ii
+        } // if
 
         nind++
-      }// j
-    }// i
+      } // j
+    } // i
   }
 
   function fillvoxelswaals () {
     var i, il
 
     for (i = 0, il = vpBits.length; i < il; ++i) {
-      vpBits[ i ] &= ~ISDONE  // not isdone
+      vpBits[ i ] &= ~ISDONE // not isdone
     }
 
     for (i = 0, il = coordList.length / 3; i < il; ++i) {
@@ -413,10 +413,10 @@ function EDTSurface (coordList, radiusList, indexList) {
           var index = i * pWH + k * pHeight + j
 
           if (vpBits[ index ] & INOUT) {
-                // var flagbound = false;
+            // var flagbound = false;
             var ii = 0
 
-                // while( !flagbound && ii < 26 ){
+            // while( !flagbound && ii < 26 ){
             while (ii < 26) {
               var ti = i + nb[ ii ][ 0 ]
               var tj = j + nb[ ii ][ 2 ]
@@ -428,7 +428,7 @@ function EDTSurface (coordList, radiusList, indexList) {
                         !(vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT)
                     ) {
                 vpBits[ index ] |= ISBOUND
-                        // flagbound = true;
+                // flagbound = true;
                 break
               } else {
                 ii++
@@ -446,13 +446,13 @@ function EDTSurface (coordList, radiusList, indexList) {
     var i, j, k, n
 
     var boundPoint = new Grid(
-            pLength, pWidth, pHeight, Uint16Array, 3
-        )
+      pLength, pWidth, pHeight, Uint16Array, 3
+    )
     var pWH = pWidth * pHeight
     var cutRSq = cutRadius * cutRadius
 
     var totalsurfacevox = 0
-        // var totalinnervox = 0;
+    // var totalinnervox = 0;
 
     var index
 
@@ -475,10 +475,8 @@ function EDTSurface (coordList, radiusList, indexList) {
 
               totalsurfacevox += 1
             }/* else{
-
-                            totalinnervox += 1;
-
-                        } */
+                totalinnervox += 1;
+            } */
           }
         }
       }
@@ -515,7 +513,7 @@ function EDTSurface (coordList, radiusList, indexList) {
         vpBits[ index ] &= ~ISBOUND
 
         if (vpDistance[ index ] <= 1.0404 * cutRSq) {
-                // if( vpDistance[ index ] <= 1.02 * cutRadius ){
+          // if( vpDistance[ index ] <= 1.02 * cutRadius ){
 
           inarray[ positin ] = outarray[ i ]
           inarray[ positin + 1 ] = outarray[ i + 1 ]
@@ -525,8 +523,8 @@ function EDTSurface (coordList, radiusList, indexList) {
       }
     } while (positin > 0)
 
-        // var cutsf = Math.max( 0, scaleFactor - 0.5 );
-        // cutoff = cutRadius - 0.5 / ( 0.1 + cutsf );
+    // var cutsf = Math.max( 0, scaleFactor - 0.5 );
+    // cutoff = cutRadius - 0.5 / ( 0.1 + cutsf );
     var cutoffSq = cutoff * cutoff
 
     var index2
@@ -538,12 +536,12 @@ function EDTSurface (coordList, radiusList, indexList) {
           index = i * pWH + j * pHeight + k
           vpBits[ index ] &= ~ISBOUND
 
-                    // ses solid
+          // ses solid
 
           if (vpBits[ index ] & INOUT) {
             if (!(vpBits[ index ] & ISDONE) ||
-                            ((vpBits[ index ] & ISDONE) && vpDistance[ index ] >= cutoffSq)
-                        ) {
+              ((vpBits[ index ] & ISDONE) && vpDistance[ index ] >= cutoffSq)
+            ) {
               vpBits[ index ] |= ISBOUND
 
               if (setAtomID && (vpBits[ index ] & ISDONE)) {
@@ -562,9 +560,9 @@ function EDTSurface (coordList, radiusList, indexList) {
   }
 
   function fastoneshell (inarray, boundPoint, positin, outarray) {
-        // *allocout,voxel2
-        // ***boundPoint, int*
-        // outnum, int *elimi)
+    // *allocout,voxel2
+    // ***boundPoint, int*
+    // outnum, int *elimi)
     var tx, ty, tz
     var dx, dy, dz
     var i, j, n
@@ -597,9 +595,9 @@ function EDTSurface (coordList, radiusList, indexList) {
         tnviz = tz + nbj[ 2 ]
 
         if (tnvix < pLength && tnvix > -1 &&
-                    tnviy < pWidth && tnviy > -1 &&
-                    tnviz < pHeight && tnviz > -1
-                ) {
+          tnviy < pWidth && tnviy > -1 &&
+          tnviz < pHeight && tnviz > -1
+        ) {
           index = tnvix * pWH + pHeight * tnviy + tnviz
 
           if ((vpBits[ index ] & INOUT) && !(vpBits[ index ] & ISDONE)) {
@@ -608,7 +606,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             vpDistance[ index ] = square
             vpBits[ index ] |= ISDONE
@@ -623,7 +621,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             if (square < vpDistance[ index ]) {
               boundPoint.fromArray(tnvix, tnviy, tnviz, bp)
@@ -656,9 +654,9 @@ function EDTSurface (coordList, radiusList, indexList) {
         tnviz = tz + nbj[ 2 ]
 
         if (tnvix < pLength && tnvix > -1 &&
-                    tnviy < pWidth && tnviy > -1 &&
-                    tnviz < pHeight && tnviz > -1
-                ) {
+          tnviy < pWidth && tnviy > -1 &&
+          tnviz < pHeight && tnviz > -1
+        ) {
           index = tnvix * pWH + pHeight * tnviy + tnviz
 
           if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
@@ -667,7 +665,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             vpDistance[index] = square
             vpBits[index] |= ISDONE
@@ -682,7 +680,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             if (square < vpDistance[index]) {
               boundPoint.fromArray(tnvix, tnviy, tnviz, bp)
@@ -715,9 +713,9 @@ function EDTSurface (coordList, radiusList, indexList) {
         tnviz = tz + nbj[ 2 ]
 
         if (tnvix < pLength && tnvix > -1 &&
-                    tnviy < pWidth && tnviy > -1 &&
-                    tnviz < pHeight && tnviz > -1
-                ) {
+          tnviy < pWidth && tnviy > -1 &&
+          tnviz < pHeight && tnviz > -1
+        ) {
           index = tnvix * pWH + pHeight * tnviy + tnviz
 
           if ((vpBits[index] & INOUT) && !(vpBits[index] & ISDONE)) {
@@ -726,7 +724,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             vpDistance[index] = square
             vpBits[index] |= ISDONE
@@ -741,7 +739,7 @@ function EDTSurface (coordList, radiusList, indexList) {
             dy = tnviy - bp[ 1 ]
             dz = tnviz - bp[ 2 ]
             square = dx * dx + dy * dy + dz * dz
-                        // square = Math.sqrt( square );
+            // square = Math.sqrt( square );
 
             if (square < vpDistance[index]) {
               boundPoint.fromArray(tnvix, tnviy, tnviz, bp)
@@ -773,7 +771,7 @@ function EDTSurface (coordList, radiusList, indexList) {
         vpBits[ i ] &= ~ISBOUND
         vpBits[ i ] = (vpBits[ i ] & ISDONE) ? 1 : 0
       }
-    } else if (stype === 'ms') {  // ses without vdw => ms
+    } else if (stype === 'ms') { // ses without vdw => ms
       for (i = 0; i < n; ++i) {
         vpBits[ i ] &= ~ISDONE
         if (vpBits[ i ] & ISBOUND) {

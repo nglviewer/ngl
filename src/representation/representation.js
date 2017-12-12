@@ -449,9 +449,8 @@ class Representation {
 
       // no value change
       if (p[ name ] === this[ name ] && (
-          !p[ name ].equals || p[ name ].equals(this[ name ])
-        )
-      ) continue
+        !p[ name ].equals || p[ name ].equals(this[ name ])
+      )) continue
 
       if (this[ name ] && this[ name ].copy && p[ name ].copy) {
         this[ name ].copy(p[ name ])
@@ -507,7 +506,7 @@ class Representation {
     })
 
     if (Object.keys(what).length) {
-      this.update(what)  // update buffer attribute
+      this.update(what) // update buffer attribute
     }
 
     this.viewer.requestRender()

@@ -6,26 +6,26 @@
 
 import { degToRad } from '../math/math-utils'
 import {
-    m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
+  m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 } from '../math/matrix-utils.js'
 import {
-    v3addScalar, v3subScalar, v3divideScalar, v3multiplyScalar,
-    v3floor, v3ceil, v3sub, v3negate,
-    v3cross, v3fromArray, normalizeVector3array
+  v3addScalar, v3subScalar, v3divideScalar, v3multiplyScalar,
+  v3floor, v3ceil, v3sub, v3negate,
+  v3cross, v3fromArray, normalizeVector3array
 } from '../math/vector-utils.js'
 
 function laplacianSmooth (verts, faces, numiter, inflate) {
-    // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
-    // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
-    //
-    // Permission to use, copy, modify, and distribute this program for
-    // any purpose, with or without fee, is hereby granted, provided that
-    // the notices on the head, the reference information, and this
-    // copyright notice appear in all copies or substantial portions of
-    // the Software. It is provided "as is" without express or implied
-    // warranty.
-    //
-    // ported to JavaScript and adapted to NGL by Alexander Rose
+  // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
+  // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
+  //
+  // Permission to use, copy, modify, and distribute this program for
+  // any purpose, with or without fee, is hereby granted, provided that
+  // the notices on the head, the reference information, and this
+  // copyright notice appear in all copies or substantial portions of
+  // the Software. It is provided "as is" without express or implied
+  // warranty.
+  //
+  // ported to JavaScript and adapted to NGL by Alexander Rose
 
   numiter = numiter || 1
   inflate = inflate || true
@@ -55,14 +55,14 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
   var j, jl
   var flagvert
 
-    // for each face
+  // for each face
 
   for (i = 0; i < nf; ++i) {
     var ao = i * 3
     var bo = i * 3 + 1
     var co = i * 3 + 2
 
-        // vertex a
+      // vertex a
 
     flagvert = true
     for (j = 0, jl = vertdeg[ 0 ][ faces[ao] ]; j < jl; ++j) {
@@ -88,7 +88,7 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
       vertdeg[ vertdeg[ 0 ][ faces[ ao ] ] ][ faces[ ao ] ] = faces[ co ]
     }
 
-        // vertex b
+    // vertex b
 
     flagvert = true
     for (j = 0, jl = vertdeg[ 0 ][ faces[ bo ] ]; j < jl; ++j) {
@@ -114,7 +114,7 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
       vertdeg[ vertdeg[ 0 ][ faces[ bo ] ] ][ faces[ bo ] ] = faces[ co ]
     }
 
-        // vertex c
+    // vertex c
 
     flagvert = true
     for (j = 0; j < vertdeg[ 0 ][ faces[ co ] ]; ++j) {
@@ -146,12 +146,12 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
   var i3, vi3, vdi, wtvi, wt2vi
   var ssign = -1
   var scaleFactor = 1
-  var outwt = 0.75 / (scaleFactor + 3.5)  // area-preserving
+  var outwt = 0.75 / (scaleFactor + 3.5) // area-preserving
 
-    // smoothing iterations
+  // smoothing iterations
 
   for (var k = 0; k < numiter; ++k) {
-        // for each vertex
+    // for each vertex
 
     for (i = 0; i < nv; ++i) {
       i3 = i * 3
@@ -204,15 +204,15 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
       }
     }
 
-    verts.set(tps)  // copy smoothed positions
+    verts.set(tps) // copy smoothed positions
 
     if (inflate) {
       computeVertexNormals(verts, faces, norms)
       var nv3 = nv * 3
 
       for (i3 = 0; i3 < nv3; i3 += 3) {
-                // if(verts[i].inout) ssign=1;
-                // else ssign=-1;
+        // if(verts[i].inout) ssign=1;
+        // else ssign=-1;
 
         verts[ i3 ] += ssign * outwt * norms[ i3 ]
         verts[ i3 + 1 ] += ssign * outwt * norms[ i3 + 1 ]
@@ -229,7 +229,7 @@ function computeVertexNormals (position, index, normal) {
   if (normal === undefined) {
     normal = new Float32Array(position.length)
   } else {
-        // reset existing normals to zero
+    // reset existing normals to zero
     for (i = 0, il = normal.length; i < il; i++) {
       normal[ i ] = 0
     }
@@ -242,7 +242,7 @@ function computeVertexNormals (position, index, normal) {
   var ab = new Float32Array(3)
 
   if (index) {
-        // indexed elements
+    // indexed elements
     for (i = 0, il = index.length; i < il; i += 3) {
       var ai = index[ i ] * 3
       var bi = index[ i + 1 ] * 3
@@ -269,7 +269,7 @@ function computeVertexNormals (position, index, normal) {
       normal[ ci + 2 ] += cb[ 2 ]
     }
   } else {
-        // non-indexed elements (unconnected triangle soup)
+    // non-indexed elements (unconnected triangle soup)
     for (i = 0, il = position.length; i < il; i += 9) {
       v3fromArray(a, position, i)
       v3fromArray(b, position, i + 3)
@@ -310,7 +310,7 @@ function getRadiusDict (radiusList) {
 }
 
 function getSurfaceGrid (min, max, maxRadius, scaleFactor, extraMargin) {
-    // need margin to avoid boundary/round off effects
+  // need margin to avoid boundary/round off effects
   var margin = (1 / scaleFactor) * 3
   margin += maxRadius
 
@@ -354,7 +354,7 @@ function getSurfaceGrid (min, max, maxRadius, scaleFactor, extraMargin) {
   var tran = new Float32Array(min)
   v3negate(tran, tran)
 
-    // coordinate transformation matrix
+  // coordinate transformation matrix
   var matrix = m4new()
   var mroty = m4new()
   m4makeRotationY(mroty, degToRad(90))
@@ -393,8 +393,8 @@ getSurfaceGrid.__deps = [
 ]
 
 export {
-    laplacianSmooth,
-    computeVertexNormals,
-    getRadiusDict,
-    getSurfaceGrid
+  laplacianSmooth,
+  computeVertexNormals,
+  getRadiusDict,
+  getSurfaceGrid
 }

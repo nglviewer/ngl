@@ -11,12 +11,12 @@ import BallAndStickRepresentation from './ballandstick-representation.js'
  * Licorice representation object ({@link BallAndStickRepresentation} with `aspectRatio` fixed at 1.0)
  */
 class LicoriceRepresentation extends BallAndStickRepresentation {
-    /**
-     * Create Licorice representation object
-     * @param {Structure} structure - the structure to be represented
-     * @param {Viewer} viewer - a viewer object
-     * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
-     */
+  /**
+   * Create Licorice representation object
+   * @param {Structure} structure - the structure to be represented
+   * @param {Viewer} viewer - a viewer object
+   * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
+   */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 

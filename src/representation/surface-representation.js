@@ -64,7 +64,7 @@ class SurfaceRepresentation extends Representation {
         type: 'integer', precision: 1, max: 10, min: 0
       },
       background: {
-        type: 'boolean', rebuild: true  // FIXME
+        type: 'boolean', rebuild: true // FIXME
       },
       opaqueBack: {
         type: 'boolean', buffer: true
