@@ -199,9 +199,8 @@ type MouseActionPreset = [ string, MouseActionCallback ][]
 export const MouseActionPresets = {
   default: [
     [ 'scroll', MouseActions.zoomScroll ],
-    [ 'scroll-ctrl', MouseActions.clipNearScroll ],
     [ 'scroll-shift', MouseActions.focusScroll ],
-    [ 'scroll-alt', MouseActions.isolevelScroll ],
+    [ 'scroll-ctrl', MouseActions.isolevelScroll ],
 
     [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-left', MouseActions.rotateDrag ],
@@ -211,7 +210,7 @@ export const MouseActionPresets = {
     [ 'drag-ctrl-right', MouseActions.panComponentDrag ],
     [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
 
-    [ 'clickPick-alt-left', MouseActions.measurePick ],
+    [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'clickPick-shift-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
