@@ -156,7 +156,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
     this.refineSaltBridges = defaults(p.refineSaltBridges, true)
     this.masterModelIndex = defaults(p.masterModelIndex, -1)
-    this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.5)
+    this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0)
 
     super.init(p)
   }

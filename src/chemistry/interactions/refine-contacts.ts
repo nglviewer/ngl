@@ -4,16 +4,27 @@
  * @private
  */
 
+import { Vector3 } from 'three'
+
 import { Debug, Log } from '../../globals'
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
+import AtomProxy from '../../proxy/atom-proxy'
 import { Elements } from '../../structure/structure-constants'
-import { FrozenContacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
+import { FrozenContacts, ContactType, ContactDefaultParams, isMasterContact } from './contact'
 import { FeatureType } from './features'
 
 export interface LineOfSightParams {
   lineOfSightDistFactor?: number
   masterModelIndex?: number
+}
+
+// also allows intra-residue contacts
+export function invalidAtomContact (ap1: AtomProxy, ap2: AtomProxy, masterIdx: number) {
+  return !isMasterContact(ap1, ap2, masterIdx) && (
+    ap1.modelIndex !== ap2.modelIndex ||
+    (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc)
+  )
 }
 
 export function refineLineOfSight (structure: Structure, contacts: FrozenContacts, params: LineOfSightParams = {}) {
@@ -32,13 +43,19 @@ export function refineLineOfSight (structure: Structure, contacts: FrozenContact
   const ac2 = structure.getAtomProxy()
   const aw = structure.getAtomProxy()
 
-  const lineOfSightDist = 2 * lineOfSightDistFactor
+  const c1 = new Vector3()
+  const c2 = new Vector3()
+
+  const lineOfSightDist = 3 * lineOfSightDistFactor
   const lineOfSightDistFactorSq = lineOfSightDistFactor * lineOfSightDistFactor
 
   contactSet.forEach(i => {
-    const cx = ( x[ index1[ i ] ] + x[ index2[ i ] ] ) / 2
-    const cy = ( y[ index1[ i ] ] + y[ index2[ i ] ] ) / 2
-    const cz = ( z[ index1[ i ] ] + z[ index2[ i ] ] ) / 2
+    c1.set(x[index1[i]], y[index1[i]], z[index1[i]])
+    c2.set(x[index2[i]], y[index2[i]], z[index2[i]])
+
+    const cx = ( c1.x + c2.x ) / 2
+    const cy = ( c1.y + c2.y ) / 2
+    const cz = ( c1.z + c2.z ) / 2
 
     const as1 = atomSets[ index1[ i ] ]
     const as2 = atomSets[ index2[ i ] ]
@@ -50,11 +67,14 @@ export function refineLineOfSight (structure: Structure, contacts: FrozenContact
       aw.index = j
       if (
         aw.number !== Elements.H &&
-        (aw.covalent * aw.covalent * lineOfSightDistFactorSq) > dSq &&
+        (aw.vdw * aw.vdw * lineOfSightDistFactorSq) > dSq &&
         !invalidAtomContact(ac1, aw, masterIdx) &&
         !invalidAtomContact(ac2, aw, masterIdx) &&
         !as1.includes(j) &&
-        !as2.includes(j)
+        !as2.includes(j) &&
+        // to ignore atoms in the center of functional groups
+        c1.distanceToSquared(aw as any) > 1 &&
+        c2.distanceToSquared(aw as any) > 1
       ) {
         contactSet.clear(i)
         console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName())
