@@ -59290,6 +59290,11 @@ function addHalogenBonds(structure, contacts, params) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+// also allows intra-residue contacts
+function invalidAtomContact$1(ap1, ap2, masterIdx) {
+    return !isMasterContact(ap1, ap2, masterIdx) && (ap1.modelIndex !== ap2.modelIndex ||
+        (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc));
+}
 function refineLineOfSight(structure, contacts, params) {
     if ( params === void 0 ) params = {};
 
@@ -59311,12 +59316,16 @@ function refineLineOfSight(structure, contacts, params) {
     var ac1 = structure.getAtomProxy();
     var ac2 = structure.getAtomProxy();
     var aw = structure.getAtomProxy();
-    var lineOfSightDist = 2 * lineOfSightDistFactor;
+    var c1 = new Vector3();
+    var c2 = new Vector3();
+    var lineOfSightDist = 3 * lineOfSightDistFactor;
     var lineOfSightDistFactorSq = lineOfSightDistFactor * lineOfSightDistFactor;
     contactSet.forEach(function (i) {
-        var cx = (x[index1[i]] + x[index2[i]]) / 2;
-        var cy = (y[index1[i]] + y[index2[i]]) / 2;
-        var cz = (z[index1[i]] + z[index2[i]]) / 2;
+        c1.set(x[index1[i]], y[index1[i]], z[index1[i]]);
+        c2.set(x[index2[i]], y[index2[i]], z[index2[i]]);
+        var cx = (c1.x + c2.x) / 2;
+        var cy = (c1.y + c2.y) / 2;
+        var cz = (c1.z + c2.z) / 2;
         var as1 = atomSets[index1[i]];
         var as2 = atomSets[index2[i]];
         ac1.index = as1[0];
@@ -59324,11 +59333,14 @@ function refineLineOfSight(structure, contacts, params) {
         spatialHash.eachWithin(cx, cy, cz, lineOfSightDist, function (j, dSq) {
             aw.index = j;
             if (aw.number !== 1 /* H */ &&
-                (aw.covalent * aw.covalent * lineOfSightDistFactorSq) > dSq &&
-                !invalidAtomContact(ac1, aw, masterIdx) &&
-                !invalidAtomContact(ac2, aw, masterIdx) &&
+                (aw.vdw * aw.vdw * lineOfSightDistFactorSq) > dSq &&
+                !invalidAtomContact$1(ac1, aw, masterIdx) &&
+                !invalidAtomContact$1(ac2, aw, masterIdx) &&
                 !as1.includes(j) &&
-                !as2.includes(j)) {
+                !as2.includes(j) &&
+                // to ignore atoms in the center of functional groups
+                c1.distanceToSquared(aw) > 1 &&
+                c2.distanceToSquared(aw) > 1) {
                 contactSet.clear(i);
                 console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName());
             }
@@ -59532,7 +59544,7 @@ var ContactDefaultParams = {
     maxMetalDist: 3.0,
     refineSaltBridges: true,
     masterModelIndex: -1,
-    lineOfSightDistFactor: 1.5
+    lineOfSightDistFactor: 1.0
 };
 function isMasterContact(ap1, ap2, masterIdx) {
     return ((ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
@@ -81682,7 +81694,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.maxMetalDist = defaults(p.maxMetalDist, 3.0);
         this.refineSaltBridges = defaults(p.refineSaltBridges, true);
         this.masterModelIndex = defaults(p.masterModelIndex, -1);
-        this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.5);
+        this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0);
         StructureRepresentation$$1.prototype.init.call(this, p);
     };
     ContactRepresentation.prototype.getAtomRadius = function getAtomRadius () {
@@ -96831,7 +96843,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.7";
+var version$1 = "2.0.0-dev.8";
 
 /**
  * @file Version
