@@ -26,7 +26,7 @@ import { Elements } from '../structure/structure-constants'
  * double bond or N, O next to a double bond, except:
  *
  *   N,O with degree 4 cannot be conjugated.
- *   N,O adjacent to P=O or S=O do not qualify
+ *   N,O adjacent to P=O or S=O do not qualify (keeps sulfonamide N sp3 geom)
  */
 function isConjugated (a: AtomProxy) {
   const _bp = a.structure.getBondProxy()
@@ -158,7 +158,14 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
             charge = 0
           }
         } else {
-          charge = 1
+          // Sulfonamide nitrogen and classed as sp3 in conjugation model but
+          // they won't be charged
+          let sCount = 0
+          a.eachBondedAtom(ba => {
+            if (ba.number === Elements.S) sCount++
+          })
+          if (sCount) charge = 0
+          else charge = 1
           // TODO: Planarity sanity check?
         }
 
