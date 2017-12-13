@@ -5,6 +5,7 @@
 
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
+import { Elements } from '../../structure/structure-constants'
 import {
   Features, FeatureType,
   addAtom, addFeature, createFeatureState,
@@ -18,11 +19,11 @@ export function addHydrophobic (structure: Structure, features: Features) {
   structure.eachAtom(a => {
     const state = createFeatureState(FeatureType.Hydrophobic)
     let flag = false
-    if (a.number === 6) {  // C
+    if (a.number === Elements.C) {
       flag = true
       a.eachBondedAtom(ap => {
         const an = ap.number
-        if (an !== 6 && an !== 1) flag = false  // C, H
+        if (an !== Elements.C && an !== Elements.H) flag = false
       })
     }
     if (flag) {

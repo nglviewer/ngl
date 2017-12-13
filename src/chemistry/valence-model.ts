@@ -19,6 +19,7 @@
 import { Data } from '../structure/data'
 import AtomProxy from '../proxy/atom-proxy'
 import { AtomGeometry, assignGeometry } from './geometry'
+import { Elements } from '../structure/structure-constants'
 
 /**
  * Are we involved in some kind of pi system. Either explicitly forming
@@ -30,7 +31,7 @@ import { AtomGeometry, assignGeometry } from './geometry'
 function isConjugated (a: AtomProxy) {
   const _bp = a.structure.getBondProxy()
   const atomicNumber = a.number
-  const hetero = atomicNumber === 7 || atomicNumber === 8  // O, N
+  const hetero = atomicNumber === Elements.O || atomicNumber === Elements.N
 
   if (hetero && a.bondCount === 4) {
     return false
@@ -50,8 +51,8 @@ function isConjugated (a: AtomProxy) {
         if (b2.bondOrder > 1) {
           const atomicNumber2 = a2.number
           if (
-            (atomicNumber2 === 15 || atomicNumber2 === 16) && // P, S
-            b2.getOtherAtom(a2).number === 8  // O
+            (atomicNumber2 === Elements.P || atomicNumber2 === Elements.S) &&
+            b2.getOtherAtom(a2).number === Elements.O
           ) {
             return
           }
@@ -75,7 +76,7 @@ function isConjugated (a: AtomProxy) {
 function hasExplicitHydrogen(r: ResidueProxy) {
   let flag = false
   r.eachAtom(a => {
-    if (a.number === 1) flag = true
+    if (a.number === Elements.H) flag = true
   })
   return flag
 } */
@@ -101,7 +102,7 @@ export function explicitValence (a: AtomProxy) {
  * @param {assignChargeHParams} params What to assign
  */
 export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelParams) {
-  const hydrogenCount = a.bondToElementCount('H')
+  const hydrogenCount = a.bondToElementCount(Elements.H)
   let charge = a.formalCharge || 0
 
   const assignCharge = (params.assignCharge === 'always' ||
@@ -120,8 +121,7 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
   let geom = AtomGeometry.Unknown
 
   switch (a.number) {
-    // H
-    case 1:
+    case Elements.H:
       if (assignCharge){
         if (degree === 0){
           charge = 1
@@ -132,8 +132,8 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
         }
       }
       break
-    // C
-    case 6:
+
+    case Elements.C:
       // TODO: Isocyanide?
       if (assignCharge) {
         charge = 0 // Assume carbon always neutral
@@ -146,8 +146,7 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
       geom = assignGeometry(degree + implicitHCount + Math.max(0, -charge))
       break
 
-    // N
-    case 7:
+    case Elements.N:
       if (assignCharge) {
         if (!assignH) { // Trust input H explicitly:
           charge = valence - 3
@@ -181,9 +180,7 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
       }
       break
 
-
-    // O
-    case 8:
+    case Elements.O:
       if (assignCharge) {
         if (!assignH) {
           charge = valence - 2 //
@@ -192,7 +189,7 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
           a.eachBondedAtom(ba => {
             ba.eachBond(b => {
               const oa = b.getOtherAtom(ba)
-              if (oa.index !== a.index && oa.number === 8 && b.bondOrder === 2){
+              if (oa.index !== a.index && oa.number === Elements.O && b.bondOrder === 2){
                 charge = -1
               }
             })
@@ -214,10 +211,10 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
 
     // Only handles thiols/thiolates/thioether/sulfonium. Sulfoxides and higher
     // oxidiation states are assumed neutral S (charge carried on O if required)
-    case 16:
+    case Elements.S:
       if (assignCharge) {
         if (!assignH) {
-          if (valence <= 3 && !a.bondToElementCount('O')) {
+          if (valence <= 3 && !a.bondToElementCount(Elements.O)) {
             charge = valence - 2 // e.g. explicitly deprotonated thiol
           } else {
             charge = 0
@@ -236,37 +233,34 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
 
       break
 
-    // F, Cl, Br, I, At
-    case 9:
-    case 17:
-    case 35:
-    case 53:
-    case 85:
+    case Elements.F:
+    case Elements.CL:
+    case Elements.BR:
+    case Elements.I:
+    case Elements.AT:
       // Never implicitly protonate halides
       if (assignCharge) {
         charge = valence - 1
       }
       break
 
-    // Li, Na, K, Rb, Cs Fr
-    case 3:
-    case 11:
-    case 19:
-    case 37:
-    case 55:
-    case 87:
+    case Elements.LI:
+    case Elements.NA:
+    case Elements.K:
+    case Elements.RB:
+    case Elements.CS:
+    case Elements.FR:
       if (assignCharge) {
         charge = 1 - valence
       }
       break
 
-    // Be, Mg, Ca, Sr, Ba, Ra
-    case 4:
-    case 12:
-    case 20:
-    case 38:
-    case 56:
-    case 88:
+    case Elements.BE:
+    case Elements.MG:
+    case Elements.CA:
+    case Elements.SR:
+    case Elements.BA:
+    case Elements.RA:
       if (assignCharge) {
         charge = 2 - valence
       }

@@ -8,9 +8,10 @@ import { Vector3 } from 'three'
 
 import { NumberArray } from '../types'
 import {
-    SecStrucHelix, SecStrucSheet, SecStrucTurn,
-    ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
-    CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
+  Elements,
+  SecStrucHelix, SecStrucSheet, SecStrucTurn,
+  ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
+  CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType
 } from '../structure/structure-constants'
 
 import Structure from '../structure/structure'
@@ -361,17 +362,17 @@ class AtomProxy {
     return flag
   }
 
-  bondToElementCount (element: string) {
+  bondToElementCount (element: Elements) {
     let count = 0
     const idx = this.index // Avoid reentrancy problems
     this.eachBondedAtom(function (bap) {
-      if (bap.element === element) count += 1
+      if (bap.number === element) count += 1
     })
     this.index = idx
     return count
   }
 
-  hasBondToElement (element: string) {
+  hasBondToElement (element: Elements) {
     return this.bondToElementCount(element) > 0
   }
 

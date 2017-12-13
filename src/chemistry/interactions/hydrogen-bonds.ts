@@ -60,8 +60,8 @@ export function addWeakHydrogenDonors (structure: Structure, features: Features)
       a.number === Elements.C &&
       totalH[ a.index ] > 0 &&
       (
-        a.bondToElementCount('N') > 0 ||
-        a.bondToElementCount('O') > 0 ||
+        a.bondToElementCount(Elements.N) > 0 ||
+        a.bondToElementCount(Elements.O) > 0 ||
         inAromaticRingWithElectronNegativeElement(a)
       )
     ) {
@@ -150,7 +150,7 @@ export function addHydrogenAcceptors (structure: Structure, features: Features) 
 // }
 
 function isHistidineNitrogen (ap: AtomProxy) {
-  return ap.resname === 'HIS' && ap.number == 7 && ap.isRing()
+  return ap.resname === 'HIS' && ap.number == Elements.N && ap.isRing()
 }
 
 function isBackboneHydrogenBond (ap1: AtomProxy, ap2: AtomProxy) {

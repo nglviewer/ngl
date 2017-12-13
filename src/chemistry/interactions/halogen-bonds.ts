@@ -6,6 +6,7 @@
 
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
+import { Elements } from '../../structure/structure-constants'
 import { degToRad } from '../../math/math-utils'
 import {
   Features, FeatureType,
@@ -21,7 +22,7 @@ const halBondElements = [17, 35, 53, 85]
  */
 export function addHalogenDonors (structure: Structure, features: Features) {
   structure.eachAtom(a => {
-    if (halBondElements.includes(a.number) && a.bondToElementCount('C') === 1) {
+    if (halBondElements.includes(a.number) && a.bondToElementCount(Elements.C) === 1) {
       const state = createFeatureState(FeatureType.HalogenDonor)
       addAtom(state, a)
       addFeature(features, state)
@@ -29,8 +30,8 @@ export function addHalogenDonors (structure: Structure, features: Features) {
   })
 }
 
-const X = [ 7, 8, 16 ]  // N, O, S
-const Y = [ 6, 7, 15, 16 ]  // C, N, P, S
+const X = [ Elements.N, Elements.O, Elements.S ]
+const Y = [ Elements.C, Elements.N, Elements.P, Elements.S ]
 
 /**
  * Halogen bond acceptors (Y-{O|N|S}, with Y=C,P,N,S)

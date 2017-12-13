@@ -6,6 +6,7 @@
 
 import { Vector3 } from 'three'
 
+import { Elements } from '../structure/structure-constants'
 import { degToRad } from '../math/math-utils'
 import AtomProxy from '../proxy/atom-proxy'
 
@@ -59,7 +60,7 @@ export function calcAngles (ap1: AtomProxy, ap2: AtomProxy): number[] {
   const d2 = new Vector3()
   d1.subVectors(ap2 as any, ap1 as any)
   ap1.eachBondedAtom( x => {
-    if (x.number !== 1) {  // H
+    if (x.number !== Elements.H) {
       d2.subVectors(x as any, ap1 as any)
       angles.push(d1.angleTo(d2))
     }
@@ -84,7 +85,7 @@ export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number | undefi
   let ni = 0
   ap1.eachBondedAtom( x => {
     if (ni > 1) { return }
-    if (x.number !== 1) {  // H
+    if (x.number !== Elements.H) {
       x1.index = x.index
       neighbours[ni++].subVectors(x as any, ap1 as any)
     }
@@ -92,7 +93,7 @@ export function calcPlaneAngle (ap1: AtomProxy, ap2: AtomProxy): number | undefi
   if (ni === 1) {
     x1.eachBondedAtom( x => {
       if (ni > 1) { return }
-      if (x.number !== 1 && x.index !== ap1.index){  // H
+      if (x.number !== Elements.H && x.index !== ap1.index){
         neighbours[ni++].subVectors(x as any, ap1 as any)
       }
     })

@@ -13,7 +13,7 @@ export function isQuaternaryAmine (a: AtomProxy) {
   return (
     a.number === 7 &&
     a.bondCount === 4 &&
-    a.bondToElementCount('H') === 0
+    a.bondToElementCount(Elements.H) === 0
   )
 }
 
@@ -33,7 +33,7 @@ export function isTertiaryAmine (a: AtomProxy, idealValence: number) {
  */
 export function isImide (a: AtomProxy) {
   let flag = false
-  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount('H')) === 2) {
+  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount(Elements.H)) === 2) {
     let carbonylCount = 0
     a.eachBondedAtom(ba => {
       if (isCarbonyl(ba)) ++carbonylCount
@@ -48,7 +48,7 @@ export function isImide (a: AtomProxy) {
  */
 export function isAmide (a: AtomProxy) {
   let flag = false
-  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount('H')) === 2) {
+  if (a.number === Elements.N && (a.bondCount - a.bondToElementCount(Elements.H)) === 2) {
     let carbonylCount = 0
     a.eachBondedAtom(ba => {
       if (isCarbonyl(ba)) ++carbonylCount
@@ -65,7 +65,7 @@ export function isSulfonium (a: AtomProxy) {
   return (
     a.number === 16 &&
     a.bondCount === 3 &&
-    a.bondToElementCount('H') === 0
+    a.bondToElementCount(Elements.H) === 0
   )
 }
 
@@ -75,7 +75,7 @@ export function isSulfonium (a: AtomProxy) {
 export function isSulfonicAcid (a: AtomProxy) {
   return (
     a.number === 16 &&
-    a.bondToElementCount('O') === 3
+    a.bondToElementCount(Elements.O) === 3
   )
 }
 
@@ -85,7 +85,7 @@ export function isSulfonicAcid (a: AtomProxy) {
 export function isSulfate (a: AtomProxy) {
   return (
     a.number === 16 &&
-    a.bondToElementCount('O') === 4
+    a.bondToElementCount(Elements.O) === 4
   )
 }
 
@@ -95,7 +95,7 @@ export function isSulfate (a: AtomProxy) {
 export function isPhosphate (a: AtomProxy) {
   return (
     a.number === 15 &&
-    a.bondToElementCount('O') === a.bondCount
+    a.bondToElementCount(Elements.O) === a.bondCount
   )
 }
 
@@ -106,7 +106,7 @@ export function isHalocarbon (a: AtomProxy) {
   return (
     a.isHalogen() &&
     a.bondCount === 1 &&
-    a.bondToElementCount('C') === 1
+    a.bondToElementCount(Elements.C) === 1
   )
 }
 
@@ -132,11 +132,11 @@ export function isCarboxylate (a: AtomProxy) {
   let terminalOxygenCount = 0
   if (
     a.number === 6 &&
-    a.bondToElementCount('O') === 2 &&
-    a.bondToElementCount('C') === 1
+    a.bondToElementCount(Elements.O) === 2 &&
+    a.bondToElementCount(Elements.C) === 1
   ) {
     a.eachBondedAtom(ba => {
-      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+      if (ba.bondCount - ba.bondToElementCount(Elements.H) === 1) {
         ++terminalOxygenCount
       }
     })
@@ -152,10 +152,10 @@ export function isGuanidine (a: AtomProxy) {
   if (
     a.number === 6 &&
     a.bondCount === 3 &&
-    a.bondToElementCount('N') === 3
+    a.bondToElementCount(Elements.N) === 3
   ) {
     a.eachBondedAtom(ba => {
-      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+      if (ba.bondCount - ba.bondToElementCount(Elements.H) === 1) {
         ++terminalNitrogenCount
       }
     })
@@ -171,11 +171,11 @@ export function isAcetamidine (a: AtomProxy) {
   if (
     a.number === 6 &&
     a.bondCount === 3 &&
-    a.bondToElementCount('N') === 2 &&
-    a.bondToElementCount('C') === 1
+    a.bondToElementCount(Elements.N) === 2 &&
+    a.bondToElementCount(Elements.C) === 1
   ) {
     a.eachBondedAtom(ba => {
-      if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+      if (ba.bondCount - ba.bondToElementCount(Elements.H) === 1) {
         ++terminalNitrogenCount
       }
     })
@@ -183,10 +183,13 @@ export function isAcetamidine (a: AtomProxy) {
   return terminalNitrogenCount === 2
 }
 
-const PolarElements = [ 'N', 'O', 'S', 'F', 'CL', 'Br', 'I' ]
+const PolarElements = [
+  Elements.N, Elements.O, Elements.S,
+  Elements.F, Elements.CL, Elements.BR, Elements.I
+]
 
 export function isPolar (a: AtomProxy) {
-  return PolarElements.includes(a.element)
+  return PolarElements.includes(a.number)
 }
 
 export function hasPolarNeighbour (a: AtomProxy) {
