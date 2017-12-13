@@ -57960,7 +57960,7 @@ function calcAngles(ap1, ap2) {
     var d2 = new Vector3();
     d1.subVectors(ap2, ap1);
     ap1.eachBondedAtom(function (x) {
-        if (x.number !== 1) {
+        if (x.number !== 1 /* H */) {
             d2.subVectors(x, ap1);
             angles.push(d1.angleTo(d2));
         }
@@ -57984,7 +57984,7 @@ function calcPlaneAngle(ap1, ap2) {
         if (ni > 1) {
             return;
         }
-        if (x.number !== 1) {
+        if (x.number !== 1 /* H */) {
             x1.index = x.index;
             neighbours[ni++].subVectors(x, ap1);
         }
@@ -57994,7 +57994,7 @@ function calcPlaneAngle(ap1, ap2) {
             if (ni > 1) {
                 return;
             }
-            if (x.number !== 1 && x.index !== ap1.index) {
+            if (x.number !== 1 /* H */ && x.index !== ap1.index) {
                 neighbours[ni++].subVectors(x, ap1);
             }
         });
@@ -58021,7 +58021,7 @@ function calcPlaneAngle(ap1, ap2) {
 function isConjugated(a) {
     var _bp = a.structure.getBondProxy();
     var atomicNumber = a.number;
-    var hetero = atomicNumber === 7 || atomicNumber === 8; // O, N
+    var hetero = atomicNumber === 8 /* O */ || atomicNumber === 7;
     if (hetero && a.bondCount === 4) {
         return false;
     }
@@ -58036,9 +58036,8 @@ function isConjugated(a) {
             a2.eachBond(function (b2) {
                 if (b2.bondOrder > 1) {
                     var atomicNumber2 = a2.number;
-                    if ((atomicNumber2 === 15 || atomicNumber2 === 16) && // P, S
-                        b2.getOtherAtom(a2).number === 8 // O
-                    ) {
+                    if ((atomicNumber2 === 15 /* P */ || atomicNumber2 === 16 /* S */) &&
+                        b2.getOtherAtom(a2).number === 8 /* O */) {
                         return;
                     }
                     flag = true;
@@ -58059,7 +58058,7 @@ function isConjugated(a) {
 function hasExplicitHydrogen(r: ResidueProxy) {
   let flag = false
   r.eachAtom(a => {
-    if (a.number === 1) flag = true
+    if (a.number === Elements.H) flag = true
   })
   return flag
 } */
@@ -58083,7 +58082,7 @@ function explicitValence(a) {
  * @param {assignChargeHParams} params What to assign
  */
 function calculateHydrogensCharge(a, params) {
-    var hydrogenCount = a.bondToElementCount('H');
+    var hydrogenCount = a.bondToElementCount(1 /* H */);
     var charge = a.formalCharge || 0;
     var assignCharge = (params.assignCharge === 'always' ||
         (params.assignCharge === 'auto' && charge === 0));
@@ -58096,8 +58095,7 @@ function calculateHydrogensCharge(a, params) {
     var implicitHCount = 0;
     var geom = 8;
     switch (a.number) {
-        // H
-        case 1:
+        case 1 /* H */:
             if (assignCharge) {
                 if (degree === 0) {
                     charge = 1;
@@ -58109,8 +58107,7 @@ function calculateHydrogensCharge(a, params) {
                 }
             }
             break;
-        // C
-        case 6:
+        case 6 /* C */:
             // TODO: Isocyanide?
             if (assignCharge) {
                 charge = 0; // Assume carbon always neutral
@@ -58122,8 +58119,7 @@ function calculateHydrogensCharge(a, params) {
             // Carbocation is planar, carbanion is tetrahedral
             geom = assignGeometry(degree + implicitHCount + Math.max(0, -charge));
             break;
-        // N
-        case 7:
+        case 7 /* N */:
             if (assignCharge) {
                 if (!assignH) {
                     charge = valence - 3;
@@ -58157,8 +58153,7 @@ function calculateHydrogensCharge(a, params) {
                 geom = assignGeometry(degree + implicitHCount + 1 - charge);
             }
             break;
-        // O
-        case 8:
+        case 8 /* O */:
             if (assignCharge) {
                 if (!assignH) {
                     charge = valence - 2; //
@@ -58167,7 +58162,7 @@ function calculateHydrogensCharge(a, params) {
                     a.eachBondedAtom(function (ba) {
                         ba.eachBond(function (b) {
                             var oa = b.getOtherAtom(ba);
-                            if (oa.index !== a.index && oa.number === 8 && b.bondOrder === 2) {
+                            if (oa.index !== a.index && oa.number === 8 /* O */ && b.bondOrder === 2) {
                                 charge = -1;
                             }
                         });
@@ -58189,10 +58184,10 @@ function calculateHydrogensCharge(a, params) {
             break;
         // Only handles thiols/thiolates/thioether/sulfonium. Sulfoxides and higher
         // oxidiation states are assumed neutral S (charge carried on O if required)
-        case 16:
+        case 16 /* S */:
             if (assignCharge) {
                 if (!assignH) {
-                    if (valence <= 3 && !a.bondToElementCount('O')) {
+                    if (valence <= 3 && !a.bondToElementCount(8 /* O */)) {
                         charge = valence - 2; // e.g. explicitly deprotonated thiol
                     }
                     else {
@@ -58210,35 +58205,32 @@ function calculateHydrogensCharge(a, params) {
                 geom = assignGeometry(degree + implicitHCount - charge + 2);
             }
             break;
-        // F, Cl, Br, I, At
-        case 9:
-        case 17:
-        case 35:
-        case 53:
-        case 85:
+        case 9 /* F */:
+        case 17 /* CL */:
+        case 35 /* BR */:
+        case 53 /* I */:
+        case 85 /* AT */:
             // Never implicitly protonate halides
             if (assignCharge) {
                 charge = valence - 1;
             }
             break;
-        // Li, Na, K, Rb, Cs Fr
-        case 3:
-        case 11:
-        case 19:
-        case 37:
-        case 55:
-        case 87:
+        case 3 /* LI */:
+        case 11 /* NA */:
+        case 19 /* K */:
+        case 37 /* RB */:
+        case 55 /* CS */:
+        case 87 /* FR */:
             if (assignCharge) {
                 charge = 1 - valence;
             }
             break;
-        // Be, Mg, Ca, Sr, Ba, Ra
-        case 4:
-        case 12:
-        case 20:
-        case 38:
-        case 56:
-        case 88:
+        case 4 /* BE */:
+        case 12 /* MG */:
+        case 20 /* CA */:
+        case 38 /* SR */:
+        case 56 /* BA */:
+        case 88 /* RA */:
             if (assignCharge) {
                 charge = 2 - valence;
             }
@@ -58315,21 +58307,21 @@ function valenceModel(data) {
  */
 function isSulfonicAcid(a) {
     return (a.number === 16 &&
-        a.bondToElementCount('O') === 3);
+        a.bondToElementCount(8 /* O */) === 3);
 }
 /**
  * Sulfur in a sulfate group
  */
 function isSulfate(a) {
     return (a.number === 16 &&
-        a.bondToElementCount('O') === 4);
+        a.bondToElementCount(8 /* O */) === 4);
 }
 /**
  * Phosphor in a phosphate group
  */
 function isPhosphate(a) {
     return (a.number === 15 &&
-        a.bondToElementCount('O') === a.bondCount);
+        a.bondToElementCount(8 /* O */) === a.bondCount);
 }
 /**
  * Halogen with one bond to a carbon
@@ -58345,10 +58337,10 @@ function isPhosphate(a) {
 function isCarboxylate(a) {
     var terminalOxygenCount = 0;
     if (a.number === 6 &&
-        a.bondToElementCount('O') === 2 &&
-        a.bondToElementCount('C') === 1) {
+        a.bondToElementCount(8 /* O */) === 2 &&
+        a.bondToElementCount(6 /* C */) === 1) {
         a.eachBondedAtom(function (ba) {
-            if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+            if (ba.bondCount - ba.bondToElementCount(1 /* H */) === 1) {
                 ++terminalOxygenCount;
             }
         });
@@ -58362,9 +58354,9 @@ function isGuanidine(a) {
     var terminalNitrogenCount = 0;
     if (a.number === 6 &&
         a.bondCount === 3 &&
-        a.bondToElementCount('N') === 3) {
+        a.bondToElementCount(7 /* N */) === 3) {
         a.eachBondedAtom(function (ba) {
-            if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+            if (ba.bondCount - ba.bondToElementCount(1 /* H */) === 1) {
                 ++terminalNitrogenCount;
             }
         });
@@ -58378,10 +58370,10 @@ function isAcetamidine(a) {
     var terminalNitrogenCount = 0;
     if (a.number === 6 &&
         a.bondCount === 3 &&
-        a.bondToElementCount('N') === 2 &&
-        a.bondToElementCount('C') === 1) {
+        a.bondToElementCount(7 /* N */) === 2 &&
+        a.bondToElementCount(6 /* C */) === 1) {
         a.eachBondedAtom(function (ba) {
-            if (ba.bondCount - ba.bondToElementCount('H') === 1) {
+            if (ba.bondCount - ba.bondToElementCount(1 /* H */) === 1) {
                 ++terminalNitrogenCount;
             }
         });
@@ -58699,8 +58691,8 @@ function addWeakHydrogenDonors(structure, features) {
     structure.eachAtom(function (a) {
         if (a.number === 6 /* C */ &&
             totalH[a.index] > 0 &&
-            (a.bondToElementCount('N') > 0 ||
-                a.bondToElementCount('O') > 0 ||
+            (a.bondToElementCount(7 /* N */) > 0 ||
+                a.bondToElementCount(8 /* O */) > 0 ||
                 inAromaticRingWithElectronNegativeElement(a))) {
             var state = createFeatureState(9 /* WeakHydrogenDonor */);
             addAtom(state, a);
@@ -58785,7 +58777,7 @@ function addHydrogenAcceptors(structure, features) {
 //   return flag
 // }
 function isHistidineNitrogen(ap) {
-    return ap.resname === 'HIS' && ap.number == 7 && ap.isRing();
+    return ap.resname === 'HIS' && ap.number == 7 /* N */ && ap.isRing();
 }
 function isBackboneHydrogenBond(ap1, ap2) {
     return ap1.isBackbone() && ap2.isBackbone();
@@ -59133,12 +59125,12 @@ function addHydrophobic(structure, features) {
     structure.eachAtom(function (a) {
         var state = createFeatureState(8 /* Hydrophobic */);
         var flag = false;
-        if (a.number === 6) {
+        if (a.number === 6 /* C */) {
             flag = true;
             a.eachBondedAtom(function (ap) {
                 var an = ap.number;
-                if (an !== 6 && an !== 1)
-                    { flag = false; } // C, H
+                if (an !== 6 /* C */ && an !== 1 /* H */)
+                    { flag = false; }
             });
         }
         if (flag) {
@@ -59200,15 +59192,15 @@ var halBondElements = [17, 35, 53, 85];
  */
 function addHalogenDonors(structure, features) {
     structure.eachAtom(function (a) {
-        if (halBondElements.includes(a.number) && a.bondToElementCount('C') === 1) {
+        if (halBondElements.includes(a.number) && a.bondToElementCount(6 /* C */) === 1) {
             var state = createFeatureState(6 /* HalogenDonor */);
             addAtom(state, a);
             addFeature(features, state);
         }
     });
 }
-var X = [7, 8, 16]; // N, O, S
-var Y = [6, 7, 15, 16]; // C, N, P, S
+var X = [7 /* N */, 8 /* O */, 16 /* S */];
+var Y = [6 /* C */, 7 /* N */, 15 /* P */, 16 /* S */];
 /**
  * Halogen bond acceptors (Y-{O|N|S}, with Y=C,P,N,S)
  */
@@ -59650,7 +59642,8 @@ var ContactDataDefaultParams = {
     weakHydrogenBond: true,
     waterHydrogenBond: true,
     backboneHydrogenBond: true,
-    radius: 1
+    radius: 1,
+    filterSele: ''
 };
 var tmpColor$1 = new Color();
 function contactColor(type) {
@@ -59704,6 +59697,7 @@ function getContactData(contacts, structure, params) {
     var contactSet = contacts.contactSet;
     var contactStore = contacts.contactStore;
     var centers = features.centers;
+    var atomSets = features.atomSets;
     var x = centers.x;
     var y = centers.y;
     var z = centers.z;
@@ -59715,17 +59709,27 @@ function getContactData(contacts, structure, params) {
     var color = [];
     var radius = [];
     var picking = [];
+    var filterSet;
+    if (p.filterSele) {
+        filterSet = structure.getAtomSet(new Selection(p.filterSele));
+    }
     contactSet.forEach(function (i) {
         var ti = type[i];
-        if (types.includes(ti)) {
-            var k = index1[i];
-            var l = index2[i];
-            position1.push(x[k], y[k], z[k]);
-            position2.push(x[l], y[l], z[l]);
-            color.push.apply(color, contactColor(ti));
-            radius.push(p.radius);
-            picking.push(i);
+        if (!types.includes(ti))
+            { return; }
+        if (filterSet) {
+            var idx1 = atomSets[index1[i]][0];
+            var idx2 = atomSets[index2[i]][0];
+            if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2))
+                { return; }
         }
+        var k = index1[i];
+        var l = index2[i];
+        position1.push(x[k], y[k], z[k]);
+        position2.push(x[l], y[l], z[l]);
+        color.push.apply(color, contactColor(ti));
+        radius.push(p.radius);
+        picking.push(i);
     });
     return {
         position1: new Float32Array(position1),
@@ -64085,9 +64089,8 @@ MouseActions.measurePick = function measurePick (stage, pickingProxy) {
 var MouseActionPresets = {
     default: [
         ['scroll', MouseActions.zoomScroll],
-        ['scroll-ctrl', MouseActions.clipNearScroll],
         ['scroll-shift', MouseActions.focusScroll],
-        ['scroll-alt', MouseActions.isolevelScroll],
+        ['scroll-ctrl', MouseActions.isolevelScroll],
         ['drag-right', MouseActions.panDrag],
         ['drag-left', MouseActions.rotateDrag],
         ['drag-middle', MouseActions.zoomDrag],
@@ -64095,7 +64098,7 @@ var MouseActionPresets = {
         ['drag-left+right', MouseActions.zoomDrag],
         ['drag-ctrl-right', MouseActions.panComponentDrag],
         ['drag-ctrl-left', MouseActions.rotateComponentDrag],
-        ['clickPick-alt-left', MouseActions.measurePick],
+        ['clickPick-ctrl-left', MouseActions.measurePick],
         ['clickPick-middle', MouseActions.movePick],
         ['clickPick-shift-left', MouseActions.movePick],
         ['hoverPick', MouseActions.tooltipPick]
@@ -66414,7 +66417,7 @@ AtomProxy.prototype.bondToElementCount = function bondToElementCount (element) {
     var count = 0;
     var idx = this.index; // Avoid reentrancy problems
     this.eachBondedAtom(function (bap) {
-        if (bap.element === element)
+        if (bap.number === element)
             { count += 1; }
     });
     this.index = idx;
@@ -81578,6 +81581,9 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             piStacking: {
                 type: 'boolean', rebuild: true
             },
+            filterSele: {
+                type: 'text', rebuild: true
+            },
             maxHydrophobicDist: {
                 type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
             },
@@ -81657,6 +81663,7 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
         this.metalCoordination = defaults(p.metalCoordination, true);
         this.cationPi = defaults(p.cationPi, true);
         this.piStacking = defaults(p.piStacking, true);
+        this.filterSele = defaults(p.filterSele, '');
         this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0);
         this.maxHbondDist = defaults(p.maxHbondDist, 3.5);
         this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1);
@@ -81714,7 +81721,8 @@ var ContactRepresentation = (function (StructureRepresentation$$1) {
             metalCoordination: this.metalCoordination,
             cationPi: this.cationPi,
             piStacking: this.piStacking,
-            radius: this.radiusSize * this.radiusScale
+            radius: this.radiusSize * this.radiusScale,
+            filterSele: this.filterSele
         };
         var contacts = calculateContacts(sview, params);
         var contactData = getContactData(contacts, sview, dataParams);
@@ -83701,10 +83709,8 @@ function EDTSurface(coordList, radiusList, indexList) {
                             vpBits[index] |= ISDONE;
                             totalsurfacevox += 1;
                         } /* else{
-            
-                                        totalinnervox += 1;
-            
-                                    } */
+                            totalinnervox += 1;
+                        } */
                     }
                 }
             }
@@ -96825,7 +96831,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.6";
+var version$1 = "2.0.0-dev.7";
 
 /**
  * @file Version
