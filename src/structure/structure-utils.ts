@@ -533,7 +533,7 @@ const BondOrderTable: { [k: string]: number } = {
   'TYR|CD1|CG': 2,
   'TYR|CD2|CE2': 2,
   'TYR|CE1|CZ': 2,
-  'ASP|CD1|CG': 2,
+  'ASP|CG|OD1': 2,
   'GLU|CD|OE1': 2,
 
   'G|C8|N7': 2,

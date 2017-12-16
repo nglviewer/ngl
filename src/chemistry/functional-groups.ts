@@ -136,7 +136,7 @@ export function isCarboxylate (a: AtomProxy) {
     a.bondToElementCount(Elements.C) === 1
   ) {
     a.eachBondedAtom(ba => {
-      if (ba.bondCount - ba.bondToElementCount(Elements.H) === 1) {
+      if (ba.number === 8 && ba.bondCount - ba.bondToElementCount(Elements.H) === 1) {
         ++terminalOxygenCount
       }
     })
