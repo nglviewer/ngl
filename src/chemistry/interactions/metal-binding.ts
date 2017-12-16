@@ -32,14 +32,14 @@ export function addMetalBinding (structure: Structure, features: Features) {
     if (a.isProtein()){
       // main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids
       if (a.number === Elements.O) {
-        if(['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN'].includes(a.resname) && a.isSidechain()) {
+        if(['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN', 'CSO'].includes(a.resname) && a.isSidechain()) {
           dative = true
           ionic = true
         } else if (a.isBackbone()) {
           dative = true
           ionic = true
         }
-      } else if (a.number === Elements.S && a.resname === 'CYS') {
+      } else if (a.number === Elements.S && ['CYS', 'CSO'].includes(a.resname)) {
         dative = true
         ionic = true
       } else if (a.number === Elements.N) {
