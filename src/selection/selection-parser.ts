@@ -146,7 +146,13 @@ function parseSele (string: string) {
     }
 
     if (cu === 'HYDROGEN') {
-      pushRule({ element: 'H' })
+      pushRule({
+        operator: 'OR',
+        rules: [
+          { element: 'H' },
+          { element: 'D' }
+        ]
+      })
       continue
     }
 
