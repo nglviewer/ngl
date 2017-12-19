@@ -4,10 +4,9 @@
  * @private
  */
 
-import { Vector3, Matrix4, Quaternion, OrthographicCamera } from 'three'
+import { Vector3, Matrix4, Quaternion } from 'three'
 
 import { defaults } from '../utils'
-import { degToRad } from '../math/math-utils'
 import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 import Viewer from '../viewer/viewer'
@@ -59,20 +58,7 @@ class TrackballControls {
   }
 
   private _setPanVector (x: number, y: number, z = 0) {
-    let scaleFactor
-    const camera = this.viewer.camera
-
-    z = -z
-    z += camera.position.z
-
-    if (camera instanceof OrthographicCamera) {
-      scaleFactor = 1 / camera.zoom
-    } else {
-      const fov = degToRad(camera.fov)
-      const unitHeight = -2.0 * z * Math.tan(fov / 2)
-      scaleFactor = unitHeight / this.viewer.height
-    }
-
+    const scaleFactor = this.controls.getCanvasScaleFactor(z)
     tmpPanVector.set(x, y, 0)
     tmpPanVector.multiplyScalar(this.panSpeed * scaleFactor)
   }

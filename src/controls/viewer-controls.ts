@@ -4,12 +4,13 @@
  * @private
  */
 
-import { Vector2, Vector3, Matrix4, Quaternion } from 'three'
+import { Vector2, Vector3, Matrix4, Quaternion, OrthographicCamera } from 'three'
 import { Signal } from 'signals'
 
 import {
   ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
 } from '../utils'
+import { degToRad } from '../math/math-utils'
 import Stage from '../stage/stage'
 import Viewer from '../viewer/viewer'
 
@@ -86,6 +87,19 @@ class ViewerControls {
       (tmpCanvasVector.x + 1) * viewer.width / 2,
       (tmpCanvasVector.y + 1) * viewer.height / 2
     )
+  }
+
+  getCanvasScaleFactor (z = 0) {
+    const camera = this.viewer.camera
+    if (camera instanceof OrthographicCamera) {
+      return 1 / camera.zoom
+    } else {
+      z = -z
+      z += camera.position.z
+      const fov = degToRad(camera.fov)
+      const unitHeight = -2.0 * z * Math.tan(fov / 2)
+      return unitHeight / this.viewer.height
+    }
   }
 
   /**

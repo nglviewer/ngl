@@ -7,6 +7,7 @@
 import { Vector3, Matrix4 } from 'three'
 
 import Stage from '../stage/stage'
+import StructureComponent from '../component/structure-component'
 import MouseObserver from '../stage/mouse-observer'
 import { Picker } from '../utils/picker'
 import ViewerControls from './viewer-controls'
@@ -17,6 +18,8 @@ import AtomProxy from '../proxy/atom-proxy'
 import Surface from '../surface/surface'
 import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
+
+const tmpVec = new Vector3()
 
 interface ShapePrimitive {
   name: string
@@ -163,6 +166,36 @@ class PickingProxy {
   }
 
   /**
+   * Close-by atom
+   * @type {AtomProxy}
+   */
+  get closeAtom () {
+    const cp = this.canvasPosition
+    const ca = this.closestBondAtom!
+    if (!ca) return undefined
+
+    const acp = this.controls.getPositionOnCanvas(ca as any)  // TODO
+
+    ca.positionToVector3(tmpVec)
+    if (this.instance) tmpVec.applyMatrix4(this.instance.matrix)
+    tmpVec.applyMatrix4(this.component.matrix)
+    const viewer = this.controls.viewer
+    tmpVec.add(viewer.translationGroup.position)
+    tmpVec.applyMatrix4(viewer.rotationGroup.matrix)
+
+    const scaleFactor = this.controls.getCanvasScaleFactor(tmpVec.z)
+    const sc = this.component as StructureComponent
+    const radius = sc.getMaxRepresentationRadius(ca.index)
+    //console.log(scaleFactor, cp.distanceTo(acp), radius/scaleFactor, radius)
+
+    if (cp.distanceTo(acp) <= radius/scaleFactor) {
+      return ca
+    } else {
+      return undefined
+    }
+  }
+
+  /**
    * @type {Object}
    */
   get arrow () { return this._objectIfType('arrow') as ShapePrimitive }
@@ -252,63 +285,50 @@ class PickingProxy {
   }
 
   getLabel () {
+    const atom = this.atom || this.closeAtom
     let msg = 'nothing'
     if (this.arrow) {
-      msg = 'arrow: ' + (this.arrow.name || this.pid) + ' (' + this.arrow.shape.name + ')'
-    } else if (this.atom) {
-      msg = 'atom: ' +
-              this.atom.qualifiedName() +
-              ' (' + this.atom.structure.name + ')'
+      msg = `arrow: ${this.arrow.name || this.pid} (${this.arrow.shape.name})`
+    } else if (atom) {
+      msg = `atom: ${atom.qualifiedName()} (${atom.structure.name})`
     } else if (this.axes) {
       msg = 'axes'
     } else if (this.bond) {
-      msg = 'bond: ' +
-              this.bond.atom1.qualifiedName() + ' - ' + this.bond.atom2.qualifiedName() +
-              ' (' + this.bond.structure.name + ')'
+      msg = `bond: ${this.bond.atom1.qualifiedName()} - ${this.bond.atom2.qualifiedName()} (${this.bond.structure.name})`
     } else if (this.box) {
-      msg = 'box: ' + (this.box.name || this.pid) + ' (' + this.box.shape.name + ')'
+      msg = `box: ${this.box.name || this.pid} (${this.box.shape.name})`
     } else if (this.cone) {
-      msg = 'cone: ' + (this.cone.name || this.pid) + ' (' + this.cone.shape.name + ')'
+      msg = `cone: ${this.cone.name || this.pid} (${this.cone.shape.name})`
     } else if (this.clash) {
-      msg = 'clash: ' + this.clash.clash.sele1 + ' - ' + this.clash.clash.sele2
+      msg = `clash: ${this.clash.clash.sele1} - ${this.clash.clash.sele2}`
     } else if (this.contact) {
-      msg = this.contact.type + ': ' +
-              this.contact.atom1.qualifiedName() + ' - ' + this.contact.atom2.qualifiedName() +
-              ' (' + this.contact.atom1.structure.name + ')'
+      msg = `${this.contact.type}: ${this.contact.atom1.qualifiedName()} - ${this.contact.atom2.qualifiedName()} (${this.contact.atom1.structure.name})`
     } else if (this.cylinder) {
-      msg = 'cylinder: ' + (this.cylinder.name || this.pid) + ' (' + this.cylinder.shape.name + ')'
+      msg = `cylinder: ${this.cylinder.name || this.pid} (${this.cylinder.shape.name})`
     } else if (this.distance) {
-      msg = 'distance: ' +
-              this.distance.atom1.qualifiedName() + ' - ' + this.distance.atom2.qualifiedName() +
-              ' (' + this.distance.structure.name + ')'
+      msg = `distance: ${this.distance.atom1.qualifiedName()} - ${this.distance.atom2.qualifiedName()} (${this.distance.structure.name})`
     } else if (this.ellipsoid) {
-      msg = 'ellipsoid: ' + (this.ellipsoid.name || this.pid) + ' (' + this.ellipsoid.shape.name + ')'
+      msg = `ellipsoid: ${this.ellipsoid.name || this.pid} ($this.ellipsoid.shape.name})`
     } else if (this.octahedron) {
-      msg = 'octahedron: ' + (this.octahedron.name || this.pid) + ' (' + this.octahedron.shape.name + ')'
+      msg = `octahedron: ${this.octahedron.name || this.pid} (${this.octahedron.shape.name})`
     } else if (this.mesh) {
-      msg = 'mesh: ' + (this.mesh.name || this.mesh.serial) + ' (' + this.mesh.shape.name + ')'
+      msg = `mesh: ${this.mesh.name || this.mesh.serial} (${this.mesh.shape.name})`
     } else if (this.slice) {
-      msg = 'slice: ' +
-              this.slice.value.toPrecision(3) +
-              ' (' + this.slice.volume.name + ')'
+      msg = `slice: ${this.slice.value.toPrecision(3)} (${this.slice.volume.name})`
     } else if (this.sphere) {
-      msg = 'sphere: ' + (this.sphere.name || this.pid) + ' (' + this.sphere.shape.name + ')'
+      msg = `sphere: ${this.sphere.name || this.pid} (${this.sphere.shape.name})`
     } else if (this.surface) {
-      msg = 'surface: ' + this.surface.surface.name
+      msg = `surface: ${this.surface.surface.name}`
     } else if (this.tetrahedron) {
-      msg = 'tetrahedron: ' + (this.tetrahedron.name || this.pid) + ' (' + this.tetrahedron.shape.name + ')'
+      msg = `tetrahedron: ${this.tetrahedron.name || this.pid} (${this.tetrahedron.shape.name})`
     } else if (this.torus) {
-      msg = 'torus: ' + (this.torus.name || this.pid) + ' (' + this.torus.shape.name + ')'
+      msg = `torus: ${this.torus.name || this.pid} (${this.torus.shape.name})`
     } else if (this.unitcell) {
-      msg = 'unitcell: ' +
-              this.unitcell.unitcell.spacegroup +
-              ' (' + this.unitcell.structure.name + ')'
+      msg = `unitcell: ${this.unitcell.unitcell.spacegroup} (${this.unitcell.structure.name})`
     } else if (this.unknown) {
       msg = 'unknown'
     } else if (this.volume) {
-      msg = 'volume: ' +
-              this.volume.value.toPrecision(3) +
-              ' (' + this.volume.volume.name + ')'
+      msg = `volume: ${this.volume.value.toPrecision(3)} (${this.volume.volume.name})`
     }
     return msg
   }
