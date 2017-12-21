@@ -49046,7 +49046,13 @@ function parseSele(string) {
             continue;
         }
         if (cu === 'HYDROGEN') {
-            pushRule({ element: 'H' });
+            pushRule({
+                operator: 'OR',
+                rules: [
+                    { element: 'H' },
+                    { element: 'D' }
+                ]
+            });
             continue;
         }
         if (cu === 'SMALL') {
@@ -54312,18 +54318,7 @@ prototypeAccessors$3.atom.get = function () {
 TrackballControls.prototype._setPanVector = function _setPanVector (x, y, z) {
         if ( z === void 0 ) z = 0;
 
-    var scaleFactor;
-    var camera = this.viewer.camera;
-    z = -z;
-    z += camera.position.z;
-    if (camera instanceof OrthographicCamera) {
-        scaleFactor = 1 / camera.zoom;
-    }
-    else {
-        var fov = degToRad(camera.fov);
-        var unitHeight = -2.0 * z * Math.tan(fov / 2);
-        scaleFactor = unitHeight / this.viewer.height;
-    }
+    var scaleFactor = this.controls.getCanvasScaleFactor(z);
     tmpPanVector.set(x, y, 0);
     tmpPanVector.multiplyScalar(this.panSpeed * scaleFactor);
 };
@@ -54406,6 +54401,7 @@ Object.defineProperties( TrackballControls.prototype, prototypeAccessors$3 );
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+var tmpVec = new Vector3();
 function closer(x, a, b) {
     return x.distanceTo(a) < x.distanceTo(b);
 }
@@ -54434,7 +54430,7 @@ var PickingProxy = function PickingProxy(pickingData, stage) {
     this.mouse = stage.mouseObserver;
 };
 
-var prototypeAccessors$4 = { type: { configurable: true },altKey: { configurable: true },ctrlKey: { configurable: true },metaKey: { configurable: true },shiftKey: { configurable: true },canvasPosition: { configurable: true },component: { configurable: true },object: { configurable: true },position: { configurable: true },closestBondAtom: { configurable: true },arrow: { configurable: true },atom: { configurable: true },axes: { configurable: true },bond: { configurable: true },box: { configurable: true },cone: { configurable: true },clash: { configurable: true },contact: { configurable: true },cylinder: { configurable: true },distance: { configurable: true },ellipsoid: { configurable: true },octahedron: { configurable: true },mesh: { configurable: true },slice: { configurable: true },sphere: { configurable: true },tetrahedron: { configurable: true },torus: { configurable: true },surface: { configurable: true },unitcell: { configurable: true },unknown: { configurable: true },volume: { configurable: true } };
+var prototypeAccessors$4 = { type: { configurable: true },altKey: { configurable: true },ctrlKey: { configurable: true },metaKey: { configurable: true },shiftKey: { configurable: true },canvasPosition: { configurable: true },component: { configurable: true },object: { configurable: true },position: { configurable: true },closestBondAtom: { configurable: true },closeAtom: { configurable: true },arrow: { configurable: true },atom: { configurable: true },axes: { configurable: true },bond: { configurable: true },box: { configurable: true },cone: { configurable: true },clash: { configurable: true },contact: { configurable: true },cylinder: { configurable: true },distance: { configurable: true },ellipsoid: { configurable: true },octahedron: { configurable: true },mesh: { configurable: true },slice: { configurable: true },sphere: { configurable: true },tetrahedron: { configurable: true },torus: { configurable: true },surface: { configurable: true },unitcell: { configurable: true },unknown: { configurable: true },volume: { configurable: true } };
 /**
  * Kind of the picked data
  * @type {String}
@@ -54499,6 +54495,34 @@ prototypeAccessors$4.closestBondAtom.get = function () {
     var acp1 = controls.getPositionOnCanvas(bond.atom1); // TODO
     var acp2 = controls.getPositionOnCanvas(bond.atom2); // TODO
     return closer(cp, acp1, acp2) ? bond.atom1 : bond.atom2;
+};
+/**
+ * Close-by atom
+ * @type {AtomProxy}
+ */
+prototypeAccessors$4.closeAtom.get = function () {
+    var cp = this.canvasPosition;
+    var ca = this.closestBondAtom;
+    if (!ca)
+        { return undefined; }
+    var acp = this.controls.getPositionOnCanvas(ca); // TODO
+    ca.positionToVector3(tmpVec);
+    if (this.instance)
+        { tmpVec.applyMatrix4(this.instance.matrix); }
+    tmpVec.applyMatrix4(this.component.matrix);
+    var viewer = this.controls.viewer;
+    tmpVec.add(viewer.translationGroup.position);
+    tmpVec.applyMatrix4(viewer.rotationGroup.matrix);
+    var scaleFactor = this.controls.getCanvasScaleFactor(tmpVec.z);
+    var sc = this.component;
+    var radius = sc.getMaxRepresentationRadius(ca.index);
+    //console.log(scaleFactor, cp.distanceTo(acp), radius/scaleFactor, radius)
+    if (cp.distanceTo(acp) <= radius / scaleFactor) {
+        return ca;
+    }
+    else {
+        return undefined;
+    }
 };
 /**
  * @type {Object}
@@ -54588,83 +54612,70 @@ PickingProxy.prototype._objectIfType = function _objectIfType (type) {
     return this.type === type ? this.object : undefined;
 };
 PickingProxy.prototype.getLabel = function getLabel () {
+    var atom = this.atom || this.closeAtom;
     var msg = 'nothing';
     if (this.arrow) {
-        msg = 'arrow: ' + (this.arrow.name || this.pid) + ' (' + this.arrow.shape.name + ')';
+        msg = "arrow: " + (this.arrow.name || this.pid) + " (" + (this.arrow.shape.name) + ")";
     }
-    else if (this.atom) {
-        msg = 'atom: ' +
-            this.atom.qualifiedName() +
-            ' (' + this.atom.structure.name + ')';
+    else if (atom) {
+        msg = "atom: " + (atom.qualifiedName()) + " (" + (atom.structure.name) + ")";
     }
     else if (this.axes) {
         msg = 'axes';
     }
     else if (this.bond) {
-        msg = 'bond: ' +
-            this.bond.atom1.qualifiedName() + ' - ' + this.bond.atom2.qualifiedName() +
-            ' (' + this.bond.structure.name + ')';
+        msg = "bond: " + (this.bond.atom1.qualifiedName()) + " - " + (this.bond.atom2.qualifiedName()) + " (" + (this.bond.structure.name) + ")";
     }
     else if (this.box) {
-        msg = 'box: ' + (this.box.name || this.pid) + ' (' + this.box.shape.name + ')';
+        msg = "box: " + (this.box.name || this.pid) + " (" + (this.box.shape.name) + ")";
     }
     else if (this.cone) {
-        msg = 'cone: ' + (this.cone.name || this.pid) + ' (' + this.cone.shape.name + ')';
+        msg = "cone: " + (this.cone.name || this.pid) + " (" + (this.cone.shape.name) + ")";
     }
     else if (this.clash) {
-        msg = 'clash: ' + this.clash.clash.sele1 + ' - ' + this.clash.clash.sele2;
+        msg = "clash: " + (this.clash.clash.sele1) + " - " + (this.clash.clash.sele2);
     }
     else if (this.contact) {
-        msg = this.contact.type + ': ' +
-            this.contact.atom1.qualifiedName() + ' - ' + this.contact.atom2.qualifiedName() +
-            ' (' + this.contact.atom1.structure.name + ')';
+        msg = (this.contact.type) + ": " + (this.contact.atom1.qualifiedName()) + " - " + (this.contact.atom2.qualifiedName()) + " (" + (this.contact.atom1.structure.name) + ")";
     }
     else if (this.cylinder) {
-        msg = 'cylinder: ' + (this.cylinder.name || this.pid) + ' (' + this.cylinder.shape.name + ')';
+        msg = "cylinder: " + (this.cylinder.name || this.pid) + " (" + (this.cylinder.shape.name) + ")";
     }
     else if (this.distance) {
-        msg = 'distance: ' +
-            this.distance.atom1.qualifiedName() + ' - ' + this.distance.atom2.qualifiedName() +
-            ' (' + this.distance.structure.name + ')';
+        msg = "distance: " + (this.distance.atom1.qualifiedName()) + " - " + (this.distance.atom2.qualifiedName()) + " (" + (this.distance.structure.name) + ")";
     }
     else if (this.ellipsoid) {
-        msg = 'ellipsoid: ' + (this.ellipsoid.name || this.pid) + ' (' + this.ellipsoid.shape.name + ')';
+        msg = "ellipsoid: " + (this.ellipsoid.name || this.pid) + " ($this.ellipsoid.shape.name})";
     }
     else if (this.octahedron) {
-        msg = 'octahedron: ' + (this.octahedron.name || this.pid) + ' (' + this.octahedron.shape.name + ')';
+        msg = "octahedron: " + (this.octahedron.name || this.pid) + " (" + (this.octahedron.shape.name) + ")";
     }
     else if (this.mesh) {
-        msg = 'mesh: ' + (this.mesh.name || this.mesh.serial) + ' (' + this.mesh.shape.name + ')';
+        msg = "mesh: " + (this.mesh.name || this.mesh.serial) + " (" + (this.mesh.shape.name) + ")";
     }
     else if (this.slice) {
-        msg = 'slice: ' +
-            this.slice.value.toPrecision(3) +
-            ' (' + this.slice.volume.name + ')';
+        msg = "slice: " + (this.slice.value.toPrecision(3)) + " (" + (this.slice.volume.name) + ")";
     }
     else if (this.sphere) {
-        msg = 'sphere: ' + (this.sphere.name || this.pid) + ' (' + this.sphere.shape.name + ')';
+        msg = "sphere: " + (this.sphere.name || this.pid) + " (" + (this.sphere.shape.name) + ")";
     }
     else if (this.surface) {
-        msg = 'surface: ' + this.surface.surface.name;
+        msg = "surface: " + (this.surface.surface.name);
     }
     else if (this.tetrahedron) {
-        msg = 'tetrahedron: ' + (this.tetrahedron.name || this.pid) + ' (' + this.tetrahedron.shape.name + ')';
+        msg = "tetrahedron: " + (this.tetrahedron.name || this.pid) + " (" + (this.tetrahedron.shape.name) + ")";
     }
     else if (this.torus) {
-        msg = 'torus: ' + (this.torus.name || this.pid) + ' (' + this.torus.shape.name + ')';
+        msg = "torus: " + (this.torus.name || this.pid) + " (" + (this.torus.shape.name) + ")";
     }
     else if (this.unitcell) {
-        msg = 'unitcell: ' +
-            this.unitcell.unitcell.spacegroup +
-            ' (' + this.unitcell.structure.name + ')';
+        msg = "unitcell: " + (this.unitcell.unitcell.spacegroup) + " (" + (this.unitcell.structure.name) + ")";
     }
     else if (this.unknown) {
         msg = 'unknown';
     }
     else if (this.volume) {
-        msg = 'volume: ' +
-            this.volume.value.toPrecision(3) +
-            ' (' + this.volume.volume.name + ')';
+        msg = "volume: " + (this.volume.value.toPrecision(3)) + " (" + (this.volume.volume.name) + ")";
     }
     return msg;
 };
@@ -54766,6 +54777,21 @@ ViewerControls.prototype.getPositionOnCanvas = function getPositionOnCanvas (pos
         .applyMatrix4(viewer.rotationGroup.matrix)
         .project(viewer.camera);
     return canvasPosition.set((tmpCanvasVector.x + 1) * viewer.width / 2, (tmpCanvasVector.y + 1) * viewer.height / 2);
+};
+ViewerControls.prototype.getCanvasScaleFactor = function getCanvasScaleFactor (z) {
+        if ( z === void 0 ) z = 0;
+
+    var camera = this.viewer.camera;
+    if (camera instanceof OrthographicCamera) {
+        return 1 / camera.zoom;
+    }
+    else {
+        z = -z;
+        z += camera.position.z;
+        var fov = degToRad(camera.fov);
+        var unitHeight = -2.0 * z * Math.tan(fov / 2);
+        return unitHeight / this.viewer.height;
+    }
 };
 /**
  * get scene orientation
@@ -56346,7 +56372,7 @@ function addElement(elm, array) {
     }
     array.push.apply(array, elm);
 }
-var tmpVec = new Vector3();
+var tmpVec$1 = new Vector3();
 /**
  * Base class for geometry primitives
  * @interface
@@ -56451,7 +56477,7 @@ var SpherePrimitive = (function (Primitive) {
         return this.valueFromShape(shape, pid, 'position');
     };
     SpherePrimitive.expandBoundingBox = function expandBoundingBox (box, data) {
-        box.expandByPoint(tmpVec.fromArray(data.position));
+        box.expandByPoint(tmpVec$1.fromArray(data.position));
     };
 
     return SpherePrimitive;
@@ -56478,7 +56504,7 @@ var BoxPrimitive = (function (Primitive) {
         return this.valueFromShape(shape, pid, 'position');
     };
     BoxPrimitive.expandBoundingBox = function expandBoundingBox (box, data) {
-        box.expandByPoint(tmpVec.fromArray(data.position));
+        box.expandByPoint(tmpVec$1.fromArray(data.position));
     };
 
     return BoxPrimitive;
@@ -56539,8 +56565,8 @@ var CylinderPrimitive = (function (Primitive) {
         return p1.add(p2).multiplyScalar(0.5);
     };
     CylinderPrimitive.expandBoundingBox = function expandBoundingBox (box, data) {
-        box.expandByPoint(tmpVec.fromArray(data.position1));
-        box.expandByPoint(tmpVec.fromArray(data.position2));
+        box.expandByPoint(tmpVec$1.fromArray(data.position1));
+        box.expandByPoint(tmpVec$1.fromArray(data.position2));
     };
 
     return CylinderPrimitive;
@@ -56635,7 +56661,7 @@ var TextPrimitive = (function (Primitive) {
         return this.valueFromShape(shape, pid, 'position');
     };
     TextPrimitive.expandBoundingBox = function expandBoundingBox (box, data) {
-        box.expandByPoint(tmpVec.fromArray(data.position));
+        box.expandByPoint(tmpVec$1.fromArray(data.position));
     };
 
     return TextPrimitive;
@@ -58016,7 +58042,7 @@ function calcPlaneAngle(ap1, ap2) {
  * double bond or N, O next to a double bond, except:
  *
  *   N,O with degree 4 cannot be conjugated.
- *   N,O adjacent to P=O or S=O do not qualify
+ *   N,O adjacent to P=O or S=O do not qualify (keeps sulfonamide N sp3 geom)
  */
 function isConjugated(a) {
     var _bp = a.structure.getBondProxy();
@@ -58134,7 +58160,17 @@ function calculateHydrogensCharge(a, params) {
                     }
                 }
                 else {
-                    charge = 1;
+                    // Sulfonamide nitrogen and classed as sp3 in conjugation model but
+                    // they won't be charged
+                    var sCount = 0;
+                    a.eachBondedAtom(function (ba) {
+                        if (ba.number === 16 /* S */)
+                            { sCount++; }
+                    });
+                    if (sCount)
+                        { charge = 0; }
+                    else
+                        { charge = 1; }
                     // TODO: Planarity sanity check?
                 }
             }
@@ -58340,7 +58376,7 @@ function isCarboxylate(a) {
         a.bondToElementCount(8 /* O */) === 2 &&
         a.bondToElementCount(6 /* C */) === 1) {
         a.eachBondedAtom(function (ba) {
-            if (ba.bondCount - ba.bondToElementCount(1 /* H */) === 1) {
+            if (ba.number === 8 && ba.bondCount - ba.bondToElementCount(1 /* H */) === 1) {
                 ++terminalOxygenCount;
             }
         });
@@ -58905,7 +58941,7 @@ function addMetalBinding(structure, features) {
         if (a.isProtein()) {
             // main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids
             if (a.number === 8 /* O */) {
-                if (['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN'].includes(a.resname) && a.isSidechain()) {
+                if (['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN', 'CSO'].includes(a.resname) && a.isSidechain()) {
                     dative = true;
                     ionic = true;
                 }
@@ -58914,7 +58950,7 @@ function addMetalBinding(structure, features) {
                     ionic = true;
                 }
             }
-            else if (a.number === 16 /* S */ && a.resname === 'CYS') {
+            else if (a.number === 16 /* S */ && ['CYS', 'CSO'].includes(a.resname)) {
                 dative = true;
                 ionic = true;
             }
@@ -64138,7 +64174,8 @@ var MouseActionPresets = {
         ['drag-ctrl-left', MouseActions.panDrag],
         ['drag-shift-left', MouseActions.zoomDrag],
         ['scroll', MouseActions.focusScroll],
-        ['clickPick-middle', MouseActions.movePick]
+        ['clickPick-middle', MouseActions.movePick],
+        ['hoverPick', MouseActions.tooltipPick]
     ]
 };
 
@@ -68007,7 +68044,7 @@ var BondOrderTable = {
     'TYR|CD1|CG': 2,
     'TYR|CD2|CE2': 2,
     'TYR|CE1|CZ': 2,
-    'ASP|CD1|CG': 2,
+    'ASP|CG|OD1': 2,
     'GLU|CD|OE1': 2,
     'G|C8|N7': 2,
     'G|C4|C5': 2,
@@ -96843,7 +96880,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.8";
+var version$1 = "2.0.0-dev.9";
 
 /**
  * @file Version
