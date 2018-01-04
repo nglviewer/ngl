@@ -6,6 +6,7 @@
 
 import { AA1 } from '../structure/structure-constants'
 import AtomProxy from '../proxy/atom-proxy'
+import { sprintf } from 'sprintf-js'
 
 const LabelFactoryTypes = {
   '': '',
@@ -21,6 +22,7 @@ const LabelFactoryTypes = {
   'res': 'one letter code + no',
   'residue': '[residue name] + no + inscode',
   'text': 'text',
+  'format': 'format',
   'qualified': 'qualified name'
 }
 type LabelType = keyof typeof LabelFactoryTypes
@@ -29,7 +31,8 @@ class LabelFactory {
 
   static types = LabelFactoryTypes
 
-  constructor(readonly type: LabelType, readonly text: { [k: number]: string } = {}) {}
+  constructor(readonly type: LabelType, readonly text: { [k: number]: string } = {},
+    readonly format: string = '') {}
 
   atomLabel (a: AtomProxy) {
     const type = this.type
@@ -88,6 +91,10 @@ class LabelFactory {
 
       case 'text':
         l = this.text[ a.index ]
+        break
+
+      case 'format':
+        l = sprintf(this.format, a)
         break
 
       // case "qualified":

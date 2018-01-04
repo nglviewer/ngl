@@ -72,6 +72,9 @@ class LabelRepresentation extends StructureRepresentation {
       labelText: {
         type: 'hidden', rebuild: true
       },
+      labelFormat: {
+        type: 'text', rebuild: true
+      },
       labelGrouping: {
         type: 'select',
         options: {
@@ -175,6 +178,7 @@ class LabelRepresentation extends StructureRepresentation {
 
     this.labelType = defaults(p.labelType, 'res')
     this.labelText = defaults(p.labelText, {})
+    this.labelFormat = defaults(p.labelFormat, '')
     this.labelGrouping = defaults(p.labelGrouping, 'atom')
     this.fontFamily = defaults(p.fontFamily, 'sans-serif')
     this.fontStyle = defaults(p.fontStyle, 'normal')
@@ -197,9 +201,8 @@ class LabelRepresentation extends StructureRepresentation {
 
   getTextData (sview, what) {
     const p = this.getAtomParams(what)
-    const labelFactory = new LabelFactory(this.labelType, this.labelText)
+    const labelFactory = new LabelFactory(this.labelType, this.labelText, this.labelFormat)
     let position, size, color, text
-
     if (this.labelGrouping === 'atom') {
       const atomData = sview.getAtomData(p)
       position = atomData.position
@@ -214,7 +217,6 @@ class LabelRepresentation extends StructureRepresentation {
       if (!what || what.color) color = []
       if (!what || what.radius) size = []
       if (!what || what.text) text = []
-
       if (p.colorParams) p.colorParams.structure = sview.getStructure()
       const colormaker = ColormakerRegistry.getScheme(p.colorParams)
       const radiusFactory = new RadiusFactory(p.radiusParams)
