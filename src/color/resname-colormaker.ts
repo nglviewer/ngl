@@ -8,7 +8,7 @@ import { ColormakerRegistry } from '../globals'
 import Colormaker from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
-// from Jmol http://jmol.sourceforge.net/jscolors/ (protein + shapely for nucleic)
+// protein colors from Jmol http://jmol.sourceforge.net/jscolors/
 const ResidueColors: { [k: string]: number } = {
   'ALA': 0x8CFF8C,
   'ARG': 0x00007C,
@@ -36,19 +36,23 @@ const ResidueColors: { [k: string]: number } = {
   'ASH': 0xFF00FF,
   'GLH': 0xFF00FF,
 
-  'A': 0xA0A0FF,
-  'G': 0xFF7070,
-  'I': 0x80FFFF,
-  'C': 0xFF8C4B,
-  'T': 0xA0FFA0,
-  'U': 0xFF8080,
+  'A': 0xDC143C,  // Crimson Red
+  'G': 0x32CD32,  // Lime Green
+  'I': 0x9ACD32,  // Yellow Green
+  'X': 0x7CFC00,  // Lawn Green
+  'C': 0xFFD700,  // Gold Yellow
+  'T': 0x4169E1,  // Royal Blue
+  'U': 0x40E0D0,  // Turquoise Cyan
+  'D': 0x008B8B,  // Dark Cyan
 
-  'DA': 0xA0A0FF,
-  'DG': 0xFF7070,
-  'DI': 0x80FFFF,
-  'DC': 0xFF8C4B,
-  'DT': 0xA0FFA0,
-  'DU': 0xFF8080
+  'DA': 0xDC143C,
+  'DG': 0x32CD32,
+  'DI': 0x9ACD32,
+  'DX': 0x7CFC00,
+  'DC': 0xFFD700,
+  'DT': 0x4169E1,
+  'DU': 0x40E0D0,
+  'DD': 0x008B8B
 }
 const DefaultResidueColor = 0xFF00FF
 

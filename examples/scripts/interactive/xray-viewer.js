@@ -134,7 +134,7 @@ function loadFofc (input) {
       surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10, contour: true, isolevelScroll: false })
     }
     surfFofc = o.addRepresentation('surface', {
-      color: 'lightgreen',
+      color: 'mediumseagreen',
       isolevel: 3,
       boxSize: 10,
       useWorker: false,
