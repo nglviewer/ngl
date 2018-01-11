@@ -9,7 +9,7 @@ import { Vector3 } from 'three'
 import { defaults } from '../../utils'
 import { radToDeg } from '../../math/math-utils'
 import Structure from '../../structure/structure'
-import { AA3, Bases } from '../../structure/structure-constants'
+import { AA3, Bases, Elements } from '../../structure/structure-constants'
 import { valenceModel } from '../../structure/data'
 import {
   isGuanidine, isAcetamidine, isSulfonicAcid, isPhosphate, isSulfate, isCarboxylate
@@ -31,7 +31,7 @@ export function addPositiveCharges (structure: Structure, features: Features) {
     if (PositvelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.PositiveCharge)
       r.eachAtom(a => {
-        if (a.element === 'N' && a.isSidechain()) {
+        if (a.number === Elements.N && a.isSidechain()) {
           addAtom(state, a)
         }
       })
@@ -49,7 +49,7 @@ export function addPositiveCharges (structure: Structure, features: Features) {
         }
         if (addGroup) {
           a.eachBondedAtom(a => {
-            if (a.number === 7) {
+            if (a.number === Elements.N) {
               atomInGroupDict[a.index] = true
               addAtom(state, a)
             }
@@ -78,7 +78,7 @@ export function addNegativeCharges (structure: Structure, features: Features) {
     if (NegativelyCharged.includes(r.resname)) {
       const state = createFeatureState(FeatureType.NegativeCharge)
       r.eachAtom(a => {
-        if (a.element === 'O' && a.isSidechain()) {
+        if (a.number === Elements.O && a.isSidechain()) {
           addAtom(state, a)
         }
       })
@@ -89,7 +89,7 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         if (isPhosphate(a)) {
           state.group = FeatureGroup.Phosphate
           a.eachBondedAtom(a => {
-            if (a.number === 8) addAtom(state, a)
+            if (a.number === Elements.O) addAtom(state, a)
           })
           addFeature(features, state)
         }
@@ -113,7 +113,7 @@ export function addNegativeCharges (structure: Structure, features: Features) {
         }
         if (addGroup) {
           a.eachBondedAtom(a => {
-            if (a.number === 8) {
+            if (a.number === Elements.O) {
               atomInGroupDict[a.index] = true
               addAtom(state, a)
             }

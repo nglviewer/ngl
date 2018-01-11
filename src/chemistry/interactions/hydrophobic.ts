@@ -13,7 +13,7 @@ import {
 import { Contacts, ContactType, ContactDefaultParams, invalidAtomContact } from './contact'
 
 /**
- * Hydrophobic carbon
+ * Hydrophobic carbon (only bonded to carbon or hydrogen); fluorine
  */
 export function addHydrophobic (structure: Structure, features: Features) {
   structure.eachAtom(a => {
@@ -25,6 +25,8 @@ export function addHydrophobic (structure: Structure, features: Features) {
         const an = ap.number
         if (an !== Elements.C && an !== Elements.H) flag = false
       })
+    } else if (a.number === Elements.F) {
+      flag = true
     }
     if (flag) {
       addAtom(state, a)
@@ -43,7 +45,7 @@ export interface HydrophobicContactsParams {
 }
 
 /**
- * All contacts between carbon atoms that are only bonded to carbon or hydrogen
+ * All hydrophobic contacts
  */
 export function addHydrophobicContacts (structure: Structure, contacts: Contacts, params: HydrophobicContactsParams = {}) {
   const maxHydrophobicDist = defaults(params.maxHydrophobicDist, ContactDefaultParams.maxHydrophobicDist)
@@ -65,6 +67,7 @@ export function addHydrophobicContacts (structure: Structure, contacts: Contacts
       ap2.index = atomSets[ j ][ 0 ]
 
       if (invalidAtomContact(ap1, ap2, masterIdx)) return
+      if (ap1.number === Elements.F && ap2.number === Elements.F) return
 
       if (isHydrophobicContact(types[ i ], types[ j ])) {
         featureSet.setBits(i, j)
