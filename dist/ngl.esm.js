@@ -58432,7 +58432,7 @@ function addPositiveCharges(structure, features) {
         if (PositvelyCharged.includes(r.resname)) {
             var state = createFeatureState(1 /* PositiveCharge */);
             r.eachAtom(function (a) {
-                if (a.element === 'N' && a.isSidechain()) {
+                if (a.number === 7 /* N */ && a.isSidechain()) {
                     addAtom(state, a);
                 }
             });
@@ -58452,7 +58452,7 @@ function addPositiveCharges(structure, features) {
                 }
                 if (addGroup) {
                     a.eachBondedAtom(function (a) {
-                        if (a.number === 7) {
+                        if (a.number === 7 /* N */) {
                             atomInGroupDict[a.index] = true;
                             addAtom(state, a);
                         }
@@ -58480,7 +58480,7 @@ function addNegativeCharges(structure, features) {
         if (NegativelyCharged.includes(r.resname)) {
             var state = createFeatureState(2 /* NegativeCharge */);
             r.eachAtom(function (a) {
-                if (a.element === 'O' && a.isSidechain()) {
+                if (a.number === 8 /* O */ && a.isSidechain()) {
                     addAtom(state, a);
                 }
             });
@@ -58492,7 +58492,7 @@ function addNegativeCharges(structure, features) {
                 if (isPhosphate(a)) {
                     state$1.group = 6 /* Phosphate */;
                     a.eachBondedAtom(function (a) {
-                        if (a.number === 8)
+                        if (a.number === 8 /* O */)
                             { addAtom(state$1, a); }
                     });
                     addFeature(features, state$1);
@@ -58521,7 +58521,7 @@ function addNegativeCharges(structure, features) {
                 }
                 if (addGroup) {
                     a.eachBondedAtom(function (a) {
-                        if (a.number === 8) {
+                        if (a.number === 8 /* O */) {
                             atomInGroupDict[a.index] = true;
                             addAtom(state, a);
                         }
@@ -59155,7 +59155,7 @@ function addMetalComplexation(structure, contacts, params) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 /**
- * Hydrophobic carbon
+ * Hydrophobic carbon (only bonded to carbon or hydrogen); fluorine
  */
 function addHydrophobic(structure, features) {
     structure.eachAtom(function (a) {
@@ -59169,6 +59169,9 @@ function addHydrophobic(structure, features) {
                     { flag = false; }
             });
         }
+        else if (a.number === 9 /* F */) {
+            flag = true;
+        }
         if (flag) {
             addAtom(state, a);
             addFeature(features, state);
@@ -59179,7 +59182,7 @@ function isHydrophobicContact(ti, tj) {
     return ti === 8 /* Hydrophobic */ && tj === 8 /* Hydrophobic */;
 }
 /**
- * All contacts between carbon atoms that are only bonded to carbon or hydrogen
+ * All hydrophobic contacts
  */
 function addHydrophobicContacts(structure, contacts, params) {
     if ( params === void 0 ) params = {};
@@ -59206,6 +59209,8 @@ function addHydrophobicContacts(structure, contacts, params) {
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
             if (invalidAtomContact(ap1, ap2, masterIdx))
+                { return; }
+            if (ap1.number === 9 /* F */ && ap2.number === 9 /* F */)
                 { return; }
             if (isHydrophobicContact(types[i], types[j])) {
                 featureSet.setBits(i, j);
@@ -69452,7 +69457,7 @@ var ResidueProxy = function ResidueProxy(structure, index) {
     this.atomMap = structure.atomMap;
 };
 
-var prototypeAccessors$20 = { entity: { configurable: true },entityIndex: { configurable: true },chain: { configurable: true },chainIndex: { configurable: true },atomOffset: { configurable: true },atomCount: { configurable: true },atomEnd: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },resno: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },residueType: { configurable: true },resname: { configurable: true },hetero: { configurable: true },moleculeType: { configurable: true },backboneType: { configurable: true },backboneStartType: { configurable: true },backboneEndType: { configurable: true },traceAtomIndex: { configurable: true },direction1AtomIndex: { configurable: true },direction2AtomIndex: { configurable: true },backboneStartAtomIndex: { configurable: true },backboneEndAtomIndex: { configurable: true },rungEndAtomIndex: { configurable: true } };
+var prototypeAccessors$20 = { entity: { configurable: true },entityIndex: { configurable: true },chain: { configurable: true },chainIndex: { configurable: true },atomOffset: { configurable: true },atomCount: { configurable: true },atomEnd: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },resno: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },residueType: { configurable: true },resname: { configurable: true },hetero: { configurable: true },moleculeType: { configurable: true },backboneType: { configurable: true },backboneStartType: { configurable: true },backboneEndType: { configurable: true },traceAtomIndex: { configurable: true },direction1AtomIndex: { configurable: true },direction2AtomIndex: { configurable: true },backboneStartAtomIndex: { configurable: true },backboneEndAtomIndex: { configurable: true },rungEndAtomIndex: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true } };
 /**
  * Entity
  * @type {Entity}
@@ -69593,6 +69598,34 @@ prototypeAccessors$20.rungEndAtomIndex.get = function () {
     return this.residueType.rungEndAtomIndex + this.atomOffset;
 };
 //
+prototypeAccessors$20.x.get = function () {
+        var this$1 = this;
+
+    var x = 0;
+    for (var i = this.atomOffset; i <= this.atomEnd; ++i) {
+        x += this$1.atomStore.x[i];
+    }
+    return x / this.atomCount;
+};
+prototypeAccessors$20.y.get = function () {
+        var this$1 = this;
+
+    var y = 0;
+    for (var i = this.atomOffset; i <= this.atomEnd; ++i) {
+        y += this$1.atomStore.y[i];
+    }
+    return y / this.atomCount;
+};
+prototypeAccessors$20.z.get = function () {
+        var this$1 = this;
+
+    var z = 0;
+    for (var i = this.atomOffset; i <= this.atomEnd; ++i) {
+        z += this$1.atomStore.z[i];
+    }
+    return z / this.atomCount;
+};
+//
 /**
  * Atom iterator
  * @param  {function(atom: AtomProxy)} callback - the callback
@@ -69618,6 +69651,22 @@ ResidueProxy.prototype.eachAtom = function eachAtom (callback, selection) {
             callback(ap);
         }
     }
+};
+//
+/**
+ * Write residue center position to array
+ * @param  {Array|TypedArray} [array] - target array
+ * @param  {Integer} [offset] - the offset
+ * @return {Array|TypedArray} target array
+ */
+ResidueProxy.prototype.positionToArray = function positionToArray (array, offset) {
+        if ( array === void 0 ) array = [];
+        if ( offset === void 0 ) offset = 0;
+
+    array[offset + 0] = this.x;
+    array[offset + 1] = this.y;
+    array[offset + 2] = this.z;
+    return array;
 };
 //
 /**
@@ -77787,7 +77836,7 @@ ColormakerRegistry.add('residueindex', ResidueindexColormaker);
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-// from Jmol http://jmol.sourceforge.net/jscolors/ (protein + shapely for nucleic)
+// protein colors from Jmol http://jmol.sourceforge.net/jscolors/
 var ResidueColors = {
     'ALA': 0x8CFF8C,
     'ARG': 0x00007C,
@@ -77813,18 +77862,22 @@ var ResidueColors = {
     'GLX': 0xFF00FF,
     'ASH': 0xFF00FF,
     'GLH': 0xFF00FF,
-    'A': 0xA0A0FF,
-    'G': 0xFF7070,
-    'I': 0x80FFFF,
-    'C': 0xFF8C4B,
-    'T': 0xA0FFA0,
-    'U': 0xFF8080,
-    'DA': 0xA0A0FF,
-    'DG': 0xFF7070,
-    'DI': 0x80FFFF,
-    'DC': 0xFF8C4B,
-    'DT': 0xA0FFA0,
-    'DU': 0xFF8080
+    'A': 0xDC143C,
+    'G': 0x32CD32,
+    'I': 0x9ACD32,
+    'X': 0x7CFC00,
+    'C': 0xFFD700,
+    'T': 0x4169E1,
+    'U': 0x40E0D0,
+    'D': 0x008B8B,
+    'DA': 0xDC143C,
+    'DG': 0x32CD32,
+    'DI': 0x9ACD32,
+    'DX': 0x7CFC00,
+    'DC': 0xFFD700,
+    'DT': 0x4169E1,
+    'DU': 0x40E0D0,
+    'DD': 0x008B8B
 };
 var DefaultResidueColor = 0xFF00FF;
 /**
@@ -82820,7 +82873,8 @@ var LabelFactoryTypes = {
     'atom': 'atom name + index',
     'resname': 'residue name',
     'resno': 'residue no',
-    'res': 'residue name + no',
+    'res': 'one letter code + no',
+    'residue': '[residue name] + no + inscode',
     'text': 'text',
     'qualified': 'qualified name'
 };
@@ -82838,7 +82892,7 @@ LabelFactory.prototype.atomLabel = function atomLabel (a) {
             l = a.atomname;
             break;
         case 'atomindex':
-            l = '' + a.index;
+            l = "" + (a.index);
             break;
         case 'occupancy':
             l = a.occupancy.toFixed(2);
@@ -82847,23 +82901,25 @@ LabelFactory.prototype.atomLabel = function atomLabel (a) {
             l = a.bfactor.toFixed(2);
             break;
         case 'serial':
-            l = '' + a.serial;
+            l = "" + (a.serial);
             break;
         case 'element':
             l = a.element;
             break;
         case 'atom':
-            l = a.atomname + '|' + a.index;
+            l = (a.atomname) + "|" + (a.index);
             break;
         case 'resname':
             l = a.resname;
             break;
         case 'resno':
-            l = '' + a.resno;
+            l = "" + (a.resno);
             break;
         case 'res':
-            var resname = a.resname.toUpperCase();
-            l = (AA1[resname] || resname) + a.resno;
+            l = "" + ((AA1[a.resname.toUpperCase()] || a.resname)) + (a.resno);
+            break;
+        case 'residue':
+            l = "[" + (a.resname) + "]" + (a.resno) + (a.inscode);
             break;
         case 'text':
             l = this.text[a.index];
@@ -82898,6 +82954,8 @@ LabelFactory.types = LabelFactoryTypes;
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
+ * @property {String} labelGrouping - grouping of the label, one of:
+ *                                 "atom", "residue".
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
  * @property {String} fontStyle - font style, "normal" or "italic"
  * @property {String} fontWeight - font weight, "normal" or "bold"
@@ -82930,6 +82988,14 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
             },
             labelText: {
                 type: 'hidden', rebuild: true
+            },
+            labelGrouping: {
+                type: 'select',
+                options: {
+                    'atom': 'atom',
+                    'residue': 'residue'
+                },
+                rebuild: true
             },
             fontFamily: {
                 type: 'select',
@@ -83023,6 +83089,7 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
         var p = params || {};
         this.labelType = defaults(p.labelType, 'res');
         this.labelText = defaults(p.labelText, {});
+        this.labelGrouping = defaults(p.labelGrouping, 'atom');
         this.fontFamily = defaults(p.fontFamily, 'sans-serif');
         this.fontStyle = defaults(p.fontStyle, 'normal');
         this.fontWeight = defaults(p.fontWeight, 'bold');
@@ -83040,20 +83107,64 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
         this.backgroundOpacity = defaults(p.backgroundOpacity, 1.0);
         StructureRepresentation$$1.prototype.init.call(this, p);
     };
-    LabelRepresentation.prototype.createData = function createData (sview) {
-        var what = { position: true, color: true, radius: true };
-        var atomData = sview.getAtomData(this.getAtomParams(what));
-        var text = [];
+    LabelRepresentation.prototype.getTextData = function getTextData (sview, what) {
+        var p = this.getAtomParams(what);
         var labelFactory = new LabelFactory(this.labelType, this.labelText);
-        sview.eachAtom(function (ap) {
-            text.push(labelFactory.atomLabel(ap));
-        });
-        var textBuffer = new TextBuffer({
-            position: atomData.position,
-            size: atomData.radius,
-            color: atomData.color,
-            text: text
-        }, this.getBufferParams({
+        var position, size, color, text;
+        if (this.labelGrouping === 'atom') {
+            var atomData = sview.getAtomData(p);
+            position = atomData.position;
+            size = atomData.radius;
+            color = atomData.color;
+            if (!what || what.text) {
+                text = [];
+                sview.eachAtom(function (ap) { return text.push(labelFactory.atomLabel(ap)); });
+            }
+        }
+        else if (this.labelGrouping === 'residue') {
+            if (!what || what.position)
+                { position = []; }
+            if (!what || what.color)
+                { color = []; }
+            if (!what || what.radius)
+                { size = []; }
+            if (!what || what.text)
+                { text = []; }
+            if (p.colorParams)
+                { p.colorParams.structure = sview.getStructure(); }
+            var colormaker = ColormakerRegistry.getScheme(p.colorParams);
+            var radiusFactory = new RadiusFactory(p.radiusParams);
+            var ap1 = sview.getAtomProxy();
+            var i = 0;
+            sview.eachResidue(function (rp) {
+                var i3 = i * 3;
+                ap1.index = rp.atomOffset;
+                if (!what || what.position) {
+                    rp.positionToArray(position, i3);
+                }
+                if (!what || what.color) {
+                    colormaker.atomColorToArray(ap1, color, i3);
+                }
+                if (!what || what.radius) {
+                    size[i] = radiusFactory.atomRadius(ap1);
+                }
+                if (!what || what.text) {
+                    text.push(labelFactory.atomLabel(ap1));
+                }
+                ++i;
+            });
+            if (!what || what.position)
+                { position = new Float32Array(position); }
+            if (!what || what.color)
+                { color = new Float32Array(color); }
+            if (!what || what.radius)
+                { size = new Float32Array(size); }
+        }
+        return { position: position, size: size, color: color, text: text };
+    };
+    LabelRepresentation.prototype.createData = function createData (sview) {
+        var what = { position: true, color: true, radius: true, text: true };
+        var textBuffer = new TextBuffer(this.getTextData(sview, what), this.getBufferParams({
             fontFamily: this.fontFamily,
             fontStyle: this.fontStyle,
             fontWeight: this.fontWeight,
@@ -83070,23 +83181,10 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
             backgroundMargin: this.backgroundMargin,
             backgroundOpacity: this.backgroundOpacity
         }));
-        return {
-            bufferList: [textBuffer]
-        };
+        return { bufferList: [textBuffer] };
     };
     LabelRepresentation.prototype.updateData = function updateData (what, data) {
-        var atomData = data.sview.getAtomData(this.getAtomParams(what));
-        var textData = {};
-        if (!what || what.position) {
-            textData.position = atomData.position;
-        }
-        if (!what || what.radius) {
-            textData.size = atomData.radius;
-        }
-        if (!what || what.color) {
-            textData.color = atomData.color;
-        }
-        data.bufferList[0].setAttributes(textData);
+        data.bufferList[0].setAttributes(this.getTextData(data.sview, what));
     };
 
     return LabelRepresentation;
@@ -96880,7 +96978,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.9";
+var version$1 = "2.0.0-dev.10";
 
 /**
  * @file Version
