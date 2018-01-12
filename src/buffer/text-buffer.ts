@@ -310,6 +310,7 @@ class TextAtlas {
  * @property {Color} backgroundColor - color of the background
  * @property {Float} backgroundMargin - width of the background
  * @property {Float} backgroundOpacity - opacity of the background
+ * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 
 interface TextBufferData extends BufferData {
@@ -336,7 +337,8 @@ const TextBufferDefaultParameters = Object.assign({
   backgroundColor: 'lightgrey' as number|string,
   backgroundMargin: 0.5,
   backgroundOpacity: 1.0,
-  forceTransparent: true
+  forceTransparent: true,
+  fixedSize: false
 }, BufferDefaultParameters)
 export type TextBufferParameters = typeof TextBufferDefaultParameters
 
@@ -353,7 +355,8 @@ const TextBufferParameterTypes = Object.assign({
   borderColor: { uniform: true },
   borderWidth: { uniform: true },
   backgroundColor: { uniform: true },
-  backgroundOpacity: { uniform: true }
+  backgroundOpacity: { uniform: true },
+  fixedSize: { updateShader: true }
 }, BufferParameterTypes)
 
 function getCharCount (data: TextBufferData, params: Partial<TextBufferParameters>) {
@@ -422,7 +425,9 @@ class TextBuffer extends MappedQuadBuffer {
       'borderColor': { value: new Color(this.parameters.borderColor as number) },
       'borderWidth': { value: this.parameters.borderWidth },
       'backgroundColor': { value: new Color(this.parameters.backgroundColor as number) },
-      'backgroundOpacity': { value: this.parameters.backgroundOpacity }
+      'backgroundOpacity': { value: this.parameters.backgroundOpacity },
+      'canvasHeight': { value: 1.0 },
+      'pixelRatio': { value: 1.0 }
     })
 
     this.addAttributes({
@@ -635,6 +640,10 @@ class TextBuffer extends MappedQuadBuffer {
 
     if (this.parameters.sdf) {
       defines.SDF = 1
+    }
+
+    if (this.parameters.fixedSize) {
+      defines.FIXED_SIZE = 1
     }
 
     return defines

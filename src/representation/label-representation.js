@@ -47,6 +47,7 @@ import TextBuffer from '../buffer/text-buffer'
  * @property {Color} backgroundColor - color of the background
  * @property {Float} backgroundMargin - width of the background
  * @property {Float} backgroundOpacity - opacity of the background
+ * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 
 /**
@@ -152,6 +153,9 @@ class LabelRepresentation extends StructureRepresentation {
       },
       backgroundOpacity: {
         type: 'range', step: 0.01, max: 1, min: 0, buffer: true
+      },
+      fixedSize: {
+        type: 'boolean', buffer: true
       }
 
     }, this.parameters, {
@@ -191,6 +195,7 @@ class LabelRepresentation extends StructureRepresentation {
     this.backgroundColor = defaults(p.backgroundColor, 'lightgrey')
     this.backgroundMargin = defaults(p.backgroundMargin, 0.5)
     this.backgroundOpacity = defaults(p.backgroundOpacity, 1.0)
+    this.fixedSize = defaults(p.fixedSize, false)
 
     super.init(p)
   }
@@ -274,7 +279,8 @@ class LabelRepresentation extends StructureRepresentation {
         showBackground: this.showBackground,
         backgroundColor: this.backgroundColor,
         backgroundMargin: this.backgroundMargin,
-        backgroundOpacity: this.backgroundOpacity
+        backgroundOpacity: this.backgroundOpacity,
+        fixedSize: this.fixedSize
       })
     )
 

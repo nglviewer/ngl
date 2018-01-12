@@ -5,6 +5,8 @@ uniform float xOffset;
 uniform float yOffset;
 uniform float zOffset;
 uniform bool ortho;
+uniform float canvasHeight;
+uniform float pixelRatio;
 
 #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
     varying vec3 vViewPosition;
@@ -49,6 +51,11 @@ void main(void){
     }
 
     vec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );
+
+    #ifdef FIXED_SIZE
+        scale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;
+    #endif
+
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
     cameraCornerPos.xy += mapping * inputSize * 0.01 * scale;
     cameraCornerPos.x += xOffset * scale;
