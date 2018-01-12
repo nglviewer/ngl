@@ -18,7 +18,8 @@ const LabelFactoryTypes = {
   'atom': 'atom name + index',
   'resname': 'residue name',
   'resno': 'residue no',
-  'res': 'residue name + no',
+  'res': 'one letter code + no',
+  'residue': '[residue name] + no + inscode',
   'text': 'text',
   'qualified': 'qualified name'
 }
@@ -41,7 +42,7 @@ class LabelFactory {
         break
 
       case 'atomindex':
-        l = '' + a.index
+        l = `${a.index}`
         break
 
       case 'occupancy':
@@ -53,7 +54,7 @@ class LabelFactory {
         break
 
       case 'serial':
-        l = '' + a.serial
+        l = `${a.serial}`
         break
 
       case 'element':
@@ -61,7 +62,7 @@ class LabelFactory {
         break
 
       case 'atom':
-        l = a.atomname + '|' + a.index
+        l = `${a.atomname}|${a.index}`
         break
 
       case 'resname':
@@ -69,12 +70,15 @@ class LabelFactory {
         break
 
       case 'resno':
-        l = '' + a.resno
+        l = `${a.resno}`
         break
 
       case 'res':
-        const resname = a.resname.toUpperCase()
-        l = (AA1[ resname ] || resname) + a.resno
+        l = `${(AA1[ a.resname.toUpperCase() ] || a.resname)}${a.resno}`
+        break
+
+      case 'residue':
+        l = `[${a.resname}]${a.resno}${a.inscode}`
         break
 
       case 'text':

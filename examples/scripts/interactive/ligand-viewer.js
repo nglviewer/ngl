@@ -205,7 +205,8 @@ function loadStructure (input) {
       borderWidth: 0.25,
       disablePicking: true,
       radiusType: 'size',
-      radiusSize: 1.0,
+      radiusSize: 0.8,
+      labelType: 'residue',
       labelGrouping: 'residue'
     })
   })
@@ -350,7 +351,7 @@ function showLigand (sele) {
     clipRadius: pocketRadius * pocketRadiusClipFactor,
     clipCenter: sview.center
   })
-  labelRepr.setSelection('(' + neighborSele + ') and .CA')
+  labelRepr.setSelection('(' + neighborSele + ') and not (water or ion)')
 
   struc.autoView(expandedSele, 2000)
 }
