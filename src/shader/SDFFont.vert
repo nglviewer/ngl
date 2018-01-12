@@ -48,16 +48,14 @@ void main(void){
         _zOffset -= 0.001;
     }
 
-    vec3 pos = position;
-    if( ortho ){
-        pos += normalize( cameraPosition ) * _zOffset;
-    }
-    vec4 cameraPos = modelViewMatrix * vec4( pos, 1.0 );
+    vec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
     cameraCornerPos.xy += mapping * inputSize * 0.01 * scale;
     cameraCornerPos.x += xOffset * scale;
     cameraCornerPos.y += yOffset * scale;
-    if( !ortho ){
+    if( ortho ){
+        cameraCornerPos.xyz += normalize( -cameraPosition ) * _zOffset;
+    } else {
         cameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;
     }
 
