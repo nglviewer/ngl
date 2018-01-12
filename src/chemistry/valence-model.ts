@@ -160,11 +160,12 @@ export function calculateHydrogensCharge (a: AtomProxy, params: ValenceModelPara
         } else {
           // Sulfonamide nitrogen and classed as sp3 in conjugation model but
           // they won't be charged
-          let sCount = 0
+          // Don't assign charge to nitrogens bound to metals
+          let flag = false
           a.eachBondedAtom(ba => {
-            if (ba.number === Elements.S) sCount++
+            if (ba.number === Elements.S || ba.isMetal()) flag = true
           })
-          if (sCount) charge = 0
+          if (flag) charge = 0
           else charge = 1
           // TODO: Planarity sanity check?
         }
