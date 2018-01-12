@@ -223,9 +223,16 @@ class LabelRepresentation extends StructureRepresentation {
       let i = 0
       sview.eachResidue(rp => {
         const i3 = i * 3
-        ap1.index = rp.atomOffset
-        if (!what || what.position) {
-          rp.positionToArray(position, i3)
+        if (rp.isProtein() || rp.isNucleic()) {
+          ap1.index = rp.traceAtomIndex
+          if (!what || what.position) {
+            ap1.positionToArray(position, i3)
+          }
+        } else {
+          ap1.index = rp.atomOffset
+          if (!what || what.position) {
+            rp.positionToArray(position, i3)
+          }
         }
         if (!what || what.color) {
           colormaker.atomColorToArray(ap1, color, i3)

@@ -78,7 +78,12 @@ class LabelFactory {
         break
 
       case 'residue':
-        l = `[${a.resname}]${a.resno}${a.inscode}`
+        const aa1 = AA1[ a.resname.toUpperCase() ]
+        if (aa1 && !a.inscode) {
+          l = `${aa1}${a.resno}`
+        } else {
+          l = `[${a.resname}]${a.resno}${a.inscode}`
+        }
         break
 
       case 'text':
