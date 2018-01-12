@@ -107,6 +107,10 @@ class PointRepresentation extends StructureRepresentation {
 
     data.bufferList[ 0 ].setAttributes(pointData)
   }
+
+  getAtomRadius () {
+    return 0.1
+  }
 }
 
 RepresentationRegistry.add('point', PointRepresentation)

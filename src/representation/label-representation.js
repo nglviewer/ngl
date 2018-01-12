@@ -290,6 +290,10 @@ class LabelRepresentation extends StructureRepresentation {
   updateData (what, data) {
     data.bufferList[ 0 ].setAttributes(this.getTextData(data.sview, what))
   }
+
+  getAtomRadius () {
+    return 0
+  }
 }
 
 RepresentationRegistry.add('label', LabelRepresentation)
