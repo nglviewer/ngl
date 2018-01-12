@@ -4,11 +4,12 @@
  * @private
  */
 
-import { Browser, RepresentationRegistry } from '../globals'
+import { Browser, RepresentationRegistry, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import LabelFactory from '../utils/label-factory.js'
-import StructureRepresentation from './structure-representation.js'
-import TextBuffer from '../buffer/text-buffer.js'
+import LabelFactory from '../utils/label-factory'
+import RadiusFactory from '../utils/radius-factory'
+import StructureRepresentation from './structure-representation'
+import TextBuffer from '../buffer/text-buffer'
 
 /**
  * Label representation parameter object. Extends {@link RepresentationParameters} and
@@ -26,6 +27,8 @@ import TextBuffer from '../buffer/text-buffer.js'
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
+ * @property {String} labelGrouping - grouping of the label, one of:
+ *                                 "atom", "residue".
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
  * @property {String} fontStyle - font style, "normal" or "italic"
  * @property {String} fontWeight - font weight, "normal" or "bold"
@@ -68,6 +71,14 @@ class LabelRepresentation extends StructureRepresentation {
       },
       labelText: {
         type: 'hidden', rebuild: true
+      },
+      labelGrouping: {
+        type: 'select',
+        options: {
+          'atom': 'atom',
+          'residue': 'residue'
+        },
+        rebuild: true
       },
       fontFamily: {
         type: 'select',
@@ -160,10 +171,11 @@ class LabelRepresentation extends StructureRepresentation {
   }
 
   init (params) {
-    var p = params || {}
+    const p = params || {}
 
     this.labelType = defaults(p.labelType, 'res')
     this.labelText = defaults(p.labelText, {})
+    this.labelGrouping = defaults(p.labelGrouping, 'atom')
     this.fontFamily = defaults(p.fontFamily, 'sans-serif')
     this.fontStyle = defaults(p.fontStyle, 'normal')
     this.fontWeight = defaults(p.fontWeight, 'bold')
@@ -183,25 +195,63 @@ class LabelRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
+  getTextData (sview, what) {
+    const p = this.getAtomParams(what)
+    const labelFactory = new LabelFactory(this.labelType, this.labelText)
+    let position, size, color, text
+
+    if (this.labelGrouping === 'atom') {
+      const atomData = sview.getAtomData(p)
+      position = atomData.position
+      size = atomData.radius
+      color = atomData.color
+      if (!what || what.text) {
+        text = []
+        sview.eachAtom(ap => text.push(labelFactory.atomLabel(ap)))
+      }
+    } else if (this.labelGrouping === 'residue') {
+      if (!what || what.position) position = []
+      if (!what || what.color) color = []
+      if (!what || what.radius) size = []
+      if (!what || what.text) text = []
+
+      if (p.colorParams) p.colorParams.structure = sview.getStructure()
+      const colormaker = ColormakerRegistry.getScheme(p.colorParams)
+      const radiusFactory = new RadiusFactory(p.radiusParams)
+      const ap1 = sview.getAtomProxy()
+
+      let i = 0
+      sview.eachResidue(rp => {
+        const i3 = i * 3
+        ap1.index = rp.atomOffset
+        if (!what || what.position) {
+          rp.positionToArray(position, i3)
+        }
+        if (!what || what.color) {
+          colormaker.atomColorToArray(ap1, color, i3)
+        }
+        if (!what || what.radius) {
+          size[ i ] = radiusFactory.atomRadius(ap1)
+        }
+        if (!what || what.text) {
+          text.push(labelFactory.atomLabel(ap1))
+        }
+        ++i
+      })
+
+      if (!what || what.position) position = new Float32Array(position)
+      if (!what || what.color) color = new Float32Array(color)
+      if (!what || what.radius) size = new Float32Array(size)
+    }
+
+    return { position, size, color, text }
+  }
+
   createData (sview) {
-    var what = { position: true, color: true, radius: true }
-    var atomData = sview.getAtomData(this.getAtomParams(what))
+    const what = { position: true, color: true, radius: true, text: true }
 
-    var text = []
-    var labelFactory = new LabelFactory(
-      this.labelType, this.labelText
-    )
-    sview.eachAtom(function (ap) {
-      text.push(labelFactory.atomLabel(ap))
-    })
-
-    var textBuffer = new TextBuffer(
-      {
-        position: atomData.position,
-        size: atomData.radius,
-        color: atomData.color,
-        text
-      },
+    const textBuffer = new TextBuffer(
+      this.getTextData(sview, what),
       this.getBufferParams({
         fontFamily: this.fontFamily,
         fontStyle: this.fontStyle,
@@ -221,28 +271,11 @@ class LabelRepresentation extends StructureRepresentation {
       })
     )
 
-    return {
-      bufferList: [ textBuffer ]
-    }
+    return { bufferList: [ textBuffer ] }
   }
 
   updateData (what, data) {
-    var atomData = data.sview.getAtomData(this.getAtomParams(what))
-    var textData = {}
-
-    if (!what || what.position) {
-      textData.position = atomData.position
-    }
-
-    if (!what || what.radius) {
-      textData.size = atomData.radius
-    }
-
-    if (!what || what.color) {
-      textData.color = atomData.color
-    }
-
-    data.bufferList[ 0 ].setAttributes(textData)
+    data.bufferList[ 0 ].setAttributes(this.getTextData(data.sview, what))
   }
 }
 

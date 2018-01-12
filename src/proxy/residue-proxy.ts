@@ -4,6 +4,7 @@
  * @private
  */
 
+import { NumberArray } from '../types'
 import { defaults } from '../utils'
 import {
     SecStrucHelix, SecStrucSheet, SecStrucTurn,
@@ -205,6 +206,32 @@ class ResidueProxy {
 
   //
 
+  get x () {
+    let x = 0
+    for (let i = this.atomOffset; i <= this.atomEnd; ++i) {
+      x += this.atomStore.x[ i ]
+    }
+    return x / this.atomCount
+  }
+
+  get y () {
+    let y = 0
+    for (let i = this.atomOffset; i <= this.atomEnd; ++i) {
+      y += this.atomStore.y[ i ]
+    }
+    return y / this.atomCount
+  }
+
+  get z () {
+    let z = 0
+    for (let i = this.atomOffset; i <= this.atomEnd; ++i) {
+      z += this.atomStore.z[ i ]
+    }
+    return z / this.atomCount
+  }
+
+  //
+
   /**
    * Atom iterator
    * @param  {function(atom: AtomProxy)} callback - the callback
@@ -229,6 +256,22 @@ class ResidueProxy {
         callback(ap)
       }
     }
+  }
+
+  //
+
+  /**
+   * Write residue center position to array
+   * @param  {Array|TypedArray} [array] - target array
+   * @param  {Integer} [offset] - the offset
+   * @return {Array|TypedArray} target array
+   */
+  positionToArray (array: NumberArray = [], offset = 0) {
+    array[ offset + 0 ] = this.x
+    array[ offset + 1 ] = this.y
+    array[ offset + 2 ] = this.z
+
+    return array
   }
 
   //

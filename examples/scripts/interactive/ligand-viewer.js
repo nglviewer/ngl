@@ -197,13 +197,16 @@ function loadStructure (input) {
     labelRepr = o.addRepresentation('label', {
       sele: 'none',
       color: '#333333',
+      yOffset: 0.2,
       zOffset: 2.0,
-      attachment: 'middle-center',
+      attachment: 'bottom-center',
       showBorder: true,
       borderColor: 'lightgrey',
       borderWidth: 0.25,
       disablePicking: true,
-      radiusScale: 0.6
+      radiusType: 'size',
+      radiusSize: 1.0,
+      labelGrouping: 'residue'
     })
   })
 }
