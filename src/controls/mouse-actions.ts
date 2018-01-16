@@ -55,6 +55,19 @@ class MouseActions {
   }
 
   /**
+   * Zoom scene based on scroll-delta and
+   * move focus planes based on camera position (zoom)
+   * @param {Stage} stage - the stage
+   * @param {Number} delta - amount to move focus planes and zoom
+   * @return {undefined}
+   */
+  static zoomFocusScroll (stage: Stage, delta: number) {
+    stage.trackballControls.zoom(delta)
+    const z = stage.viewer.camera.position.z
+    stage.setFocus(100 - Math.abs(z / 8))
+  }
+
+  /**
    * Change isolevel of volume surfaces based on scroll-delta
    * @param {Stage} stage - the stage
    * @param {Number} delta - amount to change isolevel
@@ -109,8 +122,8 @@ class MouseActions {
    * Zoom scene based on mouse coordinate changes and
    * move focus planes based on camera position (zoom)
    * @param {Stage} stage - the stage
-   * @param {Number} dx - amount to zoom
-   * @param {Number} dy - amount to zoom
+   * @param {Number} dx - amount to zoom and focus
+   * @param {Number} dy - amount to zoom and focus
    * @return {undefined}
    */
   static zoomFocusDrag (stage: Stage, dx: number, dy: number) {
@@ -201,18 +214,21 @@ export const MouseActionPresets = {
     [ 'scroll', MouseActions.zoomScroll ],
     [ 'scroll-shift', MouseActions.focusScroll ],
     [ 'scroll-ctrl', MouseActions.isolevelScroll ],
+    [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
 
-    [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-left', MouseActions.rotateDrag ],
-    [ 'drag-middle', MouseActions.zoomDrag ],
-    [ 'drag-shift-right', MouseActions.zoomDrag ],
-    [ 'drag-left+right', MouseActions.zoomDrag ],
-    [ 'drag-ctrl-right', MouseActions.panComponentDrag ],
-    [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
+    [ 'drag-right', MouseActions.panDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-shift-left', MouseActions.zoomDrag ],
+    [ 'drag-middle', MouseActions.zoomFocusDrag ],
 
+    [ 'drag-ctrl-shift-right', MouseActions.panComponentDrag ],
+    [ 'drag-ctrl-shift-left', MouseActions.rotateComponentDrag ],
+
+    [ 'clickPick-right', MouseActions.measurePick ],
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
-    [ 'clickPick-shift-left', MouseActions.movePick ],
+    [ 'clickPick-left', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
   ] as MouseActionPreset,
   pymol: [
