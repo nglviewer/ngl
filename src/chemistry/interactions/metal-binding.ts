@@ -47,6 +47,13 @@ export function addMetalBinding (structure: Structure, features: Features) {
           dative = true
         }
       }
+    } else if (!a.isPolymer()) {
+      if (a.isHalogen() || a.number === Elements.O || a.number === Elements.S) {
+        dative = true
+        ionic = true
+      } else if (a.number === Elements.N) {
+        dative = true
+      }
     } else if (a.isNucleic()){
       // http://pubs.acs.org/doi/pdf/10.1021/acs.accounts.6b00253
       // http://onlinelibrary.wiley.com/doi/10.1002/anie.200900399/full
@@ -58,13 +65,6 @@ export function addMetalBinding (structure: Structure, features: Features) {
       } else if(['O2', 'O4', 'O6'].includes(a.atomname)) {
         dative = true
         ionic = true
-      }
-    } else if (!a.isPolymer()) {
-      if (a.isHalogen() || a.number === Elements.O || a.number === Elements.S) {
-        dative = true
-        ionic = true
-      } else if (a.number === Elements.N) {
-        dative = true
       }
     }
     if (dative) {
