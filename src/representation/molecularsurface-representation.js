@@ -302,6 +302,10 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     return p
   }
 
+  getAtomRadius () {
+    return 0
+  }
+
   clear () {
     super.clear()
   }
