@@ -239,6 +239,7 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
 
       if (invalidAtomContact(donor, acceptor, masterIdx)) return
       if (donor.number !== Elements.S && acceptor.number !== Elements.S && dSq > maxHbondDistSq) return
+      if (donor.connectedTo(acceptor)) return
 
       const donorAngles = calcAngles(donor, acceptor)
       const idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120)

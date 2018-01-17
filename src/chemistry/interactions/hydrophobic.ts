@@ -68,6 +68,7 @@ export function addHydrophobicContacts (structure: Structure, contacts: Contacts
 
       if (invalidAtomContact(ap1, ap2, masterIdx)) return
       if (ap1.number === Elements.F && ap2.number === Elements.F) return
+      if (ap1.connectedTo(ap2)) return
 
       if (isHydrophobicContact(types[ i ], types[ j ])) {
         featureSet.setBits(i, j)
