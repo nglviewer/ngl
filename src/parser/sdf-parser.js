@@ -164,5 +164,6 @@ class SdfParser extends StructureParser {
 
 ParserRegistry.add('sdf', SdfParser)
 ParserRegistry.add('sd', SdfParser)
+ParserRegistry.add('mol', SdfParser)
 
 export default SdfParser
