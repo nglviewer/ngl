@@ -53,7 +53,11 @@ void main(void){
     vec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );
 
     #ifdef FIXED_SIZE
-        scale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;
+        if ( ortho ) {
+            scale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPosition.z) * 0.1;
+        } else {
+            scale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;
+        }
     #endif
 
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
