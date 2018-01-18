@@ -58889,6 +58889,8 @@ function addHydrogenBonds(structure, contacts, params) {
                 { return; }
             if (donor.number !== 16 /* S */ && acceptor.number !== 16 /* S */ && dSq > maxHbondDistSq)
                 { return; }
+            if (donor.connectedTo(acceptor))
+                { return; }
             var donorAngles = calcAngles(donor, acceptor);
             var idealDonorAngle = Angles.get(idealGeometry[donor.index]) || degToRad(120);
             if (donorAngles.some(function (donorAngle) {
@@ -58961,6 +58963,15 @@ function addMetalBinding(structure, features) {
                 }
             }
         }
+        else if (!a.isPolymer()) {
+            if (a.isHalogen() || a.number === 8 /* O */ || a.number === 16 /* S */) {
+                dative = true;
+                ionic = true;
+            }
+            else if (a.number === 7 /* N */) {
+                dative = true;
+            }
+        }
         else if (a.isNucleic()) {
             // http://pubs.acs.org/doi/pdf/10.1021/acs.accounts.6b00253
             // http://onlinelibrary.wiley.com/doi/10.1002/anie.200900399/full
@@ -58974,15 +58985,6 @@ function addMetalBinding(structure, features) {
             else if (['O2', 'O4', 'O6'].includes(a.atomname)) {
                 dative = true;
                 ionic = true;
-            }
-        }
-        else if (!a.isPolymer()) {
-            if (a.isHalogen() || a.number === 8 /* O */ || a.number === 16 /* S */) {
-                dative = true;
-                ionic = true;
-            }
-            else if (a.number === 7 /* N */) {
-                dative = true;
             }
         }
         if (dative) {
@@ -59212,6 +59214,8 @@ function addHydrophobicContacts(structure, contacts, params) {
             if (invalidAtomContact(ap1, ap2, masterIdx))
                 { return; }
             if (ap1.number === 9 /* F */ && ap2.number === 9 /* F */)
+                { return; }
+            if (ap1.connectedTo(ap2))
                 { return; }
             if (isHydrophobicContact(types[i], types[j])) {
                 featureSet.setBits(i, j);
@@ -78794,7 +78798,7 @@ function calcArcPoint(out, center, v1, v2, angle) {
     out[2] = center[2] + v1[2] * x + v2[2] * y;
 }
 
-ShaderRegistry.add('shader/SDFFont.vert', "uniform float clipNear;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\nuniform float canvasHeight;\nuniform float pixelRatio;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );\n#ifdef FIXED_SIZE\nscale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;\n#endif\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( ortho ){\ncameraCornerPos.xyz += normalize( -cameraPosition ) * _zOffset;\n} else {\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
+ShaderRegistry.add('shader/SDFFont.vert', "uniform float clipNear;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\nuniform float canvasHeight;\nuniform float pixelRatio;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );\n#ifdef FIXED_SIZE\nif ( ortho ) {\nscale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPosition.z) * 0.1;\n} else {\nscale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;\n}\n#endif\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( ortho ){\ncameraCornerPos.xyz += normalize( -cameraPosition ) * _zOffset;\n} else {\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
 ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\nuniform float opacity;\nuniform bool showBorder;\nuniform vec3 borderColor;\nuniform float borderWidth;\nuniform vec3 backgroundColor;\nuniform float backgroundOpacity;\nuniform float clipNear;\nuniform float clipRadius;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\nconst vec3 vColor = vec3( 0.0 );\n#else\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#endif\n#ifdef SDF\nconst float smoothness = 16.0;\n#else\nconst float smoothness = 256.0;\n#endif\nconst float gamma = 2.2;\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\nif( texCoord.x > 1.0 ){\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\n}else{\nfloat sdf = texture2D( fontTexture, texCoord ).a;\nif( showBorder ) sdf += borderWidth;\nfloat w = clamp(\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n0.0,\n0.5\n);\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\na = pow( a, 1.0 / gamma );\nif( a < 0.2 ) discard;\na *= opacity;\nvec3 outgoingLight = vColor;\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\noutgoingLight = borderColor;\n}\ngl_FragColor = vec4( outgoingLight, a );\n}\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
 
@@ -85032,6 +85036,9 @@ var MolecularSurfaceRepresentation = (function (StructureRepresentation$$1) {
         p.volume = this.colorVolume;
         return p;
     };
+    MolecularSurfaceRepresentation.prototype.getAtomRadius = function getAtomRadius () {
+        return 0;
+    };
     MolecularSurfaceRepresentation.prototype.clear = function clear () {
         StructureRepresentation$$1.prototype.clear.call(this);
     };
@@ -89991,6 +89998,7 @@ var SdfParser = (function (StructureParser$$1) {
 }(StructureParser));
 ParserRegistry.add('sdf', SdfParser);
 ParserRegistry.add('sd', SdfParser);
+ParserRegistry.add('mol', SdfParser);
 
 /**
  * @file Prmtop Parser
@@ -97026,7 +97034,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.11";
+var version$1 = "2.0.0-dev.12";
 
 /**
  * @file Version
