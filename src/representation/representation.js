@@ -326,7 +326,7 @@ class Representation {
   }
 
   build (updateWhat) {
-    if (this.lazy && !this.visible) {
+    if (this.lazy && (!this.visible || !this.opacity)) {
       this.lazyProps.build = true
       return
     }
@@ -395,7 +395,7 @@ class Representation {
   setVisibility (value, noRenderRequest) {
     this.visible = value
 
-    if (this.visible) {
+    if (this.visible && this.opacity) {
       const lazyProps = this.lazyProps
       const bufferParams = lazyProps.bufferParams
       const what = lazyProps.what
@@ -437,6 +437,18 @@ class Representation {
     const p = params || {}
     const tp = this.parameters
     const bufferParams = {}
+
+    if (!this.opacity && p.opacity) {
+      if (this.lazyProps.build) {
+        this.lazyProps.build = false
+        rebuild = true
+      } else {
+        Object.assign(bufferParams, this.lazyProps.bufferParams)
+        Object.assign(what, this.lazyProps.what)
+        this.lazyProps.bufferParams = {}
+        this.lazyProps.what = {}
+      }
+    }
 
     this.setColor(p.color, p)
 
@@ -495,7 +507,7 @@ class Representation {
   }
 
   updateParameters (bufferParams, what) {
-    if (this.lazy && !this.visible) {
+    if (this.lazy && (!this.visible || !this.opacity)) {
       Object.assign(this.lazyProps.bufferParams, bufferParams)
       Object.assign(this.lazyProps.what, what)
       return

@@ -186,7 +186,7 @@ function loadStructure (input) {
     pocketRepr = o.addRepresentation('surface', {
       sele: 'none',
       lazy: true,
-      visibility: false,
+      visibility: true,
       clipNear: 0,
       opaqueBack: false,
       opacity: 0.0,
@@ -338,7 +338,7 @@ function showLigand (sele) {
   ligandRepr.setVisibility(true)
   neighborRepr.setVisibility(true)
   contactRepr.setVisibility(true)
-  pocketRepr.setVisibility(pocketOpacityRange.value > 0)
+  pocketRepr.setVisibility(true)
   labelRepr.setVisibility(labelCheckbox.checked)
 
   ligandRepr.setSelection(sele)
@@ -429,10 +429,8 @@ var pocketOpacityRange = createElement('input', {
   type: 'range', value: 90, min: 0, max: 100, step: 1
 }, { top: getTopPosition(16), left: '12px' })
 pocketOpacityRange.oninput = function (e) {
-  var v = parseFloat(e.target.value)
-  pocketRepr.setVisibility(v > 0)
   pocketRepr.setParameters({
-    opacity: v / 100
+    opacity: parseFloat(e.target.value) / 100
   })
 }
 addElement(pocketOpacityRange)
