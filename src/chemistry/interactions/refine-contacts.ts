@@ -77,7 +77,7 @@ export function refineLineOfSight (structure: Structure, contacts: FrozenContact
         c2.distanceToSquared(aw as any) > 1
       ) {
         contactSet.clear(i)
-        console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName())
+        if (Debug) Log.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName())
       }
     })
   })
