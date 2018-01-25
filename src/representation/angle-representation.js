@@ -5,18 +5,18 @@
  */
 import { Color } from 'three'
 
-import { RepresentationRegistry } from '../globals.js'
-import MeasurementRepresentation, { parseNestedAtoms, calcArcPoint } from './measurement-representation.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import MeasurementRepresentation, { parseNestedAtoms, calcArcPoint } from './measurement-representation'
+import { defaults } from '../utils'
 
-import MeshBuffer from '../buffer/mesh-buffer.js'
-import TextBuffer from '../buffer/text-buffer.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
+import MeshBuffer from '../buffer/mesh-buffer'
+import TextBuffer from '../buffer/text-buffer'
+import WideLineBuffer from '../buffer/wideline-buffer'
 
 import { v3add, v3cross, v3dot, v3fromArray, v3length, v3new,
-  v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
-import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
-import { RAD2DEG } from '../math/math-constants.js'
+  v3normalize, v3sub, v3toArray } from '../math/vector-utils'
+import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
+import { RAD2DEG } from '../math/math-constants'
 import { getFixedLengthWrappedDashData } from '../geometry/dash'
 
 /**
@@ -85,7 +85,8 @@ class AngleRepresentation extends MeasurementRepresentation {
   }
 
   create () {
-    if (this.structureView.atomCount === 0) return
+    if (!this.structureView.atomCount || !this.atomTriple.length) return
+
     const atomPosition = atomTriplePositions(this.structureView, this.atomTriple)
     const angleData = getAngleData(atomPosition)
     const n = this.n = angleData.labelPosition.length / 3

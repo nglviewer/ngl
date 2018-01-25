@@ -9,15 +9,15 @@ import { Color } from 'three'
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import { DistancePicker } from '../utils/picker.js'
-import { uniformArray, uniformArray3 } from '../math/array-utils.js'
-import BitArray from '../utils/bitarray.js'
-import MeasurementRepresentation from './measurement-representation.js'
-import Selection from '../selection/selection.js'
-import BondStore from '../store/bond-store.js'
-import TextBuffer from '../buffer/text-buffer.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import { DistancePicker } from '../utils/picker'
+import { uniformArray, uniformArray3 } from '../math/array-utils'
+import BitArray from '../utils/bitarray'
+import MeasurementRepresentation from './measurement-representation'
+import Selection from '../selection/selection'
+import BondStore from '../store/bond-store'
+import TextBuffer from '../buffer/text-buffer'
+import WideLineBuffer from '../buffer/wideline-buffer'
+import CylinderBuffer from '../buffer/cylinder-buffer'
 import { getFixedLengthDashData } from '../geometry/dash'
 
 /**
@@ -83,7 +83,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
   }
 
   init (params) {
-    var p = params || {}
+    const p = params || {}
     p.linewidth = defaults(p.linewidth, 5.0)
     p.radiusType = defaults(p.radiusType, 'size')
     p.radiusSize = defaults(p.radiusSize, 0.2)
@@ -170,7 +170,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
   }
 
   getBondData (sview, what, params) {
-    var bondData = sview.getBondData(this.getBondParams(what, params))
+    const bondData = sview.getBondData(this.getBondParams(what, params))
     if (bondData.picking) {
       bondData.picking = new DistancePicker(
         bondData.picking.array,
@@ -182,14 +182,11 @@ class DistanceRepresentation extends MeasurementRepresentation {
   }
 
   create () {
-    if (this.structureView.atomCount === 0) return
+    if (!this.structureView.atomCount || !this.atomPair.length) return
 
-    var n = this.atomPair.length
-    if (n === 0) return
-
-    var distanceData = this.getDistanceData(this.structureView, this.atomPair)
-
-    var c = new Color(this.labelColor)
+    const n = this.atomPair.length
+    const c = new Color(this.labelColor)
+    const distanceData = this.getDistanceData(this.structureView, this.atomPair)
 
     this.textBuffer = new TextBuffer({
       position: distanceData.position,
@@ -198,12 +195,12 @@ class DistanceRepresentation extends MeasurementRepresentation {
       text: distanceData.text
     }, this.getLabelBufferParams())
 
-    var bondParams = {
+    const bondParams = {
       bondSet: distanceData.bondSet,
       bondStore: distanceData.bondStore
     }
 
-    var bondData = this.getBondData(
+    const bondData = this.getBondData(
       this.structureView,
       { position: true, color: true, picking: true, radius: this.useCylinder },
       bondParams
@@ -242,13 +239,13 @@ class DistanceRepresentation extends MeasurementRepresentation {
   updateData (what, data) {
     super.updateData(what, data)
 
-    var bondParams = {
+    const bondParams = {
       bondSet: data.bondSet,
       bondStore: data.bondStore
     }
 
-    var bondData = this.getBondData(data.sview, what, bondParams)
-    var distanceData = {}
+    const bondData = this.getBondData(data.sview, what, bondParams)
+    const distanceData = {}
 
     if (!what || what.color) {
       distanceData.color = bondData.color
@@ -263,8 +260,8 @@ class DistanceRepresentation extends MeasurementRepresentation {
   }
 
   setParameters (params) {
-    var rebuild = false
-    var what = {}
+    let rebuild = false
+    const what = {}
 
     super.setParameters(params, what, rebuild)
 

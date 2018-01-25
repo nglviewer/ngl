@@ -5,18 +5,18 @@
  */
 import { Color } from 'three'
 
-import { RepresentationRegistry } from '../globals.js'
-import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation'
+import { defaults } from '../utils'
 
-import MeshBuffer from '../buffer/mesh-buffer.js'
-import TextBuffer from '../buffer/text-buffer.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
+import MeshBuffer from '../buffer/mesh-buffer'
+import TextBuffer from '../buffer/text-buffer'
+import WideLineBuffer from '../buffer/wideline-buffer'
 
-import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
+import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
 import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
-  v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
-import { RAD2DEG } from '../math/math-constants.js'
+  v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils'
+import { RAD2DEG } from '../math/math-constants'
 import { getFixedLengthWrappedDashData } from '../geometry/dash'
 
 /**
@@ -84,15 +84,14 @@ class DihedralRepresentation extends MeasurementRepresentation {
   }
 
   create () {
-    if (this.structureView.atomCount === 0) return
+    if (!this.structureView.atomCount || !this.atomQuad.length) return
+
     const atomPosition = parseNestedAtoms(this.structureView, this.atomQuad)
     const dihedralData = getDihedralData(
-      atomPosition,
-      {planeVisible: this.planeVisible}
+      atomPosition, { planeVisible: this.planeVisible }
     )
 
     const n = this.n = dihedralData.labelText.length
-
     const labelColor = new Color(this.labelColor)
 
     this.textBuffer = new TextBuffer({
