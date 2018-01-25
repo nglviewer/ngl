@@ -44,7 +44,7 @@ class StructureRepresentation extends Representation {
         type: 'select', options: RadiusFactory.types
       },
       radiusData: {
-        type: 'hidden', rebuild: true
+        type: 'hidden'
       },
       radiusSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001

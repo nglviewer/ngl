@@ -7,7 +7,9 @@
 import { Signal } from 'signals'
 
 import { ComponentRegistry } from '../globals'
-import { defaults, createRingBuffer, RingBuffer, createSimpleDict, SimpleDict } from '../utils'
+import {
+  defaults, /*deepEqual, */createRingBuffer, RingBuffer, createSimpleDict, SimpleDict
+} from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Component, { ComponentSignals, ComponentDefaultParameters } from './component'
 import RepresentationCollection from './representation-collection'
@@ -381,12 +383,15 @@ class StructureComponent extends Component {
   }
 
   measureUpdate () {
+    const pickData = this.pickBuffer.data
     const radiusData: { [k: number]: number } = {}
-    this.pickBuffer.data.forEach(ai => {
+    pickData.forEach(ai => {
       const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
       radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
     })
-    this.spacefillRepresentation.setSelection('@' + this.pickBuffer.data.join(','))
+    this.spacefillRepresentation.setSelection(
+      pickData.length ? ( '@' + pickData.join(',') ) : 'none'
+    )
     this.spacefillRepresentation.setParameters({ radiusData })
   }
 
