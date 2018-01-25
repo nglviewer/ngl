@@ -33,6 +33,10 @@ class RepresentationCollection extends Collection<RepresentationElement> {
   build (params?: any) {
     return this.forEach((repr) => repr.build(params))
   }
+
+  dispose (params?: any) {
+    return this.forEach((repr) => repr.dispose())
+  }
 }
 
 export default RepresentationCollection
