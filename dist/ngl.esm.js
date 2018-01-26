@@ -45179,6 +45179,7 @@ function getAbsolutePath(relativePath) {
     return loc.origin + basePath + relativePath;
 }
 
+
 function openUrl(url) {
     var opened = window.open(url, '_blank');
     if (!opened) {
@@ -55826,7 +55827,7 @@ Representation.prototype.update = function update () {
     this.build();
 };
 Representation.prototype.build = function build (updateWhat) {
-    if (this.lazy && !this.visible) {
+    if (this.lazy && (!this.visible || !this.opacity)) {
         this.lazyProps.build = true;
         return;
     }
@@ -55895,7 +55896,7 @@ Representation.prototype.attach = function attach (callback) {
  */
 Representation.prototype.setVisibility = function setVisibility (value, noRenderRequest) {
     this.visible = value;
-    if (this.visible) {
+    if (this.visible && this.opacity) {
         var lazyProps = this.lazyProps;
         var bufferParams = lazyProps.bufferParams;
         var what = lazyProps.what;
@@ -55938,6 +55939,18 @@ Representation.prototype.setParameters = function setParameters (params, what, r
     var p = params || {};
     var tp = this.parameters;
     var bufferParams = {};
+    if (!this.opacity && p.opacity) {
+        if (this.lazyProps.build) {
+            this.lazyProps.build = false;
+            rebuild = true;
+        }
+        else {
+            Object.assign(bufferParams, this.lazyProps.bufferParams);
+            Object.assign(what, this.lazyProps.what);
+            this.lazyProps.bufferParams = {};
+            this.lazyProps.what = {};
+        }
+    }
     this.setColor(p.color, p);
     for (var name in p) {
         if (p[name] === undefined)
@@ -55990,7 +56003,7 @@ Representation.prototype.setParameters = function setParameters (params, what, r
     return this;
 };
 Representation.prototype.updateParameters = function updateParameters (bufferParams, what) {
-    if (this.lazy && !this.visible) {
+    if (this.lazy && (!this.visible || !this.opacity)) {
         Object.assign(this.lazyProps.bufferParams, bufferParams);
         Object.assign(this.lazyProps.what, what);
         return;
@@ -59388,7 +59401,8 @@ function refineLineOfSight(structure, contacts, params) {
                 c1.distanceToSquared(aw) > 1 &&
                 c2.distanceToSquared(aw) > 1) {
                 contactSet.clear(i);
-                console.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName());
+                if (Debug)
+                    { Log.log('removing', ac1.qualifiedName(), ac2.qualifiedName(), 'because', aw.qualifiedName()); }
             }
         });
     });
@@ -73741,6 +73755,9 @@ var RepresentationCollection = (function (Collection$$1) {
     RepresentationCollection.prototype.build = function build (params) {
         return this.forEach(function (repr) { return repr.build(params); });
     };
+    RepresentationCollection.prototype.dispose = function dispose (params) {
+        return this.forEach(function (repr) { return repr.dispose(); });
+    };
 
     return RepresentationCollection;
 }(Collection));
@@ -75841,12 +75858,13 @@ var StructureComponent = (function (Component$$1) {
     StructureComponent.prototype.measureUpdate = function measureUpdate () {
         var this$1 = this;
 
+        var pickData = this.pickBuffer.data;
         var radiusData = {};
-        this.pickBuffer.data.forEach(function (ai) {
+        pickData.forEach(function (ai) {
             var r = Math.max(0.1, this$1.getMaxRepresentationRadius(ai));
             radiusData[ai] = r * (2.3 - smoothstep(0.1, 2, r));
         });
-        this.spacefillRepresentation.setSelection('@' + this.pickBuffer.data.join(','));
+        this.spacefillRepresentation.setSelection(pickData.length ? ('@' + pickData.join(',')) : 'none');
         this.spacefillRepresentation.setParameters({ radiusData: radiusData });
     };
     StructureComponent.prototype.measureData = function measureData () {
@@ -78225,7 +78243,7 @@ var StructureRepresentation = (function (Representation$$1) {
                 type: 'select', options: RadiusFactory.types
             },
             radiusData: {
-                type: 'hidden', rebuild: true
+                type: 'hidden'
             },
             radiusSize: {
                 type: 'number', precision: 3, max: 10.0, min: 0.001
@@ -79637,7 +79655,7 @@ var AngleRepresentation = (function (MeasurementRepresentation$$1) {
         MeasurementRepresentation$$1.prototype.init.call(this, p);
     };
     AngleRepresentation.prototype.create = function create () {
-        if (this.structureView.atomCount === 0)
+        if (!this.structureView.atomCount || !this.atomTriple.length)
             { return; }
         var atomPosition = atomTriplePositions(this.structureView, this.atomTriple);
         var angleData = getAngleData(atomPosition);
@@ -81937,7 +81955,7 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         MeasurementRepresentation$$1.prototype.init.call(this, p);
     };
     DihedralRepresentation.prototype.create = function create () {
-        if (this.structureView.atomCount === 0)
+        if (!this.structureView.atomCount || !this.atomQuad.length)
             { return; }
         var atomPosition = parseNestedAtoms(this.structureView, this.atomQuad);
         var dihedralData = getDihedralData(atomPosition, { planeVisible: this.planeVisible });
@@ -82356,13 +82374,11 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
         return bondData;
     };
     DistanceRepresentation.prototype.create = function create () {
-        if (this.structureView.atomCount === 0)
+        if (!this.structureView.atomCount || !this.atomPair.length)
             { return; }
         var n = this.atomPair.length;
-        if (n === 0)
-            { return; }
-        var distanceData = this.getDistanceData(this.structureView, this.atomPair);
         var c = new Color(this.labelColor);
+        var distanceData = this.getDistanceData(this.structureView, this.atomPair);
         this.textBuffer = new TextBuffer({
             position: distanceData.position,
             size: uniformArray(n, this.labelSize),
@@ -97034,7 +97050,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.12";
+var version$1 = "2.0.0-dev.13";
 
 /**
  * @file Version
