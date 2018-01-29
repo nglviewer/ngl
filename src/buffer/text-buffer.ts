@@ -13,6 +13,7 @@ import { Browser, BufferRegistry } from '../globals'
 import { createParams } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
+import { edt } from '../utils/edt'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
 const TextAtlasCache: { [k: string]: TextAtlas } = {}
@@ -32,7 +33,7 @@ type TextWeights = 'normal'|'bold'
 
 const TextAtlasDefaultParams = {
   font: 'sans-serif' as TextFonts,
-  size: 36,
+  size: 72,
   style: 'normal' as TextStyles,
   variant: 'normal' as TextVariants,
   weight: 'normal' as TextWeights,
@@ -54,9 +55,24 @@ class TextAtlas {
   currentX = 0
   currentY = 0
 
+  cutoff = 0.25
+  padding: number
+  radius: number
+
+  gridOuter: Float64Array
+  gridInner: Float64Array
+  f: Float64Array
+  d: Float64Array
+  z: Float64Array
+  v: Int16Array
+
+  paddedSize: number
+  middle: number
+
   texture: CanvasTexture
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
+
   lineHeight: number
   maxWidth: number
   colors: string[]
@@ -68,68 +84,80 @@ class TextAtlas {
   placeholder: TextAtlasMap
 
   constructor (params: Partial<TextAtlasParams> = {}) {
-    // adapted from https://github.com/unconed/mathbox
-    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
-
     this.parameters = createParams(params, TextAtlasDefaultParams)
-
-    if (typeof navigator !== 'undefined') {
-      const ua = navigator.userAgent
-      if (ua.match(/Chrome/) && ua.match(/OS X/)) {
-        this.gamma = 0.5
-      }
-    }
-
-    this.build()
-    this.populate()
-
-    this.texture = new CanvasTexture(this.canvas2)
-    this.texture.flipY = false
-    this.texture.needsUpdate = true
-  }
-
-  build () {
     const p = this.parameters
 
+    this.radius = p.size / 8
+    this.padding = p.size / 3
+
     // Prepare line-height with room for outline and descenders/ascenders
-    const lineHeight = p.size + 2 * p.outline + Math.round(p.size / 4)
-    const maxWidth = p.width / 4
+    const lineHeight = this.lineHeight = p.size + 2 * p.outline + Math.round(p.size / 4)
+    const maxWidth = this.maxWidth = p.width / 4
 
     // Prepare scratch canvas
-    const canvas = document.createElement('canvas')
+    const canvas = this.canvas = document.createElement('canvas')
     canvas.width = maxWidth
     canvas.height = lineHeight
 
-    const ctx = canvas.getContext('2d')!
+    const ctx = this.context = this.canvas.getContext('2d')!
     ctx.font = `${p.style} ${p.variant} ${p.weight} ${p.size}px ${p.font}`
-    ctx.fillStyle = '#FF0000'
+    ctx.fillStyle = 'black'
     ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
     ctx.lineJoin = 'round'
 
-    const colors = []
-    const dilate = p.outline * 3
-    for (let i = 0; i < dilate; ++i) {
-      // 8 rgb levels = 1 step = .5 pixel increase
-      const val = Math.max(0, -i * 8 + 128 - i * 8)
-      const hex = ('00' + val.toString(16)).slice(-2)
-      colors.push('#' + hex + hex + hex)
-    }
-    const scratch = new Uint8Array(maxWidth * lineHeight * 2)
+    // temporary arrays for the distance transform
+    this.gridOuter = new Float64Array(lineHeight * maxWidth)
+    this.gridInner = new Float64Array(lineHeight * maxWidth)
+    this.f = new Float64Array(Math.max(lineHeight, maxWidth))
+    this.d = new Float64Array(Math.max(lineHeight, maxWidth))
+    this.z = new Float64Array(Math.max(lineHeight, maxWidth) + 1)
+    this.v = new Int16Array(Math.max(lineHeight, maxWidth))
 
-    this.canvas = canvas
-    this.context = ctx
-    this.lineHeight = lineHeight
-    this.maxWidth = maxWidth
-    this.colors = colors
-    this.scratch = scratch
-
+    //
     this.data = new Uint8Array(p.width * p.height * 4)
-
     this.canvas2 = document.createElement('canvas')
     this.canvas2.width = p.width
     this.canvas2.height = p.height
     this.context2 = this.canvas2.getContext('2d')!
+
+    // Replacement Character
+    this.placeholder = this.map(String.fromCharCode(0xFFFD))
+
+    // Basic Latin (subset)
+    for (let i = 0x0021; i <= 0x007E; ++i) {
+      this.map(String.fromCharCode(i))
+    }
+
+    // Latin-1 Supplement (subset)
+    for (let i = 0x00A1; i <= 0x00FF; ++i) {
+      this.map(String.fromCharCode(i))
+    }
+
+    // Greek and Coptic (subset)
+    for (let i = 0x0391; i <= 0x03C9; ++i) {
+      this.map(String.fromCharCode(i))
+    }
+
+    // Cyrillic (subset)
+    for (let i = 0x0400; i <= 0x044F; ++i) {
+      this.map(String.fromCharCode(i))
+    }
+
+    // Angstrom Sign
+    this.map(String.fromCharCode(0x212B))
+
+    this.texture = new CanvasTexture(this.canvas2)
+    this.texture.flipY = false
+    this.texture.needsUpdate = true
+
+    // const img = document.createElement('img')
+    // img.src = this.canvas.toDataURL()
+    // document.body.appendChild(img)
+
+    const img2 = document.createElement('img')
+    img2.src = this.canvas2.toDataURL()
+    document.body.appendChild(img2)
   }
 
   map (text: string) {
@@ -177,104 +205,49 @@ class TextAtlas {
     const h = this.lineHeight
     const o = p.outline
     const ctx = this.context
-    const dst = this.scratch
+    // const dst = this.scratch
     const max = this.maxWidth
-    const colors = this.colors
+    // const colors = this.colors
 
-        // Bottom aligned, take outline into account
+    // Bottom aligned, take outline into account
     const x = o
     const y = h - p.outline
 
-        // Measure text
+    // Measure text
     const m = ctx.measureText(text)
     const w = Math.min(max, Math.ceil(m.width + 2 * x + 1))
 
-        // Clear scratch area
+    const n = w * h
+
+    // Clear scratch area
     ctx.clearRect(0, 0, w, h)
 
-    let i, il, j, imageData, data
+    // Draw text
+    ctx.fillText(text, x, y)
 
-    if (p.outline === 0) {
-      ctx.fillText(text, x, y)
-      imageData = ctx.getImageData(0, 0, w, h)
-      data = imageData.data
+    const imageData = ctx.getImageData(0, 0, w, h)
+    const data = imageData.data
 
-      j = 3  // Skip to alpha channel
-      for (i = 0, il = data.length / 4; i < il; ++i) {
-        dst[ i ] = data[ j ]
-        j += 4
-      }
-    } else {
-      ctx.globalCompositeOperation = 'source-over'
-      // Draw strokes of decreasing width to create
-      // nested outlines (absolute distance)
-      for (i = o + 1; i > 0; --i) {
-        // Eliminate odd strokes once past > 1px,
-        // don't need the detail
-        j = i > 1 ? i * 2 - 2 : i
-        ctx.strokeStyle = colors[ j - 1 ]
-        ctx.lineWidth = j
-        ctx.strokeText(text, x, y)
-      }
-      ctx.globalCompositeOperation = 'multiply'
-      ctx.fillStyle = '#FF00FF'
-      ctx.fillText(text, x, y)
-      imageData = ctx.getImageData(0, 0, w, h)
-      data = imageData.data
+    // var imgData = this.ctx.getImageData(0, 0, this.size, this.size);
+    // var alphaChannel = new Uint8ClampedArray(this.size * this.size);
 
-      j = 0
-      const gamma = this.gamma
-      for (i = 0, il = data.length / 4; i < il; ++i) {
-        // Get value + mask
-        const a = data[ j ]
-        let mask = a ? data[ j + 1 ] / a : 1
-        if (gamma === 0.5) {
-          mask = Math.sqrt(mask)
-        }
-        mask = Math.min(1, Math.max(0, mask))
+    for (let i = 0; i < n; i++) {
+        const a = imageData.data[i * 4 + 3] / 255; // alpha value
+        this.gridOuter[i] = a === 1 ? 0 : a === 0 ? Number.MAX_SAFE_INTEGER : Math.pow(Math.max(0, 0.5 - a), 2);
+        this.gridInner[i] = a === 1 ? Number.MAX_SAFE_INTEGER : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
+    }
 
-        // Blend between positive/outside and negative/inside
-        const b = 256 - a
-        const c = b + (a - b) * mask
+    edt(this.gridOuter, w, h, this.f, this.d, this.v, this.z);
+    edt(this.gridInner, w, h, this.f, this.d, this.v, this.z);
 
-        // Clamp (slight expansion to hide errors around the transition)
-        dst[ i ] = Math.max(0, Math.min(255, c + 2))
-        data[ j + 3 ] = dst[ i ]
-        j += 4
-      }
+    for (let i = 0; i < n; i++) {
+        var d = this.gridOuter[i] - this.gridInner[i];
+        data[i * 4 + 3] = Math.max(0, Math.min(255, Math.round(255 - 255 * (d / this.radius + this.cutoff))));
     }
 
     ctx.putImageData(imageData, 0, 0)
     this.scratchW = w
     this.scratchH = h
-  }
-
-  populate () {
-    // Replacement Character
-    this.placeholder = this.map(String.fromCharCode(0xFFFD))
-
-    // Basic Latin
-    for (let i = 0x0000; i < 0x007F; ++i) {
-      this.map(String.fromCharCode(i))
-    }
-
-    // Latin-1 Supplement
-    for (let i = 0x0080; i < 0x00FF; ++i) {
-      this.map(String.fromCharCode(i))
-    }
-
-    // Greek and Coptic
-    for (let i = 0x0370; i < 0x03FF; ++i) {
-      this.map(String.fromCharCode(i))
-    }
-
-    // Cyrillic
-    for (let i = 0x0400; i < 0x04FF; ++i) {
-      this.map(String.fromCharCode(i))
-    }
-
-    // Angstrom Sign
-    this.map(String.fromCharCode(0x212B))
   }
 }
 
@@ -324,7 +297,7 @@ const TextBufferDefaultParameters = Object.assign({
   fontFamily: 'sans-serif' as TextFonts,
   fontStyle: 'normal' as TextStyles,
   fontWeight: 'bold' as TextWeights,
-  fontSize: 48,
+  fontSize: 72,
   sdf: Browser === 'Chrome',
   xOffset: 0.0,
   yOffset: 0.0,

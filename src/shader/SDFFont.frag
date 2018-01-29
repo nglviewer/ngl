@@ -30,7 +30,8 @@ varying vec2 texCoord;
 #else
     const float smoothness = 256.0;
 #endif
-const float gamma = 2.2;
+const float gamma = 2.2;  // * 1.4142 / 1.0;
+// const float padding = 0.0;
 
 void main(){
 
@@ -55,8 +56,10 @@ void main(){
         );
         float a = smoothstep( 0.5 - w, 0.5 + w, sdf );
 
+        // float a = smoothstep(padding - gamma, padding + gamma, sdf);
+
         // gamma correction for linear attenuation
-        a = pow( a, 1.0 / gamma );
+        // a = pow( a, 1.0 / gamma );
         if( a < 0.2 ) discard;
         a *= opacity;
 
