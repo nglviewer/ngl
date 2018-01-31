@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Browser, RepresentationRegistry, ColormakerRegistry } from '../globals'
+import { RepresentationRegistry, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
 import LabelFactory from '../utils/label-factory'
 import RadiusFactory from '../utils/radius-factory'
@@ -32,7 +32,6 @@ import TextBuffer from '../buffer/text-buffer'
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
  * @property {String} fontStyle - font style, "normal" or "italic"
  * @property {String} fontWeight - font weight, "normal" or "bold"
- * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
@@ -105,9 +104,6 @@ class LabelRepresentation extends StructureRepresentation {
           'bold': 'bold'
         },
         buffer: true
-      },
-      sdf: {
-        type: 'boolean', buffer: true
       },
       xOffset: {
         type: 'number', precision: 1, max: 20, min: -20, buffer: true
@@ -183,7 +179,6 @@ class LabelRepresentation extends StructureRepresentation {
     this.fontFamily = defaults(p.fontFamily, 'sans-serif')
     this.fontStyle = defaults(p.fontStyle, 'normal')
     this.fontWeight = defaults(p.fontWeight, 'bold')
-    this.sdf = defaults(p.sdf, Browser === 'Chrome')
     this.xOffset = defaults(p.xOffset, 0.0)
     this.yOffset = defaults(p.yOffset, 0.0)
     this.zOffset = defaults(p.zOffset, 0.5)
@@ -268,7 +263,6 @@ class LabelRepresentation extends StructureRepresentation {
         fontFamily: this.fontFamily,
         fontStyle: this.fontStyle,
         fontWeight: this.fontWeight,
-        sdf: this.sdf,
         xOffset: this.xOffset,
         yOffset: this.yOffset,
         zOffset: this.zOffset,

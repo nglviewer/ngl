@@ -9,7 +9,7 @@ import { Color, CanvasTexture } from 'three'
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
 
-import { Browser, BufferRegistry } from '../globals'
+import { BufferRegistry } from '../globals'
 import { createParams } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
@@ -33,13 +33,13 @@ type TextWeights = 'normal'|'bold'
 
 const TextAtlasDefaultParams = {
   font: 'sans-serif' as TextFonts,
-  size: 72,
+  size: 36,
   style: 'normal' as TextStyles,
   variant: 'normal' as TextVariants,
   weight: 'normal' as TextWeights,
-  outline: 0,
-  width: 2048,
-  height: 2048
+  outline: 3,
+  width: 1024,
+  height: 1024
 }
 type TextAtlasParams = typeof TextAtlasDefaultParams
 
@@ -129,20 +129,21 @@ class TextAtlas {
       this.map(String.fromCharCode(i))
     }
 
-    // Latin-1 Supplement (subset)
-    for (let i = 0x00A1; i <= 0x00FF; ++i) {
-      this.map(String.fromCharCode(i))
-    }
+    // TODO: to slow to always prepare them
+    // // Latin-1 Supplement (subset)
+    // for (let i = 0x00A1; i <= 0x00FF; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
 
-    // Greek and Coptic (subset)
-    for (let i = 0x0391; i <= 0x03C9; ++i) {
-      this.map(String.fromCharCode(i))
-    }
+    // // Greek and Coptic (subset)
+    // for (let i = 0x0391; i <= 0x03C9; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
 
-    // Cyrillic (subset)
-    for (let i = 0x0400; i <= 0x044F; ++i) {
-      this.map(String.fromCharCode(i))
-    }
+    // // Cyrillic (subset)
+    // for (let i = 0x0400; i <= 0x044F; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
 
     // Angstrom Sign
     this.map(String.fromCharCode(0x212B))
@@ -150,14 +151,6 @@ class TextAtlas {
     this.texture = new CanvasTexture(this.canvas2)
     this.texture.flipY = false
     this.texture.needsUpdate = true
-
-    // const img = document.createElement('img')
-    // img.src = this.canvas.toDataURL()
-    // document.body.appendChild(img)
-
-    const img2 = document.createElement('img')
-    img2.src = this.canvas2.toDataURL()
-    document.body.appendChild(img2)
   }
 
   map (text: string) {
@@ -228,9 +221,6 @@ class TextAtlas {
     const imageData = ctx.getImageData(0, 0, w, h)
     const data = imageData.data
 
-    // var imgData = this.ctx.getImageData(0, 0, this.size, this.size);
-    // var alphaChannel = new Uint8ClampedArray(this.size * this.size);
-
     for (let i = 0; i < n; i++) {
         const a = imageData.data[i * 4 + 3] / 255; // alpha value
         this.gridOuter[i] = a === 1 ? 0 : a === 0 ? Number.MAX_SAFE_INTEGER : Math.pow(Math.max(0, 0.5 - a), 2);
@@ -241,7 +231,7 @@ class TextAtlas {
     edt(this.gridInner, w, h, this.f, this.d, this.v, this.z);
 
     for (let i = 0; i < n; i++) {
-        var d = this.gridOuter[i] - this.gridInner[i];
+        const d = this.gridOuter[i] - this.gridInner[i];
         data[i * 4 + 3] = Math.max(0, Math.min(255, Math.round(255 - 255 * (d / this.radius + this.cutoff))));
     }
 
@@ -268,7 +258,6 @@ class TextAtlas {
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
  * @property {String} fontStyle - font style, "normal" or "italic"
  * @property {String} fontWeight - font weight, "normal" or "bold"
- * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
@@ -297,8 +286,7 @@ const TextBufferDefaultParameters = Object.assign({
   fontFamily: 'sans-serif' as TextFonts,
   fontStyle: 'normal' as TextStyles,
   fontWeight: 'bold' as TextWeights,
-  fontSize: 72,
-  sdf: Browser === 'Chrome',
+  fontSize: 36,
   xOffset: 0.0,
   yOffset: 0.0,
   zOffset: 0.5,
@@ -320,7 +308,6 @@ const TextBufferParameterTypes = Object.assign({
   fontStyle: { uniform: true },
   fontWeight: { uniform: true },
   fontSize: { uniform: true },
-  sdf: { updateShader: true, uniform: true },
   xOffset: { uniform: true },
   yOffset: { uniform: true },
   zOffset: { uniform: true },
@@ -506,8 +493,7 @@ class TextBuffer extends MappedQuadBuffer {
       font: this.parameters.fontFamily,
       style: this.parameters.fontStyle,
       weight: this.parameters.fontWeight,
-      size: this.parameters.fontSize,
-      outline: this.parameters.sdf ? 5 : 0
+      size: this.parameters.fontSize
     })
 
     this.texture = this.textAtlas.texture
@@ -611,10 +597,6 @@ class TextBuffer extends MappedQuadBuffer {
   getDefines (type: BufferTypes) {
     const defines = super.getDefines(type)
 
-    if (this.parameters.sdf) {
-      defines.SDF = 1
-    }
-
     if (this.parameters.fixedSize) {
       defines.FIXED_SIZE = 1
     }
@@ -627,8 +609,7 @@ class TextBuffer extends MappedQuadBuffer {
       data.fontFamily !== undefined ||
       data.fontStyle !== undefined ||
       data.fontWeight !== undefined ||
-      data.fontSize !== undefined ||
-      data.sdf !== undefined
+      data.fontSize !== undefined
     )) {
       this.makeTexture()
       this.makeMapping()
