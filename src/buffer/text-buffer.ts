@@ -125,7 +125,7 @@ class TextAtlas {
     this.placeholder = this.map(String.fromCharCode(0xFFFD))
 
     // Basic Latin (subset)
-    for (let i = 0x0021; i <= 0x007E; ++i) {
+    for (let i = 0x0020; i <= 0x007E; ++i) {
       this.map(String.fromCharCode(i))
     }
 
