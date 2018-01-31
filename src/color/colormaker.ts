@@ -70,7 +70,7 @@ abstract class Colormaker {
     }
 
     if (p.reverse) {
-      p.domain = [ p.domain[1], p.domain[0] ]
+      p.domain.reverse()
     }
     return chroma
       .scale(p.scale as any)  // TODO
