@@ -438,7 +438,7 @@ class Representation {
     const tp = this.parameters
     const bufferParams = {}
 
-    if (!this.opacity && p.opacity) {
+    if (!this.opacity && p.opacity !== undefined) {
       if (this.lazyProps.build) {
         this.lazyProps.build = false
         rebuild = true
@@ -488,8 +488,8 @@ class Representation {
 
       // mark for rebuild
       if (tp[ name ].rebuild &&
-        !(tp[ name ].rebuild === 'impostor' &&
-          ExtensionFragDepth && !this.disableImpostor)
+          !(tp[ name ].rebuild === 'impostor' &&
+            ExtensionFragDepth && !this.disableImpostor)
       ) {
         rebuild = true
       }
@@ -506,8 +506,8 @@ class Representation {
     return this
   }
 
-  updateParameters (bufferParams, what) {
-    if (this.lazy && (!this.visible || !this.opacity)) {
+  updateParameters (bufferParams = {}, what) {
+    if (this.lazy && (!this.visible || !this.opacity) && bufferParams.opacity === undefined) {
       Object.assign(this.lazyProps.bufferParams, bufferParams)
       Object.assign(this.lazyProps.what, what)
       return
