@@ -105,11 +105,15 @@ import BoxBuffer from './buffer/box-buffer.js'
 import ConeBuffer from './buffer/cone-buffer.js'
 import CylinderBuffer from './buffer/cylinder-buffer.js'
 import EllipsoidBuffer from './buffer/ellipsoid-buffer.js'
+import MeshBuffer from './buffer/mesh-buffer.js'
 import OctahedronBuffer from './buffer/octahedron-buffer.js'
 import SphereBuffer from './buffer/sphere-buffer.js'
 import TetrahedronBuffer from './buffer/tetrahedron-buffer.js'
+import PointBuffer from './buffer/point-buffer.js'
+import LineBuffer from './buffer/line-buffer.js'
 import TextBuffer from './buffer/text-buffer.js'
 import TorusBuffer from './buffer/torus-buffer.js'
+import WideLineBuffer from './buffer/wideline-buffer.js'
 
 //
 
@@ -147,7 +151,7 @@ import './parser/netcdf-parser.js'
 import './parser/text-parser.js'
 import './parser/xml-parser.js'
 
-import "./parser/kin-parser.js";
+import './parser/kin-parser.js'
 import './parser/validation-parser.js'
 
 //
@@ -240,11 +244,15 @@ export {
   ConeBuffer,
   CylinderBuffer,
   EllipsoidBuffer,
+  LineBuffer,
+  MeshBuffer,
   OctahedronBuffer,
+  PointBuffer,
   SphereBuffer,
   TetrahedronBuffer,
   TextBuffer,
   TorusBuffer,
+  WideLineBuffer,
 
   Shape,
 
