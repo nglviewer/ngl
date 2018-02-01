@@ -25,11 +25,6 @@ varying vec2 texCoord;
     #include fog_pars_fragment
 #endif
 
-#ifdef SDF
-    const float smoothness = 16.0;
-#else
-    const float smoothness = 256.0;
-#endif
 const float gamma = 2.2 * 1.4142 / 128.0;
 const float padding = 0.75;
 
