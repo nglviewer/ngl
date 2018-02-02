@@ -314,7 +314,11 @@ class StructureRepresentation extends Representation {
       }
     }
 
-    if (p.defaultAssembly !== undefined) {
+    if (p.defaultAssembly !== undefined &&
+        p.defaultAssembly !== this.defaultAssembly &&
+        ((this.assembly === 'default' && p.assembly === undefined) ||
+          p.assembly === 'default')
+    ) {
       rebuild = true
     }
 

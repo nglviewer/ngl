@@ -175,7 +175,6 @@ class StructureComponent extends Component {
   setSelection (string: string) {
     this.parameters.sele = string
     this.selection.setString(string)
-
     return this
   }
 
@@ -185,11 +184,17 @@ class StructureComponent extends Component {
    * @return {undefined}
    */
   setDefaultAssembly (value:string) {
-    this.parameters.defaultAssembly = value
-    this.reprList.forEach(repr => {
-      repr.setParameters({ defaultAssembly: this.parameters.defaultAssembly })
-    })
-    this.signals.defaultAssemblyChanged.dispatch(value)
+    // filter out non-exsisting assemblies
+    if (this.structure.biomolDict[value] === undefined) value = ''
+    // only set default assembly when changed
+    if (this.parameters.defaultAssembly !== value) {
+      this.parameters.defaultAssembly = value
+      this.reprList.forEach(repr => {
+        repr.setParameters({ defaultAssembly: this.parameters.defaultAssembly })
+      })
+      this.signals.defaultAssemblyChanged.dispatch(value)
+    }
+    return this
   }
 
   /**
@@ -197,7 +202,7 @@ class StructureComponent extends Component {
    * @return {undefined}
    */
   rebuildRepresentations () {
-    this.reprList.forEach((repr: any) => {  // TODO
+    this.reprList.forEach((repr: RepresentationElement) => {
       repr.build()
     })
     this.measureRepresentations.build()
@@ -232,13 +237,13 @@ class StructureComponent extends Component {
    * Add a new trajectory component to the structure
    */
   addTrajectory (trajPath = '', params: { [k: string]: any } = {}) {
-    var traj = makeTrajectory(trajPath, this.structureView, params as TrajectoryParameters)
+    const traj = makeTrajectory(trajPath, this.structureView, params as TrajectoryParameters)
 
     traj.signals.frameChanged.add(() => {
       this.updateRepresentations({ 'position': true })
     })
 
-    var trajComp = new TrajectoryElement(this.stage, traj, params)
+    const trajComp = new TrajectoryElement(this.stage, traj, params)
     this.trajList.push(trajComp)
     this.signals.trajectoryAdded.dispatch(trajComp)
 
@@ -246,7 +251,7 @@ class StructureComponent extends Component {
   }
 
   removeTrajectory (traj: TrajectoryElement) {
-    var idx = this.trajList.indexOf(traj)
+    const idx = this.trajList.indexOf(traj)
     if (idx !== -1) {
       this.trajList.splice(idx, 1)
     }
@@ -258,9 +263,7 @@ class StructureComponent extends Component {
 
   dispose () {
     // copy via .slice because side effects may change trajList
-    this.trajList.slice().forEach(traj => {
-      traj.dispose()
-    })
+    this.trajList.slice().forEach(traj => traj.dispose())
 
     this.trajList.length = 0
     this.structure.dispose()

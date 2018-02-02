@@ -133,7 +133,7 @@ class RepresentationElement extends Element {
     return this
   }
 
-  build (params: any) {  // TODO
+  build (params?: any) {  // TODO
     this.repr.build(params)
 
     return this
