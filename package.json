@@ -86,7 +86,7 @@
     "rollup-plugin-node-resolve": "^3.0.2",
     "rollup-watch": "^4.3.1",
     "signals": "^1.0.0",
-    "slimerjs": "1.0.0-beta.1",
+    "slimerjs": "git+https://github.com/laurentj/slimerjs.git#1.0.0-beta.1",
     "sprintf-js": "^1.1.1",
     "standard": "^10.0.3",
     "three": "^0.89.0",
