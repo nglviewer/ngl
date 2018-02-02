@@ -73,13 +73,11 @@ function parseSele (string: string) {
 
     if (c === '(') {
       // Log.log( "(" );
-
       not = false
       createNewContext()
       continue
     } else if (c === ')') {
       // Log.log( ")" );
-
       getPrevContext()
       if (selection.negate) {
         getPrevContext()
@@ -106,7 +104,6 @@ function parseSele (string: string) {
 
     if (cu === 'AND') {
       // Log.log( "AND" );
-
       if (selection.operator === 'OR') {
         const lastRule = selection.rules!.pop()!
         createNewContext('AND')
@@ -117,7 +114,6 @@ function parseSele (string: string) {
       continue
     } else if (cu === 'OR') {
       // Log.log( "OR" );
-
       if (selection.operator === 'AND') {
         getPrevContext('OR')
       } else {
@@ -126,23 +122,24 @@ function parseSele (string: string) {
       continue
     } else if (c.toUpperCase() === 'NOT') {
       // Log.log( "NOT", j );
-
       not = 1
       createNewContext()
       selection.negate = true
       continue
     } else {
-
       // Log.log( "chunk", c, j, selection );
-
     }
 
     // handle keyword attributes
 
-    const keyword = (kwd as any)[ cu ]
-    if (keyword !== undefined) {
-      pushRule({ keyword })
-      continue
+    // ensure `cu` is not a number before testing if it is in the
+    // kwd enum dictionary which includes the enum numbers as well...
+    if (+cu !== +cu) {
+      const keyword = (kwd as any)[ cu ]
+      if (keyword !== undefined) {
+        pushRule({ keyword })
+        continue
+      }
     }
 
     if (cu === 'HYDROGEN') {
