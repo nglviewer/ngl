@@ -18,7 +18,7 @@ export type MappingType = 'v2'|'v3'
 abstract class MappedBuffer extends Buffer {
   index: Uint32Array|Uint16Array
 
-  constructor (data: BufferData, params: Partial<BufferParameters> = {}) {
+  constructor (mappingType: MappingType, data: BufferData, params: Partial<BufferParameters> = {}) {
     super(data, params)
 
     this.index = getUintArray(this.indexSize, this.attributeSize)
@@ -26,7 +26,7 @@ abstract class MappedBuffer extends Buffer {
     this.initIndex(this.index)
 
     this.addAttributes({
-      'mapping': { type: this.mappingType, value: null }
+      'mapping': { type: mappingType, value: null }
     })
 
     this.setAttributes({ primitiveId: serialArray(this.size) })
@@ -35,7 +35,6 @@ abstract class MappedBuffer extends Buffer {
   abstract get mapping (): Float32Array
   abstract get mappingIndices (): Uint32Array|Uint16Array
   abstract get mappingIndicesSize (): number
-  abstract get mappingType (): MappingType
   abstract get mappingSize (): number
   abstract get mappingItemSize (): number
 

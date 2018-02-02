@@ -18,7 +18,7 @@ import BondProxy from '../proxy/bond-proxy'
 const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
   mode: 'hcl' as 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl',
-  domain: [ 0, 1 ] as [number, number],
+  domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false
 }

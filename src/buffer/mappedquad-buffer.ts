@@ -4,7 +4,8 @@
  * @private
  */
 
-import MappedBuffer, { MappingType } from './mapped-buffer'
+import { BufferParameters, BufferData } from './buffer'
+import MappedBuffer from './mapped-buffer'
 
 const mapping = new Float32Array([
   -1.0, 1.0,
@@ -23,10 +24,12 @@ const mappingIndices = new Uint16Array([
  * @interface
  */
 class MappedQuadBuffer extends MappedBuffer {
+  constructor(data: BufferData, params: Partial<BufferParameters> = {}) {
+    super('v2', data, params)
+  }
   get mapping () { return mapping }
   get mappingIndices () { return mappingIndices }
   get mappingIndicesSize () { return 6 }
-  get mappingType () { return 'v2' as MappingType }
   get mappingSize () { return 4 }
   get mappingItemSize () { return 2 }
 }

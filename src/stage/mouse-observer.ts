@@ -32,30 +32,7 @@ function getTouchDistance (event: TouchEvent) {
 }
 
 function getMouseButtons (event: MouseEvent) {
-  if (typeof event === 'object') {
-    if ('buttons' in event) {
-      return event.buttons
-    } else if ('which' in event) {
-      const b = event.which
-      if (b === 2) {
-        return 4
-      } else if (b === 3) {
-        return 2
-      } else if (b > 0) {
-        return 1 << (b - 1)
-      }
-    } else if ('button' in event) {
-      const b = event.button
-      if (b === 1) {
-        return 4
-      } else if (b === 2) {
-        return 2
-      } else if (b >= 0) {
-        return 1 << b
-      }
-    }
-  }
-  return 0
+  return (typeof event === 'object' && 'buttons' in event) ? event.buttons : 0
 }
 
 interface MouseSignals {

@@ -35,7 +35,7 @@ export function defaults (value: any, defaultValue: any) {
   return value !== undefined ? value : defaultValue
 }
 
-export function createParams<T> (params: {[k in keyof T]?}, defaultParams: T) {
+export function createParams<T> (params: {[k in keyof T]?: any}, defaultParams: T) {
   const o: any = Object.assign({}, params)
   for (const k in defaultParams) {
     const value = params[k]
@@ -44,7 +44,7 @@ export function createParams<T> (params: {[k in keyof T]?}, defaultParams: T) {
   return o as T
 }
 
-export function updateParams<T> (params: T, newParams: {[k in keyof T]?}) {
+export function updateParams<T> (params: T, newParams: {[k in keyof T]?: any}) {
   for (const k in newParams) {
     const value = newParams[k]
     if (value !== undefined) params[k] = value
@@ -112,7 +112,7 @@ export function deepCopy (src: any) {
     return src
   }
 
-  const dst: any[]|{ [index: string]: any } = Array.isArray(src) ? [] : {}
+  const dst: { [index: string]: any } = Array.isArray(src) ? [] : {}
 
   for (let key in src) {
     dst[ key ] = deepCopy(src[ key ])

@@ -4,7 +4,8 @@
  * @private
  */
 
-import MappedBuffer, { MappingType } from './mapped-buffer'
+import { BufferParameters, BufferData } from './buffer'
+import MappedBuffer from './mapped-buffer'
 
 const mapping = new Float32Array([
   -1.0, -1.0, -1.0,
@@ -37,10 +38,12 @@ const mappingIndices = new Uint16Array([
  * @interface
  */
 class MappedBoxBuffer extends MappedBuffer {
+  constructor(data: BufferData, params: Partial<BufferParameters> = {}) {
+    super('v3', data, params)
+  }
   get mapping () { return mapping }
   get mappingIndices () { return mappingIndices }
   get mappingIndicesSize () { return 36 }
-  get mappingType () { return 'v3' as MappingType }
   get mappingSize () { return 8 }
   get mappingItemSize () { return 3 }
 }
