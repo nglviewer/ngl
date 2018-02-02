@@ -81,6 +81,5 @@ export default {
       sourcemap: true
     }
   ],
-  external: external,
-  sourcemap: true
+  external: external
 };
