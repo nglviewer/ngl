@@ -49922,10 +49922,14 @@ function parseSele(string) {
             // Log.log( "chunk", c, j, selection );
         }
         // handle keyword attributes
-        var keyword = kwd[cu];
-        if (keyword !== undefined) {
-            pushRule({ keyword: keyword });
-            continue;
+        // ensure `cu` is not a number before testing if it is in the
+        // kwd enum dictionary which includes the enum numbers as well...
+        if (+cu !== +cu) {
+            var keyword = kwd[cu];
+            if (keyword !== undefined) {
+                pushRule({ keyword: keyword });
+                continue;
+            }
         }
         if (cu === 'HYDROGEN') {
             pushRule({
@@ -79806,6 +79810,8 @@ var TextAtlas = function TextAtlas(params) {
     // for (let i = 0x00A1; i <= 0x00FF; ++i) {
     //   this.map(String.fromCharCode(i))
     // }
+    // Degree sign
+    this.map(String.fromCharCode(0x00B0));
     // // Greek and Coptic (subset)
     // for (let i = 0x0391; i <= 0x03C9; ++i) {
     //   this.map(String.fromCharCode(i))
@@ -97901,7 +97907,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.14";
+var version$1 = "2.0.0-dev.15";
 
 /**
  * @file Version
