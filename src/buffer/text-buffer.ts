@@ -135,6 +135,9 @@ class TextAtlas {
     //   this.map(String.fromCharCode(i))
     // }
 
+    // Degree sign
+    this.map(String.fromCharCode(0x00B0))
+
     // // Greek and Coptic (subset)
     // for (let i = 0x0391; i <= 0x03C9; ++i) {
     //   this.map(String.fromCharCode(i))
