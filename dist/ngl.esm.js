@@ -416,251 +416,228 @@ if (typeof window !== 'undefined') {
     }
 }
 
-var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+// Store setTimeout reference so promise-polyfill will be unaffected by
+// other code modifying setTimeout (like sinon.useFakeTimers())
+var setTimeoutFunc = setTimeout;
 
+function noop() {}
 
-
-
-
-function createCommonjsModule(fn, module) {
-	return module = { exports: {} }, fn(module, module.exports), module.exports;
+// Polyfill for Function.prototype.bind
+function bind(fn, thisArg) {
+  return function() {
+    fn.apply(thisArg, arguments);
+  };
 }
 
-var promise = createCommonjsModule(function (module) {
-(function (root) {
+function Promise$1(fn) {
+  if (!(this instanceof Promise$1))
+    { throw new TypeError('Promises must be constructed via new'); }
+  if (typeof fn !== 'function') { throw new TypeError('not a function'); }
+  this._state = 0;
+  this._handled = false;
+  this._value = undefined;
+  this._deferreds = [];
 
-  // Store setTimeout reference so promise-polyfill will be unaffected by
-  // other code modifying setTimeout (like sinon.useFakeTimers())
-  var setTimeoutFunc = setTimeout;
+  doResolve(fn, this);
+}
 
-  function noop() {}
-  
-  // Polyfill for Function.prototype.bind
-  function bind(fn, thisArg) {
-    return function () {
-      fn.apply(thisArg, arguments);
-    };
+function handle(self, deferred) {
+  while (self._state === 3) {
+    self = self._value;
   }
-
-  function Promise(fn) {
-    if (!(this instanceof Promise)) { throw new TypeError('Promises must be constructed via new'); }
-    if (typeof fn !== 'function') { throw new TypeError('not a function'); }
-    this._state = 0;
-    this._handled = false;
-    this._value = undefined;
-    this._deferreds = [];
-
-    doResolve(fn, this);
+  if (self._state === 0) {
+    self._deferreds.push(deferred);
+    return;
   }
-
-  function handle(self, deferred) {
-    while (self._state === 3) {
-      self = self._value;
-    }
-    if (self._state === 0) {
-      self._deferreds.push(deferred);
+  self._handled = true;
+  Promise$1._immediateFn(function() {
+    var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
+    if (cb === null) {
+      (self._state === 1 ? resolve : reject)(deferred.promise, self._value);
       return;
     }
-    self._handled = true;
-    Promise._immediateFn(function () {
-      var cb = self._state === 1 ? deferred.onFulfilled : deferred.onRejected;
-      if (cb === null) {
-        (self._state === 1 ? resolve : reject)(deferred.promise, self._value);
+    var ret;
+    try {
+      ret = cb(self._value);
+    } catch (e) {
+      reject(deferred.promise, e);
+      return;
+    }
+    resolve(deferred.promise, ret);
+  });
+}
+
+function resolve(self, newValue) {
+  try {
+    // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+    if (newValue === self)
+      { throw new TypeError('A promise cannot be resolved with itself.'); }
+    if (
+      newValue &&
+      (typeof newValue === 'object' || typeof newValue === 'function')
+    ) {
+      var then = newValue.then;
+      if (newValue instanceof Promise$1) {
+        self._state = 3;
+        self._value = newValue;
+        finale(self);
+        return;
+      } else if (typeof then === 'function') {
+        doResolve(bind(then, newValue), self);
         return;
       }
-      var ret;
-      try {
-        ret = cb(self._value);
-      } catch (e) {
-        reject(deferred.promise, e);
-        return;
+    }
+    self._state = 1;
+    self._value = newValue;
+    finale(self);
+  } catch (e) {
+    reject(self, e);
+  }
+}
+
+function reject(self, newValue) {
+  self._state = 2;
+  self._value = newValue;
+  finale(self);
+}
+
+function finale(self) {
+  if (self._state === 2 && self._deferreds.length === 0) {
+    Promise$1._immediateFn(function() {
+      if (!self._handled) {
+        Promise$1._unhandledRejectionFn(self._value);
       }
-      resolve(deferred.promise, ret);
     });
   }
 
-  function resolve(self, newValue) {
-    try {
-      // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-      if (newValue === self) { throw new TypeError('A promise cannot be resolved with itself.'); }
-      if (newValue && (typeof newValue === 'object' || typeof newValue === 'function')) {
-        var then = newValue.then;
-        if (newValue instanceof Promise) {
-          self._state = 3;
-          self._value = newValue;
-          finale(self);
-          return;
-        } else if (typeof then === 'function') {
-          doResolve(bind(then, newValue), self);
-          return;
-        }
-      }
-      self._state = 1;
-      self._value = newValue;
-      finale(self);
-    } catch (e) {
-      reject(self, e);
-    }
+  for (var i = 0, len = self._deferreds.length; i < len; i++) {
+    handle(self, self._deferreds[i]);
   }
+  self._deferreds = null;
+}
 
-  function reject(self, newValue) {
-    self._state = 2;
-    self._value = newValue;
-    finale(self);
-  }
+function Handler(onFulfilled, onRejected, promise) {
+  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+  this.promise = promise;
+}
 
-  function finale(self) {
-    if (self._state === 2 && self._deferreds.length === 0) {
-      Promise._immediateFn(function() {
-        if (!self._handled) {
-          Promise._unhandledRejectionFn(self._value);
-        }
-      });
-    }
-
-    for (var i = 0, len = self._deferreds.length; i < len; i++) {
-      handle(self, self._deferreds[i]);
-    }
-    self._deferreds = null;
-  }
-
-  function Handler(onFulfilled, onRejected, promise) {
-    this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-    this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-    this.promise = promise;
-  }
-
-  /**
-   * Take a potentially misbehaving resolver function and make sure
-   * onFulfilled and onRejected are only called once.
-   *
-   * Makes no guarantees about asynchrony.
-   */
-  function doResolve(fn, self) {
-    var done = false;
-    try {
-      fn(function (value) {
+/**
+ * Take a potentially misbehaving resolver function and make sure
+ * onFulfilled and onRejected are only called once.
+ *
+ * Makes no guarantees about asynchrony.
+ */
+function doResolve(fn, self) {
+  var done = false;
+  try {
+    fn(
+      function(value) {
         if (done) { return; }
         done = true;
         resolve(self, value);
-      }, function (reason) {
+      },
+      function(reason) {
         if (done) { return; }
         done = true;
         reject(self, reason);
-      });
-    } catch (ex) {
-      if (done) { return; }
-      done = true;
-      reject(self, ex);
-    }
+      }
+    );
+  } catch (ex) {
+    if (done) { return; }
+    done = true;
+    reject(self, ex);
   }
+}
 
-  Promise.prototype['catch'] = function (onRejected) {
-    return this.then(null, onRejected);
-  };
+Promise$1.prototype['catch'] = function(onRejected) {
+  return this.then(null, onRejected);
+};
 
-  Promise.prototype.then = function (onFulfilled, onRejected) {
-    var prom = new (this.constructor)(noop);
+Promise$1.prototype.then = function(onFulfilled, onRejected) {
+  var prom = new this.constructor(noop);
 
-    handle(this, new Handler(onFulfilled, onRejected, prom));
-    return prom;
-  };
+  handle(this, new Handler(onFulfilled, onRejected, prom));
+  return prom;
+};
 
-  Promise.all = function (arr) {
-    return new Promise(function (resolve, reject) {
-      if (!arr || typeof arr.length === 'undefined') { throw new TypeError('Promise.all accepts an array'); }
-      var args = Array.prototype.slice.call(arr);
-      if (args.length === 0) { return resolve([]); }
-      var remaining = args.length;
+Promise$1.all = function(arr) {
+  return new Promise$1(function(resolve, reject) {
+    if (!arr || typeof arr.length === 'undefined')
+      { throw new TypeError('Promise.all accepts an array'); }
+    var args = Array.prototype.slice.call(arr);
+    if (args.length === 0) { return resolve([]); }
+    var remaining = args.length;
 
-      function res(i, val) {
-        try {
-          if (val && (typeof val === 'object' || typeof val === 'function')) {
-            var then = val.then;
-            if (typeof then === 'function') {
-              then.call(val, function (val) {
+    function res(i, val) {
+      try {
+        if (val && (typeof val === 'object' || typeof val === 'function')) {
+          var then = val.then;
+          if (typeof then === 'function') {
+            then.call(
+              val,
+              function(val) {
                 res(i, val);
-              }, reject);
-              return;
-            }
+              },
+              reject
+            );
+            return;
           }
-          args[i] = val;
-          if (--remaining === 0) {
-            resolve(args);
-          }
-        } catch (ex) {
-          reject(ex);
         }
+        args[i] = val;
+        if (--remaining === 0) {
+          resolve(args);
+        }
+      } catch (ex) {
+        reject(ex);
       }
-
-      for (var i = 0; i < args.length; i++) {
-        res(i, args[i]);
-      }
-    });
-  };
-
-  Promise.resolve = function (value) {
-    if (value && typeof value === 'object' && value.constructor === Promise) {
-      return value;
     }
 
-    return new Promise(function (resolve) {
-      resolve(value);
-    });
-  };
-
-  Promise.reject = function (value) {
-    return new Promise(function (resolve, reject) {
-      reject(value);
-    });
-  };
-
-  Promise.race = function (values) {
-    return new Promise(function (resolve, reject) {
-      for (var i = 0, len = values.length; i < len; i++) {
-        values[i].then(resolve, reject);
-      }
-    });
-  };
-
-  // Use polyfill for setImmediate for performance gains
-  Promise._immediateFn = (typeof setImmediate === 'function' && function (fn) { setImmediate(fn); }) ||
-    function (fn) {
-      setTimeoutFunc(fn, 0);
-    };
-
-  Promise._unhandledRejectionFn = function _unhandledRejectionFn(err) {
-    if (typeof console !== 'undefined' && console) {
-      console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
+    for (var i = 0; i < args.length; i++) {
+      res(i, args[i]);
     }
-  };
+  });
+};
 
-  /**
-   * Set the immediate function to execute callbacks
-   * @param fn {function} Function to execute
-   * @deprecated
-   */
-  Promise._setImmediateFn = function _setImmediateFn(fn) {
-    Promise._immediateFn = fn;
-  };
-
-  /**
-   * Change the function to execute on unhandled rejection
-   * @param {function} fn Function to execute on unhandled rejection
-   * @deprecated
-   */
-  Promise._setUnhandledRejectionFn = function _setUnhandledRejectionFn(fn) {
-    Promise._unhandledRejectionFn = fn;
-  };
-  
-  if ('object' !== 'undefined' && module.exports) {
-    module.exports = Promise;
-  } else if (!root.Promise) {
-    root.Promise = Promise;
+Promise$1.resolve = function(value) {
+  if (value && typeof value === 'object' && value.constructor === Promise$1) {
+    return value;
   }
 
-})(commonjsGlobal);
-});
+  return new Promise$1(function(resolve) {
+    resolve(value);
+  });
+};
+
+Promise$1.reject = function(value) {
+  return new Promise$1(function(resolve, reject) {
+    reject(value);
+  });
+};
+
+Promise$1.race = function(values) {
+  return new Promise$1(function(resolve, reject) {
+    for (var i = 0, len = values.length; i < len; i++) {
+      values[i].then(resolve, reject);
+    }
+  });
+};
+
+// Use polyfill for setImmediate for performance gains
+Promise$1._immediateFn =
+  (typeof setImmediate === 'function' &&
+    function(fn) {
+      setImmediate(fn);
+    }) ||
+  function(fn) {
+    setTimeoutFunc(fn, 0);
+  };
+
+Promise$1._unhandledRejectionFn = function _unhandledRejectionFn(err) {
+  if (typeof console !== 'undefined' && console) {
+    console.warn('Possible Unhandled Promise Rejection:', err); // eslint-disable-line no-console
+  }
+};
 
 // Polyfills
 
@@ -722,7 +699,6 @@ if ( Object.assign === undefined ) {
 	( function () {
 
 		Object.assign = function ( target ) {
-
 			var arguments$1 = arguments;
 
 
@@ -848,7 +824,7 @@ Object.assign( EventDispatcher.prototype, {
 
 } );
 
-var REVISION = '88';
+var REVISION = '89';
 var CullFaceNone = 0;
 var CullFaceBack = 1;
 var CullFaceFront = 2;
@@ -977,44 +953,32 @@ var _Math = {
 	DEG2RAD: Math.PI / 180,
 	RAD2DEG: 180 / Math.PI,
 
-	generateUUID: function () {
+	generateUUID: ( function () {
 
-		// http://www.broofa.com/Tools/Math.uuid.htm
-		// Replaced .join with string concatenation (@takahirox)
+		// http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
 
-		var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split( '' );
-		var rnd = 0, r;
+		var lut = [];
 
-		return function generateUUID() {
+		for ( var i = 0; i < 256; i ++ ) {
 
-			var uuid = '';
+			lut[ i ] = ( i < 16 ? '0' : '' ) + ( i ).toString( 16 ).toUpperCase();
 
-			for ( var i = 0; i < 36; i ++ ) {
+		}
 
-				if ( i === 8 || i === 13 || i === 18 || i === 23 ) {
+		return function () {
 
-					uuid += '-';
-
-				} else if ( i === 14 ) {
-
-					uuid += '4';
-
-				} else {
-
-					if ( rnd <= 0x02 ) { rnd = 0x2000000 + ( Math.random() * 0x1000000 ) | 0; }
-					r = rnd & 0xf;
-					rnd = rnd >> 4;
-					uuid += chars[ ( i === 19 ) ? ( r & 0x3 ) | 0x8 : r ];
-
-				}
-
-			}
-
-			return uuid;
+			var d0 = Math.random() * 0xffffffff | 0;
+			var d1 = Math.random() * 0xffffffff | 0;
+			var d2 = Math.random() * 0xffffffff | 0;
+			var d3 = Math.random() * 0xffffffff | 0;
+			return lut[ d0 & 0xff ] + lut[ d0 >> 8 & 0xff ] + lut[ d0 >> 16 & 0xff ] + lut[ d0 >> 24 & 0xff ] + '-' +
+				lut[ d1 & 0xff ] + lut[ d1 >> 8 & 0xff ] + '-' + lut[ d1 >> 16 & 0x0f | 0x40 ] + lut[ d1 >> 24 & 0xff ] + '-' +
+				lut[ d2 & 0x3f | 0x80 ] + lut[ d2 >> 8 & 0xff ] + '-' + lut[ d2 >> 16 & 0xff ] + lut[ d2 >> 24 & 0xff ] +
+				lut[ d3 & 0xff ] + lut[ d3 >> 8 & 0xff ] + lut[ d3 >> 16 & 0xff ] + lut[ d3 >> 24 & 0xff ];
 
 		};
 
-	}(),
+	} )(),
 
 	clamp: function ( value, min, max ) {
 
@@ -4321,17 +4285,7 @@ function Texture( image, mapping, wrapS, wrapT, magFilter, minFilter, format, ty
 Texture.DEFAULT_IMAGE = undefined;
 Texture.DEFAULT_MAPPING = UVMapping;
 
-Object.defineProperty( Texture.prototype, "needsUpdate", {
-
-	set: function ( value ) {
-
-		if ( value === true ) { this.version ++; }
-
-	}
-
-} );
-
-Object.assign( Texture.prototype, EventDispatcher.prototype, {
+Texture.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
 
 	constructor: Texture,
 
@@ -4571,6 +4525,16 @@ Object.assign( Texture.prototype, EventDispatcher.prototype, {
 			uv.y = 1 - uv.y;
 
 		}
+
+	}
+
+} );
+
+Object.defineProperty( Texture.prototype, "needsUpdate", {
+
+	set: function ( value ) {
+
+		if ( value === true ) { this.version ++; }
 
 	}
 
@@ -5238,7 +5202,9 @@ function WebGLRenderTarget( width, height, options ) {
 
 }
 
-Object.assign( WebGLRenderTarget.prototype, EventDispatcher.prototype, {
+WebGLRenderTarget.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: WebGLRenderTarget,
 
 	isWebGLRenderTarget: true,
 
@@ -5442,7 +5408,7 @@ var mat3array = new Float32Array( 9 );
 
 // Flattening for arrays of vectors and matrices
 
-function flatten$1( array, nBlocks, blockSize ) {
+function flatten( array, nBlocks, blockSize ) {
 
 	var firstElem = array[ 0 ];
 
@@ -5684,19 +5650,19 @@ function setValue1iv( gl, v ) {
 
 function setValueV2a( gl, v ) {
 
-	gl.uniform2fv( this.addr, flatten$1( v, this.size, 2 ) );
+	gl.uniform2fv( this.addr, flatten( v, this.size, 2 ) );
 
 }
 
 function setValueV3a( gl, v ) {
 
-	gl.uniform3fv( this.addr, flatten$1( v, this.size, 3 ) );
+	gl.uniform3fv( this.addr, flatten( v, this.size, 3 ) );
 
 }
 
 function setValueV4a( gl, v ) {
 
-	gl.uniform4fv( this.addr, flatten$1( v, this.size, 4 ) );
+	gl.uniform4fv( this.addr, flatten( v, this.size, 4 ) );
 
 }
 
@@ -5704,19 +5670,19 @@ function setValueV4a( gl, v ) {
 
 function setValueM2a( gl, v ) {
 
-	gl.uniformMatrix2fv( this.addr, false, flatten$1( v, this.size, 4 ) );
+	gl.uniformMatrix2fv( this.addr, false, flatten( v, this.size, 4 ) );
 
 }
 
 function setValueM3a( gl, v ) {
 
-	gl.uniformMatrix3fv( this.addr, false, flatten$1( v, this.size, 9 ) );
+	gl.uniformMatrix3fv( this.addr, false, flatten( v, this.size, 9 ) );
 
 }
 
 function setValueM4a( gl, v ) {
 
-	gl.uniformMatrix4fv( this.addr, false, flatten$1( v, this.size, 16 ) );
+	gl.uniformMatrix4fv( this.addr, false, flatten( v, this.size, 16 ) );
 
 }
 
@@ -8363,7 +8329,9 @@ function Material() {
 
 }
 
-Object.assign( Material.prototype, EventDispatcher.prototype, {
+Material.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: Material,
 
 	isMaterial: true,
 
@@ -10955,7 +10923,9 @@ function Object3D() {
 Object3D.DefaultUp = new Vector3( 0, 1, 0 );
 Object3D.DefaultMatrixAutoUpdate = true;
 
-Object.assign( Object3D.prototype, EventDispatcher.prototype, {
+Object3D.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: Object3D,
 
 	isObject3D: true,
 
@@ -11493,7 +11463,8 @@ Object.assign( Object3D.prototype, EventDispatcher.prototype, {
 				geometries: {},
 				materials: {},
 				textures: {},
-				images: {}
+				images: {},
+				shapes: {}
 			};
 
 			output.metadata = {
@@ -11536,6 +11507,30 @@ Object.assign( Object3D.prototype, EventDispatcher.prototype, {
 		if ( this.geometry !== undefined ) {
 
 			object.geometry = serialize( meta.geometries, this.geometry );
+
+			var parameters = this.geometry.parameters;
+
+			if ( parameters !== undefined && parameters.shapes !== undefined ) {
+
+				var shapes = parameters.shapes;
+
+				if ( Array.isArray( shapes ) ) {
+
+					for ( var i = 0, l = shapes.length; i < l; i ++ ) {
+
+						var shape = shapes[ i ];
+
+						serialize( meta.shapes, shape );
+
+					}
+
+				} else {
+
+					serialize( meta.shapes, shapes );
+
+				}
+
+			}
 
 		}
 
@@ -11581,11 +11576,13 @@ Object.assign( Object3D.prototype, EventDispatcher.prototype, {
 			var materials = extractFromCache( meta.materials );
 			var textures = extractFromCache( meta.textures );
 			var images = extractFromCache( meta.images );
+			var shapes = extractFromCache( meta.shapes );
 
 			if ( geometries.length > 0 ) { output.geometries = geometries; }
 			if ( materials.length > 0 ) { output.materials = materials; }
 			if ( textures.length > 0 ) { output.textures = textures; }
 			if ( images.length > 0 ) { output.images = images; }
+			if ( shapes.length > 0 ) { output.shapes = shapes; }
 
 		}
 
@@ -11980,7 +11977,9 @@ function Geometry() {
 
 }
 
-Object.assign( Geometry.prototype, EventDispatcher.prototype, {
+Geometry.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: Geometry,
 
 	isGeometry: true,
 
@@ -14130,7 +14129,9 @@ function BufferGeometry() {
 
 }
 
-Object.assign( BufferGeometry.prototype, EventDispatcher.prototype, {
+BufferGeometry.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: BufferGeometry,
 
 	isBufferGeometry: true,
 
@@ -18227,14 +18228,14 @@ function getEncodingComponents( encoding ) {
 function getTexelDecodingFunction( functionName, encoding ) {
 
 	var components = getEncodingComponents( encoding );
-	return "vec4 " + functionName + "( vec4 value ) { return " + components[ 0 ] + "ToLinear" + components[ 1 ] + "; }";
+	return 'vec4 ' + functionName + '( vec4 value ) { return ' + components[ 0 ] + 'ToLinear' + components[ 1 ] + '; }';
 
 }
 
 function getTexelEncodingFunction( functionName, encoding ) {
 
 	var components = getEncodingComponents( encoding );
-	return "vec4 " + functionName + "( vec4 value ) { return LinearTo" + components[ 0 ] + components[ 1 ] + "; }";
+	return 'vec4 ' + functionName + '( vec4 value ) { return LinearTo' + components[ 0 ] + components[ 1 ] + '; }';
 
 }
 
@@ -18245,19 +18246,19 @@ function getToneMappingFunction( functionName, toneMapping ) {
 	switch ( toneMapping ) {
 
 		case LinearToneMapping:
-			toneMappingName = "Linear";
+			toneMappingName = 'Linear';
 			break;
 
 		case ReinhardToneMapping:
-			toneMappingName = "Reinhard";
+			toneMappingName = 'Reinhard';
 			break;
 
 		case Uncharted2ToneMapping:
-			toneMappingName = "Uncharted2";
+			toneMappingName = 'Uncharted2';
 			break;
 
 		case CineonToneMapping:
-			toneMappingName = "OptimizedCineon";
+			toneMappingName = 'OptimizedCineon';
 			break;
 
 		default:
@@ -18265,7 +18266,7 @@ function getToneMappingFunction( functionName, toneMapping ) {
 
 	}
 
-	return "vec3 " + functionName + "( vec3 color ) { return " + toneMappingName + "ToneMapping( color ); }";
+	return 'vec3 ' + functionName + '( vec3 color ) { return ' + toneMappingName + 'ToneMapping( color ); }';
 
 }
 
@@ -18658,9 +18659,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters 
 			parameters.shadowMapEnabled ? '#define USE_SHADOWMAP' : '',
 			parameters.shadowMapEnabled ? '#define ' + shadowMapTypeDefine : '',
 
-			parameters.premultipliedAlpha ? "#define PREMULTIPLIED_ALPHA" : '',
+			parameters.premultipliedAlpha ? '#define PREMULTIPLIED_ALPHA' : '',
 
-			parameters.physicallyCorrectLights ? "#define PHYSICALLY_CORRECT_LIGHTS" : '',
+			parameters.physicallyCorrectLights ? '#define PHYSICALLY_CORRECT_LIGHTS' : '',
 
 			parameters.logarithmicDepthBuffer ? '#define USE_LOGDEPTHBUF' : '',
 			parameters.logarithmicDepthBuffer && extensions.get( 'EXT_frag_depth' ) ? '#define USE_LOGDEPTHBUF_EXT' : '',
@@ -18670,9 +18671,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters 
 			'uniform mat4 viewMatrix;',
 			'uniform vec3 cameraPosition;',
 
-			( parameters.toneMapping !== NoToneMapping ) ? "#define TONE_MAPPING" : '',
+			( parameters.toneMapping !== NoToneMapping ) ? '#define TONE_MAPPING' : '',
 			( parameters.toneMapping !== NoToneMapping ) ? ShaderChunk[ 'tonemapping_pars_fragment' ] : '', // this code is required here because it is used by the toneMapping() function defined below
-			( parameters.toneMapping !== NoToneMapping ) ? getToneMappingFunction( "toneMapping", parameters.toneMapping ) : '',
+			( parameters.toneMapping !== NoToneMapping ) ? getToneMappingFunction( 'toneMapping', parameters.toneMapping ) : '',
 
 			parameters.dithering ? '#define DITHERING' : '',
 
@@ -18680,9 +18681,9 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters 
 			parameters.mapEncoding ? getTexelDecodingFunction( 'mapTexelToLinear', parameters.mapEncoding ) : '',
 			parameters.envMapEncoding ? getTexelDecodingFunction( 'envMapTexelToLinear', parameters.envMapEncoding ) : '',
 			parameters.emissiveMapEncoding ? getTexelDecodingFunction( 'emissiveMapTexelToLinear', parameters.emissiveMapEncoding ) : '',
-			parameters.outputEncoding ? getTexelEncodingFunction( "linearToOutputTexel", parameters.outputEncoding ) : '',
+			parameters.outputEncoding ? getTexelEncodingFunction( 'linearToOutputTexel', parameters.outputEncoding ) : '',
 
-			parameters.depthPacking ? "#define DEPTH_PACKING " + material.depthPacking : '',
+			parameters.depthPacking ? '#define DEPTH_PACKING ' + material.depthPacking : '',
 
 			'\n'
 
@@ -19174,6 +19175,7 @@ function WebGLPrograms( renderer, extensions, capabilities ) {
 function WebGLTextures( _gl, extensions, state, properties, capabilities, utils, infoMemory ) {
 
 	var _isWebGL2 = ( typeof WebGL2RenderingContext !== 'undefined' && _gl instanceof window.WebGL2RenderingContext );
+	var _videoTextures = {};
 
 	//
 
@@ -19268,8 +19270,13 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 		deallocateTexture( texture );
 
-		infoMemory.textures --;
+		if ( texture.isVideoTexture ) {
 
+			delete _videoTextures[ texture.id ];
+
+		}
+
+		infoMemory.textures --;
 
 	}
 
@@ -19570,6 +19577,12 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 			texture.addEventListener( 'dispose', onTextureDispose );
 
 			textureProperties.__webglTexture = _gl.createTexture();
+
+			if ( texture.isVideoTexture ) {
+
+				_videoTextures[ texture.id ] = texture;
+
+			}
 
 			infoMemory.textures ++;
 
@@ -19952,11 +19965,22 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	}
 
+	function updateVideoTextures() {
+
+		for ( var id in _videoTextures ) {
+
+			_videoTextures[ id ].update();
+
+		}
+
+	}
+
 	this.setTexture2D = setTexture2D;
 	this.setTextureCube = setTextureCube;
 	this.setTextureCubeDynamic = setTextureCubeDynamic;
 	this.setupRenderTarget = setupRenderTarget;
 	this.updateRenderTargetMipmap = updateRenderTargetMipmap;
+	this.updateVideoTextures = updateVideoTextures;
 
 }
 
@@ -20649,13 +20673,16 @@ function WebGLState( gl, extensions, utils ) {
 
 	}
 
-	function setMaterial( material ) {
+	function setMaterial( material, frontFaceCW ) {
 
 		material.side === DoubleSide
 			? disable( gl.CULL_FACE )
 			: enable( gl.CULL_FACE );
 
-		setFlipSided( material.side === BackSide );
+		var flipSided = ( material.side === BackSide );
+		if ( frontFaceCW ) { flipSided = ! flipSided; }
+
+		setFlipSided( flipSided );
 
 		material.transparent === true
 			? setBlending( material.blending, material.blendEquation, material.blendSrc, material.blendDst, material.blendEquationAlpha, material.blendSrcAlpha, material.blendDstAlpha, material.premultipliedAlpha )
@@ -21326,6 +21353,8 @@ function WebVRManager( renderer ) {
 	var device = null;
 	var frameData = null;
 
+	var poseTarget = null;
+
 	if ( typeof window !== 'undefined' && 'VRFrameData' in window ) {
 
 		frameData = new window.VRFrameData();
@@ -21333,9 +21362,6 @@ function WebVRManager( renderer ) {
 	}
 
 	var matrixWorldInverse = new Matrix4();
-
-	var standingMatrix = new Matrix4();
-	var standingMatrixInverse = new Matrix4();
 
 	var cameraL = new PerspectiveCamera();
 	cameraL.bounds = new Vector4( 0.0, 0.0, 0.5, 1.0 );
@@ -21383,7 +21409,6 @@ function WebVRManager( renderer ) {
 	//
 
 	this.enabled = false;
-	this.standing = false;
 
 	this.getDevice = function () {
 
@@ -21394,6 +21419,12 @@ function WebVRManager( renderer ) {
 	this.setDevice = function ( value ) {
 
 		if ( value !== undefined ) { device = value; }
+
+	};
+
+	this.setPoseTarget = function ( object ) {
+
+		if ( object !== undefined ) { poseTarget = object; }
 
 	};
 
@@ -21409,36 +21440,25 @@ function WebVRManager( renderer ) {
 		//
 
 		var pose = frameData.pose;
+		var poseObject = poseTarget !== null ? poseTarget : camera;
 
 		if ( pose.position !== null ) {
 
-			camera.position.fromArray( pose.position );
+			poseObject.position.fromArray( pose.position );
 
 		} else {
 
-			camera.position.set( 0, 0, 0 );
+			poseObject.position.set( 0, 0, 0 );
 
 		}
 
 		if ( pose.orientation !== null ) {
 
-			camera.quaternion.fromArray( pose.orientation );
+			poseObject.quaternion.fromArray( pose.orientation );
 
 		}
 
-		camera.updateMatrixWorld();
-
-		var stageParameters = device.stageParameters;
-
-		if ( this.standing && stageParameters ) {
-
-			standingMatrix.fromArray( stageParameters.sittingToStandingTransform );
-			standingMatrixInverse.getInverse( standingMatrix );
-
-			camera.matrixWorld.multiply( standingMatrix );
-			camera.matrixWorldInverse.multiply( standingMatrixInverse );
-
-		}
+		poseObject.updateMatrixWorld();
 
 		if ( device.isPresenting === false ) { return camera; }
 
@@ -21456,14 +21476,7 @@ function WebVRManager( renderer ) {
 		cameraL.matrixWorldInverse.fromArray( frameData.leftViewMatrix );
 		cameraR.matrixWorldInverse.fromArray( frameData.rightViewMatrix );
 
-		if ( this.standing && stageParameters ) {
-
-			cameraL.matrixWorldInverse.multiply( standingMatrixInverse );
-			cameraR.matrixWorldInverse.multiply( standingMatrixInverse );
-
-		}
-
-		var parent = camera.parent;
+		var parent = poseObject.parent;
 
 		if ( parent !== null ) {
 
@@ -21510,12 +21523,6 @@ function WebVRManager( renderer ) {
 		}
 
 		return cameraVR;
-
-	};
-
-	this.getStandingMatrix = function () {
-
-		return standingMatrix;
 
 	};
 
@@ -21917,7 +21924,8 @@ function WebGLRenderer( parameters ) {
 		_stencil = parameters.stencil !== undefined ? parameters.stencil : true,
 		_antialias = parameters.antialias !== undefined ? parameters.antialias : false,
 		_premultipliedAlpha = parameters.premultipliedAlpha !== undefined ? parameters.premultipliedAlpha : true,
-		_preserveDrawingBuffer = parameters.preserveDrawingBuffer !== undefined ? parameters.preserveDrawingBuffer : false;
+		_preserveDrawingBuffer = parameters.preserveDrawingBuffer !== undefined ? parameters.preserveDrawingBuffer : false,
+		_powerPreference = parameters.powerPreference !== undefined ? parameters.powerPreference : 'default';
 
 	var lightsArray = [];
 	var shadowsArray = [];
@@ -22063,8 +22071,14 @@ function WebGLRenderer( parameters ) {
 			stencil: _stencil,
 			antialias: _antialias,
 			premultipliedAlpha: _premultipliedAlpha,
-			preserveDrawingBuffer: _preserveDrawingBuffer
+			preserveDrawingBuffer: _preserveDrawingBuffer,
+			powerPreference: _powerPreference
 		};
+
+		// event listeners must be registered before WebGL context is created, see #12753
+
+		_canvas.addEventListener( 'webglcontextlost', onContextLost, false );
+		_canvas.addEventListener( 'webglcontextrestored', onContextRestore, false );
 
 		_gl = _context || _canvas.getContext( 'webgl', contextAttributes ) || _canvas.getContext( 'experimental-webgl', contextAttributes );
 
@@ -22072,11 +22086,11 @@ function WebGLRenderer( parameters ) {
 
 			if ( _canvas.getContext( 'webgl' ) !== null ) {
 
-				throw 'Error creating WebGL context with your selected attributes.';
+				throw new Error( 'Error creating WebGL context with your selected attributes.' );
 
 			} else {
 
-				throw 'Error creating WebGL context.';
+				throw new Error( 'Error creating WebGL context.' );
 
 			}
 
@@ -22094,12 +22108,9 @@ function WebGLRenderer( parameters ) {
 
 		}
 
-		_canvas.addEventListener( 'webglcontextlost', onContextLost, false );
-		_canvas.addEventListener( 'webglcontextrestored', onContextRestore, false );
-
 	} catch ( error ) {
 
-		console.error( 'THREE.WebGLRenderer: ' + error );
+		console.error( 'THREE.WebGLRenderer: ' + error.message );
 
 	}
 
@@ -22540,7 +22551,9 @@ function WebGLRenderer( parameters ) {
 
 	this.renderBufferDirect = function ( camera, fog, geometry, material, object, group ) {
 
-		state.setMaterial( material );
+		var frontFaceCW = ( object.isMesh && object.matrixWorld.determinant() < 0 );
+
+		state.setMaterial( material, frontFaceCW );
 
 		var program = setProgram( camera, fog, material, object );
 		var geometryProgram = geometry.id + '_' + program.id + '_' + ( material.wireframe === true );
@@ -22890,7 +22903,7 @@ function WebGLRenderer( parameters ) {
 		if ( isAnimating ) { return; }
 
 		var device = vr.getDevice();
-		
+
 		if ( device && device.isPresenting ) {
 
 			device.requestAnimationFrame( loop );
@@ -22910,7 +22923,7 @@ function WebGLRenderer( parameters ) {
 		if ( onAnimationFrame !== null ) { onAnimationFrame( time ); }
 
 		var device = vr.getDevice();
-		
+
 		if ( device && device.isPresenting ) {
 
 			device.requestAnimationFrame( loop );
@@ -22985,6 +22998,10 @@ function WebGLRenderer( parameters ) {
 			currentRenderList.sort();
 
 		}
+
+		//
+
+		textures.updateVideoTextures();
 
 		//
 
@@ -23285,7 +23302,9 @@ function WebGLRenderer( parameters ) {
 
 		if ( object.isImmediateRenderObject ) {
 
-			state.setMaterial( material );
+			var frontFaceCW = ( object.isMesh && object.matrixWorld.determinant() < 0 );
+
+			state.setMaterial( material, frontFaceCW );
 
 			var program = setProgram( camera, scene.fog, material, object );
 
@@ -25786,7 +25805,9 @@ function Group() {
 
 Group.prototype = Object.assign( Object.create( Object3D.prototype ), {
 
-	constructor: Group
+	constructor: Group,
+
+	isGroup: true
 
 } );
 
@@ -25800,28 +25821,40 @@ function VideoTexture( video, mapping, wrapS, wrapT, magFilter, minFilter, forma
 
 	this.generateMipmaps = false;
 
+	// Set needsUpdate when first frame is ready
+
 	var scope = this;
 
-	function update() {
+	function onLoaded() {
 
-		var video = scope.image;
-
-		if ( video.readyState >= video.HAVE_CURRENT_DATA ) {
-
-			scope.needsUpdate = true;
-
-		}
-
-		requestAnimationFrame( update );
+		video.removeEventListener( 'loadeddata', onLoaded, false );
+		scope.needsUpdate = true;
 
 	}
 
-	requestAnimationFrame( update );
+	video.addEventListener( 'loadeddata', onLoaded, false );
 
 }
 
-VideoTexture.prototype = Object.create( Texture.prototype );
-VideoTexture.prototype.constructor = VideoTexture;
+VideoTexture.prototype = Object.assign( Object.create( Texture.prototype ), {
+
+	constructor: VideoTexture,
+
+	isVideoTexture: true,
+
+	update: function () {
+
+		var video = this.image;
+
+		if ( video.readyState >= video.HAVE_CURRENT_DATA ) {
+
+			this.needsUpdate = true;
+
+		}
+
+	}
+
+} );
 
 /**
  * @author alteredq / http://alteredqualia.com/
@@ -27328,6 +27361,815 @@ TorusBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
 TorusBufferGeometry.prototype.constructor = TorusBufferGeometry;
 
 /**
+ * @author Mugen87 / https://github.com/Mugen87
+ * Port from https://github.com/mapbox/earcut (v2.1.2)
+ */
+
+var Earcut = {
+
+	triangulate: function ( data, holeIndices, dim ) {
+
+		dim = dim || 2;
+
+		var hasHoles = holeIndices && holeIndices.length,
+			outerLen = hasHoles ? holeIndices[ 0 ] * dim : data.length,
+			outerNode = linkedList( data, 0, outerLen, dim, true ),
+			triangles = [];
+
+		if ( ! outerNode ) { return triangles; }
+
+		var minX, minY, maxX, maxY, x, y, invSize;
+
+		if ( hasHoles ) { outerNode = eliminateHoles( data, holeIndices, outerNode, dim ); }
+
+		// if the shape is not too simple, we'll use z-order curve hash later; calculate polygon bbox
+
+		if ( data.length > 80 * dim ) {
+
+			minX = maxX = data[ 0 ];
+			minY = maxY = data[ 1 ];
+
+			for ( var i = dim; i < outerLen; i += dim ) {
+
+				x = data[ i ];
+				y = data[ i + 1 ];
+				if ( x < minX ) { minX = x; }
+				if ( y < minY ) { minY = y; }
+				if ( x > maxX ) { maxX = x; }
+				if ( y > maxY ) { maxY = y; }
+
+			}
+
+			// minX, minY and invSize are later used to transform coords into integers for z-order calculation
+
+			invSize = Math.max( maxX - minX, maxY - minY );
+			invSize = invSize !== 0 ? 1 / invSize : 0;
+
+		}
+
+		earcutLinked( outerNode, triangles, dim, minX, minY, invSize );
+
+		return triangles;
+
+	}
+
+};
+
+// create a circular doubly linked list from polygon points in the specified winding order
+
+function linkedList( data, start, end, dim, clockwise ) {
+
+	var i, last;
+
+	if ( clockwise === ( signedArea( data, start, end, dim ) > 0 ) ) {
+
+		for ( i = start; i < end; i += dim ) { last = insertNode( i, data[ i ], data[ i + 1 ], last ); }
+
+	} else {
+
+		for ( i = end - dim; i >= start; i -= dim ) { last = insertNode( i, data[ i ], data[ i + 1 ], last ); }
+
+	}
+
+	if ( last && equals( last, last.next ) ) {
+
+		removeNode( last );
+		last = last.next;
+
+	}
+
+	return last;
+
+}
+
+// eliminate colinear or duplicate points
+
+function filterPoints( start, end ) {
+
+	if ( ! start ) { return start; }
+	if ( ! end ) { end = start; }
+
+	var p = start, again;
+
+	do {
+
+		again = false;
+
+		if ( ! p.steiner && ( equals( p, p.next ) || area( p.prev, p, p.next ) === 0 ) ) {
+
+			removeNode( p );
+			p = end = p.prev;
+			if ( p === p.next ) { break; }
+			again = true;
+
+		} else {
+
+			p = p.next;
+
+		}
+
+	} while ( again || p !== end );
+
+	return end;
+
+}
+
+// main ear slicing loop which triangulates a polygon (given as a linked list)
+
+function earcutLinked( ear, triangles, dim, minX, minY, invSize, pass ) {
+
+	if ( ! ear ) { return; }
+
+	// interlink polygon nodes in z-order
+
+	if ( ! pass && invSize ) { indexCurve( ear, minX, minY, invSize ); }
+
+	var stop = ear, prev, next;
+
+	// iterate through ears, slicing them one by one
+
+	while ( ear.prev !== ear.next ) {
+
+		prev = ear.prev;
+		next = ear.next;
+
+		if ( invSize ? isEarHashed( ear, minX, minY, invSize ) : isEar( ear ) ) {
+
+			// cut off the triangle
+			triangles.push( prev.i / dim );
+			triangles.push( ear.i / dim );
+			triangles.push( next.i / dim );
+
+			removeNode( ear );
+
+			// skipping the next vertice leads to less sliver triangles
+			ear = next.next;
+			stop = next.next;
+
+			continue;
+
+		}
+
+		ear = next;
+
+		// if we looped through the whole remaining polygon and can't find any more ears
+
+		if ( ear === stop ) {
+
+			// try filtering points and slicing again
+
+			if ( ! pass ) {
+
+				earcutLinked( filterPoints( ear ), triangles, dim, minX, minY, invSize, 1 );
+
+				// if this didn't work, try curing all small self-intersections locally
+
+			} else if ( pass === 1 ) {
+
+				ear = cureLocalIntersections( ear, triangles, dim );
+				earcutLinked( ear, triangles, dim, minX, minY, invSize, 2 );
+
+			// as a last resort, try splitting the remaining polygon into two
+
+			} else if ( pass === 2 ) {
+
+				splitEarcut( ear, triangles, dim, minX, minY, invSize );
+
+			}
+
+			break;
+
+		}
+
+	}
+
+}
+
+// check whether a polygon node forms a valid ear with adjacent nodes
+
+function isEar( ear ) {
+
+	var a = ear.prev,
+		b = ear,
+		c = ear.next;
+
+	if ( area( a, b, c ) >= 0 ) { return false; } // reflex, can't be an ear
+
+	// now make sure we don't have other points inside the potential ear
+	var p = ear.next.next;
+
+	while ( p !== ear.prev ) {
+
+		if ( pointInTriangle( a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y ) && area( p.prev, p, p.next ) >= 0 ) {
+
+			return false;
+
+		}
+
+		p = p.next;
+
+	}
+
+	return true;
+
+}
+
+function isEarHashed( ear, minX, minY, invSize ) {
+
+	var a = ear.prev,
+		b = ear,
+		c = ear.next;
+
+	if ( area( a, b, c ) >= 0 ) { return false; } // reflex, can't be an ear
+
+	// triangle bbox; min & max are calculated like this for speed
+
+	var minTX = a.x < b.x ? ( a.x < c.x ? a.x : c.x ) : ( b.x < c.x ? b.x : c.x ),
+		minTY = a.y < b.y ? ( a.y < c.y ? a.y : c.y ) : ( b.y < c.y ? b.y : c.y ),
+		maxTX = a.x > b.x ? ( a.x > c.x ? a.x : c.x ) : ( b.x > c.x ? b.x : c.x ),
+		maxTY = a.y > b.y ? ( a.y > c.y ? a.y : c.y ) : ( b.y > c.y ? b.y : c.y );
+
+	// z-order range for the current triangle bbox;
+
+	var minZ = zOrder( minTX, minTY, minX, minY, invSize ),
+		maxZ = zOrder( maxTX, maxTY, minX, minY, invSize );
+
+	// first look for points inside the triangle in increasing z-order
+
+	var p = ear.nextZ;
+
+	while ( p && p.z <= maxZ ) {
+
+		if ( p !== ear.prev && p !== ear.next &&
+				pointInTriangle( a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y ) &&
+				area( p.prev, p, p.next ) >= 0 ) { return false; }
+		p = p.nextZ;
+
+	}
+
+	// then look for points in decreasing z-order
+
+	p = ear.prevZ;
+
+	while ( p && p.z >= minZ ) {
+
+		if ( p !== ear.prev && p !== ear.next &&
+				pointInTriangle( a.x, a.y, b.x, b.y, c.x, c.y, p.x, p.y ) &&
+				area( p.prev, p, p.next ) >= 0 ) { return false; }
+
+		p = p.prevZ;
+
+	}
+
+	return true;
+
+}
+
+// go through all polygon nodes and cure small local self-intersections
+
+function cureLocalIntersections( start, triangles, dim ) {
+
+	var p = start;
+
+	do {
+
+		var a = p.prev, b = p.next.next;
+
+		if ( ! equals( a, b ) && intersects( a, p, p.next, b ) && locallyInside( a, b ) && locallyInside( b, a ) ) {
+
+			triangles.push( a.i / dim );
+			triangles.push( p.i / dim );
+			triangles.push( b.i / dim );
+
+			// remove two nodes involved
+
+			removeNode( p );
+			removeNode( p.next );
+
+			p = start = b;
+
+		}
+
+		p = p.next;
+
+	} while ( p !== start );
+
+	return p;
+
+}
+
+// try splitting polygon into two and triangulate them independently
+
+function splitEarcut( start, triangles, dim, minX, minY, invSize ) {
+
+	// look for a valid diagonal that divides the polygon into two
+
+	var a = start;
+
+	do {
+
+		var b = a.next.next;
+
+		while ( b !== a.prev ) {
+
+			if ( a.i !== b.i && isValidDiagonal( a, b ) ) {
+
+				// split the polygon in two by the diagonal
+
+				var c = splitPolygon( a, b );
+
+				// filter colinear points around the cuts
+
+				a = filterPoints( a, a.next );
+				c = filterPoints( c, c.next );
+
+				// run earcut on each half
+
+				earcutLinked( a, triangles, dim, minX, minY, invSize );
+				earcutLinked( c, triangles, dim, minX, minY, invSize );
+				return;
+
+			}
+
+			b = b.next;
+
+		}
+
+		a = a.next;
+
+	} while ( a !== start );
+
+}
+
+// link every hole into the outer loop, producing a single-ring polygon without holes
+
+function eliminateHoles( data, holeIndices, outerNode, dim ) {
+
+	var queue = [], i, len, start, end, list;
+
+	for ( i = 0, len = holeIndices.length; i < len; i ++ ) {
+
+		start = holeIndices[ i ] * dim;
+		end = i < len - 1 ? holeIndices[ i + 1 ] * dim : data.length;
+		list = linkedList( data, start, end, dim, false );
+		if ( list === list.next ) { list.steiner = true; }
+		queue.push( getLeftmost( list ) );
+
+	}
+
+	queue.sort( compareX );
+
+	// process holes from left to right
+
+	for ( i = 0; i < queue.length; i ++ ) {
+
+		eliminateHole( queue[ i ], outerNode );
+		outerNode = filterPoints( outerNode, outerNode.next );
+
+	}
+
+	return outerNode;
+
+}
+
+function compareX( a, b ) {
+
+	return a.x - b.x;
+
+}
+
+// find a bridge between vertices that connects hole with an outer ring and and link it
+
+function eliminateHole( hole, outerNode ) {
+
+	outerNode = findHoleBridge( hole, outerNode );
+
+	if ( outerNode ) {
+
+		var b = splitPolygon( outerNode, hole );
+
+		filterPoints( b, b.next );
+
+	}
+
+}
+
+// David Eberly's algorithm for finding a bridge between hole and outer polygon
+
+function findHoleBridge( hole, outerNode ) {
+
+	var p = outerNode,
+		hx = hole.x,
+		hy = hole.y,
+		qx = - Infinity,
+		m;
+
+	// find a segment intersected by a ray from the hole's leftmost point to the left;
+	// segment's endpoint with lesser x will be potential connection point
+
+	do {
+
+		if ( hy <= p.y && hy >= p.next.y && p.next.y !== p.y ) {
+
+			var x = p.x + ( hy - p.y ) * ( p.next.x - p.x ) / ( p.next.y - p.y );
+
+			if ( x <= hx && x > qx ) {
+
+				qx = x;
+
+				if ( x === hx ) {
+
+					if ( hy === p.y ) { return p; }
+					if ( hy === p.next.y ) { return p.next; }
+
+				}
+
+				m = p.x < p.next.x ? p : p.next;
+
+			}
+
+		}
+
+		p = p.next;
+
+	} while ( p !== outerNode );
+
+	if ( ! m ) { return null; }
+
+	if ( hx === qx ) { return m.prev; } // hole touches outer segment; pick lower endpoint
+
+	// look for points inside the triangle of hole point, segment intersection and endpoint;
+	// if there are no points found, we have a valid connection;
+	// otherwise choose the point of the minimum angle with the ray as connection point
+
+	var stop = m,
+		mx = m.x,
+		my = m.y,
+		tanMin = Infinity,
+		tan;
+
+	p = m.next;
+
+	while ( p !== stop ) {
+
+		if ( hx >= p.x && p.x >= mx && hx !== p.x &&
+						pointInTriangle( hy < my ? hx : qx, hy, mx, my, hy < my ? qx : hx, hy, p.x, p.y ) ) {
+
+			tan = Math.abs( hy - p.y ) / ( hx - p.x ); // tangential
+
+			if ( ( tan < tanMin || ( tan === tanMin && p.x > m.x ) ) && locallyInside( p, hole ) ) {
+
+				m = p;
+				tanMin = tan;
+
+			}
+
+		}
+
+		p = p.next;
+
+	}
+
+	return m;
+
+}
+
+// interlink polygon nodes in z-order
+
+function indexCurve( start, minX, minY, invSize ) {
+
+	var p = start;
+
+	do {
+
+		if ( p.z === null ) { p.z = zOrder( p.x, p.y, minX, minY, invSize ); }
+		p.prevZ = p.prev;
+		p.nextZ = p.next;
+		p = p.next;
+
+	} while ( p !== start );
+
+	p.prevZ.nextZ = null;
+	p.prevZ = null;
+
+	sortLinked( p );
+
+}
+
+// Simon Tatham's linked list merge sort algorithm
+// http://www.chiark.greenend.org.uk/~sgtatham/algorithms/listsort.html
+
+function sortLinked( list ) {
+
+	var i, p, q, e, tail, numMerges, pSize, qSize, inSize = 1;
+
+	do {
+
+		p = list;
+		list = null;
+		tail = null;
+		numMerges = 0;
+
+		while ( p ) {
+
+			numMerges ++;
+			q = p;
+			pSize = 0;
+
+			for ( i = 0; i < inSize; i ++ ) {
+
+				pSize ++;
+				q = q.nextZ;
+				if ( ! q ) { break; }
+
+			}
+
+			qSize = inSize;
+
+			while ( pSize > 0 || ( qSize > 0 && q ) ) {
+
+				if ( pSize !== 0 && ( qSize === 0 || ! q || p.z <= q.z ) ) {
+
+					e = p;
+					p = p.nextZ;
+					pSize --;
+
+				} else {
+
+					e = q;
+					q = q.nextZ;
+					qSize --;
+
+				}
+
+				if ( tail ) { tail.nextZ = e; }
+				else { list = e; }
+
+				e.prevZ = tail;
+				tail = e;
+
+			}
+
+			p = q;
+
+		}
+
+		tail.nextZ = null;
+		inSize *= 2;
+
+	} while ( numMerges > 1 );
+
+	return list;
+
+}
+
+// z-order of a point given coords and inverse of the longer side of data bbox
+
+function zOrder( x, y, minX, minY, invSize ) {
+
+	// coords are transformed into non-negative 15-bit integer range
+
+	x = 32767 * ( x - minX ) * invSize;
+	y = 32767 * ( y - minY ) * invSize;
+
+	x = ( x | ( x << 8 ) ) & 0x00FF00FF;
+	x = ( x | ( x << 4 ) ) & 0x0F0F0F0F;
+	x = ( x | ( x << 2 ) ) & 0x33333333;
+	x = ( x | ( x << 1 ) ) & 0x55555555;
+
+	y = ( y | ( y << 8 ) ) & 0x00FF00FF;
+	y = ( y | ( y << 4 ) ) & 0x0F0F0F0F;
+	y = ( y | ( y << 2 ) ) & 0x33333333;
+	y = ( y | ( y << 1 ) ) & 0x55555555;
+
+	return x | ( y << 1 );
+
+}
+
+// find the leftmost node of a polygon ring
+
+function getLeftmost( start ) {
+
+	var p = start, leftmost = start;
+
+	do {
+
+		if ( p.x < leftmost.x ) { leftmost = p; }
+		p = p.next;
+
+	} while ( p !== start );
+
+	return leftmost;
+
+}
+
+// check if a point lies within a convex triangle
+
+function pointInTriangle( ax, ay, bx, by, cx, cy, px, py ) {
+
+	return ( cx - px ) * ( ay - py ) - ( ax - px ) * ( cy - py ) >= 0 &&
+	 ( ax - px ) * ( by - py ) - ( bx - px ) * ( ay - py ) >= 0 &&
+	 ( bx - px ) * ( cy - py ) - ( cx - px ) * ( by - py ) >= 0;
+
+}
+
+// check if a diagonal between two polygon nodes is valid (lies in polygon interior)
+
+function isValidDiagonal( a, b ) {
+
+	return a.next.i !== b.i && a.prev.i !== b.i && ! intersectsPolygon( a, b ) &&
+		locallyInside( a, b ) && locallyInside( b, a ) && middleInside( a, b );
+
+}
+
+// signed area of a triangle
+
+function area( p, q, r ) {
+
+	return ( q.y - p.y ) * ( r.x - q.x ) - ( q.x - p.x ) * ( r.y - q.y );
+
+}
+
+// check if two points are equal
+
+function equals( p1, p2 ) {
+
+	return p1.x === p2.x && p1.y === p2.y;
+
+}
+
+// check if two segments intersect
+
+function intersects( p1, q1, p2, q2 ) {
+
+	if ( ( equals( p1, q1 ) && equals( p2, q2 ) ) ||
+			( equals( p1, q2 ) && equals( p2, q1 ) ) ) { return true; }
+
+	return area( p1, q1, p2 ) > 0 !== area( p1, q1, q2 ) > 0 &&
+				 area( p2, q2, p1 ) > 0 !== area( p2, q2, q1 ) > 0;
+
+}
+
+// check if a polygon diagonal intersects any polygon segments
+
+function intersectsPolygon( a, b ) {
+
+	var p = a;
+
+	do {
+
+		if ( p.i !== a.i && p.next.i !== a.i && p.i !== b.i && p.next.i !== b.i &&
+						intersects( p, p.next, a, b ) ) {
+
+			return true;
+
+		}
+
+		p = p.next;
+
+	} while ( p !== a );
+
+	return false;
+
+}
+
+// check if a polygon diagonal is locally inside the polygon
+
+function locallyInside( a, b ) {
+
+	return area( a.prev, a, a.next ) < 0 ?
+		area( a, b, a.next ) >= 0 && area( a, a.prev, b ) >= 0 :
+		area( a, b, a.prev ) < 0 || area( a, a.next, b ) < 0;
+
+}
+
+// check if the middle point of a polygon diagonal is inside the polygon
+
+function middleInside( a, b ) {
+
+	var p = a,
+		inside = false,
+		px = ( a.x + b.x ) / 2,
+		py = ( a.y + b.y ) / 2;
+
+	do {
+
+		if ( ( ( p.y > py ) !== ( p.next.y > py ) ) && p.next.y !== p.y &&
+						( px < ( p.next.x - p.x ) * ( py - p.y ) / ( p.next.y - p.y ) + p.x ) ) {
+
+			inside = ! inside;
+
+		}
+
+		p = p.next;
+
+	} while ( p !== a );
+
+	return inside;
+
+}
+
+// link two polygon vertices with a bridge; if the vertices belong to the same ring, it splits polygon into two;
+// if one belongs to the outer ring and another to a hole, it merges it into a single ring
+
+function splitPolygon( a, b ) {
+
+	var a2 = new Node( a.i, a.x, a.y ),
+		b2 = new Node( b.i, b.x, b.y ),
+		an = a.next,
+		bp = b.prev;
+
+	a.next = b;
+	b.prev = a;
+
+	a2.next = an;
+	an.prev = a2;
+
+	b2.next = a2;
+	a2.prev = b2;
+
+	bp.next = b2;
+	b2.prev = bp;
+
+	return b2;
+
+}
+
+// create a node and optionally link it with previous one (in a circular doubly linked list)
+
+function insertNode( i, x, y, last ) {
+
+	var p = new Node( i, x, y );
+
+	if ( ! last ) {
+
+		p.prev = p;
+		p.next = p;
+
+	} else {
+
+		p.next = last.next;
+		p.prev = last;
+		last.next.prev = p;
+		last.next = p;
+
+	}
+
+	return p;
+
+}
+
+function removeNode( p ) {
+
+	p.next.prev = p.prev;
+	p.prev.next = p.next;
+
+	if ( p.prevZ ) { p.prevZ.nextZ = p.nextZ; }
+	if ( p.nextZ ) { p.nextZ.prevZ = p.prevZ; }
+
+}
+
+function Node( i, x, y ) {
+
+	// vertice index in coordinates array
+	this.i = i;
+
+	// vertex coordinates
+	this.x = x;
+	this.y = y;
+
+	// previous and next vertice nodes in a polygon ring
+	this.prev = null;
+	this.next = null;
+
+	// z-order curve value
+	this.z = null;
+
+	// previous and next nodes in z-order
+	this.prevZ = null;
+	this.nextZ = null;
+
+	// indicates whether this is a steiner point
+	this.steiner = false;
+
+}
+
+function signedArea( data, start, end, dim ) {
+
+	var sum = 0;
+
+	for ( var i = start, j = end - dim; i < end; i += dim ) {
+
+		sum += ( data[ j ] - data[ i ] ) * ( data[ i + 1 ] + data[ j + 1 ] );
+		j = i;
+
+	}
+
+	return sum;
+
+}
+
+/**
  * @author zz85 / http://www.lab4games.net/zz85/blog
  */
 
@@ -27350,173 +28192,11 @@ var ShapeUtils = {
 
 	},
 
-	triangulate: ( function () {
+	isClockWise: function ( pts ) {
 
-		/**
-		 * This code is a quick port of code written in C++ which was submitted to
-		 * flipcode.com by John W. Ratcliff  // July 22, 2000
-		 * See original code and more information here:
-		 * http://www.flipcode.com/archives/Efficient_Polygon_Triangulation.shtml
-		 *
-		 * ported to actionscript by Zevan Rosser
-		 * www.actionsnippet.com
-		 *
-		 * ported to javascript by Joshua Koo
-		 * http://www.lab4games.net/zz85/blog
-		 *
-		 */
+		return ShapeUtils.area( pts ) < 0;
 
-		function snip( contour, u, v, w, n, verts ) {
-
-			var p;
-			var ax, ay, bx, by;
-			var cx, cy, px, py;
-
-			ax = contour[ verts[ u ] ].x;
-			ay = contour[ verts[ u ] ].y;
-
-			bx = contour[ verts[ v ] ].x;
-			by = contour[ verts[ v ] ].y;
-
-			cx = contour[ verts[ w ] ].x;
-			cy = contour[ verts[ w ] ].y;
-
-			if ( ( bx - ax ) * ( cy - ay ) - ( by - ay ) * ( cx - ax ) <= 0 ) { return false; }
-
-			var aX, aY, bX, bY, cX, cY;
-			var apx, apy, bpx, bpy, cpx, cpy;
-			var cCROSSap, bCROSScp, aCROSSbp;
-
-			aX = cx - bx; aY = cy - by;
-			bX = ax - cx; bY = ay - cy;
-			cX = bx - ax; cY = by - ay;
-
-			for ( p = 0; p < n; p ++ ) {
-
-				px = contour[ verts[ p ] ].x;
-				py = contour[ verts[ p ] ].y;
-
-				if ( ( ( px === ax ) && ( py === ay ) ) ||
-					 ( ( px === bx ) && ( py === by ) ) ||
-					 ( ( px === cx ) && ( py === cy ) ) )	{ continue; }
-
-				apx = px - ax; apy = py - ay;
-				bpx = px - bx; bpy = py - by;
-				cpx = px - cx; cpy = py - cy;
-
-				// see if p is inside triangle abc
-
-				aCROSSbp = aX * bpy - aY * bpx;
-				cCROSSap = cX * apy - cY * apx;
-				bCROSScp = bX * cpy - bY * cpx;
-
-				if ( ( aCROSSbp >= - Number.EPSILON ) && ( bCROSScp >= - Number.EPSILON ) && ( cCROSSap >= - Number.EPSILON ) ) { return false; }
-
-			}
-
-			return true;
-
-		}
-
-		// takes in an contour array and returns
-
-		return function triangulate( contour, indices ) {
-
-			var n = contour.length;
-
-			if ( n < 3 ) { return null; }
-
-			var result = [],
-				verts = [],
-				vertIndices = [];
-
-			/* we want a counter-clockwise polygon in verts */
-
-			var u, v, w;
-
-			if ( ShapeUtils.area( contour ) > 0.0 ) {
-
-				for ( v = 0; v < n; v ++ ) { verts[ v ] = v; }
-
-			} else {
-
-				for ( v = 0; v < n; v ++ ) { verts[ v ] = ( n - 1 ) - v; }
-
-			}
-
-			var nv = n;
-
-			/*  remove nv - 2 vertices, creating 1 triangle every time */
-
-			var count = 2 * nv; /* error detection */
-
-			for ( v = nv - 1; nv > 2; ) {
-
-				/* if we loop, it is probably a non-simple polygon */
-
-				if ( ( count -- ) <= 0 ) {
-
-					//** Triangulate: ERROR - probable bad polygon!
-
-					//throw ( "Warning, unable to triangulate polygon!" );
-					//return null;
-					// Sometimes warning is fine, especially polygons are triangulated in reverse.
-					console.warn( 'THREE.ShapeUtils: Unable to triangulate polygon! in triangulate()' );
-
-					if ( indices ) { return vertIndices; }
-					return result;
-
-				}
-
-				/* three consecutive vertices in current polygon, <u,v,w> */
-
-				u = v; if ( nv <= u ) { u = 0; } /* previous */
-				v = u + 1; if ( nv <= v ) { v = 0; } /* new v    */
-				w = v + 1; if ( nv <= w ) { w = 0; } /* next     */
-
-				if ( snip( contour, u, v, w, nv, verts ) ) {
-
-					var a, b, c, s, t;
-
-					/* true names of the vertices */
-
-					a = verts[ u ];
-					b = verts[ v ];
-					c = verts[ w ];
-
-					/* output Triangle */
-
-					result.push( [ contour[ a ],
-						contour[ b ],
-						contour[ c ] ] );
-
-
-					vertIndices.push( [ verts[ u ], verts[ v ], verts[ w ] ] );
-
-					/* remove v from the remaining polygon */
-
-					for ( s = v, t = v + 1; t < nv; s ++, t ++ ) {
-
-						verts[ s ] = verts[ t ];
-
-					}
-
-					nv --;
-
-					/* reset error detection counter */
-
-					count = 2 * nv;
-
-				}
-
-			}
-
-			if ( indices ) { return vertIndices; }
-			return result;
-
-		};
-
-	} )(),
+	},
 
 	triangulateShape: function ( contour, holes ) {
 
@@ -27532,488 +28212,50 @@ var ShapeUtils = {
 
 		}
 
+		function addContour( vertices, contour ) {
+
+			for ( var i = 0; i < contour.length; i ++ ) {
+
+				vertices.push( contour[ i ].x );
+				vertices.push( contour[ i ].y );
+
+			}
+
+		}
+
+		var vertices = []; // flat array of vertices like [ x0,y0, x1,y1, x2,y2, ... ]
+		var holeIndices = []; // array of hole indices
+		var faces = []; // final array of vertex indices like [ [ a,b,d ], [ b,c,d ] ]
+
 		removeDupEndPts( contour );
+		addContour( vertices, contour );
+
+		//
+
+		var holeIndex = contour.length;
 		holes.forEach( removeDupEndPts );
 
-		function point_in_segment_2D_colin( inSegPt1, inSegPt2, inOtherPt ) {
+		for ( i = 0; i < holes.length; i ++ ) {
 
-			// inOtherPt needs to be collinear to the inSegment
-			if ( inSegPt1.x !== inSegPt2.x ) {
-
-				if ( inSegPt1.x < inSegPt2.x ) {
-
-					return	( ( inSegPt1.x <= inOtherPt.x ) && ( inOtherPt.x <= inSegPt2.x ) );
-
-				} else {
-
-					return	( ( inSegPt2.x <= inOtherPt.x ) && ( inOtherPt.x <= inSegPt1.x ) );
-
-				}
-
-			} else {
-
-				if ( inSegPt1.y < inSegPt2.y ) {
-
-					return	( ( inSegPt1.y <= inOtherPt.y ) && ( inOtherPt.y <= inSegPt2.y ) );
-
-				} else {
-
-					return	( ( inSegPt2.y <= inOtherPt.y ) && ( inOtherPt.y <= inSegPt1.y ) );
-
-				}
-
-			}
+			holeIndices.push( holeIndex );
+			holeIndex += holes[ i ].length;
+			addContour( vertices, holes[ i ] );
 
 		}
 
-		function intersect_segments_2D( inSeg1Pt1, inSeg1Pt2, inSeg2Pt1, inSeg2Pt2, inExcludeAdjacentSegs ) {
+		//
 
-			var seg1dx = inSeg1Pt2.x - inSeg1Pt1.x, seg1dy = inSeg1Pt2.y - inSeg1Pt1.y;
-			var seg2dx = inSeg2Pt2.x - inSeg2Pt1.x, seg2dy = inSeg2Pt2.y - inSeg2Pt1.y;
+		var triangles = Earcut.triangulate( vertices, holeIndices );
 
-			var seg1seg2dx = inSeg1Pt1.x - inSeg2Pt1.x;
-			var seg1seg2dy = inSeg1Pt1.y - inSeg2Pt1.y;
+		//
 
-			var limit		= seg1dy * seg2dx - seg1dx * seg2dy;
-			var perpSeg1	= seg1dy * seg1seg2dx - seg1dx * seg1seg2dy;
+		for ( var i = 0; i < triangles.length; i += 3 ) {
 
-			if ( Math.abs( limit ) > Number.EPSILON ) {
-
-				// not parallel
-
-				var perpSeg2;
-				if ( limit > 0 ) {
-
-					if ( ( perpSeg1 < 0 ) || ( perpSeg1 > limit ) ) 		{ return []; }
-					perpSeg2 = seg2dy * seg1seg2dx - seg2dx * seg1seg2dy;
-					if ( ( perpSeg2 < 0 ) || ( perpSeg2 > limit ) ) 		{ return []; }
-
-				} else {
-
-					if ( ( perpSeg1 > 0 ) || ( perpSeg1 < limit ) ) 		{ return []; }
-					perpSeg2 = seg2dy * seg1seg2dx - seg2dx * seg1seg2dy;
-					if ( ( perpSeg2 > 0 ) || ( perpSeg2 < limit ) ) 		{ return []; }
-
-				}
-
-				// i.e. to reduce rounding errors
-				// intersection at endpoint of segment#1?
-				if ( perpSeg2 === 0 ) {
-
-					if ( ( inExcludeAdjacentSegs ) &&
-						 ( ( perpSeg1 === 0 ) || ( perpSeg1 === limit ) ) )		{ return []; }
-					return [ inSeg1Pt1 ];
-
-				}
-				if ( perpSeg2 === limit ) {
-
-					if ( ( inExcludeAdjacentSegs ) &&
-						 ( ( perpSeg1 === 0 ) || ( perpSeg1 === limit ) ) )		{ return []; }
-					return [ inSeg1Pt2 ];
-
-				}
-				// intersection at endpoint of segment#2?
-				if ( perpSeg1 === 0 )		{ return [ inSeg2Pt1 ]; }
-				if ( perpSeg1 === limit )	{ return [ inSeg2Pt2 ]; }
-
-				// return real intersection point
-				var factorSeg1 = perpSeg2 / limit;
-				return	[ { x: inSeg1Pt1.x + factorSeg1 * seg1dx, y: inSeg1Pt1.y + factorSeg1 * seg1dy } ];
-
-			} else {
-
-				// parallel or collinear
-				if ( ( perpSeg1 !== 0 ) ||
-					 ( seg2dy * seg1seg2dx !== seg2dx * seg1seg2dy ) ) 			{ return []; }
-
-				// they are collinear or degenerate
-				var seg1Pt = ( ( seg1dx === 0 ) && ( seg1dy === 0 ) );	// segment1 is just a point?
-				var seg2Pt = ( ( seg2dx === 0 ) && ( seg2dy === 0 ) );	// segment2 is just a point?
-				// both segments are points
-				if ( seg1Pt && seg2Pt ) {
-
-					if ( ( inSeg1Pt1.x !== inSeg2Pt1.x ) ||
-						 ( inSeg1Pt1.y !== inSeg2Pt1.y ) )		{ return []; }	// they are distinct  points
-					return [ inSeg1Pt1 ];	// they are the same point
-
-				}
-				// segment#1  is a single point
-				if ( seg1Pt ) {
-
-					if ( ! point_in_segment_2D_colin( inSeg2Pt1, inSeg2Pt2, inSeg1Pt1 ) )		{ return []; }		// but not in segment#2
-					return [ inSeg1Pt1 ];
-
-				}
-				// segment#2  is a single point
-				if ( seg2Pt ) {
-
-					if ( ! point_in_segment_2D_colin( inSeg1Pt1, inSeg1Pt2, inSeg2Pt1 ) )		{ return []; }		// but not in segment#1
-					return [ inSeg2Pt1 ];
-
-				}
-
-				// they are collinear segments, which might overlap
-				var seg1min, seg1max, seg1minVal, seg1maxVal;
-				var seg2min, seg2max, seg2minVal, seg2maxVal;
-				if ( seg1dx !== 0 ) {
-
-					// the segments are NOT on a vertical line
-					if ( inSeg1Pt1.x < inSeg1Pt2.x ) {
-
-						seg1min = inSeg1Pt1; seg1minVal = inSeg1Pt1.x;
-						seg1max = inSeg1Pt2; seg1maxVal = inSeg1Pt2.x;
-
-					} else {
-
-						seg1min = inSeg1Pt2; seg1minVal = inSeg1Pt2.x;
-						seg1max = inSeg1Pt1; seg1maxVal = inSeg1Pt1.x;
-
-					}
-					if ( inSeg2Pt1.x < inSeg2Pt2.x ) {
-
-						seg2min = inSeg2Pt1; seg2minVal = inSeg2Pt1.x;
-						seg2max = inSeg2Pt2; seg2maxVal = inSeg2Pt2.x;
-
-					} else {
-
-						seg2min = inSeg2Pt2; seg2minVal = inSeg2Pt2.x;
-						seg2max = inSeg2Pt1; seg2maxVal = inSeg2Pt1.x;
-
-					}
-
-				} else {
-
-					// the segments are on a vertical line
-					if ( inSeg1Pt1.y < inSeg1Pt2.y ) {
-
-						seg1min = inSeg1Pt1; seg1minVal = inSeg1Pt1.y;
-						seg1max = inSeg1Pt2; seg1maxVal = inSeg1Pt2.y;
-
-					} else {
-
-						seg1min = inSeg1Pt2; seg1minVal = inSeg1Pt2.y;
-						seg1max = inSeg1Pt1; seg1maxVal = inSeg1Pt1.y;
-
-					}
-					if ( inSeg2Pt1.y < inSeg2Pt2.y ) {
-
-						seg2min = inSeg2Pt1; seg2minVal = inSeg2Pt1.y;
-						seg2max = inSeg2Pt2; seg2maxVal = inSeg2Pt2.y;
-
-					} else {
-
-						seg2min = inSeg2Pt2; seg2minVal = inSeg2Pt2.y;
-						seg2max = inSeg2Pt1; seg2maxVal = inSeg2Pt1.y;
-
-					}
-
-				}
-				if ( seg1minVal <= seg2minVal ) {
-
-					if ( seg1maxVal < seg2minVal )	{ return []; }
-					if ( seg1maxVal === seg2minVal )	{
-
-						if ( inExcludeAdjacentSegs )		{ return []; }
-						return [ seg2min ];
-
-					}
-					if ( seg1maxVal <= seg2maxVal )	{ return [ seg2min, seg1max ]; }
-					return	[ seg2min, seg2max ];
-
-				} else {
-
-					if ( seg1minVal > seg2maxVal )	{ return []; }
-					if ( seg1minVal === seg2maxVal )	{
-
-						if ( inExcludeAdjacentSegs )		{ return []; }
-						return [ seg1min ];
-
-					}
-					if ( seg1maxVal <= seg2maxVal )	{ return [ seg1min, seg1max ]; }
-					return	[ seg1min, seg2max ];
-
-				}
-
-			}
+			faces.push( triangles.slice( i, i + 3 ) );
 
 		}
 
-		function isPointInsideAngle( inVertex, inLegFromPt, inLegToPt, inOtherPt ) {
-
-			// The order of legs is important
-
-			// translation of all points, so that Vertex is at (0,0)
-			var legFromPtX	= inLegFromPt.x - inVertex.x, legFromPtY = inLegFromPt.y - inVertex.y;
-			var legToPtX	= inLegToPt.x	- inVertex.x, legToPtY = inLegToPt.y	- inVertex.y;
-			var otherPtX	= inOtherPt.x	- inVertex.x, otherPtY = inOtherPt.y	- inVertex.y;
-
-			// main angle >0: < 180 deg.; 0: 180 deg.; <0: > 180 deg.
-			var from2toAngle	= legFromPtX * legToPtY - legFromPtY * legToPtX;
-			var from2otherAngle	= legFromPtX * otherPtY - legFromPtY * otherPtX;
-
-			if ( Math.abs( from2toAngle ) > Number.EPSILON ) {
-
-				// angle != 180 deg.
-
-				var other2toAngle		= otherPtX * legToPtY - otherPtY * legToPtX;
-				// console.log( "from2to: " + from2toAngle + ", from2other: " + from2otherAngle + ", other2to: " + other2toAngle );
-
-				if ( from2toAngle > 0 ) {
-
-					// main angle < 180 deg.
-					return	( ( from2otherAngle >= 0 ) && ( other2toAngle >= 0 ) );
-
-				} else {
-
-					// main angle > 180 deg.
-					return	( ( from2otherAngle >= 0 ) || ( other2toAngle >= 0 ) );
-
-				}
-
-			} else {
-
-				// angle == 180 deg.
-				// console.log( "from2to: 180 deg., from2other: " + from2otherAngle  );
-				return	( from2otherAngle > 0 );
-
-			}
-
-		}
-
-
-		function removeHoles( contour, holes ) {
-
-			var shape = contour.concat(); // work on this shape
-			var hole;
-
-			function isCutLineInsideAngles( inShapeIdx, inHoleIdx ) {
-
-				// Check if hole point lies within angle around shape point
-				var lastShapeIdx = shape.length - 1;
-
-				var prevShapeIdx = inShapeIdx - 1;
-				if ( prevShapeIdx < 0 )			{ prevShapeIdx = lastShapeIdx; }
-
-				var nextShapeIdx = inShapeIdx + 1;
-				if ( nextShapeIdx > lastShapeIdx )	{ nextShapeIdx = 0; }
-
-				var insideAngle = isPointInsideAngle( shape[ inShapeIdx ], shape[ prevShapeIdx ], shape[ nextShapeIdx ], hole[ inHoleIdx ] );
-				if ( ! insideAngle ) {
-
-					// console.log( "Vertex (Shape): " + inShapeIdx + ", Point: " + hole[inHoleIdx].x + "/" + hole[inHoleIdx].y );
-					return	false;
-
-				}
-
-				// Check if shape point lies within angle around hole point
-				var lastHoleIdx = hole.length - 1;
-
-				var prevHoleIdx = inHoleIdx - 1;
-				if ( prevHoleIdx < 0 )			{ prevHoleIdx = lastHoleIdx; }
-
-				var nextHoleIdx = inHoleIdx + 1;
-				if ( nextHoleIdx > lastHoleIdx )	{ nextHoleIdx = 0; }
-
-				insideAngle = isPointInsideAngle( hole[ inHoleIdx ], hole[ prevHoleIdx ], hole[ nextHoleIdx ], shape[ inShapeIdx ] );
-				if ( ! insideAngle ) {
-
-					// console.log( "Vertex (Hole): " + inHoleIdx + ", Point: " + shape[inShapeIdx].x + "/" + shape[inShapeIdx].y );
-					return	false;
-
-				}
-
-				return	true;
-
-			}
-
-			function intersectsShapeEdge( inShapePt, inHolePt ) {
-
-				// checks for intersections with shape edges
-				var sIdx, nextIdx, intersection;
-				for ( sIdx = 0; sIdx < shape.length; sIdx ++ ) {
-
-					nextIdx = sIdx + 1; nextIdx %= shape.length;
-					intersection = intersect_segments_2D( inShapePt, inHolePt, shape[ sIdx ], shape[ nextIdx ], true );
-					if ( intersection.length > 0 )		{ return	true; }
-
-				}
-
-				return	false;
-
-			}
-
-			var indepHoles = [];
-
-			function intersectsHoleEdge( inShapePt, inHolePt ) {
-
-				// checks for intersections with hole edges
-				var ihIdx, chkHole,
-					hIdx, nextIdx, intersection;
-				for ( ihIdx = 0; ihIdx < indepHoles.length; ihIdx ++ ) {
-
-					chkHole = holes[ indepHoles[ ihIdx ] ];
-					for ( hIdx = 0; hIdx < chkHole.length; hIdx ++ ) {
-
-						nextIdx = hIdx + 1; nextIdx %= chkHole.length;
-						intersection = intersect_segments_2D( inShapePt, inHolePt, chkHole[ hIdx ], chkHole[ nextIdx ], true );
-						if ( intersection.length > 0 )		{ return	true; }
-
-					}
-
-				}
-				return	false;
-
-			}
-
-			var holeIndex, shapeIndex,
-				shapePt, holePt,
-				holeIdx, cutKey, failedCuts = [],
-				tmpShape1, tmpShape2,
-				tmpHole1, tmpHole2;
-
-			for ( var h = 0, hl = holes.length; h < hl; h ++ ) {
-
-				indepHoles.push( h );
-
-			}
-
-			var minShapeIndex = 0;
-			var counter = indepHoles.length * 2;
-			while ( indepHoles.length > 0 ) {
-
-				counter --;
-				if ( counter < 0 ) {
-
-					console.log( 'THREE.ShapeUtils: Infinite Loop! Holes left:" + indepHoles.length + ", Probably Hole outside Shape!' );
-					break;
-
-				}
-
-				// search for shape-vertex and hole-vertex,
-				// which can be connected without intersections
-				for ( shapeIndex = minShapeIndex; shapeIndex < shape.length; shapeIndex ++ ) {
-
-					shapePt = shape[ shapeIndex ];
-					holeIndex	= - 1;
-
-					// search for hole which can be reached without intersections
-					for ( var h = 0; h < indepHoles.length; h ++ ) {
-
-						holeIdx = indepHoles[ h ];
-
-						// prevent multiple checks
-						cutKey = shapePt.x + ':' + shapePt.y + ':' + holeIdx;
-						if ( failedCuts[ cutKey ] !== undefined )			{ continue; }
-
-						hole = holes[ holeIdx ];
-						for ( var h2 = 0; h2 < hole.length; h2 ++ ) {
-
-							holePt = hole[ h2 ];
-							if ( ! isCutLineInsideAngles( shapeIndex, h2 ) )		{ continue; }
-							if ( intersectsShapeEdge( shapePt, holePt ) )		{ continue; }
-							if ( intersectsHoleEdge( shapePt, holePt ) )		{ continue; }
-
-							holeIndex = h2;
-							indepHoles.splice( h, 1 );
-
-							tmpShape1 = shape.slice( 0, shapeIndex + 1 );
-							tmpShape2 = shape.slice( shapeIndex );
-							tmpHole1 = hole.slice( holeIndex );
-							tmpHole2 = hole.slice( 0, holeIndex + 1 );
-
-							shape = tmpShape1.concat( tmpHole1 ).concat( tmpHole2 ).concat( tmpShape2 );
-
-							minShapeIndex = shapeIndex;
-
-							// Debug only, to show the selected cuts
-							// glob_CutLines.push( [ shapePt, holePt ] );
-
-							break;
-
-						}
-						if ( holeIndex >= 0 )	{ break; }		// hole-vertex found
-
-						failedCuts[ cutKey ] = true;			// remember failure
-
-					}
-					if ( holeIndex >= 0 )	{ break; }		// hole-vertex found
-
-				}
-
-			}
-
-			return shape; 			/* shape with no holes */
-
-		}
-
-
-		var i, il, f, face,
-			key, index,
-			allPointsMap = {};
-
-		// To maintain reference to old shape, one must match coordinates, or offset the indices from original arrays. It's probably easier to do the first.
-
-		var allpoints = contour.concat();
-
-		for ( var h = 0, hl = holes.length; h < hl; h ++ ) {
-
-			Array.prototype.push.apply( allpoints, holes[ h ] );
-
-		}
-
-		//console.log( "allpoints",allpoints, allpoints.length );
-
-		// prepare all points map
-
-		for ( i = 0, il = allpoints.length; i < il; i ++ ) {
-
-			key = allpoints[ i ].x + ':' + allpoints[ i ].y;
-
-			if ( allPointsMap[ key ] !== undefined ) {
-
-				console.warn( 'THREE.ShapeUtils: Duplicate point', key, i );
-
-			}
-
-			allPointsMap[ key ] = i;
-
-		}
-
-		// remove holes by cutting paths to holes and adding them to the shape
-		var shapeWithoutHoles = removeHoles( contour, holes );
-
-		var triangles = ShapeUtils.triangulate( shapeWithoutHoles, false ); // True returns indices for points of spooled shape
-		//console.log( "triangles",triangles, triangles.length );
-
-		// check all face vertices against all points map
-
-		for ( i = 0, il = triangles.length; i < il; i ++ ) {
-
-			face = triangles[ i ];
-
-			for ( f = 0; f < 3; f ++ ) {
-
-				key = face[ f ].x + ':' + face[ f ].y;
-
-				index = allPointsMap[ key ];
-
-				if ( index !== undefined ) {
-
-					face[ f ] = index;
-
-				}
-
-			}
-
-		}
-
-		return triangles.concat();
-
-	},
-
-	isClockWise: function ( pts ) {
-
-		return ShapeUtils.area( pts ) < 0;
+		return faces;
 
 	}
 
@@ -28763,7 +29005,7 @@ ExtrudeBufferGeometry.prototype.addShape = function ( shape, options ) {
 
 		this.setIndex( indicesArray );
 		this.addAttribute( 'position', new Float32BufferAttribute( verticesArray, 3 ) );
-		this.addAttribute( 'uv', new Float32BufferAttribute( options.arrays.uv, 2 ) );
+		this.addAttribute( 'uv', new Float32BufferAttribute( uvArray, 2 ) );
 
 	}
 
@@ -29403,6 +29645,16 @@ function ShapeGeometry( shapes, curveSegments ) {
 ShapeGeometry.prototype = Object.create( Geometry.prototype );
 ShapeGeometry.prototype.constructor = ShapeGeometry;
 
+ShapeGeometry.prototype.toJSON = function () {
+
+	var data = Geometry.prototype.toJSON.call( this );
+
+	var shapes = this.parameters.shapes;
+
+	return toJSON( shapes, data );
+
+};
+
 // ShapeBufferGeometry
 
 function ShapeBufferGeometry( shapes, curveSegments ) {
@@ -29539,6 +29791,42 @@ function ShapeBufferGeometry( shapes, curveSegments ) {
 
 ShapeBufferGeometry.prototype = Object.create( BufferGeometry.prototype );
 ShapeBufferGeometry.prototype.constructor = ShapeBufferGeometry;
+
+ShapeBufferGeometry.prototype.toJSON = function () {
+
+	var data = BufferGeometry.prototype.toJSON.call( this );
+
+	var shapes = this.parameters.shapes;
+
+	return toJSON( shapes, data );
+
+};
+
+//
+
+function toJSON( shapes, data ) {
+
+	data.shapes = [];
+
+	if ( Array.isArray( shapes ) ) {
+
+		for ( var i = 0, l = shapes.length; i < l; i ++ ) {
+
+			var shape = shapes[ i ];
+
+			data.shapes.push( shape.uuid );
+
+		}
+
+	} else {
+
+		data.shapes.push( shapes.uuid );
+
+	}
+
+	return data;
+
+}
 
 /**
  * @author WestLangley / http://github.com/WestLangley
@@ -31032,6 +31320,7 @@ function LoadingManager( onLoad, onProgress, onError ) {
 	this.setURLModifier = function ( transform ) {
 
 		urlModifier = transform;
+		return this;
 
 	};
 
@@ -31208,7 +31497,7 @@ Object.assign( FileLoader.prototype, {
 
 			request.addEventListener( 'load', function ( event ) {
 
-				var response = event.target.response;
+				var response = this.response;
 
 				Cache.add( url, response );
 
@@ -31757,12 +32046,15 @@ Object.assign( TextureLoader.prototype, {
 
 	load: function ( url, onLoad, onProgress, onError ) {
 
+		var texture = new Texture();
+
 		var loader = new ImageLoader( this.manager );
 		loader.setCrossOrigin( this.crossOrigin );
 		loader.setPath( this.path );
 
-		var texture = new Texture();
-		texture.image = loader.load( url, function () {
+		loader.load( url, function ( image ) {
+
+			texture.image = image;
 
 			// JPEGs can't have an alpha channel, so memory can be saved by storing them as RGB.
 			var isJPEG = url.search( /\.(jpg|jpeg)$/ ) > 0 || url.search( /^data\:image\/jpeg/ ) === 0;
@@ -31792,6 +32084,2051 @@ Object.assign( TextureLoader.prototype, {
 	setPath: function ( value ) {
 
 		this.path = value;
+		return this;
+
+	}
+
+} );
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ * Extensible curve object
+ *
+ * Some common of curve methods:
+ * .getPoint( t, optionalTarget ), .getTangent( t )
+ * .getPointAt( u, optionalTarget ), .getTangentAt( u )
+ * .getPoints(), .getSpacedPoints()
+ * .getLength()
+ * .updateArcLengths()
+ *
+ * This following curves inherit from THREE.Curve:
+ *
+ * -- 2D curves --
+ * THREE.ArcCurve
+ * THREE.CubicBezierCurve
+ * THREE.EllipseCurve
+ * THREE.LineCurve
+ * THREE.QuadraticBezierCurve
+ * THREE.SplineCurve
+ *
+ * -- 3D curves --
+ * THREE.CatmullRomCurve3
+ * THREE.CubicBezierCurve3
+ * THREE.LineCurve3
+ * THREE.QuadraticBezierCurve3
+ *
+ * A series of curves can be represented as a THREE.CurvePath.
+ *
+ **/
+
+/**************************************************************
+ *	Abstract Curve base class
+ **************************************************************/
+
+function Curve() {
+
+	this.type = 'Curve';
+
+	this.arcLengthDivisions = 200;
+
+}
+
+Object.assign( Curve.prototype, {
+
+	// Virtual base class method to overwrite and implement in subclasses
+	//	- t [0 .. 1]
+
+	getPoint: function ( /* t, optionalTarget */ ) {
+
+		console.warn( 'THREE.Curve: .getPoint() not implemented.' );
+		return null;
+
+	},
+
+	// Get point at relative position in curve according to arc length
+	// - u [0 .. 1]
+
+	getPointAt: function ( u, optionalTarget ) {
+
+		var t = this.getUtoTmapping( u );
+		return this.getPoint( t, optionalTarget );
+
+	},
+
+	// Get sequence of points using getPoint( t )
+
+	getPoints: function ( divisions ) {
+		var this$1 = this;
+
+
+		if ( divisions === undefined ) { divisions = 5; }
+
+		var points = [];
+
+		for ( var d = 0; d <= divisions; d ++ ) {
+
+			points.push( this$1.getPoint( d / divisions ) );
+
+		}
+
+		return points;
+
+	},
+
+	// Get sequence of points using getPointAt( u )
+
+	getSpacedPoints: function ( divisions ) {
+		var this$1 = this;
+
+
+		if ( divisions === undefined ) { divisions = 5; }
+
+		var points = [];
+
+		for ( var d = 0; d <= divisions; d ++ ) {
+
+			points.push( this$1.getPointAt( d / divisions ) );
+
+		}
+
+		return points;
+
+	},
+
+	// Get total curve arc length
+
+	getLength: function () {
+
+		var lengths = this.getLengths();
+		return lengths[ lengths.length - 1 ];
+
+	},
+
+	// Get list of cumulative segment lengths
+
+	getLengths: function ( divisions ) {
+		var this$1 = this;
+
+
+		if ( divisions === undefined ) { divisions = this.arcLengthDivisions; }
+
+		if ( this.cacheArcLengths &&
+			( this.cacheArcLengths.length === divisions + 1 ) &&
+			! this.needsUpdate ) {
+
+			return this.cacheArcLengths;
+
+		}
+
+		this.needsUpdate = false;
+
+		var cache = [];
+		var current, last = this.getPoint( 0 );
+		var p, sum = 0;
+
+		cache.push( 0 );
+
+		for ( p = 1; p <= divisions; p ++ ) {
+
+			current = this$1.getPoint( p / divisions );
+			sum += current.distanceTo( last );
+			cache.push( sum );
+			last = current;
+
+		}
+
+		this.cacheArcLengths = cache;
+
+		return cache; // { sums: cache, sum: sum }; Sum is in the last element.
+
+	},
+
+	updateArcLengths: function () {
+
+		this.needsUpdate = true;
+		this.getLengths();
+
+	},
+
+	// Given u ( 0 .. 1 ), get a t to find p. This gives you points which are equidistant
+
+	getUtoTmapping: function ( u, distance ) {
+
+		var arcLengths = this.getLengths();
+
+		var i = 0, il = arcLengths.length;
+
+		var targetArcLength; // The targeted u distance value to get
+
+		if ( distance ) {
+
+			targetArcLength = distance;
+
+		} else {
+
+			targetArcLength = u * arcLengths[ il - 1 ];
+
+		}
+
+		// binary search for the index with largest value smaller than target u distance
+
+		var low = 0, high = il - 1, comparison;
+
+		while ( low <= high ) {
+
+			i = Math.floor( low + ( high - low ) / 2 ); // less likely to overflow, though probably not issue here, JS doesn't really have integers, all numbers are floats
+
+			comparison = arcLengths[ i ] - targetArcLength;
+
+			if ( comparison < 0 ) {
+
+				low = i + 1;
+
+			} else if ( comparison > 0 ) {
+
+				high = i - 1;
+
+			} else {
+
+				high = i;
+				break;
+
+				// DONE
+
+			}
+
+		}
+
+		i = high;
+
+		if ( arcLengths[ i ] === targetArcLength ) {
+
+			return i / ( il - 1 );
+
+		}
+
+		// we could get finer grain at lengths, or use simple interpolation between two points
+
+		var lengthBefore = arcLengths[ i ];
+		var lengthAfter = arcLengths[ i + 1 ];
+
+		var segmentLength = lengthAfter - lengthBefore;
+
+		// determine where we are between the 'before' and 'after' points
+
+		var segmentFraction = ( targetArcLength - lengthBefore ) / segmentLength;
+
+		// add that fractional amount to t
+
+		var t = ( i + segmentFraction ) / ( il - 1 );
+
+		return t;
+
+	},
+
+	// Returns a unit vector tangent at t
+	// In case any sub curve does not implement its tangent derivation,
+	// 2 points a small delta apart will be used to find its gradient
+	// which seems to give a reasonable approximation
+
+	getTangent: function ( t ) {
+
+		var delta = 0.0001;
+		var t1 = t - delta;
+		var t2 = t + delta;
+
+		// Capping in case of danger
+
+		if ( t1 < 0 ) { t1 = 0; }
+		if ( t2 > 1 ) { t2 = 1; }
+
+		var pt1 = this.getPoint( t1 );
+		var pt2 = this.getPoint( t2 );
+
+		var vec = pt2.clone().sub( pt1 );
+		return vec.normalize();
+
+	},
+
+	getTangentAt: function ( u ) {
+
+		var t = this.getUtoTmapping( u );
+		return this.getTangent( t );
+
+	},
+
+	computeFrenetFrames: function ( segments, closed ) {
+		var this$1 = this;
+
+
+		// see http://www.cs.indiana.edu/pub/techreports/TR425.pdf
+
+		var normal = new Vector3();
+
+		var tangents = [];
+		var normals = [];
+		var binormals = [];
+
+		var vec = new Vector3();
+		var mat = new Matrix4();
+
+		var i, u, theta;
+
+		// compute the tangent vectors for each segment on the curve
+
+		for ( i = 0; i <= segments; i ++ ) {
+
+			u = i / segments;
+
+			tangents[ i ] = this$1.getTangentAt( u );
+			tangents[ i ].normalize();
+
+		}
+
+		// select an initial normal vector perpendicular to the first tangent vector,
+		// and in the direction of the minimum tangent xyz component
+
+		normals[ 0 ] = new Vector3();
+		binormals[ 0 ] = new Vector3();
+		var min = Number.MAX_VALUE;
+		var tx = Math.abs( tangents[ 0 ].x );
+		var ty = Math.abs( tangents[ 0 ].y );
+		var tz = Math.abs( tangents[ 0 ].z );
+
+		if ( tx <= min ) {
+
+			min = tx;
+			normal.set( 1, 0, 0 );
+
+		}
+
+		if ( ty <= min ) {
+
+			min = ty;
+			normal.set( 0, 1, 0 );
+
+		}
+
+		if ( tz <= min ) {
+
+			normal.set( 0, 0, 1 );
+
+		}
+
+		vec.crossVectors( tangents[ 0 ], normal ).normalize();
+
+		normals[ 0 ].crossVectors( tangents[ 0 ], vec );
+		binormals[ 0 ].crossVectors( tangents[ 0 ], normals[ 0 ] );
+
+
+		// compute the slowly-varying normal and binormal vectors for each segment on the curve
+
+		for ( i = 1; i <= segments; i ++ ) {
+
+			normals[ i ] = normals[ i - 1 ].clone();
+
+			binormals[ i ] = binormals[ i - 1 ].clone();
+
+			vec.crossVectors( tangents[ i - 1 ], tangents[ i ] );
+
+			if ( vec.length() > Number.EPSILON ) {
+
+				vec.normalize();
+
+				theta = Math.acos( _Math.clamp( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
+
+				normals[ i ].applyMatrix4( mat.makeRotationAxis( vec, theta ) );
+
+			}
+
+			binormals[ i ].crossVectors( tangents[ i ], normals[ i ] );
+
+		}
+
+		// if the curve is closed, postprocess the vectors so the first and last normal vectors are the same
+
+		if ( closed === true ) {
+
+			theta = Math.acos( _Math.clamp( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
+			theta /= segments;
+
+			if ( tangents[ 0 ].dot( vec.crossVectors( normals[ 0 ], normals[ segments ] ) ) > 0 ) {
+
+				theta = - theta;
+
+			}
+
+			for ( i = 1; i <= segments; i ++ ) {
+
+				// twist a little...
+				normals[ i ].applyMatrix4( mat.makeRotationAxis( tangents[ i ], theta * i ) );
+				binormals[ i ].crossVectors( tangents[ i ], normals[ i ] );
+
+			}
+
+		}
+
+		return {
+			tangents: tangents,
+			normals: normals,
+			binormals: binormals
+		};
+
+	},
+
+	clone: function () {
+
+		return new this.constructor().copy( this );
+
+	},
+
+	copy: function ( source ) {
+
+		this.arcLengthDivisions = source.arcLengthDivisions;
+
+		return this;
+
+	},
+
+	toJSON: function () {
+
+		var data = {
+			metadata: {
+				version: 4.5,
+				type: 'Curve',
+				generator: 'Curve.toJSON'
+			}
+		};
+
+		data.arcLengthDivisions = this.arcLengthDivisions;
+		data.type = this.type;
+
+		return data;
+
+	},
+
+	fromJSON: function ( json ) {
+
+		this.arcLengthDivisions = json.arcLengthDivisions;
+
+		return this;
+
+	}
+
+} );
+
+function EllipseCurve( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
+
+	Curve.call( this );
+
+	this.type = 'EllipseCurve';
+
+	this.aX = aX || 0;
+	this.aY = aY || 0;
+
+	this.xRadius = xRadius || 1;
+	this.yRadius = yRadius || 1;
+
+	this.aStartAngle = aStartAngle || 0;
+	this.aEndAngle = aEndAngle || 2 * Math.PI;
+
+	this.aClockwise = aClockwise || false;
+
+	this.aRotation = aRotation || 0;
+
+}
+
+EllipseCurve.prototype = Object.create( Curve.prototype );
+EllipseCurve.prototype.constructor = EllipseCurve;
+
+EllipseCurve.prototype.isEllipseCurve = true;
+
+EllipseCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector2();
+
+	var twoPi = Math.PI * 2;
+	var deltaAngle = this.aEndAngle - this.aStartAngle;
+	var samePoints = Math.abs( deltaAngle ) < Number.EPSILON;
+
+	// ensures that deltaAngle is 0 .. 2 PI
+	while ( deltaAngle < 0 ) { deltaAngle += twoPi; }
+	while ( deltaAngle > twoPi ) { deltaAngle -= twoPi; }
+
+	if ( deltaAngle < Number.EPSILON ) {
+
+		if ( samePoints ) {
+
+			deltaAngle = 0;
+
+		} else {
+
+			deltaAngle = twoPi;
+
+		}
+
+	}
+
+	if ( this.aClockwise === true && ! samePoints ) {
+
+		if ( deltaAngle === twoPi ) {
+
+			deltaAngle = - twoPi;
+
+		} else {
+
+			deltaAngle = deltaAngle - twoPi;
+
+		}
+
+	}
+
+	var angle = this.aStartAngle + t * deltaAngle;
+	var x = this.aX + this.xRadius * Math.cos( angle );
+	var y = this.aY + this.yRadius * Math.sin( angle );
+
+	if ( this.aRotation !== 0 ) {
+
+		var cos = Math.cos( this.aRotation );
+		var sin = Math.sin( this.aRotation );
+
+		var tx = x - this.aX;
+		var ty = y - this.aY;
+
+		// Rotate the point about the center of the ellipse.
+		x = tx * cos - ty * sin + this.aX;
+		y = tx * sin + ty * cos + this.aY;
+
+	}
+
+	return point.set( x, y );
+
+};
+
+EllipseCurve.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.aX = source.aX;
+	this.aY = source.aY;
+
+	this.xRadius = source.xRadius;
+	this.yRadius = source.yRadius;
+
+	this.aStartAngle = source.aStartAngle;
+	this.aEndAngle = source.aEndAngle;
+
+	this.aClockwise = source.aClockwise;
+
+	this.aRotation = source.aRotation;
+
+	return this;
+
+};
+
+
+EllipseCurve.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.aX = this.aX;
+	data.aY = this.aY;
+
+	data.xRadius = this.xRadius;
+	data.yRadius = this.yRadius;
+
+	data.aStartAngle = this.aStartAngle;
+	data.aEndAngle = this.aEndAngle;
+
+	data.aClockwise = this.aClockwise;
+
+	data.aRotation = this.aRotation;
+
+	return data;
+
+};
+
+EllipseCurve.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.aX = json.aX;
+	this.aY = json.aY;
+
+	this.xRadius = json.xRadius;
+	this.yRadius = json.yRadius;
+
+	this.aStartAngle = json.aStartAngle;
+	this.aEndAngle = json.aEndAngle;
+
+	this.aClockwise = json.aClockwise;
+
+	this.aRotation = json.aRotation;
+
+	return this;
+
+};
+
+function ArcCurve( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
+
+	EllipseCurve.call( this, aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise );
+
+	this.type = 'ArcCurve';
+
+}
+
+ArcCurve.prototype = Object.create( EllipseCurve.prototype );
+ArcCurve.prototype.constructor = ArcCurve;
+
+ArcCurve.prototype.isArcCurve = true;
+
+/**
+ * @author zz85 https://github.com/zz85
+ *
+ * Centripetal CatmullRom Curve - which is useful for avoiding
+ * cusps and self-intersections in non-uniform catmull rom curves.
+ * http://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
+ *
+ * curve.type accepts centripetal(default), chordal and catmullrom
+ * curve.tension is used for catmullrom which defaults to 0.5
+ */
+
+
+/*
+Based on an optimized c++ solution in
+ - http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
+ - http://ideone.com/NoEbVM
+
+This CubicPoly class could be used for reusing some variables and calculations,
+but for three.js curve use, it could be possible inlined and flatten into a single function call
+which can be placed in CurveUtils.
+*/
+
+function CubicPoly() {
+
+	var c0 = 0, c1 = 0, c2 = 0, c3 = 0;
+
+	/*
+	 * Compute coefficients for a cubic polynomial
+	 *   p(s) = c0 + c1*s + c2*s^2 + c3*s^3
+	 * such that
+	 *   p(0) = x0, p(1) = x1
+	 *  and
+	 *   p'(0) = t0, p'(1) = t1.
+	 */
+	function init( x0, x1, t0, t1 ) {
+
+		c0 = x0;
+		c1 = t0;
+		c2 = - 3 * x0 + 3 * x1 - 2 * t0 - t1;
+		c3 = 2 * x0 - 2 * x1 + t0 + t1;
+
+	}
+
+	return {
+
+		initCatmullRom: function ( x0, x1, x2, x3, tension ) {
+
+			init( x1, x2, tension * ( x2 - x0 ), tension * ( x3 - x1 ) );
+
+		},
+
+		initNonuniformCatmullRom: function ( x0, x1, x2, x3, dt0, dt1, dt2 ) {
+
+			// compute tangents when parameterized in [t1,t2]
+			var t1 = ( x1 - x0 ) / dt0 - ( x2 - x0 ) / ( dt0 + dt1 ) + ( x2 - x1 ) / dt1;
+			var t2 = ( x2 - x1 ) / dt1 - ( x3 - x1 ) / ( dt1 + dt2 ) + ( x3 - x2 ) / dt2;
+
+			// rescale tangents for parametrization in [0,1]
+			t1 *= dt1;
+			t2 *= dt1;
+
+			init( x1, x2, t1, t2 );
+
+		},
+
+		calc: function ( t ) {
+
+			var t2 = t * t;
+			var t3 = t2 * t;
+			return c0 + c1 * t + c2 * t2 + c3 * t3;
+
+		}
+
+	};
+
+}
+
+//
+
+var tmp = new Vector3();
+var px = new CubicPoly();
+var py = new CubicPoly();
+var pz = new CubicPoly();
+
+function CatmullRomCurve3( points, closed, curveType, tension ) {
+
+	Curve.call( this );
+
+	this.type = 'CatmullRomCurve3';
+
+	this.points = points || [];
+	this.closed = closed || false;
+	this.curveType = curveType || 'centripetal';
+	this.tension = tension || 0.5;
+
+}
+
+CatmullRomCurve3.prototype = Object.create( Curve.prototype );
+CatmullRomCurve3.prototype.constructor = CatmullRomCurve3;
+
+CatmullRomCurve3.prototype.isCatmullRomCurve3 = true;
+
+CatmullRomCurve3.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector3();
+
+	var points = this.points;
+	var l = points.length;
+
+	var p = ( l - ( this.closed ? 0 : 1 ) ) * t;
+	var intPoint = Math.floor( p );
+	var weight = p - intPoint;
+
+	if ( this.closed ) {
+
+		intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
+
+	} else if ( weight === 0 && intPoint === l - 1 ) {
+
+		intPoint = l - 2;
+		weight = 1;
+
+	}
+
+	var p0, p1, p2, p3; // 4 points
+
+	if ( this.closed || intPoint > 0 ) {
+
+		p0 = points[ ( intPoint - 1 ) % l ];
+
+	} else {
+
+		// extrapolate first point
+		tmp.subVectors( points[ 0 ], points[ 1 ] ).add( points[ 0 ] );
+		p0 = tmp;
+
+	}
+
+	p1 = points[ intPoint % l ];
+	p2 = points[ ( intPoint + 1 ) % l ];
+
+	if ( this.closed || intPoint + 2 < l ) {
+
+		p3 = points[ ( intPoint + 2 ) % l ];
+
+	} else {
+
+		// extrapolate last point
+		tmp.subVectors( points[ l - 1 ], points[ l - 2 ] ).add( points[ l - 1 ] );
+		p3 = tmp;
+
+	}
+
+	if ( this.curveType === 'centripetal' || this.curveType === 'chordal' ) {
+
+		// init Centripetal / Chordal Catmull-Rom
+		var pow = this.curveType === 'chordal' ? 0.5 : 0.25;
+		var dt0 = Math.pow( p0.distanceToSquared( p1 ), pow );
+		var dt1 = Math.pow( p1.distanceToSquared( p2 ), pow );
+		var dt2 = Math.pow( p2.distanceToSquared( p3 ), pow );
+
+		// safety check for repeated points
+		if ( dt1 < 1e-4 ) { dt1 = 1.0; }
+		if ( dt0 < 1e-4 ) { dt0 = dt1; }
+		if ( dt2 < 1e-4 ) { dt2 = dt1; }
+
+		px.initNonuniformCatmullRom( p0.x, p1.x, p2.x, p3.x, dt0, dt1, dt2 );
+		py.initNonuniformCatmullRom( p0.y, p1.y, p2.y, p3.y, dt0, dt1, dt2 );
+		pz.initNonuniformCatmullRom( p0.z, p1.z, p2.z, p3.z, dt0, dt1, dt2 );
+
+	} else if ( this.curveType === 'catmullrom' ) {
+
+		px.initCatmullRom( p0.x, p1.x, p2.x, p3.x, this.tension );
+		py.initCatmullRom( p0.y, p1.y, p2.y, p3.y, this.tension );
+		pz.initCatmullRom( p0.z, p1.z, p2.z, p3.z, this.tension );
+
+	}
+
+	point.set(
+		px.calc( weight ),
+		py.calc( weight ),
+		pz.calc( weight )
+	);
+
+	return point;
+
+};
+
+CatmullRomCurve3.prototype.copy = function ( source ) {
+	var this$1 = this;
+
+
+	Curve.prototype.copy.call( this, source );
+
+	this.points = [];
+
+	for ( var i = 0, l = source.points.length; i < l; i ++ ) {
+
+		var point = source.points[ i ];
+
+		this$1.points.push( point.clone() );
+
+	}
+
+	this.closed = source.closed;
+	this.curveType = source.curveType;
+	this.tension = source.tension;
+
+	return this;
+
+};
+
+CatmullRomCurve3.prototype.toJSON = function () {
+	var this$1 = this;
+
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.points = [];
+
+	for ( var i = 0, l = this.points.length; i < l; i ++ ) {
+
+		var point = this$1.points[ i ];
+		data.points.push( point.toArray() );
+
+	}
+
+	data.closed = this.closed;
+	data.curveType = this.curveType;
+	data.tension = this.tension;
+
+	return data;
+
+};
+
+CatmullRomCurve3.prototype.fromJSON = function ( json ) {
+	var this$1 = this;
+
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.points = [];
+
+	for ( var i = 0, l = json.points.length; i < l; i ++ ) {
+
+		var point = json.points[ i ];
+		this$1.points.push( new Vector3().fromArray( point ) );
+
+	}
+
+	this.closed = json.closed;
+	this.curveType = json.curveType;
+	this.tension = json.tension;
+
+	return this;
+
+};
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ *
+ * Bezier Curves formulas obtained from
+ * http://en.wikipedia.org/wiki/Bézier_curve
+ */
+
+function CatmullRom( t, p0, p1, p2, p3 ) {
+
+	var v0 = ( p2 - p0 ) * 0.5;
+	var v1 = ( p3 - p1 ) * 0.5;
+	var t2 = t * t;
+	var t3 = t * t2;
+	return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
+
+}
+
+//
+
+function QuadraticBezierP0( t, p ) {
+
+	var k = 1 - t;
+	return k * k * p;
+
+}
+
+function QuadraticBezierP1( t, p ) {
+
+	return 2 * ( 1 - t ) * t * p;
+
+}
+
+function QuadraticBezierP2( t, p ) {
+
+	return t * t * p;
+
+}
+
+function QuadraticBezier( t, p0, p1, p2 ) {
+
+	return QuadraticBezierP0( t, p0 ) + QuadraticBezierP1( t, p1 ) +
+		QuadraticBezierP2( t, p2 );
+
+}
+
+//
+
+function CubicBezierP0( t, p ) {
+
+	var k = 1 - t;
+	return k * k * k * p;
+
+}
+
+function CubicBezierP1( t, p ) {
+
+	var k = 1 - t;
+	return 3 * k * k * t * p;
+
+}
+
+function CubicBezierP2( t, p ) {
+
+	return 3 * ( 1 - t ) * t * t * p;
+
+}
+
+function CubicBezierP3( t, p ) {
+
+	return t * t * t * p;
+
+}
+
+function CubicBezier( t, p0, p1, p2, p3 ) {
+
+	return CubicBezierP0( t, p0 ) + CubicBezierP1( t, p1 ) + CubicBezierP2( t, p2 ) +
+		CubicBezierP3( t, p3 );
+
+}
+
+function CubicBezierCurve( v0, v1, v2, v3 ) {
+
+	Curve.call( this );
+
+	this.type = 'CubicBezierCurve';
+
+	this.v0 = v0 || new Vector2();
+	this.v1 = v1 || new Vector2();
+	this.v2 = v2 || new Vector2();
+	this.v3 = v3 || new Vector2();
+
+}
+
+CubicBezierCurve.prototype = Object.create( Curve.prototype );
+CubicBezierCurve.prototype.constructor = CubicBezierCurve;
+
+CubicBezierCurve.prototype.isCubicBezierCurve = true;
+
+CubicBezierCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector2();
+
+	var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
+
+	point.set(
+		CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
+		CubicBezier( t, v0.y, v1.y, v2.y, v3.y )
+	);
+
+	return point;
+
+};
+
+CubicBezierCurve.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v0.copy( source.v0 );
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+	this.v3.copy( source.v3 );
+
+	return this;
+
+};
+
+CubicBezierCurve.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v0 = this.v0.toArray();
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+	data.v3 = this.v3.toArray();
+
+	return data;
+
+};
+
+CubicBezierCurve.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v0.fromArray( json.v0 );
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+	this.v3.fromArray( json.v3 );
+
+	return this;
+
+};
+
+function CubicBezierCurve3( v0, v1, v2, v3 ) {
+
+	Curve.call( this );
+
+	this.type = 'CubicBezierCurve3';
+
+	this.v0 = v0 || new Vector3();
+	this.v1 = v1 || new Vector3();
+	this.v2 = v2 || new Vector3();
+	this.v3 = v3 || new Vector3();
+
+}
+
+CubicBezierCurve3.prototype = Object.create( Curve.prototype );
+CubicBezierCurve3.prototype.constructor = CubicBezierCurve3;
+
+CubicBezierCurve3.prototype.isCubicBezierCurve3 = true;
+
+CubicBezierCurve3.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector3();
+
+	var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
+
+	point.set(
+		CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
+		CubicBezier( t, v0.y, v1.y, v2.y, v3.y ),
+		CubicBezier( t, v0.z, v1.z, v2.z, v3.z )
+	);
+
+	return point;
+
+};
+
+CubicBezierCurve3.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v0.copy( source.v0 );
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+	this.v3.copy( source.v3 );
+
+	return this;
+
+};
+
+CubicBezierCurve3.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v0 = this.v0.toArray();
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+	data.v3 = this.v3.toArray();
+
+	return data;
+
+};
+
+CubicBezierCurve3.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v0.fromArray( json.v0 );
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+	this.v3.fromArray( json.v3 );
+
+	return this;
+
+};
+
+function LineCurve( v1, v2 ) {
+
+	Curve.call( this );
+
+	this.type = 'LineCurve';
+
+	this.v1 = v1 || new Vector2();
+	this.v2 = v2 || new Vector2();
+
+}
+
+LineCurve.prototype = Object.create( Curve.prototype );
+LineCurve.prototype.constructor = LineCurve;
+
+LineCurve.prototype.isLineCurve = true;
+
+LineCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector2();
+
+	if ( t === 1 ) {
+
+		point.copy( this.v2 );
+
+	} else {
+
+		point.copy( this.v2 ).sub( this.v1 );
+		point.multiplyScalar( t ).add( this.v1 );
+
+	}
+
+	return point;
+
+};
+
+// Line curve is linear, so we can overwrite default getPointAt
+
+LineCurve.prototype.getPointAt = function ( u, optionalTarget ) {
+
+	return this.getPoint( u, optionalTarget );
+
+};
+
+LineCurve.prototype.getTangent = function ( /* t */ ) {
+
+	var tangent = this.v2.clone().sub( this.v1 );
+
+	return tangent.normalize();
+
+};
+
+LineCurve.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+
+	return this;
+
+};
+
+LineCurve.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+
+	return data;
+
+};
+
+LineCurve.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+
+	return this;
+
+};
+
+function LineCurve3( v1, v2 ) {
+
+	Curve.call( this );
+
+	this.type = 'LineCurve3';
+
+	this.v1 = v1 || new Vector3();
+	this.v2 = v2 || new Vector3();
+
+}
+
+LineCurve3.prototype = Object.create( Curve.prototype );
+LineCurve3.prototype.constructor = LineCurve3;
+
+LineCurve3.prototype.isLineCurve3 = true;
+
+LineCurve3.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector3();
+
+	if ( t === 1 ) {
+
+		point.copy( this.v2 );
+
+	} else {
+
+		point.copy( this.v2 ).sub( this.v1 );
+		point.multiplyScalar( t ).add( this.v1 );
+
+	}
+
+	return point;
+
+};
+
+// Line curve is linear, so we can overwrite default getPointAt
+
+LineCurve3.prototype.getPointAt = function ( u, optionalTarget ) {
+
+	return this.getPoint( u, optionalTarget );
+
+};
+
+LineCurve3.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+
+	return this;
+
+};
+
+LineCurve3.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+
+	return data;
+
+};
+
+LineCurve3.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+
+	return this;
+
+};
+
+function QuadraticBezierCurve( v0, v1, v2 ) {
+
+	Curve.call( this );
+
+	this.type = 'QuadraticBezierCurve';
+
+	this.v0 = v0 || new Vector2();
+	this.v1 = v1 || new Vector2();
+	this.v2 = v2 || new Vector2();
+
+}
+
+QuadraticBezierCurve.prototype = Object.create( Curve.prototype );
+QuadraticBezierCurve.prototype.constructor = QuadraticBezierCurve;
+
+QuadraticBezierCurve.prototype.isQuadraticBezierCurve = true;
+
+QuadraticBezierCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector2();
+
+	var v0 = this.v0, v1 = this.v1, v2 = this.v2;
+
+	point.set(
+		QuadraticBezier( t, v0.x, v1.x, v2.x ),
+		QuadraticBezier( t, v0.y, v1.y, v2.y )
+	);
+
+	return point;
+
+};
+
+QuadraticBezierCurve.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v0.copy( source.v0 );
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+
+	return this;
+
+};
+
+QuadraticBezierCurve.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v0 = this.v0.toArray();
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+
+	return data;
+
+};
+
+QuadraticBezierCurve.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v0.fromArray( json.v0 );
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+
+	return this;
+
+};
+
+function QuadraticBezierCurve3( v0, v1, v2 ) {
+
+	Curve.call( this );
+
+	this.type = 'QuadraticBezierCurve3';
+
+	this.v0 = v0 || new Vector3();
+	this.v1 = v1 || new Vector3();
+	this.v2 = v2 || new Vector3();
+
+}
+
+QuadraticBezierCurve3.prototype = Object.create( Curve.prototype );
+QuadraticBezierCurve3.prototype.constructor = QuadraticBezierCurve3;
+
+QuadraticBezierCurve3.prototype.isQuadraticBezierCurve3 = true;
+
+QuadraticBezierCurve3.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector3();
+
+	var v0 = this.v0, v1 = this.v1, v2 = this.v2;
+
+	point.set(
+		QuadraticBezier( t, v0.x, v1.x, v2.x ),
+		QuadraticBezier( t, v0.y, v1.y, v2.y ),
+		QuadraticBezier( t, v0.z, v1.z, v2.z )
+	);
+
+	return point;
+
+};
+
+QuadraticBezierCurve3.prototype.copy = function ( source ) {
+
+	Curve.prototype.copy.call( this, source );
+
+	this.v0.copy( source.v0 );
+	this.v1.copy( source.v1 );
+	this.v2.copy( source.v2 );
+
+	return this;
+
+};
+
+QuadraticBezierCurve3.prototype.toJSON = function () {
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.v0 = this.v0.toArray();
+	data.v1 = this.v1.toArray();
+	data.v2 = this.v2.toArray();
+
+	return data;
+
+};
+
+QuadraticBezierCurve3.prototype.fromJSON = function ( json ) {
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.v0.fromArray( json.v0 );
+	this.v1.fromArray( json.v1 );
+	this.v2.fromArray( json.v2 );
+
+	return this;
+
+};
+
+function SplineCurve( points /* array of Vector2 */ ) {
+
+	Curve.call( this );
+
+	this.type = 'SplineCurve';
+
+	this.points = points || [];
+
+}
+
+SplineCurve.prototype = Object.create( Curve.prototype );
+SplineCurve.prototype.constructor = SplineCurve;
+
+SplineCurve.prototype.isSplineCurve = true;
+
+SplineCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new Vector2();
+
+	var points = this.points;
+	var p = ( points.length - 1 ) * t;
+
+	var intPoint = Math.floor( p );
+	var weight = p - intPoint;
+
+	var p0 = points[ intPoint === 0 ? intPoint : intPoint - 1 ];
+	var p1 = points[ intPoint ];
+	var p2 = points[ intPoint > points.length - 2 ? points.length - 1 : intPoint + 1 ];
+	var p3 = points[ intPoint > points.length - 3 ? points.length - 1 : intPoint + 2 ];
+
+	point.set(
+		CatmullRom( weight, p0.x, p1.x, p2.x, p3.x ),
+		CatmullRom( weight, p0.y, p1.y, p2.y, p3.y )
+	);
+
+	return point;
+
+};
+
+SplineCurve.prototype.copy = function ( source ) {
+	var this$1 = this;
+
+
+	Curve.prototype.copy.call( this, source );
+
+	this.points = [];
+
+	for ( var i = 0, l = source.points.length; i < l; i ++ ) {
+
+		var point = source.points[ i ];
+
+		this$1.points.push( point.clone() );
+
+	}
+
+	return this;
+
+};
+
+SplineCurve.prototype.toJSON = function () {
+	var this$1 = this;
+
+
+	var data = Curve.prototype.toJSON.call( this );
+
+	data.points = [];
+
+	for ( var i = 0, l = this.points.length; i < l; i ++ ) {
+
+		var point = this$1.points[ i ];
+		data.points.push( point.toArray() );
+
+	}
+
+	return data;
+
+};
+
+SplineCurve.prototype.fromJSON = function ( json ) {
+	var this$1 = this;
+
+
+	Curve.prototype.fromJSON.call( this, json );
+
+	this.points = [];
+
+	for ( var i = 0, l = json.points.length; i < l; i ++ ) {
+
+		var point = json.points[ i ];
+		this$1.points.push( new Vector2().fromArray( point ) );
+
+	}
+
+	return this;
+
+};
+
+
+
+var Curves = Object.freeze({
+	ArcCurve: ArcCurve,
+	CatmullRomCurve3: CatmullRomCurve3,
+	CubicBezierCurve: CubicBezierCurve,
+	CubicBezierCurve3: CubicBezierCurve3,
+	EllipseCurve: EllipseCurve,
+	LineCurve: LineCurve,
+	LineCurve3: LineCurve3,
+	QuadraticBezierCurve: QuadraticBezierCurve,
+	QuadraticBezierCurve3: QuadraticBezierCurve3,
+	SplineCurve: SplineCurve
+});
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ *
+ **/
+
+/**************************************************************
+ *	Curved Path - a curve path is simply a array of connected
+ *  curves, but retains the api of a curve
+ **************************************************************/
+
+function CurvePath() {
+
+	Curve.call( this );
+
+	this.type = 'CurvePath';
+
+	this.curves = [];
+	this.autoClose = false; // Automatically closes the path
+
+}
+
+CurvePath.prototype = Object.assign( Object.create( Curve.prototype ), {
+
+	constructor: CurvePath,
+
+	add: function ( curve ) {
+
+		this.curves.push( curve );
+
+	},
+
+	closePath: function () {
+
+		// Add a line curve if start and end of lines are not connected
+		var startPoint = this.curves[ 0 ].getPoint( 0 );
+		var endPoint = this.curves[ this.curves.length - 1 ].getPoint( 1 );
+
+		if ( ! startPoint.equals( endPoint ) ) {
+
+			this.curves.push( new LineCurve( endPoint, startPoint ) );
+
+		}
+
+	},
+
+	// To get accurate point with reference to
+	// entire path distance at time t,
+	// following has to be done:
+
+	// 1. Length of each sub path have to be known
+	// 2. Locate and identify type of curve
+	// 3. Get t for the curve
+	// 4. Return curve.getPointAt(t')
+
+	getPoint: function ( t ) {
+		var this$1 = this;
+
+
+		var d = t * this.getLength();
+		var curveLengths = this.getCurveLengths();
+		var i = 0;
+
+		// To think about boundaries points.
+
+		while ( i < curveLengths.length ) {
+
+			if ( curveLengths[ i ] >= d ) {
+
+				var diff = curveLengths[ i ] - d;
+				var curve = this$1.curves[ i ];
+
+				var segmentLength = curve.getLength();
+				var u = segmentLength === 0 ? 0 : 1 - diff / segmentLength;
+
+				return curve.getPointAt( u );
+
+			}
+
+			i ++;
+
+		}
+
+		return null;
+
+		// loop where sum != 0, sum > d , sum+1 <d
+
+	},
+
+	// We cannot use the default THREE.Curve getPoint() with getLength() because in
+	// THREE.Curve, getLength() depends on getPoint() but in THREE.CurvePath
+	// getPoint() depends on getLength
+
+	getLength: function () {
+
+		var lens = this.getCurveLengths();
+		return lens[ lens.length - 1 ];
+
+	},
+
+	// cacheLengths must be recalculated.
+	updateArcLengths: function () {
+
+		this.needsUpdate = true;
+		this.cacheLengths = null;
+		this.getCurveLengths();
+
+	},
+
+	// Compute lengths and cache them
+	// We cannot overwrite getLengths() because UtoT mapping uses it.
+
+	getCurveLengths: function () {
+		var this$1 = this;
+
+
+		// We use cache values if curves and cache array are same length
+
+		if ( this.cacheLengths && this.cacheLengths.length === this.curves.length ) {
+
+			return this.cacheLengths;
+
+		}
+
+		// Get length of sub-curve
+		// Push sums into cached array
+
+		var lengths = [], sums = 0;
+
+		for ( var i = 0, l = this.curves.length; i < l; i ++ ) {
+
+			sums += this$1.curves[ i ].getLength();
+			lengths.push( sums );
+
+		}
+
+		this.cacheLengths = lengths;
+
+		return lengths;
+
+	},
+
+	getSpacedPoints: function ( divisions ) {
+		var this$1 = this;
+
+
+		if ( divisions === undefined ) { divisions = 40; }
+
+		var points = [];
+
+		for ( var i = 0; i <= divisions; i ++ ) {
+
+			points.push( this$1.getPoint( i / divisions ) );
+
+		}
+
+		if ( this.autoClose ) {
+
+			points.push( points[ 0 ] );
+
+		}
+
+		return points;
+
+	},
+
+	getPoints: function ( divisions ) {
+
+		divisions = divisions || 12;
+
+		var points = [], last;
+
+		for ( var i = 0, curves = this.curves; i < curves.length; i ++ ) {
+
+			var curve = curves[ i ];
+			var resolution = ( curve && curve.isEllipseCurve ) ? divisions * 2
+				: ( curve && curve.isLineCurve ) ? 1
+					: ( curve && curve.isSplineCurve ) ? divisions * curve.points.length
+						: divisions;
+
+			var pts = curve.getPoints( resolution );
+
+			for ( var j = 0; j < pts.length; j ++ ) {
+
+				var point = pts[ j ];
+
+				if ( last && last.equals( point ) ) { continue; } // ensures no consecutive points are duplicates
+
+				points.push( point );
+				last = point;
+
+			}
+
+		}
+
+		if ( this.autoClose && points.length > 1 && ! points[ points.length - 1 ].equals( points[ 0 ] ) ) {
+
+			points.push( points[ 0 ] );
+
+		}
+
+		return points;
+
+	},
+
+	copy: function ( source ) {
+		var this$1 = this;
+
+
+		Curve.prototype.copy.call( this, source );
+
+		this.curves = [];
+
+		for ( var i = 0, l = source.curves.length; i < l; i ++ ) {
+
+			var curve = source.curves[ i ];
+
+			this$1.curves.push( curve.clone() );
+
+		}
+
+		this.autoClose = source.autoClose;
+
+		return this;
+
+	},
+
+	toJSON: function () {
+		var this$1 = this;
+
+
+		var data = Curve.prototype.toJSON.call( this );
+
+		data.autoClose = this.autoClose;
+		data.curves = [];
+
+		for ( var i = 0, l = this.curves.length; i < l; i ++ ) {
+
+			var curve = this$1.curves[ i ];
+			data.curves.push( curve.toJSON() );
+
+		}
+
+		return data;
+
+	},
+
+	fromJSON: function ( json ) {
+		var this$1 = this;
+
+
+		Curve.prototype.fromJSON.call( this, json );
+
+		this.autoClose = json.autoClose;
+		this.curves = [];
+
+		for ( var i = 0, l = json.curves.length; i < l; i ++ ) {
+
+			var curve = json.curves[ i ];
+			this$1.curves.push( new Curves[ curve.type ]().fromJSON( curve ) );
+
+		}
+
+		return this;
+
+	}
+
+} );
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ * Creates free form 2d path using series of points, lines or curves.
+ **/
+
+function Path( points ) {
+
+	CurvePath.call( this );
+
+	this.type = 'Path';
+
+	this.currentPoint = new Vector2();
+
+	if ( points ) {
+
+		this.setFromPoints( points );
+
+	}
+
+}
+
+Path.prototype = Object.assign( Object.create( CurvePath.prototype ), {
+
+	constructor: Path,
+
+	setFromPoints: function ( points ) {
+		var this$1 = this;
+
+
+		this.moveTo( points[ 0 ].x, points[ 0 ].y );
+
+		for ( var i = 1, l = points.length; i < l; i ++ ) {
+
+			this$1.lineTo( points[ i ].x, points[ i ].y );
+
+		}
+
+	},
+
+	moveTo: function ( x, y ) {
+
+		this.currentPoint.set( x, y ); // TODO consider referencing vectors instead of copying?
+
+	},
+
+	lineTo: function ( x, y ) {
+
+		var curve = new LineCurve( this.currentPoint.clone(), new Vector2( x, y ) );
+		this.curves.push( curve );
+
+		this.currentPoint.set( x, y );
+
+	},
+
+	quadraticCurveTo: function ( aCPx, aCPy, aX, aY ) {
+
+		var curve = new QuadraticBezierCurve(
+			this.currentPoint.clone(),
+			new Vector2( aCPx, aCPy ),
+			new Vector2( aX, aY )
+		);
+
+		this.curves.push( curve );
+
+		this.currentPoint.set( aX, aY );
+
+	},
+
+	bezierCurveTo: function ( aCP1x, aCP1y, aCP2x, aCP2y, aX, aY ) {
+
+		var curve = new CubicBezierCurve(
+			this.currentPoint.clone(),
+			new Vector2( aCP1x, aCP1y ),
+			new Vector2( aCP2x, aCP2y ),
+			new Vector2( aX, aY )
+		);
+
+		this.curves.push( curve );
+
+		this.currentPoint.set( aX, aY );
+
+	},
+
+	splineThru: function ( pts /*Array of Vector*/ ) {
+
+		var npts = [ this.currentPoint.clone() ].concat( pts );
+
+		var curve = new SplineCurve( npts );
+		this.curves.push( curve );
+
+		this.currentPoint.copy( pts[ pts.length - 1 ] );
+
+	},
+
+	arc: function ( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
+
+		var x0 = this.currentPoint.x;
+		var y0 = this.currentPoint.y;
+
+		this.absarc( aX + x0, aY + y0, aRadius,
+			aStartAngle, aEndAngle, aClockwise );
+
+	},
+
+	absarc: function ( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
+
+		this.absellipse( aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise );
+
+	},
+
+	ellipse: function ( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
+
+		var x0 = this.currentPoint.x;
+		var y0 = this.currentPoint.y;
+
+		this.absellipse( aX + x0, aY + y0, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation );
+
+	},
+
+	absellipse: function ( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
+
+		var curve = new EllipseCurve( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation );
+
+		if ( this.curves.length > 0 ) {
+
+			// if a previous curve is present, attempt to join
+			var firstPoint = curve.getPoint( 0 );
+
+			if ( ! firstPoint.equals( this.currentPoint ) ) {
+
+				this.lineTo( firstPoint.x, firstPoint.y );
+
+			}
+
+		}
+
+		this.curves.push( curve );
+
+		var lastPoint = curve.getPoint( 1 );
+		this.currentPoint.copy( lastPoint );
+
+	},
+
+	copy: function ( source ) {
+
+		CurvePath.prototype.copy.call( this, source );
+
+		this.currentPoint.copy( source.currentPoint );
+
+		return this;
+
+	},
+
+	toJSON: function () {
+
+		var data = CurvePath.prototype.toJSON.call( this );
+
+		data.currentPoint = this.currentPoint.toArray();
+
+		return data;
+
+	},
+
+	fromJSON: function ( json ) {
+
+		CurvePath.prototype.fromJSON.call( this, json );
+
+		this.currentPoint.fromArray( json.currentPoint );
+
+		return this;
+
+	}
+
+} );
+
+/**
+ * @author zz85 / http://www.lab4games.net/zz85/blog
+ * Defines a 2d shape plane using paths.
+ **/
+
+// STEP 1 Create a path.
+// STEP 2 Turn path into shape.
+// STEP 3 ExtrudeGeometry takes in Shape/Shapes
+// STEP 3a - Extract points from each shape, turn to vertices
+// STEP 3b - Triangulate each shape, add faces.
+
+function Shape( points ) {
+
+	Path.call( this, points );
+
+	this.uuid = _Math.generateUUID();
+
+	this.type = 'Shape';
+
+	this.holes = [];
+
+}
+
+Shape.prototype = Object.assign( Object.create( Path.prototype ), {
+
+	constructor: Shape,
+
+	getPointsHoles: function ( divisions ) {
+		var this$1 = this;
+
+
+		var holesPts = [];
+
+		for ( var i = 0, l = this.holes.length; i < l; i ++ ) {
+
+			holesPts[ i ] = this$1.holes[ i ].getPoints( divisions );
+
+		}
+
+		return holesPts;
+
+	},
+
+	// get points of shape and holes (keypoints based on segments parameter)
+
+	extractPoints: function ( divisions ) {
+
+		return {
+
+			shape: this.getPoints( divisions ),
+			holes: this.getPointsHoles( divisions )
+
+		};
+
+	},
+
+	copy: function ( source ) {
+		var this$1 = this;
+
+
+		Path.prototype.copy.call( this, source );
+
+		this.holes = [];
+
+		for ( var i = 0, l = source.holes.length; i < l; i ++ ) {
+
+			var hole = source.holes[ i ];
+
+			this$1.holes.push( hole.clone() );
+
+		}
+
+		return this;
+
+	},
+
+	toJSON: function () {
+		var this$1 = this;
+
+
+		var data = Path.prototype.toJSON.call( this );
+
+		data.uuid = this.uuid;
+		data.holes = [];
+
+		for ( var i = 0, l = this.holes.length; i < l; i ++ ) {
+
+			var hole = this$1.holes[ i ];
+			data.holes.push( hole.toJSON() );
+
+		}
+
+		return data;
+
+	},
+
+	fromJSON: function ( json ) {
+		var this$1 = this;
+
+
+		Path.prototype.fromJSON.call( this, json );
+
+		this.uuid = json.uuid;
+		this.holes = [];
+
+		for ( var i = 0, l = json.holes.length; i < l; i ++ ) {
+
+			var hole = json.holes[ i ];
+			this$1.holes.push( new Path().fromJSON( hole ) );
+
+		}
+
 		return this;
 
 	}
@@ -32241,168 +34578,69 @@ RectAreaLight.prototype = Object.assign( Object.create( Light.prototype ), {
 } );
 
 /**
- * @author tschw
+ *
+ * A Track that interpolates Strings
+ *
+ *
  * @author Ben Houston / http://clara.io/
  * @author David Sarno / http://lighthaus.us/
+ * @author tschw
  */
 
-var AnimationUtils = {
+function StringKeyframeTrack( name, times, values, interpolation ) {
 
-	// same as Array.prototype.slice, but also works on typed arrays
-	arraySlice: function ( array, from, to ) {
+	KeyframeTrack.call( this, name, times, values, interpolation );
 
-		if ( AnimationUtils.isTypedArray( array ) ) {
+}
 
-			// in ios9 array.subarray(from, undefined) will return empty array
-			// but array.subarray(from) or array.subarray(from, len) is correct
-			return new array.constructor( array.subarray( from, to !== undefined ? to : array.length ) );
+StringKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
 
-		}
+	constructor: StringKeyframeTrack,
 
-		return array.slice( from, to );
+	ValueTypeName: 'string',
+	ValueBufferType: Array,
 
-	},
+	DefaultInterpolation: InterpolateDiscrete,
 
-	// converts an array to a specific type
-	convertArray: function ( array, type, forceClone ) {
+	InterpolantFactoryMethodLinear: undefined,
 
-		if ( ! array || // let 'undefined' and 'null' pass
-				! forceClone && array.constructor === type ) { return array; }
+	InterpolantFactoryMethodSmooth: undefined
 
-		if ( typeof type.BYTES_PER_ELEMENT === 'number' ) {
+} );
 
-			return new type( array ); // create typed array
+/**
+ *
+ * A Track of Boolean keyframe values.
+ *
+ *
+ * @author Ben Houston / http://clara.io/
+ * @author David Sarno / http://lighthaus.us/
+ * @author tschw
+ */
 
-		}
+function BooleanKeyframeTrack( name, times, values ) {
 
-		return Array.prototype.slice.call( array ); // create Array
+	KeyframeTrack.call( this, name, times, values );
 
-	},
+}
 
-	isTypedArray: function ( object ) {
+BooleanKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
 
-		return ArrayBuffer.isView( object ) &&
-				! ( object instanceof DataView );
+	constructor: BooleanKeyframeTrack,
 
-	},
+	ValueTypeName: 'bool',
+	ValueBufferType: Array,
 
-	// returns an array by which times and values can be sorted
-	getKeyframeOrder: function ( times ) {
+	DefaultInterpolation: InterpolateDiscrete,
 
-		function compareTime( i, j ) {
+	InterpolantFactoryMethodLinear: undefined,
+	InterpolantFactoryMethodSmooth: undefined
 
-			return times[ i ] - times[ j ];
+	// Note: Actually this track could have a optimized / compressed
+	// representation of a single value and a custom interpolant that
+	// computes "firstValue ^ isOdd( index )".
 
-		}
-
-		var n = times.length;
-		var result = new Array( n );
-		for ( var i = 0; i !== n; ++ i ) { result[ i ] = i; }
-
-		result.sort( compareTime );
-
-		return result;
-
-	},
-
-	// uses the array previously returned by 'getKeyframeOrder' to sort data
-	sortedArray: function ( values, stride, order ) {
-
-		var nValues = values.length;
-		var result = new values.constructor( nValues );
-
-		for ( var i = 0, dstOffset = 0; dstOffset !== nValues; ++ i ) {
-
-			var srcOffset = order[ i ] * stride;
-
-			for ( var j = 0; j !== stride; ++ j ) {
-
-				result[ dstOffset ++ ] = values[ srcOffset + j ];
-
-			}
-
-		}
-
-		return result;
-
-	},
-
-	// function for parsing AOS keyframe formats
-	flattenJSON: function ( jsonKeys, times, values, valuePropertyName ) {
-
-		var i = 1, key = jsonKeys[ 0 ];
-
-		while ( key !== undefined && key[ valuePropertyName ] === undefined ) {
-
-			key = jsonKeys[ i ++ ];
-
-		}
-
-		if ( key === undefined ) { return; } // no data
-
-		var value = key[ valuePropertyName ];
-		if ( value === undefined ) { return; } // no data
-
-		if ( Array.isArray( value ) ) {
-
-			do {
-
-				value = key[ valuePropertyName ];
-
-				if ( value !== undefined ) {
-
-					times.push( key.time );
-					values.push.apply( values, value ); // push all elements
-
-				}
-
-				key = jsonKeys[ i ++ ];
-
-			} while ( key !== undefined );
-
-		} else if ( value.toArray !== undefined ) {
-
-			// ...assume THREE.Math-ish
-
-			do {
-
-				value = key[ valuePropertyName ];
-
-				if ( value !== undefined ) {
-
-					times.push( key.time );
-					value.toArray( values, values.length );
-
-				}
-
-				key = jsonKeys[ i ++ ];
-
-			} while ( key !== undefined );
-
-		} else {
-
-			// otherwise push as-is
-
-			do {
-
-				value = key[ valuePropertyName ];
-
-				if ( value !== undefined ) {
-
-					times.push( key.time );
-					values.push( value );
-
-				}
-
-				key = jsonKeys[ i ++ ];
-
-			} while ( key !== undefined );
-
-		}
-
-	}
-
-};
+} );
 
 /**
  * Abstract base class of interpolants over parametric samples.
@@ -32664,6 +34902,137 @@ Object.assign( Interpolant.prototype, {
 } );
 
 /**
+ * Spherical linear unit quaternion interpolant.
+ *
+ * @author tschw
+ */
+
+function QuaternionLinearInterpolant( parameterPositions, sampleValues, sampleSize, resultBuffer ) {
+
+	Interpolant.call( this, parameterPositions, sampleValues, sampleSize, resultBuffer );
+
+}
+
+QuaternionLinearInterpolant.prototype = Object.assign( Object.create( Interpolant.prototype ), {
+
+	constructor: QuaternionLinearInterpolant,
+
+	interpolate_: function ( i1, t0, t, t1 ) {
+
+		var result = this.resultBuffer,
+			values = this.sampleValues,
+			stride = this.valueSize,
+
+			offset = i1 * stride,
+
+			alpha = ( t - t0 ) / ( t1 - t0 );
+
+		for ( var end = offset + stride; offset !== end; offset += 4 ) {
+
+			Quaternion.slerpFlat( result, 0, values, offset - stride, values, offset, alpha );
+
+		}
+
+		return result;
+
+	}
+
+} );
+
+/**
+ *
+ * A Track of quaternion keyframe values.
+ *
+ * @author Ben Houston / http://clara.io/
+ * @author David Sarno / http://lighthaus.us/
+ * @author tschw
+ */
+
+function QuaternionKeyframeTrack( name, times, values, interpolation ) {
+
+	KeyframeTrack.call( this, name, times, values, interpolation );
+
+}
+
+QuaternionKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
+
+	constructor: QuaternionKeyframeTrack,
+
+	ValueTypeName: 'quaternion',
+
+	// ValueBufferType is inherited
+
+	DefaultInterpolation: InterpolateLinear,
+
+	InterpolantFactoryMethodLinear: function ( result ) {
+
+		return new QuaternionLinearInterpolant( this.times, this.values, this.getValueSize(), result );
+
+	},
+
+	InterpolantFactoryMethodSmooth: undefined // not yet implemented
+
+} );
+
+/**
+ *
+ * A Track of keyframe values that represent color.
+ *
+ *
+ * @author Ben Houston / http://clara.io/
+ * @author David Sarno / http://lighthaus.us/
+ * @author tschw
+ */
+
+function ColorKeyframeTrack( name, times, values, interpolation ) {
+
+	KeyframeTrack.call( this, name, times, values, interpolation );
+
+}
+
+ColorKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
+
+	constructor: ColorKeyframeTrack,
+
+	ValueTypeName: 'color'
+
+	// ValueBufferType is inherited
+
+	// DefaultInterpolation is inherited
+
+	// Note: Very basic implementation and nothing special yet.
+	// However, this is the place for color space parameterization.
+
+} );
+
+/**
+ *
+ * A Track of numeric keyframe values.
+ *
+ * @author Ben Houston / http://clara.io/
+ * @author David Sarno / http://lighthaus.us/
+ * @author tschw
+ */
+
+function NumberKeyframeTrack( name, times, values, interpolation ) {
+
+	KeyframeTrack.call( this, name, times, values, interpolation );
+
+}
+
+NumberKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
+
+	constructor: NumberKeyframeTrack,
+
+	ValueTypeName: 'number'
+
+	// ValueBufferType is inherited
+
+	// DefaultInterpolation is inherited
+
+} );
+
+/**
  * Fast and simple cubic spline interpolant.
  *
  * It was derived from a Hermitian construction setting the first derivative
@@ -32879,606 +35248,169 @@ DiscreteInterpolant.prototype = Object.assign( Object.create( Interpolant.protot
 
 } );
 
-var KeyframeTrackPrototype;
-
-KeyframeTrackPrototype = {
-
-	TimeBufferType: Float32Array,
-	ValueBufferType: Float32Array,
-
-	DefaultInterpolation: InterpolateLinear,
-
-	InterpolantFactoryMethodDiscrete: function ( result ) {
-
-		return new DiscreteInterpolant( this.times, this.values, this.getValueSize(), result );
-
-	},
-
-	InterpolantFactoryMethodLinear: function ( result ) {
-
-		return new LinearInterpolant( this.times, this.values, this.getValueSize(), result );
-
-	},
-
-	InterpolantFactoryMethodSmooth: function ( result ) {
-
-		return new CubicInterpolant( this.times, this.values, this.getValueSize(), result );
-
-	},
-
-	setInterpolation: function ( interpolation ) {
-
-		var factoryMethod;
-
-		switch ( interpolation ) {
-
-			case InterpolateDiscrete:
-
-				factoryMethod = this.InterpolantFactoryMethodDiscrete;
-
-				break;
-
-			case InterpolateLinear:
-
-				factoryMethod = this.InterpolantFactoryMethodLinear;
-
-				break;
-
-			case InterpolateSmooth:
-
-				factoryMethod = this.InterpolantFactoryMethodSmooth;
-
-				break;
-
-		}
-
-		if ( factoryMethod === undefined ) {
-
-			var message = "unsupported interpolation for " +
-					this.ValueTypeName + " keyframe track named " + this.name;
-
-			if ( this.createInterpolant === undefined ) {
-
-				// fall back to default, unless the default itself is messed up
-				if ( interpolation !== this.DefaultInterpolation ) {
-
-					this.setInterpolation( this.DefaultInterpolation );
-
-				} else {
-
-					throw new Error( message ); // fatal, in this case
-
-				}
-
-			}
-
-			console.warn( 'THREE.KeyframeTrackPrototype:', message );
-			return;
-
-		}
-
-		this.createInterpolant = factoryMethod;
-
-	},
-
-	getInterpolation: function () {
-
-		switch ( this.createInterpolant ) {
-
-			case this.InterpolantFactoryMethodDiscrete:
-
-				return InterpolateDiscrete;
-
-			case this.InterpolantFactoryMethodLinear:
-
-				return InterpolateLinear;
-
-			case this.InterpolantFactoryMethodSmooth:
-
-				return InterpolateSmooth;
-
-		}
-
-	},
-
-	getValueSize: function () {
-
-		return this.values.length / this.times.length;
-
-	},
-
-	// move all keyframes either forwards or backwards in time
-	shift: function ( timeOffset ) {
-
-		if ( timeOffset !== 0.0 ) {
-
-			var times = this.times;
-
-			for ( var i = 0, n = times.length; i !== n; ++ i ) {
-
-				times[ i ] += timeOffset;
-
-			}
-
-		}
-
-		return this;
-
-	},
-
-	// scale all keyframe times by a factor (useful for frame <-> seconds conversions)
-	scale: function ( timeScale ) {
-
-		if ( timeScale !== 1.0 ) {
-
-			var times = this.times;
-
-			for ( var i = 0, n = times.length; i !== n; ++ i ) {
-
-				times[ i ] *= timeScale;
-
-			}
-
-		}
-
-		return this;
-
-	},
-
-	// removes keyframes before and after animation without changing any values within the range [startTime, endTime].
-	// IMPORTANT: We do not shift around keys to the start of the track time, because for interpolated keys this will change their values
-	trim: function ( startTime, endTime ) {
-
-		var times = this.times,
-			nKeys = times.length,
-			from = 0,
-			to = nKeys - 1;
-
-		while ( from !== nKeys && times[ from ] < startTime ) { ++ from; }
-		while ( to !== - 1 && times[ to ] > endTime ) { -- to; }
-
-		++ to; // inclusive -> exclusive bound
-
-		if ( from !== 0 || to !== nKeys ) {
-
-			// empty tracks are forbidden, so keep at least one keyframe
-			if ( from >= to ) { to = Math.max( to, 1 ), from = to - 1; }
-
-			var stride = this.getValueSize();
-			this.times = AnimationUtils.arraySlice( times, from, to );
-			this.values = AnimationUtils.arraySlice( this.values, from * stride, to * stride );
-
-		}
-
-		return this;
-
-	},
-
-	// ensure we do not get a GarbageInGarbageOut situation, make sure tracks are at least minimally viable
-	validate: function () {
-		var this$1 = this;
-
-
-		var valid = true;
-
-		var valueSize = this.getValueSize();
-		if ( valueSize - Math.floor( valueSize ) !== 0 ) {
-
-			console.error( 'THREE.KeyframeTrackPrototype: Invalid value size in track.', this );
-			valid = false;
-
-		}
-
-		var times = this.times,
-			values = this.values,
-
-			nKeys = times.length;
-
-		if ( nKeys === 0 ) {
-
-			console.error( 'THREE.KeyframeTrackPrototype: Track is empty.', this );
-			valid = false;
-
-		}
-
-		var prevTime = null;
-
-		for ( var i = 0; i !== nKeys; i ++ ) {
-
-			var currTime = times[ i ];
-
-			if ( typeof currTime === 'number' && isNaN( currTime ) ) {
-
-				console.error( 'THREE.KeyframeTrackPrototype: Time is not a valid number.', this$1, i, currTime );
-				valid = false;
-				break;
-
-			}
-
-			if ( prevTime !== null && prevTime > currTime ) {
-
-				console.error( 'THREE.KeyframeTrackPrototype: Out of order keys.', this$1, i, currTime, prevTime );
-				valid = false;
-				break;
-
-			}
-
-			prevTime = currTime;
-
-		}
-
-		if ( values !== undefined ) {
-
-			if ( AnimationUtils.isTypedArray( values ) ) {
-
-				for ( var i = 0, n = values.length; i !== n; ++ i ) {
-
-					var value = values[ i ];
-
-					if ( isNaN( value ) ) {
-
-						console.error( 'THREE.KeyframeTrackPrototype: Value is not a valid number.', this$1, i, value );
-						valid = false;
-						break;
-
-					}
-
-				}
-
-			}
-
-		}
-
-		return valid;
-
-	},
-
-	// removes equivalent sequential keys as common in morph target sequences
-	// (0,0,0,0,1,1,1,0,0,0,0,0,0,0) --> (0,0,1,1,0,0)
-	optimize: function () {
-
-		var times = this.times,
-			values = this.values,
-			stride = this.getValueSize(),
-
-			smoothInterpolation = this.getInterpolation() === InterpolateSmooth,
-
-			writeIndex = 1,
-			lastIndex = times.length - 1;
-
-		for ( var i = 1; i < lastIndex; ++ i ) {
-
-			var keep = false;
-
-			var time = times[ i ];
-			var timeNext = times[ i + 1 ];
-
-			// remove adjacent keyframes scheduled at the same time
-
-			if ( time !== timeNext && ( i !== 1 || time !== time[ 0 ] ) ) {
-
-				if ( ! smoothInterpolation ) {
-
-					// remove unnecessary keyframes same as their neighbors
-
-					var offset = i * stride,
-						offsetP = offset - stride,
-						offsetN = offset + stride;
-
-					for ( var j = 0; j !== stride; ++ j ) {
-
-						var value = values[ offset + j ];
-
-						if ( value !== values[ offsetP + j ] ||
-								value !== values[ offsetN + j ] ) {
-
-							keep = true;
-							break;
-
-						}
-
-					}
-
-				} else { keep = true; }
-
-			}
-
-			// in-place compaction
-
-			if ( keep ) {
-
-				if ( i !== writeIndex ) {
-
-					times[ writeIndex ] = times[ i ];
-
-					var readOffset = i * stride,
-						writeOffset = writeIndex * stride;
-
-					for ( var j = 0; j !== stride; ++ j )
-
-						{ values[ writeOffset + j ] = values[ readOffset + j ]; }
-
-				}
-
-				++ writeIndex;
-
-			}
-
-		}
-
-		// flush last keyframe (compaction looks ahead)
-
-		if ( lastIndex > 0 ) {
-
-			times[ writeIndex ] = times[ lastIndex ];
-
-			for ( var readOffset = lastIndex * stride, writeOffset = writeIndex * stride, j = 0; j !== stride; ++ j )
-
-				{ values[ writeOffset + j ] = values[ readOffset + j ]; }
-
-			++ writeIndex;
-
-		}
-
-		if ( writeIndex !== times.length ) {
-
-			this.times = AnimationUtils.arraySlice( times, 0, writeIndex );
-			this.values = AnimationUtils.arraySlice( values, 0, writeIndex * stride );
-
-		}
-
-		return this;
-
-	}
-
-};
-
-function KeyframeTrackConstructor( name, times, values, interpolation ) {
-
-	if ( name === undefined ) { throw new Error( 'track name is undefined' ); }
-
-	if ( times === undefined || times.length === 0 ) {
-
-		throw new Error( 'no keyframes in track named ' + name );
-
-	}
-
-	this.name = name;
-
-	this.times = AnimationUtils.convertArray( times, this.TimeBufferType );
-	this.values = AnimationUtils.convertArray( values, this.ValueBufferType );
-
-	this.setInterpolation( interpolation || this.DefaultInterpolation );
-
-	this.validate();
-	this.optimize();
-
-}
-
 /**
- *
- * A Track of vectored keyframe values.
- *
- *
+ * @author tschw
  * @author Ben Houston / http://clara.io/
  * @author David Sarno / http://lighthaus.us/
- * @author tschw
  */
 
-function VectorKeyframeTrack( name, times, values, interpolation ) {
+var AnimationUtils = {
 
-	KeyframeTrackConstructor.call( this, name, times, values, interpolation );
+	// same as Array.prototype.slice, but also works on typed arrays
+	arraySlice: function ( array, from, to ) {
 
-}
+		if ( AnimationUtils.isTypedArray( array ) ) {
 
-VectorKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
+			// in ios9 array.subarray(from, undefined) will return empty array
+			// but array.subarray(from) or array.subarray(from, len) is correct
+			return new array.constructor( array.subarray( from, to !== undefined ? to : array.length ) );
 
-	constructor: VectorKeyframeTrack,
+		}
 
-	ValueTypeName: 'vector'
+		return array.slice( from, to );
 
-	// ValueBufferType is inherited
+	},
 
-	// DefaultInterpolation is inherited
+	// converts an array to a specific type
+	convertArray: function ( array, type, forceClone ) {
 
-} );
+		if ( ! array || // let 'undefined' and 'null' pass
+				! forceClone && array.constructor === type ) { return array; }
 
-/**
- * Spherical linear unit quaternion interpolant.
- *
- * @author tschw
- */
+		if ( typeof type.BYTES_PER_ELEMENT === 'number' ) {
 
-function QuaternionLinearInterpolant( parameterPositions, sampleValues, sampleSize, resultBuffer ) {
+			return new type( array ); // create typed array
 
-	Interpolant.call( this, parameterPositions, sampleValues, sampleSize, resultBuffer );
+		}
 
-}
+		return Array.prototype.slice.call( array ); // create Array
 
-QuaternionLinearInterpolant.prototype = Object.assign( Object.create( Interpolant.prototype ), {
+	},
 
-	constructor: QuaternionLinearInterpolant,
+	isTypedArray: function ( object ) {
 
-	interpolate_: function ( i1, t0, t, t1 ) {
+		return ArrayBuffer.isView( object ) &&
+				! ( object instanceof DataView );
 
-		var result = this.resultBuffer,
-			values = this.sampleValues,
-			stride = this.valueSize,
+	},
 
-			offset = i1 * stride,
+	// returns an array by which times and values can be sorted
+	getKeyframeOrder: function ( times ) {
 
-			alpha = ( t - t0 ) / ( t1 - t0 );
+		function compareTime( i, j ) {
 
-		for ( var end = offset + stride; offset !== end; offset += 4 ) {
+			return times[ i ] - times[ j ];
 
-			Quaternion.slerpFlat( result, 0, values, offset - stride, values, offset, alpha );
+		}
+
+		var n = times.length;
+		var result = new Array( n );
+		for ( var i = 0; i !== n; ++ i ) { result[ i ] = i; }
+
+		result.sort( compareTime );
+
+		return result;
+
+	},
+
+	// uses the array previously returned by 'getKeyframeOrder' to sort data
+	sortedArray: function ( values, stride, order ) {
+
+		var nValues = values.length;
+		var result = new values.constructor( nValues );
+
+		for ( var i = 0, dstOffset = 0; dstOffset !== nValues; ++ i ) {
+
+			var srcOffset = order[ i ] * stride;
+
+			for ( var j = 0; j !== stride; ++ j ) {
+
+				result[ dstOffset ++ ] = values[ srcOffset + j ];
+
+			}
 
 		}
 
 		return result;
 
-	}
-
-} );
-
-/**
- *
- * A Track of quaternion keyframe values.
- *
- * @author Ben Houston / http://clara.io/
- * @author David Sarno / http://lighthaus.us/
- * @author tschw
- */
-
-function QuaternionKeyframeTrack( name, times, values, interpolation ) {
-
-	KeyframeTrackConstructor.call( this, name, times, values, interpolation );
-
-}
-
-QuaternionKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
-
-	constructor: QuaternionKeyframeTrack,
-
-	ValueTypeName: 'quaternion',
-
-	// ValueBufferType is inherited
-
-	DefaultInterpolation: InterpolateLinear,
-
-	InterpolantFactoryMethodLinear: function ( result ) {
-
-		return new QuaternionLinearInterpolant( this.times, this.values, this.getValueSize(), result );
-
 	},
 
-	InterpolantFactoryMethodSmooth: undefined // not yet implemented
+	// function for parsing AOS keyframe formats
+	flattenJSON: function ( jsonKeys, times, values, valuePropertyName ) {
 
-} );
+		var i = 1, key = jsonKeys[ 0 ];
 
-/**
- *
- * A Track of numeric keyframe values.
- *
- * @author Ben Houston / http://clara.io/
- * @author David Sarno / http://lighthaus.us/
- * @author tschw
- */
+		while ( key !== undefined && key[ valuePropertyName ] === undefined ) {
 
-function NumberKeyframeTrack( name, times, values, interpolation ) {
+			key = jsonKeys[ i ++ ];
 
-	KeyframeTrackConstructor.call( this, name, times, values, interpolation );
+		}
 
-}
+		if ( key === undefined ) { return; } // no data
 
-NumberKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
+		var value = key[ valuePropertyName ];
+		if ( value === undefined ) { return; } // no data
 
-	constructor: NumberKeyframeTrack,
+		if ( Array.isArray( value ) ) {
 
-	ValueTypeName: 'number'
+			do {
 
-	// ValueBufferType is inherited
+				value = key[ valuePropertyName ];
 
-	// DefaultInterpolation is inherited
+				if ( value !== undefined ) {
 
-} );
+					times.push( key.time );
+					values.push.apply( values, value ); // push all elements
 
-/**
- *
- * A Track that interpolates Strings
- *
- *
- * @author Ben Houston / http://clara.io/
- * @author David Sarno / http://lighthaus.us/
- * @author tschw
- */
+				}
 
-function StringKeyframeTrack( name, times, values, interpolation ) {
+				key = jsonKeys[ i ++ ];
 
-	KeyframeTrackConstructor.call( this, name, times, values, interpolation );
+			} while ( key !== undefined );
 
-}
+		} else if ( value.toArray !== undefined ) {
 
-StringKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
+			// ...assume THREE.Math-ish
 
-	constructor: StringKeyframeTrack,
+			do {
 
-	ValueTypeName: 'string',
-	ValueBufferType: Array,
+				value = key[ valuePropertyName ];
 
-	DefaultInterpolation: InterpolateDiscrete,
+				if ( value !== undefined ) {
 
-	InterpolantFactoryMethodLinear: undefined,
+					times.push( key.time );
+					value.toArray( values, values.length );
 
-	InterpolantFactoryMethodSmooth: undefined
+				}
 
-} );
+				key = jsonKeys[ i ++ ];
 
-/**
- *
- * A Track of Boolean keyframe values.
- *
- *
- * @author Ben Houston / http://clara.io/
- * @author David Sarno / http://lighthaus.us/
- * @author tschw
- */
+			} while ( key !== undefined );
 
-function BooleanKeyframeTrack( name, times, values ) {
+		} else {
 
-	KeyframeTrackConstructor.call( this, name, times, values );
+			// otherwise push as-is
 
-}
+			do {
 
-BooleanKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
+				value = key[ valuePropertyName ];
 
-	constructor: BooleanKeyframeTrack,
+				if ( value !== undefined ) {
 
-	ValueTypeName: 'bool',
-	ValueBufferType: Array,
+					times.push( key.time );
+					values.push( value );
 
-	DefaultInterpolation: InterpolateDiscrete,
+				}
 
-	InterpolantFactoryMethodLinear: undefined,
-	InterpolantFactoryMethodSmooth: undefined
+				key = jsonKeys[ i ++ ];
 
-	// Note: Actually this track could have a optimized / compressed
-	// representation of a single value and a custom interpolant that
-	// computes "firstValue ^ isOdd( index )".
+			} while ( key !== undefined );
 
-} );
+		}
 
-/**
- *
- * A Track of keyframe values that represent color.
- *
- *
- * @author Ben Houston / http://clara.io/
- * @author David Sarno / http://lighthaus.us/
- * @author tschw
- */
+	}
 
-function ColorKeyframeTrack( name, times, values, interpolation ) {
-
-	KeyframeTrackConstructor.call( this, name, times, values, interpolation );
-
-}
-
-ColorKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackPrototype ), {
-
-	constructor: ColorKeyframeTrack,
-
-	ValueTypeName: 'color'
-
-	// ValueBufferType is inherited
-
-	// DefaultInterpolation is inherited
-
-
-	// Note: Very basic implementation and nothing special yet.
-	// However, this is the place for color space parameterization.
-
-} );
+};
 
 /**
  *
@@ -33492,12 +35424,20 @@ ColorKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrackProtot
 
 function KeyframeTrack( name, times, values, interpolation ) {
 
-	KeyframeTrackConstructor.apply( this, name, times, values, interpolation );
+	if ( name === undefined ) { throw new Error( 'THREE.KeyframeTrack: track name is undefined' ); }
+	if ( times === undefined || times.length === 0 ) { throw new Error( 'THREE.KeyframeTrack: no keyframes in track named ' + name ); }
+
+	this.name = name;
+
+	this.times = AnimationUtils.convertArray( times, this.TimeBufferType );
+	this.values = AnimationUtils.convertArray( values, this.ValueBufferType );
+
+	this.setInterpolation( interpolation || this.DefaultInterpolation );
+
+	this.validate();
+	this.optimize();
 
 }
-
-KeyframeTrack.prototype = KeyframeTrackPrototype;
-KeyframeTrackPrototype.constructor = KeyframeTrack;
 
 // Static methods:
 
@@ -33510,7 +35450,7 @@ Object.assign( KeyframeTrack, {
 
 		if ( json.type === undefined ) {
 
-			throw new Error( 'track type undefined, can not parse' );
+			throw new Error( 'THREE.KeyframeTrack: track type undefined, can not parse' );
 
 		}
 
@@ -33617,9 +35557,409 @@ Object.assign( KeyframeTrack, {
 
 		}
 
-		throw new Error( 'Unsupported typeName: ' + typeName );
+		throw new Error( 'THREE.KeyframeTrack: Unsupported typeName: ' + typeName );
 
 	}
+
+} );
+
+Object.assign( KeyframeTrack.prototype, {
+
+	constructor: KeyframeTrack,
+
+	TimeBufferType: Float32Array,
+
+	ValueBufferType: Float32Array,
+
+	DefaultInterpolation: InterpolateLinear,
+
+	InterpolantFactoryMethodDiscrete: function ( result ) {
+
+		return new DiscreteInterpolant( this.times, this.values, this.getValueSize(), result );
+
+	},
+
+	InterpolantFactoryMethodLinear: function ( result ) {
+
+		return new LinearInterpolant( this.times, this.values, this.getValueSize(), result );
+
+	},
+
+	InterpolantFactoryMethodSmooth: function ( result ) {
+
+		return new CubicInterpolant( this.times, this.values, this.getValueSize(), result );
+
+	},
+
+	setInterpolation: function ( interpolation ) {
+
+		var factoryMethod;
+
+		switch ( interpolation ) {
+
+			case InterpolateDiscrete:
+
+				factoryMethod = this.InterpolantFactoryMethodDiscrete;
+
+				break;
+
+			case InterpolateLinear:
+
+				factoryMethod = this.InterpolantFactoryMethodLinear;
+
+				break;
+
+			case InterpolateSmooth:
+
+				factoryMethod = this.InterpolantFactoryMethodSmooth;
+
+				break;
+
+		}
+
+		if ( factoryMethod === undefined ) {
+
+			var message = "unsupported interpolation for " +
+				this.ValueTypeName + " keyframe track named " + this.name;
+
+			if ( this.createInterpolant === undefined ) {
+
+				// fall back to default, unless the default itself is messed up
+				if ( interpolation !== this.DefaultInterpolation ) {
+
+					this.setInterpolation( this.DefaultInterpolation );
+
+				} else {
+
+					throw new Error( message ); // fatal, in this case
+
+				}
+
+			}
+
+			console.warn( 'THREE.KeyframeTrack:', message );
+			return;
+
+		}
+
+		this.createInterpolant = factoryMethod;
+
+	},
+
+	getInterpolation: function () {
+
+		switch ( this.createInterpolant ) {
+
+			case this.InterpolantFactoryMethodDiscrete:
+
+				return InterpolateDiscrete;
+
+			case this.InterpolantFactoryMethodLinear:
+
+				return InterpolateLinear;
+
+			case this.InterpolantFactoryMethodSmooth:
+
+				return InterpolateSmooth;
+
+		}
+
+	},
+
+	getValueSize: function () {
+
+		return this.values.length / this.times.length;
+
+	},
+
+	// move all keyframes either forwards or backwards in time
+	shift: function ( timeOffset ) {
+
+		if ( timeOffset !== 0.0 ) {
+
+			var times = this.times;
+
+			for ( var i = 0, n = times.length; i !== n; ++ i ) {
+
+				times[ i ] += timeOffset;
+
+			}
+
+		}
+
+		return this;
+
+	},
+
+	// scale all keyframe times by a factor (useful for frame <-> seconds conversions)
+	scale: function ( timeScale ) {
+
+		if ( timeScale !== 1.0 ) {
+
+			var times = this.times;
+
+			for ( var i = 0, n = times.length; i !== n; ++ i ) {
+
+				times[ i ] *= timeScale;
+
+			}
+
+		}
+
+		return this;
+
+	},
+
+	// removes keyframes before and after animation without changing any values within the range [startTime, endTime].
+	// IMPORTANT: We do not shift around keys to the start of the track time, because for interpolated keys this will change their values
+	trim: function ( startTime, endTime ) {
+
+		var times = this.times,
+			nKeys = times.length,
+			from = 0,
+			to = nKeys - 1;
+
+		while ( from !== nKeys && times[ from ] < startTime ) {
+
+			++ from;
+
+		}
+
+		while ( to !== - 1 && times[ to ] > endTime ) {
+
+			-- to;
+
+		}
+
+		++ to; // inclusive -> exclusive bound
+
+		if ( from !== 0 || to !== nKeys ) {
+
+			// empty tracks are forbidden, so keep at least one keyframe
+			if ( from >= to ) { to = Math.max( to, 1 ), from = to - 1; }
+
+			var stride = this.getValueSize();
+			this.times = AnimationUtils.arraySlice( times, from, to );
+			this.values = AnimationUtils.arraySlice( this.values, from * stride, to * stride );
+
+		}
+
+		return this;
+
+	},
+
+	// ensure we do not get a GarbageInGarbageOut situation, make sure tracks are at least minimally viable
+	validate: function () {
+		var this$1 = this;
+
+
+		var valid = true;
+
+		var valueSize = this.getValueSize();
+		if ( valueSize - Math.floor( valueSize ) !== 0 ) {
+
+			console.error( 'THREE.KeyframeTrack: Invalid value size in track.', this );
+			valid = false;
+
+		}
+
+		var times = this.times,
+			values = this.values,
+
+			nKeys = times.length;
+
+		if ( nKeys === 0 ) {
+
+			console.error( 'THREE.KeyframeTrack: Track is empty.', this );
+			valid = false;
+
+		}
+
+		var prevTime = null;
+
+		for ( var i = 0; i !== nKeys; i ++ ) {
+
+			var currTime = times[ i ];
+
+			if ( typeof currTime === 'number' && isNaN( currTime ) ) {
+
+				console.error( 'THREE.KeyframeTrack: Time is not a valid number.', this$1, i, currTime );
+				valid = false;
+				break;
+
+			}
+
+			if ( prevTime !== null && prevTime > currTime ) {
+
+				console.error( 'THREE.KeyframeTrack: Out of order keys.', this$1, i, currTime, prevTime );
+				valid = false;
+				break;
+
+			}
+
+			prevTime = currTime;
+
+		}
+
+		if ( values !== undefined ) {
+
+			if ( AnimationUtils.isTypedArray( values ) ) {
+
+				for ( var i = 0, n = values.length; i !== n; ++ i ) {
+
+					var value = values[ i ];
+
+					if ( isNaN( value ) ) {
+
+						console.error( 'THREE.KeyframeTrack: Value is not a valid number.', this$1, i, value );
+						valid = false;
+						break;
+
+					}
+
+				}
+
+			}
+
+		}
+
+		return valid;
+
+	},
+
+	// removes equivalent sequential keys as common in morph target sequences
+	// (0,0,0,0,1,1,1,0,0,0,0,0,0,0) --> (0,0,1,1,0,0)
+	optimize: function () {
+
+		var times = this.times,
+			values = this.values,
+			stride = this.getValueSize(),
+
+			smoothInterpolation = this.getInterpolation() === InterpolateSmooth,
+
+			writeIndex = 1,
+			lastIndex = times.length - 1;
+
+		for ( var i = 1; i < lastIndex; ++ i ) {
+
+			var keep = false;
+
+			var time = times[ i ];
+			var timeNext = times[ i + 1 ];
+
+			// remove adjacent keyframes scheduled at the same time
+
+			if ( time !== timeNext && ( i !== 1 || time !== time[ 0 ] ) ) {
+
+				if ( ! smoothInterpolation ) {
+
+					// remove unnecessary keyframes same as their neighbors
+
+					var offset = i * stride,
+						offsetP = offset - stride,
+						offsetN = offset + stride;
+
+					for ( var j = 0; j !== stride; ++ j ) {
+
+						var value = values[ offset + j ];
+
+						if ( value !== values[ offsetP + j ] ||
+							value !== values[ offsetN + j ] ) {
+
+							keep = true;
+							break;
+
+						}
+
+					}
+
+				} else {
+
+					keep = true;
+
+				}
+
+			}
+
+			// in-place compaction
+
+			if ( keep ) {
+
+				if ( i !== writeIndex ) {
+
+					times[ writeIndex ] = times[ i ];
+
+					var readOffset = i * stride,
+						writeOffset = writeIndex * stride;
+
+					for ( var j = 0; j !== stride; ++ j ) {
+
+						values[ writeOffset + j ] = values[ readOffset + j ];
+
+					}
+
+				}
+
+				++ writeIndex;
+
+			}
+
+		}
+
+		// flush last keyframe (compaction looks ahead)
+
+		if ( lastIndex > 0 ) {
+
+			times[ writeIndex ] = times[ lastIndex ];
+
+			for ( var readOffset = lastIndex * stride, writeOffset = writeIndex * stride, j = 0; j !== stride; ++ j ) {
+
+				values[ writeOffset + j ] = values[ readOffset + j ];
+
+			}
+
+			++ writeIndex;
+
+		}
+
+		if ( writeIndex !== times.length ) {
+
+			this.times = AnimationUtils.arraySlice( times, 0, writeIndex );
+			this.values = AnimationUtils.arraySlice( values, 0, writeIndex * stride );
+
+		}
+
+		return this;
+
+	}
+
+} );
+
+/**
+ *
+ * A Track of vectored keyframe values.
+ *
+ *
+ * @author Ben Houston / http://clara.io/
+ * @author David Sarno / http://lighthaus.us/
+ * @author tschw
+ */
+
+function VectorKeyframeTrack( name, times, values, interpolation ) {
+
+	KeyframeTrack.call( this, name, times, values, interpolation );
+
+}
+
+VectorKeyframeTrack.prototype = Object.assign( Object.create( KeyframeTrack.prototype ), {
+
+	constructor: VectorKeyframeTrack,
+
+	ValueTypeName: 'vector'
+
+	// ValueBufferType is inherited
+
+	// DefaultInterpolation is inherited
 
 } );
 
@@ -34288,18 +36628,6 @@ Object.assign( Loader.prototype, {
 
 	crossOrigin: undefined,
 
-	extractUrlBase: function ( url ) {
-
-		var parts = url.split( '/' );
-
-		if ( parts.length === 1 ) { return './'; }
-
-		parts.pop();
-
-		return parts.join( '/' ) + '/';
-
-	},
-
 	initMaterials: function ( materials, texturePath, crossOrigin ) {
 		var this$1 = this;
 
@@ -34573,6 +36901,50 @@ Object.assign( Loader.prototype, {
 } );
 
 /**
+ * @author Don McCurdy / https://www.donmccurdy.com
+ */
+
+var LoaderUtils = {
+
+	decodeText: function ( array ) {
+
+		if ( typeof TextDecoder !== 'undefined' ) {
+
+			return new TextDecoder().decode( array );
+
+		}
+
+		// Avoid the String.fromCharCode.apply(null, array) shortcut, which
+		// throws a "maximum call stack size exceeded" error for large arrays.
+
+		var s = '';
+
+		for ( var i = 0, il = array.length; i < il; i ++ ) {
+
+			// Implicitly assumes little-endian.
+			s += String.fromCharCode( array[ i ] );
+
+		}
+
+		return s;
+
+	},
+
+	extractUrlBase: function ( url ) {
+
+		var parts = url.split( '/' );
+
+		if ( parts.length === 1 ) { return './'; }
+
+		parts.pop();
+
+		return parts.join( '/' ) + '/';
+
+	}
+
+};
+
+/**
  * @author mrdoob / http://mrdoob.com/
  * @author alteredq / http://alteredqualia.com/
  */
@@ -34598,7 +36970,7 @@ Object.assign( JSONLoader.prototype, {
 
 		var scope = this;
 
-		var texturePath = this.texturePath && ( typeof this.texturePath === "string" ) ? this.texturePath : Loader.prototype.extractUrlBase( url );
+		var texturePath = this.texturePath && ( typeof this.texturePath === 'string' ) ? this.texturePath : LoaderUtils.extractUrlBase( url );
 
 		var loader = new FileLoader( this.manager );
 		loader.setWithCredentials( this.withCredentials );
@@ -35205,7 +37577,8 @@ Object.assign( ObjectLoader.prototype, {
 
 	parse: function ( json, onLoad ) {
 
-		var geometries = this.parseGeometries( json.geometries );
+		var shapes = this.parseShape( json.shapes );
+		var geometries = this.parseGeometries( json.geometries, shapes );
 
 		var images = this.parseImages( json.images, function () {
 
@@ -35234,7 +37607,27 @@ Object.assign( ObjectLoader.prototype, {
 
 	},
 
-	parseGeometries: function ( json ) {
+	parseShape: function ( json ) {
+
+		var shapes = {};
+
+		if ( json !== undefined ) {
+
+			for ( var i = 0, l = json.length; i < l; i ++ ) {
+
+				var shape = new Shape().fromJSON( json[ i ] );
+
+				shapes[ shape.uuid ] = shape;
+
+			}
+
+		}
+
+		return shapes;
+
+	},
+
+	parseGeometries: function ( json, shapes ) {
 		var this$1 = this;
 
 
@@ -35414,6 +37807,26 @@ Object.assign( ObjectLoader.prototype, {
 							data.indices,
 							data.radius,
 							data.details
+						);
+
+						break;
+
+					case 'ShapeGeometry':
+					case 'ShapeBufferGeometry':
+
+						var geometryShapes = [];
+
+						for ( var i = 0, l = data.shapes.length; i < l; i ++ ) {
+
+							var shape = shapes[ data.shapes[ i ] ];
+
+							geometryShapes.push( shape );
+
+						}
+
+						geometry = new Geometries[ data.type ](
+							geometryShapes,
+							data.curveSegments
 						);
 
 						break;
@@ -35935,1268 +38348,6 @@ var TEXTURE_FILTER = {
 
 /**
  * @author zz85 / http://www.lab4games.net/zz85/blog
- *
- * Bezier Curves formulas obtained from
- * http://en.wikipedia.org/wiki/Bézier_curve
- */
-
-function CatmullRom( t, p0, p1, p2, p3 ) {
-
-	var v0 = ( p2 - p0 ) * 0.5;
-	var v1 = ( p3 - p1 ) * 0.5;
-	var t2 = t * t;
-	var t3 = t * t2;
-	return ( 2 * p1 - 2 * p2 + v0 + v1 ) * t3 + ( - 3 * p1 + 3 * p2 - 2 * v0 - v1 ) * t2 + v0 * t + p1;
-
-}
-
-//
-
-function QuadraticBezierP0( t, p ) {
-
-	var k = 1 - t;
-	return k * k * p;
-
-}
-
-function QuadraticBezierP1( t, p ) {
-
-	return 2 * ( 1 - t ) * t * p;
-
-}
-
-function QuadraticBezierP2( t, p ) {
-
-	return t * t * p;
-
-}
-
-function QuadraticBezier( t, p0, p1, p2 ) {
-
-	return QuadraticBezierP0( t, p0 ) + QuadraticBezierP1( t, p1 ) +
-		QuadraticBezierP2( t, p2 );
-
-}
-
-//
-
-function CubicBezierP0( t, p ) {
-
-	var k = 1 - t;
-	return k * k * k * p;
-
-}
-
-function CubicBezierP1( t, p ) {
-
-	var k = 1 - t;
-	return 3 * k * k * t * p;
-
-}
-
-function CubicBezierP2( t, p ) {
-
-	return 3 * ( 1 - t ) * t * t * p;
-
-}
-
-function CubicBezierP3( t, p ) {
-
-	return t * t * t * p;
-
-}
-
-function CubicBezier( t, p0, p1, p2, p3 ) {
-
-	return CubicBezierP0( t, p0 ) + CubicBezierP1( t, p1 ) + CubicBezierP2( t, p2 ) +
-		CubicBezierP3( t, p3 );
-
-}
-
-/**
- * @author zz85 / http://www.lab4games.net/zz85/blog
- * Extensible curve object
- *
- * Some common of curve methods:
- * .getPoint( t, optionalTarget ), .getTangent( t )
- * .getPointAt( u, optionalTarget ), .getTangentAt( u )
- * .getPoints(), .getSpacedPoints()
- * .getLength()
- * .updateArcLengths()
- *
- * This following curves inherit from THREE.Curve:
- *
- * -- 2D curves --
- * THREE.ArcCurve
- * THREE.CubicBezierCurve
- * THREE.EllipseCurve
- * THREE.LineCurve
- * THREE.QuadraticBezierCurve
- * THREE.SplineCurve
- *
- * -- 3D curves --
- * THREE.CatmullRomCurve3
- * THREE.CubicBezierCurve3
- * THREE.LineCurve3
- * THREE.QuadraticBezierCurve3
- *
- * A series of curves can be represented as a THREE.CurvePath.
- *
- **/
-
-/**************************************************************
- *	Abstract Curve base class
- **************************************************************/
-
-function Curve() {
-
-	this.type = 'Curve';
-
-	this.arcLengthDivisions = 200;
-
-}
-
-Object.assign( Curve.prototype, {
-
-	// Virtual base class method to overwrite and implement in subclasses
-	//	- t [0 .. 1]
-
-	getPoint: function ( /* t, optionalTarget */ ) {
-
-		console.warn( 'THREE.Curve: .getPoint() not implemented.' );
-		return null;
-
-	},
-
-	// Get point at relative position in curve according to arc length
-	// - u [0 .. 1]
-
-	getPointAt: function ( u, optionalTarget ) {
-
-		var t = this.getUtoTmapping( u );
-		return this.getPoint( t, optionalTarget );
-
-	},
-
-	// Get sequence of points using getPoint( t )
-
-	getPoints: function ( divisions ) {
-		var this$1 = this;
-
-
-		if ( divisions === undefined ) { divisions = 5; }
-
-		var points = [];
-
-		for ( var d = 0; d <= divisions; d ++ ) {
-
-			points.push( this$1.getPoint( d / divisions ) );
-
-		}
-
-		return points;
-
-	},
-
-	// Get sequence of points using getPointAt( u )
-
-	getSpacedPoints: function ( divisions ) {
-		var this$1 = this;
-
-
-		if ( divisions === undefined ) { divisions = 5; }
-
-		var points = [];
-
-		for ( var d = 0; d <= divisions; d ++ ) {
-
-			points.push( this$1.getPointAt( d / divisions ) );
-
-		}
-
-		return points;
-
-	},
-
-	// Get total curve arc length
-
-	getLength: function () {
-
-		var lengths = this.getLengths();
-		return lengths[ lengths.length - 1 ];
-
-	},
-
-	// Get list of cumulative segment lengths
-
-	getLengths: function ( divisions ) {
-		var this$1 = this;
-
-
-		if ( divisions === undefined ) { divisions = this.arcLengthDivisions; }
-
-		if ( this.cacheArcLengths &&
-			( this.cacheArcLengths.length === divisions + 1 ) &&
-			! this.needsUpdate ) {
-
-			return this.cacheArcLengths;
-
-		}
-
-		this.needsUpdate = false;
-
-		var cache = [];
-		var current, last = this.getPoint( 0 );
-		var p, sum = 0;
-
-		cache.push( 0 );
-
-		for ( p = 1; p <= divisions; p ++ ) {
-
-			current = this$1.getPoint( p / divisions );
-			sum += current.distanceTo( last );
-			cache.push( sum );
-			last = current;
-
-		}
-
-		this.cacheArcLengths = cache;
-
-		return cache; // { sums: cache, sum: sum }; Sum is in the last element.
-
-	},
-
-	updateArcLengths: function () {
-
-		this.needsUpdate = true;
-		this.getLengths();
-
-	},
-
-	// Given u ( 0 .. 1 ), get a t to find p. This gives you points which are equidistant
-
-	getUtoTmapping: function ( u, distance ) {
-
-		var arcLengths = this.getLengths();
-
-		var i = 0, il = arcLengths.length;
-
-		var targetArcLength; // The targeted u distance value to get
-
-		if ( distance ) {
-
-			targetArcLength = distance;
-
-		} else {
-
-			targetArcLength = u * arcLengths[ il - 1 ];
-
-		}
-
-		// binary search for the index with largest value smaller than target u distance
-
-		var low = 0, high = il - 1, comparison;
-
-		while ( low <= high ) {
-
-			i = Math.floor( low + ( high - low ) / 2 ); // less likely to overflow, though probably not issue here, JS doesn't really have integers, all numbers are floats
-
-			comparison = arcLengths[ i ] - targetArcLength;
-
-			if ( comparison < 0 ) {
-
-				low = i + 1;
-
-			} else if ( comparison > 0 ) {
-
-				high = i - 1;
-
-			} else {
-
-				high = i;
-				break;
-
-				// DONE
-
-			}
-
-		}
-
-		i = high;
-
-		if ( arcLengths[ i ] === targetArcLength ) {
-
-			return i / ( il - 1 );
-
-		}
-
-		// we could get finer grain at lengths, or use simple interpolation between two points
-
-		var lengthBefore = arcLengths[ i ];
-		var lengthAfter = arcLengths[ i + 1 ];
-
-		var segmentLength = lengthAfter - lengthBefore;
-
-		// determine where we are between the 'before' and 'after' points
-
-		var segmentFraction = ( targetArcLength - lengthBefore ) / segmentLength;
-
-		// add that fractional amount to t
-
-		var t = ( i + segmentFraction ) / ( il - 1 );
-
-		return t;
-
-	},
-
-	// Returns a unit vector tangent at t
-	// In case any sub curve does not implement its tangent derivation,
-	// 2 points a small delta apart will be used to find its gradient
-	// which seems to give a reasonable approximation
-
-	getTangent: function ( t ) {
-
-		var delta = 0.0001;
-		var t1 = t - delta;
-		var t2 = t + delta;
-
-		// Capping in case of danger
-
-		if ( t1 < 0 ) { t1 = 0; }
-		if ( t2 > 1 ) { t2 = 1; }
-
-		var pt1 = this.getPoint( t1 );
-		var pt2 = this.getPoint( t2 );
-
-		var vec = pt2.clone().sub( pt1 );
-		return vec.normalize();
-
-	},
-
-	getTangentAt: function ( u ) {
-
-		var t = this.getUtoTmapping( u );
-		return this.getTangent( t );
-
-	},
-
-	computeFrenetFrames: function ( segments, closed ) {
-		var this$1 = this;
-
-
-		// see http://www.cs.indiana.edu/pub/techreports/TR425.pdf
-
-		var normal = new Vector3();
-
-		var tangents = [];
-		var normals = [];
-		var binormals = [];
-
-		var vec = new Vector3();
-		var mat = new Matrix4();
-
-		var i, u, theta;
-
-		// compute the tangent vectors for each segment on the curve
-
-		for ( i = 0; i <= segments; i ++ ) {
-
-			u = i / segments;
-
-			tangents[ i ] = this$1.getTangentAt( u );
-			tangents[ i ].normalize();
-
-		}
-
-		// select an initial normal vector perpendicular to the first tangent vector,
-		// and in the direction of the minimum tangent xyz component
-
-		normals[ 0 ] = new Vector3();
-		binormals[ 0 ] = new Vector3();
-		var min = Number.MAX_VALUE;
-		var tx = Math.abs( tangents[ 0 ].x );
-		var ty = Math.abs( tangents[ 0 ].y );
-		var tz = Math.abs( tangents[ 0 ].z );
-
-		if ( tx <= min ) {
-
-			min = tx;
-			normal.set( 1, 0, 0 );
-
-		}
-
-		if ( ty <= min ) {
-
-			min = ty;
-			normal.set( 0, 1, 0 );
-
-		}
-
-		if ( tz <= min ) {
-
-			normal.set( 0, 0, 1 );
-
-		}
-
-		vec.crossVectors( tangents[ 0 ], normal ).normalize();
-
-		normals[ 0 ].crossVectors( tangents[ 0 ], vec );
-		binormals[ 0 ].crossVectors( tangents[ 0 ], normals[ 0 ] );
-
-
-		// compute the slowly-varying normal and binormal vectors for each segment on the curve
-
-		for ( i = 1; i <= segments; i ++ ) {
-
-			normals[ i ] = normals[ i - 1 ].clone();
-
-			binormals[ i ] = binormals[ i - 1 ].clone();
-
-			vec.crossVectors( tangents[ i - 1 ], tangents[ i ] );
-
-			if ( vec.length() > Number.EPSILON ) {
-
-				vec.normalize();
-
-				theta = Math.acos( _Math.clamp( tangents[ i - 1 ].dot( tangents[ i ] ), - 1, 1 ) ); // clamp for floating pt errors
-
-				normals[ i ].applyMatrix4( mat.makeRotationAxis( vec, theta ) );
-
-			}
-
-			binormals[ i ].crossVectors( tangents[ i ], normals[ i ] );
-
-		}
-
-		// if the curve is closed, postprocess the vectors so the first and last normal vectors are the same
-
-		if ( closed === true ) {
-
-			theta = Math.acos( _Math.clamp( normals[ 0 ].dot( normals[ segments ] ), - 1, 1 ) );
-			theta /= segments;
-
-			if ( tangents[ 0 ].dot( vec.crossVectors( normals[ 0 ], normals[ segments ] ) ) > 0 ) {
-
-				theta = - theta;
-
-			}
-
-			for ( i = 1; i <= segments; i ++ ) {
-
-				// twist a little...
-				normals[ i ].applyMatrix4( mat.makeRotationAxis( tangents[ i ], theta * i ) );
-				binormals[ i ].crossVectors( tangents[ i ], normals[ i ] );
-
-			}
-
-		}
-
-		return {
-			tangents: tangents,
-			normals: normals,
-			binormals: binormals
-		};
-
-	},
-
-	clone: function () {
-
-		return new this.constructor().copy( this );
-
-	},
-
-	copy: function ( source ) {
-
-		this.arcLengthDivisions = source.arcLengthDivisions;
-
-		return this;
-
-	}
-
-} );
-
-function LineCurve( v1, v2 ) {
-
-	Curve.call( this );
-
-	this.type = 'LineCurve';
-
-	this.v1 = v1 || new Vector2();
-	this.v2 = v2 || new Vector2();
-
-}
-
-LineCurve.prototype = Object.create( Curve.prototype );
-LineCurve.prototype.constructor = LineCurve;
-
-LineCurve.prototype.isLineCurve = true;
-
-LineCurve.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector2();
-
-	if ( t === 1 ) {
-
-		point.copy( this.v2 );
-
-	} else {
-
-		point.copy( this.v2 ).sub( this.v1 );
-		point.multiplyScalar( t ).add( this.v1 );
-
-	}
-
-	return point;
-
-};
-
-// Line curve is linear, so we can overwrite default getPointAt
-
-LineCurve.prototype.getPointAt = function ( u, optionalTarget ) {
-
-	return this.getPoint( u, optionalTarget );
-
-};
-
-LineCurve.prototype.getTangent = function ( /* t */ ) {
-
-	var tangent = this.v2.clone().sub( this.v1 );
-
-	return tangent.normalize();
-
-};
-
-LineCurve.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-
-	return this;
-
-};
-
-/**
- * @author zz85 / http://www.lab4games.net/zz85/blog
- *
- **/
-
-/**************************************************************
- *	Curved Path - a curve path is simply a array of connected
- *  curves, but retains the api of a curve
- **************************************************************/
-
-function CurvePath() {
-
-	Curve.call( this );
-
-	this.type = 'CurvePath';
-
-	this.curves = [];
-	this.autoClose = false; // Automatically closes the path
-
-}
-
-CurvePath.prototype = Object.assign( Object.create( Curve.prototype ), {
-
-	constructor: CurvePath,
-
-	add: function ( curve ) {
-
-		this.curves.push( curve );
-
-	},
-
-	closePath: function () {
-
-		// Add a line curve if start and end of lines are not connected
-		var startPoint = this.curves[ 0 ].getPoint( 0 );
-		var endPoint = this.curves[ this.curves.length - 1 ].getPoint( 1 );
-
-		if ( ! startPoint.equals( endPoint ) ) {
-
-			this.curves.push( new LineCurve( endPoint, startPoint ) );
-
-		}
-
-	},
-
-	// To get accurate point with reference to
-	// entire path distance at time t,
-	// following has to be done:
-
-	// 1. Length of each sub path have to be known
-	// 2. Locate and identify type of curve
-	// 3. Get t for the curve
-	// 4. Return curve.getPointAt(t')
-
-	getPoint: function ( t ) {
-		var this$1 = this;
-
-
-		var d = t * this.getLength();
-		var curveLengths = this.getCurveLengths();
-		var i = 0;
-
-		// To think about boundaries points.
-
-		while ( i < curveLengths.length ) {
-
-			if ( curveLengths[ i ] >= d ) {
-
-				var diff = curveLengths[ i ] - d;
-				var curve = this$1.curves[ i ];
-
-				var segmentLength = curve.getLength();
-				var u = segmentLength === 0 ? 0 : 1 - diff / segmentLength;
-
-				return curve.getPointAt( u );
-
-			}
-
-			i ++;
-
-		}
-
-		return null;
-
-		// loop where sum != 0, sum > d , sum+1 <d
-
-	},
-
-	// We cannot use the default THREE.Curve getPoint() with getLength() because in
-	// THREE.Curve, getLength() depends on getPoint() but in THREE.CurvePath
-	// getPoint() depends on getLength
-
-	getLength: function () {
-
-		var lens = this.getCurveLengths();
-		return lens[ lens.length - 1 ];
-
-	},
-
-	// cacheLengths must be recalculated.
-	updateArcLengths: function () {
-
-		this.needsUpdate = true;
-		this.cacheLengths = null;
-		this.getCurveLengths();
-
-	},
-
-	// Compute lengths and cache them
-	// We cannot overwrite getLengths() because UtoT mapping uses it.
-
-	getCurveLengths: function () {
-		var this$1 = this;
-
-
-		// We use cache values if curves and cache array are same length
-
-		if ( this.cacheLengths && this.cacheLengths.length === this.curves.length ) {
-
-			return this.cacheLengths;
-
-		}
-
-		// Get length of sub-curve
-		// Push sums into cached array
-
-		var lengths = [], sums = 0;
-
-		for ( var i = 0, l = this.curves.length; i < l; i ++ ) {
-
-			sums += this$1.curves[ i ].getLength();
-			lengths.push( sums );
-
-		}
-
-		this.cacheLengths = lengths;
-
-		return lengths;
-
-	},
-
-	getSpacedPoints: function ( divisions ) {
-		var this$1 = this;
-
-
-		if ( divisions === undefined ) { divisions = 40; }
-
-		var points = [];
-
-		for ( var i = 0; i <= divisions; i ++ ) {
-
-			points.push( this$1.getPoint( i / divisions ) );
-
-		}
-
-		if ( this.autoClose ) {
-
-			points.push( points[ 0 ] );
-
-		}
-
-		return points;
-
-	},
-
-	getPoints: function ( divisions ) {
-
-		divisions = divisions || 12;
-
-		var points = [], last;
-
-		for ( var i = 0, curves = this.curves; i < curves.length; i ++ ) {
-
-			var curve = curves[ i ];
-			var resolution = ( curve && curve.isEllipseCurve ) ? divisions * 2
-				: ( curve && curve.isLineCurve ) ? 1
-					: ( curve && curve.isSplineCurve ) ? divisions * curve.points.length
-						: divisions;
-
-			var pts = curve.getPoints( resolution );
-
-			for ( var j = 0; j < pts.length; j ++ ) {
-
-				var point = pts[ j ];
-
-				if ( last && last.equals( point ) ) { continue; } // ensures no consecutive points are duplicates
-
-				points.push( point );
-				last = point;
-
-			}
-
-		}
-
-		if ( this.autoClose && points.length > 1 && ! points[ points.length - 1 ].equals( points[ 0 ] ) ) {
-
-			points.push( points[ 0 ] );
-
-		}
-
-		return points;
-
-	},
-
-	copy: function ( source ) {
-		var this$1 = this;
-
-
-		Curve.prototype.copy.call( this, source );
-
-		this.curves = [];
-
-		for ( var i = 0, l = source.curves.length; i < l; i ++ ) {
-
-			var curve = source.curves[ i ];
-
-			this$1.curves.push( curve.clone() );
-
-		}
-
-		this.autoClose = source.autoClose;
-
-		return this;
-
-	}
-
-} );
-
-function EllipseCurve( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
-
-	Curve.call( this );
-
-	this.type = 'EllipseCurve';
-
-	this.aX = aX || 0;
-	this.aY = aY || 0;
-
-	this.xRadius = xRadius || 1;
-	this.yRadius = yRadius || 1;
-
-	this.aStartAngle = aStartAngle || 0;
-	this.aEndAngle = aEndAngle || 2 * Math.PI;
-
-	this.aClockwise = aClockwise || false;
-
-	this.aRotation = aRotation || 0;
-
-}
-
-EllipseCurve.prototype = Object.create( Curve.prototype );
-EllipseCurve.prototype.constructor = EllipseCurve;
-
-EllipseCurve.prototype.isEllipseCurve = true;
-
-EllipseCurve.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector2();
-
-	var twoPi = Math.PI * 2;
-	var deltaAngle = this.aEndAngle - this.aStartAngle;
-	var samePoints = Math.abs( deltaAngle ) < Number.EPSILON;
-
-	// ensures that deltaAngle is 0 .. 2 PI
-	while ( deltaAngle < 0 ) { deltaAngle += twoPi; }
-	while ( deltaAngle > twoPi ) { deltaAngle -= twoPi; }
-
-	if ( deltaAngle < Number.EPSILON ) {
-
-		if ( samePoints ) {
-
-			deltaAngle = 0;
-
-		} else {
-
-			deltaAngle = twoPi;
-
-		}
-
-	}
-
-	if ( this.aClockwise === true && ! samePoints ) {
-
-		if ( deltaAngle === twoPi ) {
-
-			deltaAngle = - twoPi;
-
-		} else {
-
-			deltaAngle = deltaAngle - twoPi;
-
-		}
-
-	}
-
-	var angle = this.aStartAngle + t * deltaAngle;
-	var x = this.aX + this.xRadius * Math.cos( angle );
-	var y = this.aY + this.yRadius * Math.sin( angle );
-
-	if ( this.aRotation !== 0 ) {
-
-		var cos = Math.cos( this.aRotation );
-		var sin = Math.sin( this.aRotation );
-
-		var tx = x - this.aX;
-		var ty = y - this.aY;
-
-		// Rotate the point about the center of the ellipse.
-		x = tx * cos - ty * sin + this.aX;
-		y = tx * sin + ty * cos + this.aY;
-
-	}
-
-	return point.set( x, y );
-
-};
-
-EllipseCurve.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.aX = source.aX;
-	this.aY = source.aY;
-
-	this.xRadius = source.xRadius;
-	this.yRadius = source.yRadius;
-
-	this.aStartAngle = source.aStartAngle;
-	this.aEndAngle = source.aEndAngle;
-
-	this.aClockwise = source.aClockwise;
-
-	this.aRotation = source.aRotation;
-
-	return this;
-
-};
-
-function SplineCurve( points /* array of Vector2 */ ) {
-
-	Curve.call( this );
-
-	this.type = 'SplineCurve';
-
-	this.points = points || [];
-
-}
-
-SplineCurve.prototype = Object.create( Curve.prototype );
-SplineCurve.prototype.constructor = SplineCurve;
-
-SplineCurve.prototype.isSplineCurve = true;
-
-SplineCurve.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector2();
-
-	var points = this.points;
-	var p = ( points.length - 1 ) * t;
-
-	var intPoint = Math.floor( p );
-	var weight = p - intPoint;
-
-	var p0 = points[ intPoint === 0 ? intPoint : intPoint - 1 ];
-	var p1 = points[ intPoint ];
-	var p2 = points[ intPoint > points.length - 2 ? points.length - 1 : intPoint + 1 ];
-	var p3 = points[ intPoint > points.length - 3 ? points.length - 1 : intPoint + 2 ];
-
-	point.set(
-		CatmullRom( weight, p0.x, p1.x, p2.x, p3.x ),
-		CatmullRom( weight, p0.y, p1.y, p2.y, p3.y )
-	);
-
-	return point;
-
-};
-
-SplineCurve.prototype.copy = function ( source ) {
-	var this$1 = this;
-
-
-	Curve.prototype.copy.call( this, source );
-
-	this.points = [];
-
-	for ( var i = 0, l = source.points.length; i < l; i ++ ) {
-
-		var point = source.points[ i ];
-
-		this$1.points.push( point.clone() );
-
-	}
-
-	return this;
-
-};
-
-function CubicBezierCurve( v0, v1, v2, v3 ) {
-
-	Curve.call( this );
-
-	this.type = 'CubicBezierCurve';
-
-	this.v0 = v0 || new Vector2();
-	this.v1 = v1 || new Vector2();
-	this.v2 = v2 || new Vector2();
-	this.v3 = v3 || new Vector2();
-
-}
-
-CubicBezierCurve.prototype = Object.create( Curve.prototype );
-CubicBezierCurve.prototype.constructor = CubicBezierCurve;
-
-CubicBezierCurve.prototype.isCubicBezierCurve = true;
-
-CubicBezierCurve.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector2();
-
-	var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
-
-	point.set(
-		CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
-		CubicBezier( t, v0.y, v1.y, v2.y, v3.y )
-	);
-
-	return point;
-
-};
-
-CubicBezierCurve.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v0.copy( source.v0 );
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-	this.v3.copy( source.v3 );
-
-	return this;
-
-};
-
-function QuadraticBezierCurve( v0, v1, v2 ) {
-
-	Curve.call( this );
-
-	this.type = 'QuadraticBezierCurve';
-
-	this.v0 = v0 || new Vector2();
-	this.v1 = v1 || new Vector2();
-	this.v2 = v2 || new Vector2();
-
-}
-
-QuadraticBezierCurve.prototype = Object.create( Curve.prototype );
-QuadraticBezierCurve.prototype.constructor = QuadraticBezierCurve;
-
-QuadraticBezierCurve.prototype.isQuadraticBezierCurve = true;
-
-QuadraticBezierCurve.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector2();
-
-	var v0 = this.v0, v1 = this.v1, v2 = this.v2;
-
-	point.set(
-		QuadraticBezier( t, v0.x, v1.x, v2.x ),
-		QuadraticBezier( t, v0.y, v1.y, v2.y )
-	);
-
-	return point;
-
-};
-
-QuadraticBezierCurve.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v0.copy( source.v0 );
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-
-	return this;
-
-};
-
-var PathPrototype = Object.assign( Object.create( CurvePath.prototype ), {
-
-	setFromPoints: function ( points ) {
-		var this$1 = this;
-
-
-		this.moveTo( points[ 0 ].x, points[ 0 ].y );
-
-		for ( var i = 1, l = points.length; i < l; i ++ ) {
-
-			this$1.lineTo( points[ i ].x, points[ i ].y );
-
-		}
-
-	},
-
-	moveTo: function ( x, y ) {
-
-		this.currentPoint.set( x, y ); // TODO consider referencing vectors instead of copying?
-
-	},
-
-	lineTo: function ( x, y ) {
-
-		var curve = new LineCurve( this.currentPoint.clone(), new Vector2( x, y ) );
-		this.curves.push( curve );
-
-		this.currentPoint.set( x, y );
-
-	},
-
-	quadraticCurveTo: function ( aCPx, aCPy, aX, aY ) {
-
-		var curve = new QuadraticBezierCurve(
-			this.currentPoint.clone(),
-			new Vector2( aCPx, aCPy ),
-			new Vector2( aX, aY )
-		);
-
-		this.curves.push( curve );
-
-		this.currentPoint.set( aX, aY );
-
-	},
-
-	bezierCurveTo: function ( aCP1x, aCP1y, aCP2x, aCP2y, aX, aY ) {
-
-		var curve = new CubicBezierCurve(
-			this.currentPoint.clone(),
-			new Vector2( aCP1x, aCP1y ),
-			new Vector2( aCP2x, aCP2y ),
-			new Vector2( aX, aY )
-		);
-
-		this.curves.push( curve );
-
-		this.currentPoint.set( aX, aY );
-
-	},
-
-	splineThru: function ( pts /*Array of Vector*/ ) {
-
-		var npts = [ this.currentPoint.clone() ].concat( pts );
-
-		var curve = new SplineCurve( npts );
-		this.curves.push( curve );
-
-		this.currentPoint.copy( pts[ pts.length - 1 ] );
-
-	},
-
-	arc: function ( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
-
-		var x0 = this.currentPoint.x;
-		var y0 = this.currentPoint.y;
-
-		this.absarc( aX + x0, aY + y0, aRadius,
-			aStartAngle, aEndAngle, aClockwise );
-
-	},
-
-	absarc: function ( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
-
-		this.absellipse( aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise );
-
-	},
-
-	ellipse: function ( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
-
-		var x0 = this.currentPoint.x;
-		var y0 = this.currentPoint.y;
-
-		this.absellipse( aX + x0, aY + y0, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation );
-
-	},
-
-	absellipse: function ( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation ) {
-
-		var curve = new EllipseCurve( aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise, aRotation );
-
-		if ( this.curves.length > 0 ) {
-
-			// if a previous curve is present, attempt to join
-			var firstPoint = curve.getPoint( 0 );
-
-			if ( ! firstPoint.equals( this.currentPoint ) ) {
-
-				this.lineTo( firstPoint.x, firstPoint.y );
-
-			}
-
-		}
-
-		this.curves.push( curve );
-
-		var lastPoint = curve.getPoint( 1 );
-		this.currentPoint.copy( lastPoint );
-
-	},
-
-	copy: function ( source ) {
-
-		CurvePath.prototype.copy.call( this, source );
-
-		this.currentPoint.copy( source.currentPoint );
-
-		return this;
-
-	}
-
-} );
-
-/**
- * @author zz85 / http://www.lab4games.net/zz85/blog
- * Creates free form 2d path using series of points, lines or curves.
- **/
-
-function Path( points ) {
-
-	CurvePath.call( this );
-
-	this.type = 'Path';
-
-	this.currentPoint = new Vector2();
-
-	if ( points ) {
-
-		this.setFromPoints( points );
-
-	}
-
-}
-
-Path.prototype = PathPrototype;
-PathPrototype.constructor = Path;
-
-/**
- * @author zz85 / http://www.lab4games.net/zz85/blog
- * Defines a 2d shape plane using paths.
- **/
-
-// STEP 1 Create a path.
-// STEP 2 Turn path into shape.
-// STEP 3 ExtrudeGeometry takes in Shape/Shapes
-// STEP 3a - Extract points from each shape, turn to vertices
-// STEP 3b - Triangulate each shape, add faces.
-
-function Shape( points ) {
-
-	Path.call( this, points );
-
-	this.type = 'Shape';
-
-	this.holes = [];
-
-}
-
-Shape.prototype = Object.assign( Object.create( PathPrototype ), {
-
-	constructor: Shape,
-
-	getPointsHoles: function ( divisions ) {
-		var this$1 = this;
-
-
-		var holesPts = [];
-
-		for ( var i = 0, l = this.holes.length; i < l; i ++ ) {
-
-			holesPts[ i ] = this$1.holes[ i ].getPoints( divisions );
-
-		}
-
-		return holesPts;
-
-	},
-
-	// get points of shape and holes (keypoints based on segments parameter)
-
-	extractPoints: function ( divisions ) {
-
-		return {
-
-			shape: this.getPoints( divisions ),
-			holes: this.getPointsHoles( divisions )
-
-		};
-
-	},
-
-	copy: function ( source ) {
-		var this$1 = this;
-
-
-		Path.prototype.copy.call( this, source );
-
-		this.holes = [];
-
-		for ( var i = 0, l = source.holes.length; i < l; i ++ ) {
-
-			var hole = source.holes[ i ];
-
-			this$1.holes.push( hole.clone() );
-
-		}
-
-		return this;
-
-	}
-
-} );
-
-/**
- * @author zz85 / http://www.lab4games.net/zz85/blog
  * minimal class for proxing functions to Path. Replaces old "extractSubpaths()"
  **/
 
@@ -37696,6 +38847,10 @@ Object.assign( FontLoader.prototype, {
 	}
 
 } );
+
+/**
+ * @author mrdoob / http://mrdoob.com/
+ */
 
 var context;
 
@@ -40514,7 +41669,9 @@ function AnimationMixer( root ) {
 
 }
 
-Object.assign( AnimationMixer.prototype, EventDispatcher.prototype, {
+AnimationMixer.prototype = Object.assign( Object.create( EventDispatcher.prototype ), {
+
+	constructor: AnimationMixer,
 
 	_bindAction: function ( action, prototypeAction ) {
 		var this$1 = this;
@@ -43451,377 +44608,6 @@ function AxesHelper( size ) {
 AxesHelper.prototype = Object.create( LineSegments.prototype );
 AxesHelper.prototype.constructor = AxesHelper;
 
-/**
- * @author zz85 https://github.com/zz85
- *
- * Centripetal CatmullRom Curve - which is useful for avoiding
- * cusps and self-intersections in non-uniform catmull rom curves.
- * http://www.cemyuksel.com/research/catmullrom_param/catmullrom.pdf
- *
- * curve.type accepts centripetal(default), chordal and catmullrom
- * curve.tension is used for catmullrom which defaults to 0.5
- */
-
-
-/*
-Based on an optimized c++ solution in
- - http://stackoverflow.com/questions/9489736/catmull-rom-curve-with-no-cusps-and-no-self-intersections/
- - http://ideone.com/NoEbVM
-
-This CubicPoly class could be used for reusing some variables and calculations,
-but for three.js curve use, it could be possible inlined and flatten into a single function call
-which can be placed in CurveUtils.
-*/
-
-function CubicPoly() {
-
-	var c0 = 0, c1 = 0, c2 = 0, c3 = 0;
-
-	/*
-	 * Compute coefficients for a cubic polynomial
-	 *   p(s) = c0 + c1*s + c2*s^2 + c3*s^3
-	 * such that
-	 *   p(0) = x0, p(1) = x1
-	 *  and
-	 *   p'(0) = t0, p'(1) = t1.
-	 */
-	function init( x0, x1, t0, t1 ) {
-
-		c0 = x0;
-		c1 = t0;
-		c2 = - 3 * x0 + 3 * x1 - 2 * t0 - t1;
-		c3 = 2 * x0 - 2 * x1 + t0 + t1;
-
-	}
-
-	return {
-
-		initCatmullRom: function ( x0, x1, x2, x3, tension ) {
-
-			init( x1, x2, tension * ( x2 - x0 ), tension * ( x3 - x1 ) );
-
-		},
-
-		initNonuniformCatmullRom: function ( x0, x1, x2, x3, dt0, dt1, dt2 ) {
-
-			// compute tangents when parameterized in [t1,t2]
-			var t1 = ( x1 - x0 ) / dt0 - ( x2 - x0 ) / ( dt0 + dt1 ) + ( x2 - x1 ) / dt1;
-			var t2 = ( x2 - x1 ) / dt1 - ( x3 - x1 ) / ( dt1 + dt2 ) + ( x3 - x2 ) / dt2;
-
-			// rescale tangents for parametrization in [0,1]
-			t1 *= dt1;
-			t2 *= dt1;
-
-			init( x1, x2, t1, t2 );
-
-		},
-
-		calc: function ( t ) {
-
-			var t2 = t * t;
-			var t3 = t2 * t;
-			return c0 + c1 * t + c2 * t2 + c3 * t3;
-
-		}
-
-	};
-
-}
-
-//
-
-var tmp = new Vector3();
-var px = new CubicPoly();
-var py = new CubicPoly();
-var pz = new CubicPoly();
-
-function CatmullRomCurve3( points, closed, curveType, tension ) {
-
-	Curve.call( this );
-
-	this.type = 'CatmullRomCurve3';
-
-	this.points = points || [];
-	this.closed = closed || false;
-	this.curveType = curveType || 'centripetal';
-	this.tension = tension || 0.5;
-
-}
-
-CatmullRomCurve3.prototype = Object.create( Curve.prototype );
-CatmullRomCurve3.prototype.constructor = CatmullRomCurve3;
-
-CatmullRomCurve3.prototype.isCatmullRomCurve3 = true;
-
-CatmullRomCurve3.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector3();
-
-	var points = this.points;
-	var l = points.length;
-
-	var p = ( l - ( this.closed ? 0 : 1 ) ) * t;
-	var intPoint = Math.floor( p );
-	var weight = p - intPoint;
-
-	if ( this.closed ) {
-
-		intPoint += intPoint > 0 ? 0 : ( Math.floor( Math.abs( intPoint ) / points.length ) + 1 ) * points.length;
-
-	} else if ( weight === 0 && intPoint === l - 1 ) {
-
-		intPoint = l - 2;
-		weight = 1;
-
-	}
-
-	var p0, p1, p2, p3; // 4 points
-
-	if ( this.closed || intPoint > 0 ) {
-
-		p0 = points[ ( intPoint - 1 ) % l ];
-
-	} else {
-
-		// extrapolate first point
-		tmp.subVectors( points[ 0 ], points[ 1 ] ).add( points[ 0 ] );
-		p0 = tmp;
-
-	}
-
-	p1 = points[ intPoint % l ];
-	p2 = points[ ( intPoint + 1 ) % l ];
-
-	if ( this.closed || intPoint + 2 < l ) {
-
-		p3 = points[ ( intPoint + 2 ) % l ];
-
-	} else {
-
-		// extrapolate last point
-		tmp.subVectors( points[ l - 1 ], points[ l - 2 ] ).add( points[ l - 1 ] );
-		p3 = tmp;
-
-	}
-
-	if ( this.curveType === 'centripetal' || this.curveType === 'chordal' ) {
-
-		// init Centripetal / Chordal Catmull-Rom
-		var pow = this.curveType === 'chordal' ? 0.5 : 0.25;
-		var dt0 = Math.pow( p0.distanceToSquared( p1 ), pow );
-		var dt1 = Math.pow( p1.distanceToSquared( p2 ), pow );
-		var dt2 = Math.pow( p2.distanceToSquared( p3 ), pow );
-
-		// safety check for repeated points
-		if ( dt1 < 1e-4 ) { dt1 = 1.0; }
-		if ( dt0 < 1e-4 ) { dt0 = dt1; }
-		if ( dt2 < 1e-4 ) { dt2 = dt1; }
-
-		px.initNonuniformCatmullRom( p0.x, p1.x, p2.x, p3.x, dt0, dt1, dt2 );
-		py.initNonuniformCatmullRom( p0.y, p1.y, p2.y, p3.y, dt0, dt1, dt2 );
-		pz.initNonuniformCatmullRom( p0.z, p1.z, p2.z, p3.z, dt0, dt1, dt2 );
-
-	} else if ( this.curveType === 'catmullrom' ) {
-
-		px.initCatmullRom( p0.x, p1.x, p2.x, p3.x, this.tension );
-		py.initCatmullRom( p0.y, p1.y, p2.y, p3.y, this.tension );
-		pz.initCatmullRom( p0.z, p1.z, p2.z, p3.z, this.tension );
-
-	}
-
-	point.set(
-		px.calc( weight ),
-		py.calc( weight ),
-		pz.calc( weight )
-	);
-
-	return point;
-
-};
-
-CatmullRomCurve3.prototype.copy = function ( source ) {
-	var this$1 = this;
-
-
-	Curve.prototype.copy.call( this, source );
-
-	this.points = [];
-
-	for ( var i = 0, l = source.points.length; i < l; i ++ ) {
-
-		var point = source.points[ i ];
-
-		this$1.points.push( point.clone() );
-
-	}
-
-	this.closed = source.closed;
-	this.curveType = source.curveType;
-	this.tension = source.tension;
-
-	return this;
-
-};
-
-function CubicBezierCurve3( v0, v1, v2, v3 ) {
-
-	Curve.call( this );
-
-	this.type = 'CubicBezierCurve3';
-
-	this.v0 = v0 || new Vector3();
-	this.v1 = v1 || new Vector3();
-	this.v2 = v2 || new Vector3();
-	this.v3 = v3 || new Vector3();
-
-}
-
-CubicBezierCurve3.prototype = Object.create( Curve.prototype );
-CubicBezierCurve3.prototype.constructor = CubicBezierCurve3;
-
-CubicBezierCurve3.prototype.isCubicBezierCurve3 = true;
-
-CubicBezierCurve3.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector3();
-
-	var v0 = this.v0, v1 = this.v1, v2 = this.v2, v3 = this.v3;
-
-	point.set(
-		CubicBezier( t, v0.x, v1.x, v2.x, v3.x ),
-		CubicBezier( t, v0.y, v1.y, v2.y, v3.y ),
-		CubicBezier( t, v0.z, v1.z, v2.z, v3.z )
-	);
-
-	return point;
-
-};
-
-CubicBezierCurve3.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v0.copy( source.v0 );
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-	this.v3.copy( source.v3 );
-
-	return this;
-
-};
-
-function QuadraticBezierCurve3( v0, v1, v2 ) {
-
-	Curve.call( this );
-
-	this.type = 'QuadraticBezierCurve3';
-
-	this.v0 = v0 || new Vector3();
-	this.v1 = v1 || new Vector3();
-	this.v2 = v2 || new Vector3();
-
-}
-
-QuadraticBezierCurve3.prototype = Object.create( Curve.prototype );
-QuadraticBezierCurve3.prototype.constructor = QuadraticBezierCurve3;
-
-QuadraticBezierCurve3.prototype.isQuadraticBezierCurve3 = true;
-
-QuadraticBezierCurve3.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector3();
-
-	var v0 = this.v0, v1 = this.v1, v2 = this.v2;
-
-	point.set(
-		QuadraticBezier( t, v0.x, v1.x, v2.x ),
-		QuadraticBezier( t, v0.y, v1.y, v2.y ),
-		QuadraticBezier( t, v0.z, v1.z, v2.z )
-	);
-
-	return point;
-
-};
-
-QuadraticBezierCurve3.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v0.copy( source.v0 );
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-
-	return this;
-
-};
-
-function LineCurve3( v1, v2 ) {
-
-	Curve.call( this );
-
-	this.type = 'LineCurve3';
-
-	this.v1 = v1 || new Vector3();
-	this.v2 = v2 || new Vector3();
-
-}
-
-LineCurve3.prototype = Object.create( Curve.prototype );
-LineCurve3.prototype.constructor = LineCurve3;
-
-LineCurve3.prototype.isLineCurve3 = true;
-
-LineCurve3.prototype.getPoint = function ( t, optionalTarget ) {
-
-	var point = optionalTarget || new Vector3();
-
-	if ( t === 1 ) {
-
-		point.copy( this.v2 );
-
-	} else {
-
-		point.copy( this.v2 ).sub( this.v1 );
-		point.multiplyScalar( t ).add( this.v1 );
-
-	}
-
-	return point;
-
-};
-
-// Line curve is linear, so we can overwrite default getPointAt
-
-LineCurve3.prototype.getPointAt = function ( u, optionalTarget ) {
-
-	return this.getPoint( u, optionalTarget );
-
-};
-
-LineCurve3.prototype.copy = function ( source ) {
-
-	Curve.prototype.copy.call( this, source );
-
-	this.v1.copy( source.v1 );
-	this.v2.copy( source.v2 );
-
-	return this;
-
-};
-
-function ArcCurve( aX, aY, aRadius, aStartAngle, aEndAngle, aClockwise ) {
-
-	EllipseCurve.call( this, aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise );
-
-	this.type = 'ArcCurve';
-
-}
-
-ArcCurve.prototype = Object.create( EllipseCurve.prototype );
-ArcCurve.prototype.constructor = ArcCurve;
-
-ArcCurve.prototype.isArcCurve = true;
-
 //
 
 Curve.create = function ( construct, getPoint ) {
@@ -43938,6 +44724,19 @@ SkeletonHelper.prototype.update = function () {
 	console.error( 'THREE.SkeletonHelper: update() no longer needs to be called.' );
 
 };
+
+//
+
+Object.assign( Loader.prototype, {
+
+	extractUrlBase: function ( url ) {
+
+		console.warn( 'THREE.Loader: .extractUrlBase() has been deprecated. Use THREE.LoaderUtils.extractUrlBase() instead.' );
+		return LoaderUtils.extractUrlBase( url );
+
+	}
+
+} );
 
 //
 
@@ -45055,6 +45854,30 @@ Object.defineProperties( WebGLRenderTarget.prototype, {
 
 //
 
+Object.assign( WebVRManager.prototype, {
+
+	getStandingMatrix: function () {
+
+		console.warn( 'THREE.WebVRManager: .getStandingMatrix() has been removed.' );
+
+	}
+
+} );
+
+Object.defineProperties( WebVRManager.prototype, {
+
+	standing: {
+		set: function ( /* value */ ) {
+
+			console.warn( 'THREE.WebVRManager: .standing has been removed.' );
+
+		}
+	}
+
+} );
+
+//
+
 Audio.prototype.load = function ( file ) {
 
 	console.warn( 'THREE.Audio: .load has been deprecated. Use THREE.AudioLoader instead.' );
@@ -45132,11 +45955,11 @@ function updateParams(params, newParams) {
     return params;
 }
 
-function flatten(array, ret) {
+function flatten$1(array, ret) {
     ret = defaults(ret, []);
     for (var i = 0; i < array.length; i++) {
         if (Array.isArray(array[i])) {
-            flatten(array[i], ret);
+            flatten$1(array[i], ret);
         }
         else {
             ret.push(array[i]);
@@ -45602,6 +46425,16 @@ function almostIdentity(value, start, stop) {
     return (a * t + b) * t * t + stop;
 }
 
+var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+
+
+
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
 var chroma = createCommonjsModule(function (module, exports) {
 /**
  * @license
@@ -45638,7 +46471,7 @@ var chroma = createCommonjsModule(function (module, exports) {
  */
 
 (function() {
-  var Color, DEG2RAD, LAB_CONSTANTS, PI, PITHIRD, RAD2DEG, TWOPI, _guess_formats, _guess_formats_sorted, _input, _interpolators, abs, atan2, bezier, blend, blend_f, brewer, burn, chroma, clip_rgb, cmyk2rgb, colors, cos, css2rgb, darken, dodge, each, floor, hcg2rgb, hex2rgb, hsi2rgb, hsl2css, hsl2rgb, hsv2rgb, interpolate, interpolate_hsx, interpolate_lab, interpolate_num, interpolate_rgb, lab2lch, lab2rgb, lab_xyz, lch2lab, lch2rgb, lighten, limit, log, luminance_x, m, max, multiply, normal, num2rgb, overlay, pow, rgb2cmyk, rgb2css, rgb2hcg, rgb2hex, rgb2hsi, rgb2hsl, rgb2hsv, rgb2lab, rgb2lch, rgb2luminance, rgb2num, rgb2temperature, rgb2xyz, rgb_xyz, rnd, root, round, screen, sin, sqrt, temperature2rgb, type, unpack, w3cx11, xyz_lab, xyz_rgb,
+  var Color, DEG2RAD, LAB_CONSTANTS, PI, PITHIRD, RAD2DEG, TWOPI, _average_lrgb, _guess_formats, _guess_formats_sorted, _input, _interpolators, abs, atan2, bezier, blend, blend_f, brewer, burn, chroma, clip_rgb, cmyk2rgb, colors, cos, css2rgb, darken, dodge, each, floor, hcg2rgb, hex2rgb, hsi2rgb, hsl2css, hsl2rgb, hsv2rgb, interpolate, interpolate_hsx, interpolate_lab, interpolate_lrgb, interpolate_num, interpolate_rgb, lab2lch, lab2rgb, lab_xyz, lch2lab, lch2rgb, lighten, limit, log, luminance_x, m, max, multiply, normal, num2rgb, overlay, pow, rgb2cmyk, rgb2css, rgb2hcg, rgb2hex, rgb2hsi, rgb2hsl, rgb2hsv, rgb2lab, rgb2lch, rgb2luminance, rgb2num, rgb2temperature, rgb2xyz, rgb_xyz, rnd, root, round, screen, sin, sqrt, temperature2rgb, type, unpack, w3cx11, xyz_lab, xyz_rgb,
     slice = [].slice;
 
   type = (function() {
@@ -45736,6 +46569,8 @@ var chroma = createCommonjsModule(function (module, exports) {
     })(Color, arguments, function(){});
   };
 
+  chroma["default"] = chroma;
+
   _interpolators = [];
 
   if (('object' !== "undefined" && module !== null) && (module.exports != null)) {
@@ -45751,7 +46586,7 @@ var chroma = createCommonjsModule(function (module, exports) {
     root.chroma = chroma;
   }
 
-  chroma.version = '1.3.4';
+  chroma.version = '1.3.5';
 
   _input = {};
 
@@ -45772,7 +46607,9 @@ var chroma = createCommonjsModule(function (module, exports) {
           args.push(arg);
         }
       }
-      mode = args[args.length - 1];
+      if (args.length > 1) {
+        mode = args[args.length - 1];
+      }
       if (_input[mode] != null) {
         me._rgb = clip_rgb(_input[mode](unpack(args.slice(0, -1))));
       } else {
@@ -46378,61 +47215,50 @@ var chroma = createCommonjsModule(function (module, exports) {
     return new Color(code);
   };
 
-  chroma.average = function(colors, mode) {
-    var A, alpha, c, cnt, dx, dy, first, i, l, len, o, xyz, xyz2;
-    if (mode == null) {
-      mode = 'rgb';
+  _interpolators = [];
+
+  interpolate = function(col1, col2, f, m) {
+    var interpol, len, o, res;
+    if (f == null) {
+      f = 0.5;
     }
-    l = colors.length;
-    colors = colors.map(function(c) {
-      return chroma(c);
-    });
-    first = colors.splice(0, 1)[0];
-    xyz = first.get(mode);
-    cnt = [];
-    dx = 0;
-    dy = 0;
-    for (i in xyz) {
-      xyz[i] = xyz[i] || 0;
-      cnt.push(!isNaN(xyz[i]) ? 1 : 0);
-      if (mode.charAt(i) === 'h' && !isNaN(xyz[i])) {
-        A = xyz[i] / 180 * PI;
-        dx += cos(A);
-        dy += sin(A);
+    if (m == null) {
+      m = 'rgb';
+    }
+
+    /*
+    interpolates between colors
+    f = 0 --> me
+    f = 1 --> col
+     */
+    if (type(col1) !== 'object') {
+      col1 = chroma(col1);
+    }
+    if (type(col2) !== 'object') {
+      col2 = chroma(col2);
+    }
+    for (o = 0, len = _interpolators.length; o < len; o++) {
+      interpol = _interpolators[o];
+      if (m === interpol[0]) {
+        res = interpol[1](col1, col2, f, m);
+        break;
       }
     }
-    alpha = first.alpha();
-    for (o = 0, len = colors.length; o < len; o++) {
-      c = colors[o];
-      xyz2 = c.get(mode);
-      alpha += c.alpha();
-      for (i in xyz) {
-        if (!isNaN(xyz2[i])) {
-          xyz[i] += xyz2[i];
-          cnt[i] += 1;
-          if (mode.charAt(i) === 'h') {
-            A = xyz[i] / 180 * PI;
-            dx += cos(A);
-            dy += sin(A);
-          }
-        }
-      }
+    if (res == null) {
+      throw "color mode " + m + " is not supported";
     }
-    for (i in xyz) {
-      xyz[i] = xyz[i] / cnt[i];
-      if (mode.charAt(i) === 'h') {
-        A = atan2(dy / cnt[i], dx / cnt[i]) / PI * 180;
-        while (A < 0) {
-          A += 360;
-        }
-        while (A >= 360) {
-          A -= 360;
-        }
-        xyz[i] = A;
-      }
-    }
-    return chroma(xyz, mode).alpha(alpha / l);
+    return res.alpha(col1.alpha() + f * (col2.alpha() - col1.alpha()));
   };
+
+  chroma.interpolate = interpolate;
+
+  Color.prototype.interpolate = function(col2, f, m) {
+    return interpolate(this, col2, f, m);
+  };
+
+  chroma.mix = interpolate;
+
+  Color.prototype.mix = Color.prototype.interpolate;
 
   _input.rgb = function() {
     var k, ref, results, v;
@@ -46487,6 +47313,94 @@ var chroma = createCommonjsModule(function (module, exports) {
       }
     }
   });
+
+  _input.lrgb = _input.rgb;
+
+  interpolate_lrgb = function(col1, col2, f, m) {
+    var xyz0, xyz1;
+    xyz0 = col1._rgb;
+    xyz1 = col2._rgb;
+    return new Color(sqrt(pow(xyz0[0], 2) * (1 - f) + pow(xyz1[0], 2) * f), sqrt(pow(xyz0[1], 2) * (1 - f) + pow(xyz1[1], 2) * f), sqrt(pow(xyz0[2], 2) * (1 - f) + pow(xyz1[2], 2) * f), m);
+  };
+
+  _average_lrgb = function(colors) {
+    var col, f, len, o, rgb, xyz;
+    f = 1 / colors.length;
+    xyz = [0, 0, 0, 0];
+    for (o = 0, len = colors.length; o < len; o++) {
+      col = colors[o];
+      rgb = col._rgb;
+      xyz[0] += pow(rgb[0], 2) * f;
+      xyz[1] += pow(rgb[1], 2) * f;
+      xyz[2] += pow(rgb[2], 2) * f;
+      xyz[3] += rgb[3] * f;
+    }
+    xyz[0] = sqrt(xyz[0]);
+    xyz[1] = sqrt(xyz[1]);
+    xyz[2] = sqrt(xyz[2]);
+    return new Color(xyz);
+  };
+
+  _interpolators.push(['lrgb', interpolate_lrgb]);
+
+  chroma.average = function(colors, mode) {
+    var A, alpha, c, cnt, dx, dy, first, i, l, len, o, xyz, xyz2;
+    if (mode == null) {
+      mode = 'rgb';
+    }
+    l = colors.length;
+    colors = colors.map(function(c) {
+      return chroma(c);
+    });
+    first = colors.splice(0, 1)[0];
+    if (mode === 'lrgb') {
+      return _average_lrgb(colors);
+    }
+    xyz = first.get(mode);
+    cnt = [];
+    dx = 0;
+    dy = 0;
+    for (i in xyz) {
+      xyz[i] = xyz[i] || 0;
+      cnt.push(!isNaN(xyz[i]) ? 1 : 0);
+      if (mode.charAt(i) === 'h' && !isNaN(xyz[i])) {
+        A = xyz[i] / 180 * PI;
+        dx += cos(A);
+        dy += sin(A);
+      }
+    }
+    alpha = first.alpha();
+    for (o = 0, len = colors.length; o < len; o++) {
+      c = colors[o];
+      xyz2 = c.get(mode);
+      alpha += c.alpha();
+      for (i in xyz) {
+        if (!isNaN(xyz2[i])) {
+          xyz[i] += xyz2[i];
+          cnt[i] += 1;
+          if (mode.charAt(i) === 'h') {
+            A = xyz[i] / 180 * PI;
+            dx += cos(A);
+            dy += sin(A);
+          }
+        }
+      }
+    }
+    for (i in xyz) {
+      xyz[i] = xyz[i] / cnt[i];
+      if (mode.charAt(i) === 'h') {
+        A = atan2(dy / cnt[i], dx / cnt[i]) / PI * 180;
+        while (A < 0) {
+          A += 360;
+        }
+        while (A >= 360) {
+          A -= 360;
+        }
+        xyz[i] = A;
+      }
+    }
+    return chroma(xyz, mode).alpha(alpha / l);
+  };
 
   hex2rgb = function(hex) {
     var a, b, g, r, rgb, u;
@@ -47175,51 +48089,6 @@ var chroma = createCommonjsModule(function (module, exports) {
     }
   };
 
-  _interpolators = [];
-
-  interpolate = function(col1, col2, f, m) {
-    var interpol, len, o, res;
-    if (f == null) {
-      f = 0.5;
-    }
-    if (m == null) {
-      m = 'rgb';
-    }
-
-    /*
-    interpolates between colors
-    f = 0 --> me
-    f = 1 --> col
-     */
-    if (type(col1) !== 'object') {
-      col1 = chroma(col1);
-    }
-    if (type(col2) !== 'object') {
-      col2 = chroma(col2);
-    }
-    for (o = 0, len = _interpolators.length; o < len; o++) {
-      interpol = _interpolators[o];
-      if (m === interpol[0]) {
-        res = interpol[1](col1, col2, f, m);
-        break;
-      }
-    }
-    if (res == null) {
-      throw "color mode " + m + " is not supported";
-    }
-    return res.alpha(col1.alpha() + f * (col2.alpha() - col1.alpha()));
-  };
-
-  chroma.interpolate = interpolate;
-
-  Color.prototype.interpolate = function(col2, f, m) {
-    return interpolate(this, col2, f, m);
-  };
-
-  chroma.mix = interpolate;
-
-  Color.prototype.mix = Color.prototype.interpolate;
-
   interpolate_rgb = function(col1, col2, f, m) {
     var xyz0, xyz1;
     xyz0 = col1._rgb;
@@ -47634,7 +48503,7 @@ var chroma = createCommonjsModule(function (module, exports) {
   };
 
   chroma.scale = function(colors, positions) {
-    var _classes, _colorCache, _colors, _correctLightness, _domain, _fixed, _max, _min, _mode, _nacol, _out, _padding, _pos, _spread, _useCache, classifyValue, f, getClass, getColor, resetCache, setColors, tmap;
+    var _classes, _colorCache, _colors, _correctLightness, _domain, _fixed, _gamma, _max, _min, _mode, _nacol, _out, _padding, _pos, _spread, _useCache, classifyValue, f, getClass, getColor, resetCache, setColors, tmap;
     _mode = 'rgb';
     _nacol = chroma('#ccc');
     _spread = 0;
@@ -47649,6 +48518,7 @@ var chroma = createCommonjsModule(function (module, exports) {
     _correctLightness = false;
     _colorCache = {};
     _useCache = true;
+    _gamma = 1;
     setColors = function(colors) {
       var c, col, o, ref, ref1, w;
       if (colors == null) {
@@ -47700,11 +48570,8 @@ var chroma = createCommonjsModule(function (module, exports) {
         if (_classes && _classes.length > 2) {
           c = getClass(val);
           t = c / (_classes.length - 2);
-          t = _padding[0] + (t * (1 - _padding[0] - _padding[1]));
         } else if (_max !== _min) {
           t = (val - _min) / (_max - _min);
-          t = _padding[0] + (t * (1 - _padding[0] - _padding[1]));
-          t = Math.min(1, Math.max(0, t));
         } else {
           t = 1;
         }
@@ -47714,6 +48581,11 @@ var chroma = createCommonjsModule(function (module, exports) {
       if (!bypassMap) {
         t = tmap(t);
       }
+      if (_gamma !== 1) {
+        t = pow(t, _gamma);
+      }
+      t = _padding[0] + (t * (1 - _padding[0] - _padding[1]));
+      t = Math.min(1, Math.max(0, t));
       k = Math.floor(t * 10000);
       if (_useCache && _colorCache[k]) {
         col = _colorCache[k];
@@ -47917,9 +48789,18 @@ var chroma = createCommonjsModule(function (module, exports) {
     };
     f.cache = function(c) {
       if (c != null) {
-        return _useCache = c;
+        _useCache = c;
+        return f;
       } else {
         return _useCache;
+      }
+    };
+    f.gamma = function(g) {
+      if (g != null) {
+        _gamma = g;
+        return f;
+      } else {
+        return _gamma;
       }
     };
     return f;
@@ -48341,7 +49222,7 @@ Colormaker.prototype.getScale = function getScale (params) {
         p.scale = ['red', 'white', 'blue'];
     }
     if (p.reverse) {
-        p.domain = [p.domain[1], p.domain[0]];
+        p.domain.reverse();
     }
     return chroma_1(p.scale) // TODO
         .mode(p.mode)
@@ -49830,7 +50711,7 @@ var SelectionColormaker = (function (Colormaker$$1) {
             var scheme = data[0];
             var sele = data[1];
             var params = data[2]; if ( params === void 0 ) params = {};
-            if (ColormakerRegistry.hasScheme(scheme)) {
+            if (ColormakerRegistry$1.hasScheme(scheme)) {
                 Object.assign(params, {
                     scheme: scheme,
                     structure: this$1.parameters.structure
@@ -49842,7 +50723,7 @@ var SelectionColormaker = (function (Colormaker$$1) {
                     value: new Color(scheme).getHex()
                 });
             }
-            this$1.colormakerList.push(ColormakerRegistry.getScheme(params));
+            this$1.colormakerList.push(ColormakerRegistry$1.getScheme(params));
             this$1.selectionList.push(new Selection(sele));
         });
     }
@@ -49928,11 +50809,11 @@ var ColormakerModes = {
  * Class for registering {@link Colormaker}s. Generally use the
  * global {@link src/globals.js~ColormakerRegistry} instance.
  */
-var ColormakerRegistry$1 = function ColormakerRegistry() {
+var ColormakerRegistry = function ColormakerRegistry() {
     this.schemes = {};
     this.userSchemes = {};
 };
-ColormakerRegistry$1.prototype.getScheme = function getScheme (params) {
+ColormakerRegistry.prototype.getScheme = function getScheme (params) {
     var p = params || {};
     var id = (p.scheme || '').toLowerCase();
     var SchemeClass;
@@ -49952,7 +50833,7 @@ ColormakerRegistry$1.prototype.getScheme = function getScheme (params) {
  * object with id-label as key-value pairs
  * @return {Object} available schemes
  */
-ColormakerRegistry$1.prototype.getSchemes = function getSchemes () {
+ColormakerRegistry.prototype.getSchemes = function getSchemes () {
     var types = {};
     Object.keys(this.schemes).forEach(function (k) {
         types[k] = k;
@@ -49967,10 +50848,10 @@ ColormakerRegistry$1.prototype.getSchemes = function getSchemes () {
  * object with id-label as key-value pairs
  * @return {Object} available scales
  */
-ColormakerRegistry$1.prototype.getScales = function getScales () {
+ColormakerRegistry.prototype.getScales = function getScales () {
     return ColormakerScales;
 };
-ColormakerRegistry$1.prototype.getModes = function getModes () {
+ColormakerRegistry.prototype.getModes = function getModes () {
     return ColormakerModes;
 };
 /**
@@ -49979,7 +50860,7 @@ ColormakerRegistry$1.prototype.getModes = function getModes () {
  * @param {Colormaker} scheme - the colormaker
  * @return {undefined}
  */
-ColormakerRegistry$1.prototype.add = function add (id, scheme) {
+ColormakerRegistry.prototype.add = function add (id, scheme) {
     id = id.toLowerCase();
     this.schemes[id] = scheme;
 };
@@ -50009,7 +50890,7 @@ ColormakerRegistry$1.prototype.add = function add (id, scheme) {
  * @param {String} label - scheme label
  * @return {String} id to refer to the registered scheme
  */
-ColormakerRegistry$1.prototype.addScheme = function addScheme (scheme, label) {
+ColormakerRegistry.prototype.addScheme = function addScheme (scheme, label) {
     if (!(scheme instanceof Colormaker)) {
         scheme = this._createScheme(scheme);
     }
@@ -50021,7 +50902,7 @@ ColormakerRegistry$1.prototype.addScheme = function addScheme (scheme, label) {
  * @param {String} [label] - scheme label
  * @return {String} id to refer to the registered scheme
  */
-ColormakerRegistry$1.prototype._addUserScheme = function _addUserScheme (scheme, label) {
+ColormakerRegistry.prototype._addUserScheme = function _addUserScheme (scheme, label) {
     label = label || '';
     var id = ((generateUUID()) + "|" + label).toLowerCase();
     this.userSchemes[id] = scheme;
@@ -50032,11 +50913,11 @@ ColormakerRegistry$1.prototype._addUserScheme = function _addUserScheme (scheme,
  * @param  {String} id - scheme to remove
  * @return {undefined}
  */
-ColormakerRegistry$1.prototype.removeScheme = function removeScheme (id) {
+ColormakerRegistry.prototype.removeScheme = function removeScheme (id) {
     id = id.toLowerCase();
     delete this.userSchemes[id];
 };
-ColormakerRegistry$1.prototype._createScheme = function _createScheme (constructor) {
+ColormakerRegistry.prototype._createScheme = function _createScheme (constructor) {
     var _Colormaker = function (params) {
         Colormaker.call(this, params);
         constructor.call(this, params);
@@ -50068,7 +50949,7 @@ ColormakerRegistry$1.prototype._createScheme = function _createScheme (construct
  * @param {String} label - scheme name
  * @return {String} id to refer to the registered scheme
  */
-ColormakerRegistry$1.prototype.addSelectionScheme = function addSelectionScheme (dataList, label) {
+ColormakerRegistry.prototype.addSelectionScheme = function addSelectionScheme (dataList, label) {
     var MySelectionColormaker = (function (SelectionColormaker$$1) {
             function MySelectionColormaker(params) {
             SelectionColormaker$$1.call(this, Object.assign({ dataList: dataList }, params));
@@ -50087,7 +50968,7 @@ ColormakerRegistry$1.prototype.addSelectionScheme = function addSelectionScheme 
  * @param  {String}  id - the id to check
  * @return {Boolean} flag indicating if the scheme exists
  */
-ColormakerRegistry$1.prototype.hasScheme = function hasScheme (id) {
+ColormakerRegistry.prototype.hasScheme = function hasScheme (id) {
     id = id.toLowerCase();
     return id in this.schemes || id in this.userSchemes;
 };
@@ -50097,7 +50978,7 @@ ColormakerRegistry$1.prototype.hasScheme = function hasScheme (id) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-var ParserRegistry$1 = (function (Registry$$1) {
+var ParserRegistry = (function (Registry$$1) {
     function ParserRegistry() {
         Registry$$1.call(this, 'parser');
     }
@@ -50216,17 +51097,17 @@ function makeWorkerBlob(func, deps) {
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-var WorkerRegistry$1 = function WorkerRegistry() {
+var WorkerRegistry = function WorkerRegistry() {
     this.activeWorkerCount = 0;
     this._funcDict = {};
     this._depsDict = {};
     this._blobDict = {};
 };
-WorkerRegistry$1.prototype.add = function add (name, func, deps) {
+WorkerRegistry.prototype.add = function add (name, func, deps) {
     this._funcDict[name] = func;
     this._depsDict[name] = deps;
 };
-WorkerRegistry$1.prototype.get = function get (name) {
+WorkerRegistry.prototype.get = function get (name) {
     if (!this._blobDict[name]) {
         this._blobDict[name] = makeWorkerBlob(this._funcDict[name], this._depsDict[name]);
     }
@@ -50289,11 +51170,11 @@ var WebglErrorMessage = '<div style="display:flex;align-items:center;justify-con
  * List of file extensions to be recognized as scripts
  */
 var ScriptExtensions = ['ngl', 'js'];
-var WorkerRegistry = new WorkerRegistry$1();
-var ColormakerRegistry = new ColormakerRegistry$1();
+var WorkerRegistry$1 = new WorkerRegistry();
+var ColormakerRegistry$1 = new ColormakerRegistry();
 var DatasourceRegistry = new Registry('datasource');
 var RepresentationRegistry = new Registry('representatation');
-var ParserRegistry = new ParserRegistry$1();
+var ParserRegistry$1 = new ParserRegistry();
 var ShaderRegistry = new Registry('shader');
 var DecompressorRegistry = new Registry('decompressor');
 var ComponentRegistry = new Registry('component');
@@ -50583,7 +51464,7 @@ var Loader$1 = function Loader(src, params) {
     this.parameters = createParams(params, {
         ext: '',
         compressed: false,
-        binary: ParserRegistry.isBinary(params.ext || ''),
+        binary: ParserRegistry$1.isBinary(params.ext || ''),
         name: '',
         dir: '',
         path: '',
@@ -50592,8 +51473,8 @@ var Loader$1 = function Loader(src, params) {
     var streamerParams = {
         compressed: this.parameters.compressed,
         binary: this.parameters.binary,
-        json: ParserRegistry.isJson(this.parameters.ext),
-        xml: ParserRegistry.isXml(this.parameters.ext)
+        json: ParserRegistry$1.isJson(this.parameters.ext),
+        xml: ParserRegistry$1.isXml(this.parameters.ext)
     };
     if ((typeof File !== 'undefined' && src instanceof File) ||
         (typeof Blob !== 'undefined' && src instanceof Blob)) {
@@ -50637,7 +51518,7 @@ var ParserLoader = (function (Loader) {
      *                   {@link Volume}, {@link Surface} or data object
      */
     ParserLoader.prototype.load = function load () {
-        var ParserClass = ParserRegistry.get(this.parameters.ext);
+        var ParserClass = ParserRegistry$1.get(this.parameters.ext);
         var parser = new ParserClass(this.streamer, this.parserParams);
         return parser.parse();
     };
@@ -50806,7 +51687,7 @@ function autoLoad(file, params) {
 
     var p = Object.assign(getDataInfo(file), params);
     var loader;
-    if (ParserRegistry.names.includes(p.ext)) {
+    if (ParserRegistry$1.names.includes(p.ext)) {
         loader = new ParserLoader(p.src, p);
     }
     else if (ScriptExtensions.includes(p.ext)) {
@@ -53896,36 +54777,7 @@ function getTouchDistance(event) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 function getMouseButtons(event) {
-    if (typeof event === 'object') {
-        if ('buttons' in event) {
-            return event.buttons;
-        }
-        else if ('which' in event) {
-            var b = event.which;
-            if (b === 2) {
-                return 4;
-            }
-            else if (b === 3) {
-                return 2;
-            }
-            else if (b > 0) {
-                return 1 << (b - 1);
-            }
-        }
-        else if ('button' in event) {
-            var b$1 = event.button;
-            if (b$1 === 1) {
-                return 4;
-            }
-            else if (b$1 === 2) {
-                return 2;
-            }
-            else if (b$1 >= 0) {
-                return 1 << b$1;
-            }
-        }
-    }
-    return 0;
+    return (typeof event === 'object' && 'buttons' in event) ? event.buttons : 0;
 }
 /**
  * Mouse observer
@@ -54930,17 +55782,17 @@ var Animation = function Animation(duration, controls) {
     var ref;
 };
 
-var prototypeAccessors$7 = { done: { configurable: true },paused: { configurable: true } };
+var prototypeAccessors$6 = { done: { configurable: true },paused: { configurable: true } };
 /**
  * True when animation has finished
  */
-prototypeAccessors$7.done.get = function () {
+prototypeAccessors$6.done.get = function () {
     return this.alpha === 1;
 };
 /**
  * True when animation is paused
  */
-prototypeAccessors$7.paused.get = function () {
+prototypeAccessors$6.paused.get = function () {
     return this._paused;
 };
 Animation.prototype.tick = function tick (stats) {
@@ -55011,7 +55863,7 @@ Animation.prototype.then = function then (callback) {
     return p.then(callback);
 };
 
-Object.defineProperties( Animation.prototype, prototypeAccessors$7 );
+Object.defineProperties( Animation.prototype, prototypeAccessors$6 );
 /**
  * Spin animation. Spin around an axis.
  */
@@ -55263,12 +56115,12 @@ var AnimationControls = function AnimationControls(stage) {
     this.controls = stage.viewerControls;
 };
 
-var prototypeAccessors$6 = { paused: { configurable: true } };
+var prototypeAccessors$7 = { paused: { configurable: true } };
 /**
  * True when all animations are paused
  * @type {Boolean}
  */
-prototypeAccessors$6.paused.get = function () {
+prototypeAccessors$7.paused.get = function () {
     return this.animationList.every(function (animation) { return animation.paused; });
 };
 /**
@@ -55495,7 +56347,7 @@ AnimationControls.prototype.dispose = function dispose () {
     this.clear();
 };
 
-Object.defineProperties( AnimationControls.prototype, prototypeAccessors$6 );
+Object.defineProperties( AnimationControls.prototype, prototypeAccessors$7 );
 
 /**
  * @file Queue
@@ -55626,7 +56478,7 @@ var Representation = function Representation(object, viewer, params) {
         colorScale: {
             type: 'select',
             update: 'color',
-            options: ColormakerRegistry.getScales()
+            options: ColormakerRegistry$1.getScales()
         },
         colorReverse: {
             type: 'boolean', update: 'color'
@@ -55640,7 +56492,7 @@ var Representation = function Representation(object, viewer, params) {
         colorMode: {
             type: 'select',
             update: 'color',
-            options: ColormakerRegistry.getModes()
+            options: ColormakerRegistry$1.getModes()
         },
         roughness: {
             type: 'range', step: 0.01, max: 1, min: 0, buffer: true
@@ -55679,7 +56531,7 @@ var Representation = function Representation(object, viewer, params) {
      */
     this.bufferList = [];
     if (this.parameters.colorScheme) {
-        this.parameters.colorScheme.options = ColormakerRegistry.getSchemes();
+        this.parameters.colorScheme.options = ColormakerRegistry$1.getSchemes();
     }
 };
 Representation.prototype.init = function init (params) {
@@ -55795,7 +56647,7 @@ Representation.prototype.getBufferParams = function getBufferParams (p) {
     }, p);
 };
 Representation.prototype.setColor = function setColor (value, p) {
-    var types = Object.keys(ColormakerRegistry.getSchemes());
+    var types = Object.keys(ColormakerRegistry$1.getSchemes());
     if (typeof value === 'string' && types.includes(value.toLowerCase())) {
         if (p) {
             p.colorScheme = value;
@@ -55939,7 +56791,7 @@ Representation.prototype.setParameters = function setParameters (params, what, r
     var p = params || {};
     var tp = this.parameters;
     var bufferParams = {};
-    if (!this.opacity && p.opacity) {
+    if (!this.opacity && p.opacity !== undefined) {
         if (this.lazyProps.build) {
             this.lazyProps.build = false;
             rebuild = true;
@@ -56003,7 +56855,9 @@ Representation.prototype.setParameters = function setParameters (params, what, r
     return this;
 };
 Representation.prototype.updateParameters = function updateParameters (bufferParams, what) {
-    if (this.lazy && (!this.visible || !this.opacity)) {
+        if ( bufferParams === void 0 ) bufferParams = {};
+
+    if (this.lazy && (!this.visible || !this.opacity) && bufferParams.opacity === undefined) {
         Object.assign(this.lazyProps.bufferParams, bufferParams);
         Object.assign(this.lazyProps.what, what);
         return;
@@ -56061,9 +56915,9 @@ var _Worker = function _Worker(name) {
     this.onmessageDict = {};
     this.onerrorDict = {};
     this.name = name;
-    this.blobUrl = window.URL.createObjectURL(WorkerRegistry.get(name));
+    this.blobUrl = window.URL.createObjectURL(WorkerRegistry$1.get(name));
     this.worker = new Worker(this.blobUrl);
-    WorkerRegistry.activeWorkerCount += 1;
+    WorkerRegistry$1.activeWorkerCount += 1;
     this.worker.onmessage = function (event) {
         this$1.pending -= 1;
         var postId = event.data.__postId;
@@ -56123,7 +56977,7 @@ _Worker.prototype.terminate = function terminate () {
     if (this.worker) {
         this.worker.terminate();
         window.URL.revokeObjectURL(this.blobUrl);
-        WorkerRegistry.activeWorkerCount -= 1;
+        WorkerRegistry$1.activeWorkerCount -= 1;
     }
     else {
         Log.log('no worker to terminate');
@@ -58657,7 +59511,7 @@ function addChargedContacts(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2, masterIdx))
+            if (invalidAtomContact$1(ap1, ap2, masterIdx))
                 { return; }
             var ti = types[i];
             var tj = types[j];
@@ -58898,7 +59752,7 @@ function addHydrogenBonds(structure, contacts, params) {
             var k = ref[1];
             donor.index = atomSets[l][0];
             acceptor.index = atomSets[k][0];
-            if (invalidAtomContact(donor, acceptor, masterIdx))
+            if (invalidAtomContact$1(donor, acceptor, masterIdx))
                 { return; }
             if (donor.number !== 16 /* S */ && acceptor.number !== 16 /* S */ && dSq > maxHbondDistSq)
                 { return; }
@@ -59147,7 +60001,7 @@ function addMetalComplexation(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2, masterIdx))
+            if (invalidAtomContact$1(ap1, ap2, masterIdx))
                 { return; }
             var m1 = ap1.isMetal();
             var m2 = ap2.isMetal();
@@ -59224,7 +60078,7 @@ function addHydrophobicContacts(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2, masterIdx))
+            if (invalidAtomContact$1(ap1, ap2, masterIdx))
                 { return; }
             if (ap1.number === 9 /* F */ && ap2.number === 9 /* F */)
                 { return; }
@@ -59315,7 +60169,7 @@ function addHalogenBonds(structure, contacts, params) {
                 { return; }
             ap1.index = atomSets[i][0];
             ap2.index = atomSets[j][0];
-            if (invalidAtomContact(ap1, ap2, masterIdx))
+            if (invalidAtomContact$1(ap1, ap2, masterIdx))
                 { return; }
             if (!isHalogenBond(types[i], types[j]))
                 { return; }
@@ -59350,7 +60204,7 @@ function addHalogenBonds(structure, contacts, params) {
  * @private
  */
 // also allows intra-residue contacts
-function invalidAtomContact$1(ap1, ap2, masterIdx) {
+function invalidAtomContact(ap1, ap2, masterIdx) {
     return !isMasterContact(ap1, ap2, masterIdx) && (ap1.modelIndex !== ap2.modelIndex ||
         (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc));
 }
@@ -59393,8 +60247,8 @@ function refineLineOfSight(structure, contacts, params) {
             aw.index = j;
             if (aw.number !== 1 /* H */ &&
                 (aw.vdw * aw.vdw * lineOfSightDistFactorSq) > dSq &&
-                !invalidAtomContact$1(ac1, aw, masterIdx) &&
-                !invalidAtomContact$1(ac2, aw, masterIdx) &&
+                !invalidAtomContact(ac1, aw, masterIdx) &&
+                !invalidAtomContact(ac2, aw, masterIdx) &&
                 !as1.includes(j) &&
                 !as2.includes(j) &&
                 // to ignore atoms in the center of functional groups
@@ -59610,7 +60464,7 @@ function isMasterContact(ap1, ap2, masterIdx) {
     return ((ap1.modelIndex === masterIdx && ap2.modelIndex !== masterIdx) ||
         (ap2.modelIndex === masterIdx && ap1.modelIndex !== masterIdx));
 }
-function invalidAtomContact(ap1, ap2, masterIdx) {
+function invalidAtomContact$1(ap1, ap2, masterIdx) {
     return !isMasterContact(ap1, ap2, masterIdx) && (ap1.modelIndex !== ap2.modelIndex ||
         ap1.residueIndex === ap2.residueIndex ||
         (ap1.altloc && ap2.altloc && ap1.altloc !== ap2.altloc));
@@ -59825,9 +60679,9 @@ var Picker = function Picker(array) {
     this.array = array;
 };
 
-var prototypeAccessors$9 = { type: { configurable: true },data: { configurable: true } };
-prototypeAccessors$9.type.get = function () { return ''; };
-prototypeAccessors$9.data.get = function () { return {}; };
+var prototypeAccessors$8 = { type: { configurable: true },data: { configurable: true } };
+prototypeAccessors$8.type.get = function () { return ''; };
+prototypeAccessors$8.data.get = function () { return {}; };
 /**
  * Get the index for the given picking id
  * @param  {Integer} pid - the picking id
@@ -59874,7 +60728,7 @@ Picker.prototype.getPosition = function getPosition (pid, instance, component) {
     return this._applyTransformations(this._getPosition(pid), instance, component);
 };
 
-Object.defineProperties( Picker.prototype, prototypeAccessors$9 );
+Object.defineProperties( Picker.prototype, prototypeAccessors$8 );
 /**
  * Shape picker class
  * @interface
@@ -62232,8 +63086,8 @@ var Surface = function Surface(name, path, data) {
     }
 };
 
-var prototypeAccessors$10 = { type: { configurable: true } };
-prototypeAccessors$10.type.get = function () { return 'Surface'; };
+var prototypeAccessors$9 = { type: { configurable: true } };
+prototypeAccessors$9.type.get = function () { return 'Surface'; };
 /**
  * set surface data
  * @param {Float32Array} position - surface positions
@@ -62310,7 +63164,7 @@ Surface.prototype.getColor = function getColor (params) {
     p.surface = this;
     var n = this.size;
     var array = new Float32Array(n * 3);
-    var colormaker = ColormakerRegistry.getScheme(p);
+    var colormaker = ColormakerRegistry$1.getScheme(p);
     if (colormaker.volumeColor || p.scheme === 'random') {
         for (var i = 0; i < n; ++i) {
             colormaker.volumeColorToArray(i, array, i * 3);
@@ -62396,7 +63250,7 @@ Surface.prototype.dispose = function dispose () {
     //
 };
 
-Object.defineProperties( Surface.prototype, prototypeAccessors$10 );
+Object.defineProperties( Surface.prototype, prototypeAccessors$9 );
 
 /**
  * @file Volume
@@ -62428,7 +63282,7 @@ VolumeSurface.__deps = [
     applyMatrix4toVector3array, applyMatrix3toVector3array,
     m3new, m3makeNormal
 ];
-WorkerRegistry.add('surf', function func(e, callback) {
+WorkerRegistry$1.add('surf', function func(e, callback) {
     var a = e.data.args;
     var p = e.data.params;
     if (a) {
@@ -62463,8 +63317,8 @@ var Volume = function Volume(name, path, data, nx, ny, nz, atomindex) {
     this.setData(data, nx, ny, nz, atomindex);
 };
 
-var prototypeAccessors$8 = { type: { configurable: true },position: { configurable: true },min: { configurable: true },max: { configurable: true },sum: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
-prototypeAccessors$8.type.get = function () { return 'Volume'; };
+var prototypeAccessors$10 = { type: { configurable: true },position: { configurable: true },min: { configurable: true },max: { configurable: true },sum: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
+prototypeAccessors$10.type.get = function () { return 'Volume'; };
 /**
  * set volume data
  * @param {Float32array} data - volume 3d grid
@@ -62640,7 +63494,7 @@ Volume.prototype.getValueForSigma = function getValueForSigma (sigma) {
 Volume.prototype.getSigmaForValue = function getSigmaForValue (value) {
     return (defaults(value, 0) - this.mean) / this.rms;
 };
-prototypeAccessors$8.position.get = function () {
+prototypeAccessors$10.position.get = function () {
     if (!this._position) {
         var nz = this.nz;
         var ny = this.ny;
@@ -62673,7 +63527,7 @@ Volume.prototype.getDataColor = function getDataColor (params) {
     p.volume = this;
     p.scale = p.scale || 'Spectral';
     p.domain = p.domain || [this.min, this.max];
-    var colormaker = ColormakerRegistry.getScheme(p);
+    var colormaker = ColormakerRegistry$1.getScheme(p);
     var n = this.position.length / 3;
     var array = new Float32Array(n * 3);
     // var atoms = p.structure.atoms;
@@ -62725,31 +63579,31 @@ Volume.prototype.getDataSize = function getDataSize (size, scale) {
     }
     return array;
 };
-prototypeAccessors$8.min.get = function () {
+prototypeAccessors$10.min.get = function () {
     if (this._min === undefined) {
         this._min = arrayMin(this.data);
     }
     return this._min;
 };
-prototypeAccessors$8.max.get = function () {
+prototypeAccessors$10.max.get = function () {
     if (this._max === undefined) {
         this._max = arrayMax$1(this.data);
     }
     return this._max;
 };
-prototypeAccessors$8.sum.get = function () {
+prototypeAccessors$10.sum.get = function () {
     if (this._sum === undefined) {
         this._sum = arraySum(this.data);
     }
     return this._sum;
 };
-prototypeAccessors$8.mean.get = function () {
+prototypeAccessors$10.mean.get = function () {
     if (this._mean === undefined) {
         this._mean = arrayMean(this.data);
     }
     return this._mean;
 };
-prototypeAccessors$8.rms.get = function () {
+prototypeAccessors$10.rms.get = function () {
     if (this._rms === undefined) {
         this._rms = arrayRms(this.data);
     }
@@ -62766,7 +63620,7 @@ Volume.prototype.dispose = function dispose () {
         { this.workerPool.terminate(); }
 };
 
-Object.defineProperties( Volume.prototype, prototypeAccessors$8 );
+Object.defineProperties( Volume.prototype, prototypeAccessors$10 );
 
 ShaderRegistry.add('shader/Mesh.vert', "#define STANDARD\nuniform float clipNear;\nuniform vec3 clipCenter;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#elif defined( NOLIGHT )\nvarying vec3 vColor;\n#else\n#include color_pars_vertex\n#ifndef FLAT_SHADED\nvarying vec3 vNormal;\n#endif\n#endif\n#include common\nvoid main(){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#elif defined( NOLIGHT )\nvColor = color;\n#else\n#include color_vertex\n#include beginnormal_vertex\n#include defaultnormal_vertex\n#ifndef FLAT_SHADED\nvNormal = normalize( transformedNormal );\n#endif\n#endif\n#include begin_vertex\n#include project_vertex\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -mvPosition.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n}");
 
@@ -64829,19 +65683,19 @@ var ComponentControls = function ComponentControls(component) {
     this.viewer = component.stage.viewer;
 };
 
-var prototypeAccessors$14 = { position: { configurable: true },rotation: { configurable: true } };
+var prototypeAccessors$13 = { position: { configurable: true },rotation: { configurable: true } };
 /**
  * component center position
  * @type {Vector3}
  */
-prototypeAccessors$14.position.get = function () {
+prototypeAccessors$13.position.get = function () {
     return this.component.position;
 };
 /**
  * component rotation
  * @type {Quaternion}
  */
-prototypeAccessors$14.rotation.get = function () {
+prototypeAccessors$13.rotation.get = function () {
     return this.component.quaternion;
 };
 /**
@@ -64875,7 +65729,7 @@ ComponentControls.prototype.spin = function spin (axis, angle) {
     this.changed();
 };
 
-Object.defineProperties( ComponentControls.prototype, prototypeAccessors$14 );
+Object.defineProperties( ComponentControls.prototype, prototypeAccessors$13 );
 
 /**
  * @file Radius Factory
@@ -65102,17 +65956,17 @@ var FilteredVolume = function FilteredVolume(volume, minValue, maxValue, outside
     this.setFilter(minValue, maxValue, outside);
 };
 
-var prototypeAccessors$16 = { header: { configurable: true },matrix: { configurable: true },normalMatrix: { configurable: true },inverseMatrix: { configurable: true },center: { configurable: true },boundingBox: { configurable: true },min: { configurable: true },max: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
-prototypeAccessors$16.header.get = function () { return this.volume.header; };
-prototypeAccessors$16.matrix.get = function () { return this.volume.matrix; };
-prototypeAccessors$16.normalMatrix.get = function () { return this.volume.normalMatrix; };
-prototypeAccessors$16.inverseMatrix.get = function () { return this.volume.inverseMatrix; };
-prototypeAccessors$16.center.get = function () { return this.volume.center; };
-prototypeAccessors$16.boundingBox.get = function () { return this.volume.boundingBox; };
-prototypeAccessors$16.min.get = function () { return this.volume.min; };
-prototypeAccessors$16.max.get = function () { return this.volume.max; };
-prototypeAccessors$16.mean.get = function () { return this.volume.mean; };
-prototypeAccessors$16.rms.get = function () { return this.volume.rms; };
+var prototypeAccessors$14 = { header: { configurable: true },matrix: { configurable: true },normalMatrix: { configurable: true },inverseMatrix: { configurable: true },center: { configurable: true },boundingBox: { configurable: true },min: { configurable: true },max: { configurable: true },mean: { configurable: true },rms: { configurable: true } };
+prototypeAccessors$14.header.get = function () { return this.volume.header; };
+prototypeAccessors$14.matrix.get = function () { return this.volume.matrix; };
+prototypeAccessors$14.normalMatrix.get = function () { return this.volume.normalMatrix; };
+prototypeAccessors$14.inverseMatrix.get = function () { return this.volume.inverseMatrix; };
+prototypeAccessors$14.center.get = function () { return this.volume.center; };
+prototypeAccessors$14.boundingBox.get = function () { return this.volume.boundingBox; };
+prototypeAccessors$14.min.get = function () { return this.volume.min; };
+prototypeAccessors$14.max.get = function () { return this.volume.max; };
+prototypeAccessors$14.mean.get = function () { return this.volume.mean; };
+prototypeAccessors$14.rms.get = function () { return this.volume.rms; };
 FilteredVolume.prototype._getFilterHash = function _getFilterHash (minValue, maxValue, outside) {
     return JSON.stringify([minValue, maxValue, outside]);
 };
@@ -65175,7 +66029,7 @@ FilteredVolume.prototype.setFilter = function setFilter (minValue, maxValue, out
     this._filterHash = filterHash;
 };
 
-Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$16 );
+Object.defineProperties( FilteredVolume.prototype, prototypeAccessors$14 );
 FilteredVolume.prototype.getValueForSigma = Volume.prototype.getValueForSigma;
 FilteredVolume.prototype.getSigmaForValue = Volume.prototype.getSigmaForValue;
 FilteredVolume.prototype.getDataAtomindex = Volume.prototype.getDataAtomindex;
@@ -65524,7 +66378,7 @@ Helixorient.prototype.getColor = function getColor (params) {
     var col = new Float32Array(n * 3);
     var p = params || {};
     p.structure = structure;
-    var colormaker = ColormakerRegistry.getScheme(p);
+    var colormaker = ColormakerRegistry$1.getScheme(p);
     var rp = structure.getResidueProxy();
     var ap = structure.getAtomProxy();
     for (var i = 0; i < n; ++i) {
@@ -65735,7 +66589,7 @@ Helixbundle.prototype.getAxis = function getAxis (localAngle, centerDist, ssBord
     var pos = this.position;
     var cp = colorParams || {};
     cp.structure = structure;
-    var colormaker = ColormakerRegistry.getScheme(cp);
+    var colormaker = ColormakerRegistry$1.getScheme(cp);
     var radiusFactory = new RadiusFactory(radiusParams);
     var j = 0;
     var k = 0;
@@ -65986,7 +66840,7 @@ BinaryHeap.prototype.sinkDown = function sinkDown (n) {
  * @param {Float32Array} points - points
  * @param {Function} metric - metric
  */
-var Kdtree$2 = function Kdtree(points, metric) {
+var Kdtree = function Kdtree(points, metric) {
     this.points = points;
     this.metric = metric;
     this.maxDepth = 0;
@@ -66000,7 +66854,7 @@ var Kdtree$2 = function Kdtree(points, metric) {
     this.nodes = new Int32Array(n * 4);
     this.rootIndex = this.buildTree(0, -1, 0, n);
 };
-Kdtree$2.prototype.buildTree = function buildTree (depth, parent, arrBegin, arrEnd) {
+Kdtree.prototype.buildTree = function buildTree (depth, parent, arrBegin, arrEnd) {
     if (depth > this.maxDepth)
         { this.maxDepth = depth; }
     var plength = arrEnd - arrBegin;
@@ -66066,7 +66920,7 @@ Kdtree$2.prototype.buildTree = function buildTree (depth, parent, arrBegin, arrE
     nodes[nodeIndex + 3] = parent;
     return nodeIndex;
 };
-Kdtree$2.prototype.getNodeDepth = function getNodeDepth (nodeIndex) {
+Kdtree.prototype.getNodeDepth = function getNodeDepth (nodeIndex) {
     var parentIndex = this.nodes[nodeIndex + 3];
     return (parentIndex === -1) ? 0 : this.getNodeDepth(parentIndex) + 1;
 };
@@ -66079,7 +66933,7 @@ Kdtree$2.prototype.getNodeDepth = function getNodeDepth (nodeIndex) {
  * @param {Float} maxDistance - maximum distance of point to result nodes
  * @return {Array} array of point, distance pairs
  */
-Kdtree$2.prototype.nearest = function nearest (point, maxNodes, maxDistance) {
+Kdtree.prototype.nearest = function nearest (point, maxNodes, maxDistance) {
         var this$1 = this;
 
     var bestNodes = new BinaryHeap(function (e) { return -e[1]; });
@@ -66163,7 +67017,7 @@ Kdtree$2.prototype.nearest = function nearest (point, maxNodes, maxDistance) {
     }
     return result;
 };
-Kdtree$2.prototype.verify = function verify (nodeIndex, depth) {
+Kdtree.prototype.verify = function verify (nodeIndex, depth) {
         if ( depth === void 0 ) depth = 0;
 
     var count = 1;
@@ -66216,38 +67070,38 @@ var AtomProxy = function AtomProxy(structure, index) {
     this.atomMap = structure.atomMap;
 };
 
-var prototypeAccessors$17 = { bondHash: { configurable: true },entity: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },chainIndex: { configurable: true },residue: { configurable: true },residueIndex: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },resno: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },residueType: { configurable: true },atomType: { configurable: true },residueAtomOffset: { configurable: true },resname: { configurable: true },hetero: { configurable: true },atomname: { configurable: true },number: { configurable: true },element: { configurable: true },vdw: { configurable: true },covalent: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true },serial: { configurable: true },bfactor: { configurable: true },occupancy: { configurable: true },altloc: { configurable: true },partialCharge: { configurable: true },formalCharge: { configurable: true },aromatic: { configurable: true },bondCount: { configurable: true } };
+var prototypeAccessors$15 = { bondHash: { configurable: true },entity: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },chainIndex: { configurable: true },residue: { configurable: true },residueIndex: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },resno: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },residueType: { configurable: true },atomType: { configurable: true },residueAtomOffset: { configurable: true },resname: { configurable: true },hetero: { configurable: true },atomname: { configurable: true },number: { configurable: true },element: { configurable: true },vdw: { configurable: true },covalent: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true },serial: { configurable: true },bfactor: { configurable: true },occupancy: { configurable: true },altloc: { configurable: true },partialCharge: { configurable: true },formalCharge: { configurable: true },aromatic: { configurable: true },bondCount: { configurable: true } };
 /**
  * @type {BondHash}
  */
-prototypeAccessors$17.bondHash.get = function () { return this.structure.bondHash; };
+prototypeAccessors$15.bondHash.get = function () { return this.structure.bondHash; };
 /**
  * Molecular enity
  * @type {Entity}
  */
-prototypeAccessors$17.entity.get = function () {
+prototypeAccessors$15.entity.get = function () {
     return this.structure.entityList[this.entityIndex];
 };
-prototypeAccessors$17.entityIndex.get = function () {
+prototypeAccessors$15.entityIndex.get = function () {
     return this.chainStore.entityIndex[this.chainIndex];
 };
-prototypeAccessors$17.modelIndex.get = function () {
+prototypeAccessors$15.modelIndex.get = function () {
     return this.chainStore.modelIndex[this.chainIndex];
 };
-prototypeAccessors$17.chainIndex.get = function () {
+prototypeAccessors$15.chainIndex.get = function () {
     return this.residueStore.chainIndex[this.residueIndex];
 };
 /**
  * @type {ResidueProxy}
  */
-prototypeAccessors$17.residue.get = function () {
+prototypeAccessors$15.residue.get = function () {
     console.warn('residue - might be expensive');
     return this.structure.getResidueProxy(this.residueIndex);
 };
-prototypeAccessors$17.residueIndex.get = function () {
+prototypeAccessors$15.residueIndex.get = function () {
     return this.atomStore.residueIndex[this.index];
 };
-prototypeAccessors$17.residueIndex.set = function (value) {
+prototypeAccessors$15.residueIndex.set = function (value) {
     this.atomStore.residueIndex[this.index] = value;
 };
 //
@@ -66255,168 +67109,168 @@ prototypeAccessors$17.residueIndex.set = function (value) {
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$17.sstruc.get = function () {
+prototypeAccessors$15.sstruc.get = function () {
     return this.residueStore.getSstruc(this.residueIndex);
 };
 /**
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$17.inscode.get = function () {
+prototypeAccessors$15.inscode.get = function () {
     return this.residueStore.getInscode(this.residueIndex);
 };
 /**
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$17.resno.get = function () {
+prototypeAccessors$15.resno.get = function () {
     return this.residueStore.resno[this.residueIndex];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$17.chainname.get = function () {
+prototypeAccessors$15.chainname.get = function () {
     return this.chainStore.getChainname(this.chainIndex);
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$17.chainid.get = function () {
+prototypeAccessors$15.chainid.get = function () {
     return this.chainStore.getChainid(this.chainIndex);
 };
 //
 /**
  * @type {ResidueType}
  */
-prototypeAccessors$17.residueType.get = function () {
+prototypeAccessors$15.residueType.get = function () {
     return this.residueMap.get(this.residueStore.residueTypeId[this.residueIndex]);
 };
 /**
  * @type {AtomType}
  */
-prototypeAccessors$17.atomType.get = function () {
+prototypeAccessors$15.atomType.get = function () {
     return this.atomMap.get(this.atomStore.atomTypeId[this.index]);
 };
-prototypeAccessors$17.residueAtomOffset.get = function () {
+prototypeAccessors$15.residueAtomOffset.get = function () {
     return this.residueStore.atomOffset[this.residueIndex];
 };
 //
 /**
  * Residue name
  */
-prototypeAccessors$17.resname.get = function () {
+prototypeAccessors$15.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  */
-prototypeAccessors$17.hetero.get = function () {
+prototypeAccessors$15.hetero.get = function () {
     return this.residueType.hetero;
 };
 //
 /**
  * Atom name
  */
-prototypeAccessors$17.atomname.get = function () {
+prototypeAccessors$15.atomname.get = function () {
     return this.atomType.atomname;
 };
 /**
  * Atomic number
  */
-prototypeAccessors$17.number.get = function () {
+prototypeAccessors$15.number.get = function () {
     return this.atomType.number;
 };
 /**
  * Element
  */
-prototypeAccessors$17.element.get = function () {
+prototypeAccessors$15.element.get = function () {
     return this.atomType.element;
 };
 /**
  * Van-der-Waals radius
  */
-prototypeAccessors$17.vdw.get = function () {
+prototypeAccessors$15.vdw.get = function () {
     return this.atomType.vdw;
 };
 /**
  * Covalent radius
  */
-prototypeAccessors$17.covalent.get = function () {
+prototypeAccessors$15.covalent.get = function () {
     return this.atomType.covalent;
 };
 //
 /**
  * X coordinate
  */
-prototypeAccessors$17.x.get = function () {
+prototypeAccessors$15.x.get = function () {
     return this.atomStore.x[this.index];
 };
-prototypeAccessors$17.x.set = function (value) {
+prototypeAccessors$15.x.set = function (value) {
     this.atomStore.x[this.index] = value;
 };
 /**
  * Y coordinate
  */
-prototypeAccessors$17.y.get = function () {
+prototypeAccessors$15.y.get = function () {
     return this.atomStore.y[this.index];
 };
-prototypeAccessors$17.y.set = function (value) {
+prototypeAccessors$15.y.set = function (value) {
     this.atomStore.y[this.index] = value;
 };
 /**
  * Z coordinate
  */
-prototypeAccessors$17.z.get = function () {
+prototypeAccessors$15.z.get = function () {
     return this.atomStore.z[this.index];
 };
-prototypeAccessors$17.z.set = function (value) {
+prototypeAccessors$15.z.set = function (value) {
     this.atomStore.z[this.index] = value;
 };
 /**
  * Serial number
  */
-prototypeAccessors$17.serial.get = function () {
+prototypeAccessors$15.serial.get = function () {
     return this.atomStore.serial[this.index];
 };
-prototypeAccessors$17.serial.set = function (value) {
+prototypeAccessors$15.serial.set = function (value) {
     this.atomStore.serial[this.index] = value;
 };
 /**
  * B-factor value
  */
-prototypeAccessors$17.bfactor.get = function () {
+prototypeAccessors$15.bfactor.get = function () {
     return this.atomStore.bfactor[this.index];
 };
-prototypeAccessors$17.bfactor.set = function (value) {
+prototypeAccessors$15.bfactor.set = function (value) {
     this.atomStore.bfactor[this.index] = value;
 };
 /**
  * Occupancy value
  */
-prototypeAccessors$17.occupancy.get = function () {
+prototypeAccessors$15.occupancy.get = function () {
     return this.atomStore.occupancy[this.index];
 };
-prototypeAccessors$17.occupancy.set = function (value) {
+prototypeAccessors$15.occupancy.set = function (value) {
     this.atomStore.occupancy[this.index] = value;
 };
 /**
  * Alternate location identifier
  */
-prototypeAccessors$17.altloc.get = function () {
+prototypeAccessors$15.altloc.get = function () {
     return this.atomStore.getAltloc(this.index);
 };
-prototypeAccessors$17.altloc.set = function (value) {
+prototypeAccessors$15.altloc.set = function (value) {
     this.atomStore.setAltloc(this.index, value);
 };
 /**
  * Partial charge
  */
-prototypeAccessors$17.partialCharge.get = function () {
+prototypeAccessors$15.partialCharge.get = function () {
     return this.atomStore.partialCharge ? this.atomStore.partialCharge[this.index] : null;
 };
-prototypeAccessors$17.partialCharge.set = function (value) {
+prototypeAccessors$15.partialCharge.set = function (value) {
     if (this.atomStore.partialCharge) {
         this.atomStore.partialCharge[this.index] = value;
     }
@@ -66424,10 +67278,10 @@ prototypeAccessors$17.partialCharge.set = function (value) {
 /**
  * Formal charge
  */
-prototypeAccessors$17.formalCharge.get = function () {
+prototypeAccessors$15.formalCharge.get = function () {
     return this.atomStore.formalCharge ? this.atomStore.formalCharge[this.index] : null;
 };
-prototypeAccessors$17.formalCharge.set = function (value) {
+prototypeAccessors$15.formalCharge.set = function (value) {
     if (this.atomStore.formalCharge) {
         this.atomStore.formalCharge[this.index] = value;
     }
@@ -66435,7 +67289,7 @@ prototypeAccessors$17.formalCharge.set = function (value) {
 /**
  * Aromaticity flag
  */
-prototypeAccessors$17.aromatic.get = function () {
+prototypeAccessors$15.aromatic.get = function () {
     if (this.atomStore.aromatic) {
         return this.atomStore.aromatic[this.index];
     }
@@ -66443,13 +67297,13 @@ prototypeAccessors$17.aromatic.get = function () {
         return this.residueType.isAromatic(this) ? 1 : 0;
     }
 };
-prototypeAccessors$17.aromatic.set = function (value) {
+prototypeAccessors$15.aromatic.set = function (value) {
     if (this.atomStore.aromatic) {
         this.atomStore.aromatic[this.index] = value;
     }
 };
 //
-prototypeAccessors$17.bondCount.get = function () {
+prototypeAccessors$15.bondCount.get = function () {
     return this.bondHash.countArray[this.index]; // TODO
 };
 //
@@ -66885,7 +67739,7 @@ AtomProxy.prototype.toObject = function toObject () {
     };
 };
 
-Object.defineProperties( AtomProxy.prototype, prototypeAccessors$17 );
+Object.defineProperties( AtomProxy.prototype, prototypeAccessors$15 );
 
 /**
  * @file Kdtree
@@ -66902,7 +67756,7 @@ function euclideanDist(a, b) {
     return Math.sqrt(euclideanDistSq(a, b));
 }
 var pointArray = new Float32Array(3);
-var Kdtree = function Kdtree(structure, useSquaredDist) {
+var Kdtree$1 = function Kdtree$$1(structure, useSquaredDist) {
     if ( useSquaredDist === void 0 ) useSquaredDist = false;
 
     if (Debug)
@@ -66920,12 +67774,12 @@ var Kdtree = function Kdtree(structure, useSquaredDist) {
     });
     this.atomIndices = atomIndices;
     this.points = points;
-    this.kdtree = new Kdtree$2(points, metric);
+    this.kdtree = new Kdtree(points, metric);
     if (Debug)
         { Log.timeEnd('Kdtree build'); }
     // console.log("this.kdtree.verify()", this.kdtree.verify())
 };
-Kdtree.prototype.nearest = function nearest (point, maxNodes, maxDistance) {
+Kdtree$1.prototype.nearest = function nearest (point, maxNodes, maxDistance) {
     // Log.time( "Kdtree nearest" );
     if (point instanceof Vector3) {
         point.toArray(pointArray);
@@ -67388,8 +68242,8 @@ var Assembly = function Assembly(name) {
     this.partList = [];
 };
 
-var prototypeAccessors$18 = { type: { configurable: true } };
-prototypeAccessors$18.type.get = function () { return 'Assembly'; };
+var prototypeAccessors$16 = { type: { configurable: true } };
+prototypeAccessors$16.type.get = function () { return 'Assembly'; };
 /**
  * Add transformed parts to the assembly
  * @example
@@ -67479,7 +68333,7 @@ Assembly.prototype.getSelection = function getSelection () {
     return selectionFromChains(chainList);
 };
 
-Object.defineProperties( Assembly.prototype, prototypeAccessors$18 );
+Object.defineProperties( Assembly.prototype, prototypeAccessors$16 );
 var AssemblyPart = function AssemblyPart(matrixList, chainList) {
     if ( matrixList === void 0 ) matrixList = [];
     if ( chainList === void 0 ) chainList = [];
@@ -68139,7 +68993,7 @@ function calculateResidueBonds(r) {
     }
     else {
         if (count > 50) {
-            var kdtree = new Kdtree(r, true);
+            var kdtree = new Kdtree$1(r, true);
             var radius = r.isCg() ? 1.2 : 2.3;
             for (var i = offset; i < end1; ++i) {
                 a1.index = i;
@@ -69344,44 +70198,44 @@ var BondProxy = function BondProxy(structure, index) {
     this._ap3 = this.structure.getAtomProxy();
 };
 
-var prototypeAccessors$19 = { atom1: { configurable: true },atom2: { configurable: true },atomIndex1: { configurable: true },atomIndex2: { configurable: true },bondOrder: { configurable: true } };
+var prototypeAccessors$17 = { atom1: { configurable: true },atom2: { configurable: true },atomIndex1: { configurable: true },atomIndex2: { configurable: true },bondOrder: { configurable: true } };
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$19.atom1.get = function () {
+prototypeAccessors$17.atom1.get = function () {
     return this.structure.getAtomProxy(this.atomIndex1);
 };
 /**
  * @type {AtomProxy}
  */
-prototypeAccessors$19.atom2.get = function () {
+prototypeAccessors$17.atom2.get = function () {
     return this.structure.getAtomProxy(this.atomIndex2);
 };
 /**
  * @type {Integer}
  */
-prototypeAccessors$19.atomIndex1.get = function () {
+prototypeAccessors$17.atomIndex1.get = function () {
     return this.bondStore.atomIndex1[this.index];
 };
-prototypeAccessors$19.atomIndex1.set = function (value) {
+prototypeAccessors$17.atomIndex1.set = function (value) {
     this.bondStore.atomIndex1[this.index] = value;
 };
 /**
  * @type {Integer}
  */
-prototypeAccessors$19.atomIndex2.get = function () {
+prototypeAccessors$17.atomIndex2.get = function () {
     return this.bondStore.atomIndex2[this.index];
 };
-prototypeAccessors$19.atomIndex2.set = function (value) {
+prototypeAccessors$17.atomIndex2.set = function (value) {
     this.bondStore.atomIndex2[this.index] = value;
 };
 /**
  * @type {Integer}
  */
-prototypeAccessors$19.bondOrder.get = function () {
+prototypeAccessors$17.bondOrder.get = function () {
     return this.bondStore.bondOrder[this.index];
 };
-prototypeAccessors$19.bondOrder.set = function (value) {
+prototypeAccessors$17.bondOrder.set = function (value) {
     this.bondStore.bondOrder[this.index] = value;
 };
 BondProxy.prototype.getOtherAtomIndex = function getOtherAtomIndex (atomIndex) {
@@ -69468,7 +70322,7 @@ BondProxy.prototype.toObject = function toObject () {
     };
 };
 
-Object.defineProperties( BondProxy.prototype, prototypeAccessors$19 );
+Object.defineProperties( BondProxy.prototype, prototypeAccessors$17 );
 
 /**
  * @file Residue Proxy
@@ -69490,65 +70344,65 @@ var ResidueProxy = function ResidueProxy(structure, index) {
     this.atomMap = structure.atomMap;
 };
 
-var prototypeAccessors$20 = { entity: { configurable: true },entityIndex: { configurable: true },chain: { configurable: true },chainIndex: { configurable: true },atomOffset: { configurable: true },atomCount: { configurable: true },atomEnd: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },resno: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },residueType: { configurable: true },resname: { configurable: true },hetero: { configurable: true },moleculeType: { configurable: true },backboneType: { configurable: true },backboneStartType: { configurable: true },backboneEndType: { configurable: true },traceAtomIndex: { configurable: true },direction1AtomIndex: { configurable: true },direction2AtomIndex: { configurable: true },backboneStartAtomIndex: { configurable: true },backboneEndAtomIndex: { configurable: true },rungEndAtomIndex: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true } };
+var prototypeAccessors$18 = { entity: { configurable: true },entityIndex: { configurable: true },chain: { configurable: true },chainIndex: { configurable: true },atomOffset: { configurable: true },atomCount: { configurable: true },atomEnd: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true },chainid: { configurable: true },resno: { configurable: true },sstruc: { configurable: true },inscode: { configurable: true },residueType: { configurable: true },resname: { configurable: true },hetero: { configurable: true },moleculeType: { configurable: true },backboneType: { configurable: true },backboneStartType: { configurable: true },backboneEndType: { configurable: true },traceAtomIndex: { configurable: true },direction1AtomIndex: { configurable: true },direction2AtomIndex: { configurable: true },backboneStartAtomIndex: { configurable: true },backboneEndAtomIndex: { configurable: true },rungEndAtomIndex: { configurable: true },x: { configurable: true },y: { configurable: true },z: { configurable: true } };
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$20.entity.get = function () {
+prototypeAccessors$18.entity.get = function () {
     return this.structure.entityList[this.entityIndex];
 };
-prototypeAccessors$20.entityIndex.get = function () {
+prototypeAccessors$18.entityIndex.get = function () {
     return this.chainStore.entityIndex[this.chainIndex];
 };
 /**
  * Chain
  * @type {ChainProxy}
  */
-prototypeAccessors$20.chain.get = function () {
+prototypeAccessors$18.chain.get = function () {
     return this.structure.getChainProxy(this.chainIndex);
 };
-prototypeAccessors$20.chainIndex.get = function () {
+prototypeAccessors$18.chainIndex.get = function () {
     return this.residueStore.chainIndex[this.index];
 };
-prototypeAccessors$20.chainIndex.set = function (value) {
+prototypeAccessors$18.chainIndex.set = function (value) {
     this.residueStore.chainIndex[this.index] = value;
 };
-prototypeAccessors$20.atomOffset.get = function () {
+prototypeAccessors$18.atomOffset.get = function () {
     return this.residueStore.atomOffset[this.index];
 };
-prototypeAccessors$20.atomOffset.set = function (value) {
+prototypeAccessors$18.atomOffset.set = function (value) {
     this.residueStore.atomOffset[this.index] = value;
 };
 /**
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$20.atomCount.get = function () {
+prototypeAccessors$18.atomCount.get = function () {
     return this.residueStore.atomCount[this.index];
 };
-prototypeAccessors$20.atomCount.set = function (value) {
+prototypeAccessors$18.atomCount.set = function (value) {
     this.residueStore.atomCount[this.index] = value;
 };
-prototypeAccessors$20.atomEnd.get = function () {
+prototypeAccessors$18.atomEnd.get = function () {
     return this.atomOffset + this.atomCount - 1;
 };
 //
-prototypeAccessors$20.modelIndex.get = function () {
+prototypeAccessors$18.modelIndex.get = function () {
     return this.chainStore.modelIndex[this.chainIndex];
 };
 /**
  * Chain name
  * @type {String}
  */
-prototypeAccessors$20.chainname.get = function () {
+prototypeAccessors$18.chainname.get = function () {
     return this.chainStore.getChainname(this.chainIndex);
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$20.chainid.get = function () {
+prototypeAccessors$18.chainid.get = function () {
     return this.chainStore.getChainid(this.chainIndex);
 };
 //
@@ -69556,82 +70410,82 @@ prototypeAccessors$20.chainid.get = function () {
  * Residue number/label
  * @type {Integer}
  */
-prototypeAccessors$20.resno.get = function () {
+prototypeAccessors$18.resno.get = function () {
     return this.residueStore.resno[this.index];
 };
-prototypeAccessors$20.resno.set = function (value) {
+prototypeAccessors$18.resno.set = function (value) {
     this.residueStore.resno[this.index] = value;
 };
 /**
  * Secondary structure code
  * @type {String}
  */
-prototypeAccessors$20.sstruc.get = function () {
+prototypeAccessors$18.sstruc.get = function () {
     return this.residueStore.getSstruc(this.index);
 };
-prototypeAccessors$20.sstruc.set = function (value) {
+prototypeAccessors$18.sstruc.set = function (value) {
     this.residueStore.setSstruc(this.index, value);
 };
 /**
  * Insertion code
  * @type {String}
  */
-prototypeAccessors$20.inscode.get = function () {
+prototypeAccessors$18.inscode.get = function () {
     return this.residueStore.getInscode(this.index);
 };
-prototypeAccessors$20.inscode.set = function (value) {
+prototypeAccessors$18.inscode.set = function (value) {
     this.residueStore.setInscode(this.index, value);
 };
 //
-prototypeAccessors$20.residueType.get = function () {
+prototypeAccessors$18.residueType.get = function () {
     return this.residueMap.get(this.residueStore.residueTypeId[this.index]);
 };
 /**
  * Residue name
  * @type {String}
  */
-prototypeAccessors$20.resname.get = function () {
+prototypeAccessors$18.resname.get = function () {
     return this.residueType.resname;
 };
 /**
  * Hetero flag
  * @type {Boolean}
  */
-prototypeAccessors$20.hetero.get = function () {
+prototypeAccessors$18.hetero.get = function () {
     return this.residueType.hetero;
 };
-prototypeAccessors$20.moleculeType.get = function () {
+prototypeAccessors$18.moleculeType.get = function () {
     return this.residueType.moleculeType;
 };
-prototypeAccessors$20.backboneType.get = function () {
+prototypeAccessors$18.backboneType.get = function () {
     return this.residueType.backboneType;
 };
-prototypeAccessors$20.backboneStartType.get = function () {
+prototypeAccessors$18.backboneStartType.get = function () {
     return this.residueType.backboneStartType;
 };
-prototypeAccessors$20.backboneEndType.get = function () {
+prototypeAccessors$18.backboneEndType.get = function () {
     return this.residueType.backboneEndType;
 };
-prototypeAccessors$20.traceAtomIndex.get = function () {
+prototypeAccessors$18.traceAtomIndex.get = function () {
     return this.residueType.traceAtomIndex + this.atomOffset;
 };
-prototypeAccessors$20.direction1AtomIndex.get = function () {
+prototypeAccessors$18.direction1AtomIndex.get = function () {
     return this.residueType.direction1AtomIndex + this.atomOffset;
 };
-prototypeAccessors$20.direction2AtomIndex.get = function () {
+prototypeAccessors$18.direction2AtomIndex.get = function () {
     return this.residueType.direction2AtomIndex + this.atomOffset;
 };
-prototypeAccessors$20.backboneStartAtomIndex.get = function () {
+prototypeAccessors$18.backboneStartAtomIndex.get = function () {
     return this.residueType.backboneStartAtomIndex + this.atomOffset;
 };
-prototypeAccessors$20.backboneEndAtomIndex.get = function () {
+prototypeAccessors$18.backboneEndAtomIndex.get = function () {
     return this.residueType.backboneEndAtomIndex + this.atomOffset;
 };
-prototypeAccessors$20.rungEndAtomIndex.get = function () {
+prototypeAccessors$18.rungEndAtomIndex.get = function () {
     return this.residueType.rungEndAtomIndex + this.atomOffset;
 };
 //
-prototypeAccessors$20.x.get = function () {
+prototypeAccessors$18.x.get = function () {
         var this$1 = this;
 
     var x = 0;
@@ -69640,7 +70494,7 @@ prototypeAccessors$20.x.get = function () {
     }
     return x / this.atomCount;
 };
-prototypeAccessors$20.y.get = function () {
+prototypeAccessors$18.y.get = function () {
         var this$1 = this;
 
     var y = 0;
@@ -69649,7 +70503,7 @@ prototypeAccessors$20.y.get = function () {
     }
     return y / this.atomCount;
 };
-prototypeAccessors$20.z.get = function () {
+prototypeAccessors$18.z.get = function () {
         var this$1 = this;
 
     var z = 0;
@@ -69940,7 +70794,7 @@ ResidueProxy.prototype.toObject = function toObject () {
     };
 };
 
-Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$20 );
+Object.defineProperties( ResidueProxy.prototype, prototypeAccessors$18 );
 
 /**
  * @file Polymer
@@ -69972,17 +70826,17 @@ var Polymer = function Polymer(structure, residueIndexStart, residueIndexEnd) {
     // console.log( this.qualifiedName(), this );
 };
 
-var prototypeAccessors$22 = { chainIndex: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true } };
-prototypeAccessors$22.chainIndex.get = function () {
+var prototypeAccessors$19 = { chainIndex: { configurable: true },modelIndex: { configurable: true },chainname: { configurable: true } };
+prototypeAccessors$19.chainIndex.get = function () {
     return this.residueStore.chainIndex[this.residueIndexStart];
 };
-prototypeAccessors$22.modelIndex.get = function () {
+prototypeAccessors$19.modelIndex.get = function () {
     return this.chainStore.modelIndex[this.chainIndex];
 };
 /**
  * @type {String}
  */
-prototypeAccessors$22.chainname.get = function () {
+prototypeAccessors$19.chainname.get = function () {
     return this.chainStore.getChainname(this.chainIndex);
 };
 //
@@ -70109,7 +70963,7 @@ Polymer.prototype.qualifiedName = function qualifiedName () {
     return rpStart.qualifiedName() + ' - ' + rpEnd.qualifiedName();
 };
 
-Object.defineProperties( Polymer.prototype, prototypeAccessors$22 );
+Object.defineProperties( Polymer.prototype, prototypeAccessors$19 );
 
 /**
  * @file Chain Proxy
@@ -70128,56 +70982,56 @@ var ChainProxy = function ChainProxy(structure, index) {
     this.residueStore = structure.residueStore;
 };
 
-var prototypeAccessors$21 = { entity: { configurable: true },model: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },residueOffset: { configurable: true },residueCount: { configurable: true },residueEnd: { configurable: true },atomOffset: { configurable: true },atomEnd: { configurable: true },atomCount: { configurable: true },chainname: { configurable: true },chainid: { configurable: true } };
+var prototypeAccessors$20 = { entity: { configurable: true },model: { configurable: true },entityIndex: { configurable: true },modelIndex: { configurable: true },residueOffset: { configurable: true },residueCount: { configurable: true },residueEnd: { configurable: true },atomOffset: { configurable: true },atomEnd: { configurable: true },atomCount: { configurable: true },chainname: { configurable: true },chainid: { configurable: true } };
 /**
  * Entity
  * @type {Entity}
  */
-prototypeAccessors$21.entity.get = function () {
+prototypeAccessors$20.entity.get = function () {
     return this.structure.entityList[this.entityIndex];
 };
 /**
  * Model
  * @type {ModelProxy}
  */
-prototypeAccessors$21.model.get = function () {
+prototypeAccessors$20.model.get = function () {
     return this.structure.getModelProxy(this.modelIndex);
 };
-prototypeAccessors$21.entityIndex.get = function () {
+prototypeAccessors$20.entityIndex.get = function () {
     return this.chainStore.entityIndex[this.index];
 };
-prototypeAccessors$21.entityIndex.set = function (value) {
+prototypeAccessors$20.entityIndex.set = function (value) {
     this.chainStore.entityIndex[this.index] = value;
 };
-prototypeAccessors$21.modelIndex.get = function () {
+prototypeAccessors$20.modelIndex.get = function () {
     return this.chainStore.modelIndex[this.index];
 };
-prototypeAccessors$21.modelIndex.set = function (value) {
+prototypeAccessors$20.modelIndex.set = function (value) {
     this.chainStore.modelIndex[this.index] = value;
 };
-prototypeAccessors$21.residueOffset.get = function () {
+prototypeAccessors$20.residueOffset.get = function () {
     return this.chainStore.residueOffset[this.index];
 };
-prototypeAccessors$21.residueOffset.set = function (value) {
+prototypeAccessors$20.residueOffset.set = function (value) {
     this.chainStore.residueOffset[this.index] = value;
 };
 /**
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$21.residueCount.get = function () {
+prototypeAccessors$20.residueCount.get = function () {
     return this.chainStore.residueCount[this.index];
 };
-prototypeAccessors$21.residueCount.set = function (value) {
+prototypeAccessors$20.residueCount.set = function (value) {
     this.chainStore.residueCount[this.index] = value;
 };
-prototypeAccessors$21.residueEnd.get = function () {
+prototypeAccessors$20.residueEnd.get = function () {
     return this.residueOffset + this.residueCount - 1;
 };
-prototypeAccessors$21.atomOffset.get = function () {
+prototypeAccessors$20.atomOffset.get = function () {
     return this.residueStore.atomOffset[this.residueOffset];
 };
-prototypeAccessors$21.atomEnd.get = function () {
+prototypeAccessors$20.atomEnd.get = function () {
     return (this.residueStore.atomOffset[this.residueEnd] +
         this.residueStore.atomCount[this.residueEnd] - 1);
 };
@@ -70185,7 +71039,7 @@ prototypeAccessors$21.atomEnd.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$21.atomCount.get = function () {
+prototypeAccessors$20.atomCount.get = function () {
     if (this.residueCount === 0) {
         return 0;
     }
@@ -70198,20 +71052,20 @@ prototypeAccessors$21.atomCount.get = function () {
  * Chain name
  * @type {String}
  */
-prototypeAccessors$21.chainname.get = function () {
+prototypeAccessors$20.chainname.get = function () {
     return this.chainStore.getChainname(this.index);
 };
-prototypeAccessors$21.chainname.set = function (value) {
+prototypeAccessors$20.chainname.set = function (value) {
     this.chainStore.setChainname(this.index, value);
 };
 /**
  * Chain id
  * @type {String}
  */
-prototypeAccessors$21.chainid.get = function () {
+prototypeAccessors$20.chainid.get = function () {
     return this.chainStore.getChainid(this.index);
 };
-prototypeAccessors$21.chainid.set = function (value) {
+prototypeAccessors$20.chainid.set = function (value) {
     this.chainStore.setChainid(this.index, value);
 };
 //
@@ -70367,7 +71221,7 @@ ChainProxy.prototype.toObject = function toObject () {
     };
 };
 
-Object.defineProperties( ChainProxy.prototype, prototypeAccessors$21 );
+Object.defineProperties( ChainProxy.prototype, prototypeAccessors$20 );
 
 /**
  * @file Model Proxy
@@ -70387,33 +71241,33 @@ var ModelProxy = function ModelProxy(structure, index) {
     this.residueStore = structure.residueStore;
 };
 
-var prototypeAccessors$23 = { chainOffset: { configurable: true },chainCount: { configurable: true },residueOffset: { configurable: true },atomOffset: { configurable: true },chainEnd: { configurable: true },residueEnd: { configurable: true },atomEnd: { configurable: true },residueCount: { configurable: true },atomCount: { configurable: true } };
-prototypeAccessors$23.chainOffset.get = function () {
+var prototypeAccessors$21 = { chainOffset: { configurable: true },chainCount: { configurable: true },residueOffset: { configurable: true },atomOffset: { configurable: true },chainEnd: { configurable: true },residueEnd: { configurable: true },atomEnd: { configurable: true },residueCount: { configurable: true },atomCount: { configurable: true } };
+prototypeAccessors$21.chainOffset.get = function () {
     return this.modelStore.chainOffset[this.index];
 };
-prototypeAccessors$23.chainOffset.set = function (value) {
+prototypeAccessors$21.chainOffset.set = function (value) {
     this.modelStore.chainOffset[this.index] = value;
 };
-prototypeAccessors$23.chainCount.get = function () {
+prototypeAccessors$21.chainCount.get = function () {
     return this.modelStore.chainCount[this.index];
 };
-prototypeAccessors$23.chainCount.set = function (value) {
+prototypeAccessors$21.chainCount.set = function (value) {
     this.modelStore.chainCount[this.index] = value;
 };
-prototypeAccessors$23.residueOffset.get = function () {
+prototypeAccessors$21.residueOffset.get = function () {
     return this.chainStore.residueOffset[this.chainOffset];
 };
-prototypeAccessors$23.atomOffset.get = function () {
+prototypeAccessors$21.atomOffset.get = function () {
     return this.residueStore.atomOffset[this.residueOffset];
 };
-prototypeAccessors$23.chainEnd.get = function () {
+prototypeAccessors$21.chainEnd.get = function () {
     return this.chainOffset + this.chainCount - 1;
 };
-prototypeAccessors$23.residueEnd.get = function () {
+prototypeAccessors$21.residueEnd.get = function () {
     return (this.chainStore.residueOffset[this.chainEnd] +
         this.chainStore.residueCount[this.chainEnd] - 1);
 };
-prototypeAccessors$23.atomEnd.get = function () {
+prototypeAccessors$21.atomEnd.get = function () {
     return (this.residueStore.atomOffset[this.residueEnd] +
         this.residueStore.atomCount[this.residueEnd] - 1);
 };
@@ -70421,7 +71275,7 @@ prototypeAccessors$23.atomEnd.get = function () {
  * Residue count
  * @type {Integer}
  */
-prototypeAccessors$23.residueCount.get = function () {
+prototypeAccessors$21.residueCount.get = function () {
     if (this.chainCount === 0) {
         return 0;
     }
@@ -70433,7 +71287,7 @@ prototypeAccessors$23.residueCount.get = function () {
  * Atom count
  * @type {Integer}
  */
-prototypeAccessors$23.atomCount.get = function () {
+prototypeAccessors$21.atomCount.get = function () {
     if (this.residueCount === 0) {
         return 0;
     }
@@ -70540,7 +71394,7 @@ ModelProxy.prototype.toObject = function toObject () {
     };
 };
 
-Object.defineProperties( ModelProxy.prototype, prototypeAccessors$23 );
+Object.defineProperties( ModelProxy.prototype, prototypeAccessors$21 );
 
 /**
  * @file Structure
@@ -70560,7 +71414,7 @@ var Structure = function Structure(name, path) {
     this.init(name, path);
 };
 
-var prototypeAccessors$15 = { type: { configurable: true } };
+var prototypeAccessors$22 = { type: { configurable: true } };
 Structure.prototype.init = function init (name, path) {
     this.name = name;
     this.path = path;
@@ -70597,7 +71451,7 @@ Structure.prototype.init = function init (name, path) {
     this._rp = this.getResidueProxy();
     this._cp = this.getChainProxy();
 };
-prototypeAccessors$15.type.get = function () { return 'Structure'; };
+prototypeAccessors$22.type.get = function () { return 'Structure'; };
 Structure.prototype.finalizeAtoms = function finalizeAtoms () {
     this.atomSet = this.getAtomSet();
     this.atomCount = this.atomStore.count;
@@ -71034,7 +71888,7 @@ Structure.prototype.getAtomData = function getAtomData (params) {
     }
     if ((!what || what.color) && p.colorParams) {
         atomData.color = new Float32Array(atomCount * 3);
-        colormaker = ColormakerRegistry.getScheme(p.colorParams);
+        colormaker = ColormakerRegistry$1.getScheme(p.colorParams);
     }
     if (!what || what.picking) {
         atomData.picking = new AtomPicker(new Float32Array(atomCount), this.getStructure());
@@ -71109,7 +71963,7 @@ Structure.prototype.getBondData = function getBondData (params) {
     if ((!what || what.color) && p.colorParams) {
         bondData.color = new Float32Array(bondCount * 3);
         bondData.color2 = new Float32Array(bondCount * 3);
-        colormaker = ColormakerRegistry.getScheme(p.colorParams);
+        colormaker = ColormakerRegistry$1.getScheme(p.colorParams);
     }
     if (!what || what.picking) {
         bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore);
@@ -71423,7 +72277,7 @@ Structure.prototype.dispose = function dispose () {
     delete this.atomSet;
 };
 
-Object.defineProperties( Structure.prototype, prototypeAccessors$15 );
+Object.defineProperties( Structure.prototype, prototypeAccessors$22 );
 
 /**
  * @file Shape
@@ -71477,7 +72331,7 @@ var Shape$1 = function Shape$$1(name, params) {
     });
 };
 
-var prototypeAccessors$24 = { center: { configurable: true },type: { configurable: true } };
+var prototypeAccessors$23 = { center: { configurable: true },type: { configurable: true } };
 /**
  * Add a buffer
  * @param {Buffer} buffer - buffer object
@@ -71720,15 +72574,15 @@ Shape$1.prototype.dispose = function dispose () {
         this$1._primitiveData[P.getShapeKey('name')].length = 0;
     });
 };
-prototypeAccessors$24.center.get = function () {
+prototypeAccessors$23.center.get = function () {
     if (!this._center) {
         this._center = this.boundingBox.getCenter();
     }
     return this._center;
 };
-prototypeAccessors$24.type.get = function () { return 'Shape'; };
+prototypeAccessors$23.type.get = function () { return 'Shape'; };
 
-Object.defineProperties( Shape$1.prototype, prototypeAccessors$24 );
+Object.defineProperties( Shape$1.prototype, prototypeAccessors$23 );
 
 /**
  * @file Buffer Representation
@@ -72021,7 +72875,7 @@ ShaderRegistry.add('shader/SphereImpostor.frag', "#define STANDARD\n#define IMPO
  * @interface
  */
 var MappedBuffer = (function (Buffer$$1) {
-    function MappedBuffer(data, params) {
+    function MappedBuffer(mappingType, data, params) {
         if ( params === void 0 ) params = {};
 
         Buffer$$1.call(this, data, params);
@@ -72029,7 +72883,7 @@ var MappedBuffer = (function (Buffer$$1) {
         this.makeIndex();
         this.initIndex(this.index);
         this.addAttributes({
-            'mapping': { type: this.mappingType, value: null }
+            'mapping': { type: mappingType, value: null }
         });
         this.setAttributes({ primitiveId: serialArray(this.size) });
     }
@@ -72139,20 +72993,20 @@ var mappingIndices = new Uint16Array([
  * @interface
  */
 var MappedQuadBuffer = (function (MappedBuffer$$1) {
-    function MappedQuadBuffer () {
-        MappedBuffer$$1.apply(this, arguments);
+    function MappedQuadBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedBuffer$$1.call(this, 'v2', data, params);
     }
 
     if ( MappedBuffer$$1 ) MappedQuadBuffer.__proto__ = MappedBuffer$$1;
     MappedQuadBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
     MappedQuadBuffer.prototype.constructor = MappedQuadBuffer;
 
-    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
-
+    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
     prototypeAccessors.mapping.get = function () { return mapping; };
     prototypeAccessors.mappingIndices.get = function () { return mappingIndices; };
     prototypeAccessors.mappingIndicesSize.get = function () { return 6; };
-    prototypeAccessors.mappingType.get = function () { return 'v2'; };
     prototypeAccessors.mappingSize.get = function () { return 4; };
     prototypeAccessors.mappingItemSize.get = function () { return 2; };
 
@@ -72903,7 +73757,7 @@ VolumeSlice.prototype.getData = function getData (params) {
     if (this.normalize) {
         cp.domain = [0, 1];
     }
-    var colormaker = ColormakerRegistry.getScheme(cp);
+    var colormaker = ColormakerRegistry$1.getScheme(cp);
     var tmp = new Float32Array(3);
     var scale = colormaker.getScale();
     var min, max, diff;
@@ -73176,9 +74030,9 @@ var Element = function Element(stage, params) {
     this.uuid = generateUUID();
 };
 
-var prototypeAccessors$25 = { defaultParameters: { configurable: true },name: { configurable: true } };
-prototypeAccessors$25.defaultParameters.get = function () { return ElementDefaultParameters; };
-prototypeAccessors$25.name.get = function () { return this.parameters.name; };
+var prototypeAccessors$24 = { defaultParameters: { configurable: true },name: { configurable: true } };
+prototypeAccessors$24.defaultParameters.get = function () { return ElementDefaultParameters; };
+prototypeAccessors$24.name.get = function () { return this.parameters.name; };
 Element.prototype.setStatus = function setStatus (value) {
     this.parameters.status = value;
     this.signals.statusChanged.dispatch(value);
@@ -73193,7 +74047,7 @@ Element.prototype.dispose = function dispose () {
     this.signals.disposed.dispatch();
 };
 
-Object.defineProperties( Element.prototype, prototypeAccessors$25 );
+Object.defineProperties( Element.prototype, prototypeAccessors$24 );
 
 /**
  * @file Representation Element
@@ -73390,11 +74244,11 @@ var Component = function Component(stage, object, params) {
     this.controls = new ComponentControls(this);
 };
 
-var prototypeAccessors$13 = { defaultParameters: { configurable: true },name: { configurable: true },status: { configurable: true },visible: { configurable: true } };
-prototypeAccessors$13.defaultParameters.get = function () { return ComponentDefaultParameters; };
-prototypeAccessors$13.name.get = function () { return this.parameters.name; };
-prototypeAccessors$13.status.get = function () { return this.parameters.status; };
-prototypeAccessors$13.visible.get = function () { return this.parameters.visible; };
+var prototypeAccessors$25 = { defaultParameters: { configurable: true },name: { configurable: true },status: { configurable: true },visible: { configurable: true } };
+prototypeAccessors$25.defaultParameters.get = function () { return ComponentDefaultParameters; };
+prototypeAccessors$25.name.get = function () { return this.parameters.name; };
+prototypeAccessors$25.status.get = function () { return this.parameters.status; };
+prototypeAccessors$25.visible.get = function () { return this.parameters.visible; };
 /**
  * Set position transform
  *
@@ -73683,7 +74537,7 @@ Component.prototype.autoView = function autoView (duration) {
     this.stage.animationControls.zoomMove(this.getCenter(), this.getZoom(), defaults(duration, 0));
 };
 
-Object.defineProperties( Component.prototype, prototypeAccessors$13 );
+Object.defineProperties( Component.prototype, prototypeAccessors$25 );
 
 /**
  * @file Collection
@@ -74057,8 +74911,8 @@ var TrajectoryPlayer = function TrajectoryPlayer(traj, params) {
     this._animate = this._animate.bind(this);
 };
 
-var prototypeAccessors$29 = { isRunning: { configurable: true } };
-prototypeAccessors$29.isRunning.get = function () { return this._run; };
+var prototypeAccessors$28 = { isRunning: { configurable: true } };
+prototypeAccessors$28.isRunning.get = function () { return this._run; };
 /**
  * set player parameters
  * @param {TrajectoryPlayerParameters} [params] - parameter object
@@ -74240,7 +75094,7 @@ TrajectoryPlayer.prototype.stop = function stop () {
     this.traj.setFrame(this.parameters.start);
 };
 
-Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$29 );
+Object.defineProperties( TrajectoryPlayer.prototype, prototypeAccessors$28 );
 
 /**
  * @file Trajectory
@@ -74384,17 +75238,17 @@ var Trajectory = function Trajectory(trajPath, structure, params) {
     });
 };
 
-var prototypeAccessors$28 = { frameCount: { configurable: true },currentFrame: { configurable: true } };
+var prototypeAccessors$29 = { frameCount: { configurable: true },currentFrame: { configurable: true } };
 /**
  * Number of frames in the trajectory
  */
-prototypeAccessors$28.frameCount.get = function () {
+prototypeAccessors$29.frameCount.get = function () {
     return this._frameCount;
 };
 /**
  * Currently set frame of the trajectory
  */
-prototypeAccessors$28.currentFrame.get = function () {
+prototypeAccessors$29.currentFrame.get = function () {
     return this._currentFrame;
 };
 Trajectory.prototype._init = function _init (structure) {
@@ -74727,7 +75581,7 @@ Trajectory.prototype.getFrameTime = function getFrameTime (i) {
     return this.timeOffset + i * this.deltaTime;
 };
 
-Object.defineProperties( Trajectory.prototype, prototypeAccessors$28 );
+Object.defineProperties( Trajectory.prototype, prototypeAccessors$29 );
 
 /**
  * @file Frames Trajectory
@@ -75686,11 +76540,18 @@ var StructureComponent = (function (Component$$1) {
     StructureComponent.prototype.setDefaultAssembly = function setDefaultAssembly (value) {
         var this$1 = this;
 
-        this.parameters.defaultAssembly = value;
-        this.reprList.forEach(function (repr) {
-            repr.setParameters({ defaultAssembly: this$1.parameters.defaultAssembly });
-        });
-        this.signals.defaultAssemblyChanged.dispatch(value);
+        // filter out non-exsisting assemblies
+        if (this.structure.biomolDict[value] === undefined)
+            { value = ''; }
+        // only set default assembly when changed
+        if (this.parameters.defaultAssembly !== value) {
+            this.parameters.defaultAssembly = value;
+            this.reprList.forEach(function (repr) {
+                repr.setParameters({ defaultAssembly: this$1.parameters.defaultAssembly });
+            });
+            this.signals.defaultAssemblyChanged.dispatch(value);
+        }
+        return this;
     };
     /**
      * Rebuild all representations
@@ -75756,9 +76617,7 @@ var StructureComponent = (function (Component$$1) {
     };
     StructureComponent.prototype.dispose = function dispose () {
         // copy via .slice because side effects may change trajList
-        this.trajList.slice().forEach(function (traj) {
-            traj.dispose();
-        });
+        this.trajList.slice().forEach(function (traj) { return traj.dispose(); });
         this.trajList.length = 0;
         this.structure.dispose();
         this.measureRepresentations.dispose();
@@ -76384,7 +77243,7 @@ Stage.prototype.loadFile = function loadFile (path, params) {
     };
     var ext = defaults(p.ext, getFileInfo(path).ext);
     var promise;
-    if (ParserRegistry.isTrajectory(ext)) {
+    if (ParserRegistry$1.isTrajectory(ext)) {
         promise = Promise.reject(new Error(("loadFile: ext '" + ext + "' is a trajectory and must be loaded into a structure component")));
     }
     else {
@@ -76815,7 +77674,7 @@ var AtomindexColormaker = (function (Colormaker$$1) {
 
     return AtomindexColormaker;
 }(Colormaker));
-ColormakerRegistry.add('atomindex', AtomindexColormaker); // TODO
+ColormakerRegistry$1.add('atomindex', AtomindexColormaker); // TODO
 
 /**
  * @file Bfactor Colormaker
@@ -76866,7 +77725,7 @@ var BfactorColormaker = (function (Colormaker$$1) {
 
     return BfactorColormaker;
 }(Colormaker));
-ColormakerRegistry.add('bfactor', BfactorColormaker);
+ColormakerRegistry$1.add('bfactor', BfactorColormaker);
 
 /**
  * @file Chainid Colormaker
@@ -76911,7 +77770,7 @@ var ChainidColormaker = (function (Colormaker$$1) {
 
     return ChainidColormaker;
 }(Colormaker));
-ColormakerRegistry.add('chainid', ChainidColormaker);
+ColormakerRegistry$1.add('chainid', ChainidColormaker);
 
 /**
  * @file Chainindex Colormaker
@@ -76945,7 +77804,7 @@ var ChainindexColormaker = (function (Colormaker$$1) {
 
     return ChainindexColormaker;
 }(Colormaker));
-ColormakerRegistry.add('chainindex', ChainindexColormaker);
+ColormakerRegistry$1.add('chainindex', ChainindexColormaker);
 
 /**
  * @file Chainname Colormaker
@@ -76990,7 +77849,7 @@ var ChainnameColormaker = (function (Colormaker$$1) {
 
     return ChainnameColormaker;
 }(Colormaker));
-ColormakerRegistry.add('chainname', ChainnameColormaker);
+ColormakerRegistry$1.add('chainname', ChainnameColormaker);
 
 /**
  * @file Densityfit Colormaker
@@ -77040,7 +77899,7 @@ var DensityfitColormaker = (function (Colormaker$$1) {
 
     return DensityfitColormaker;
 }(Colormaker));
-ColormakerRegistry.add('densityfit', DensityfitColormaker);
+ColormakerRegistry$1.add('densityfit', DensityfitColormaker);
 
 /**
  * @file Atomindex Colormaker
@@ -77320,7 +78179,7 @@ var ElectrostaticColormaker = (function (Colormaker$$1) {
 
     return ElectrostaticColormaker;
 }(Colormaker));
-ColormakerRegistry.add('electrostatic', ElectrostaticColormaker);
+ColormakerRegistry$1.add('electrostatic', ElectrostaticColormaker);
 
 /**
  * @file Element Colormaker
@@ -77474,7 +78333,7 @@ var ElementColormaker = (function (Colormaker$$1) {
 
     return ElementColormaker;
 }(Colormaker));
-ColormakerRegistry.add('element', ElementColormaker);
+ColormakerRegistry$1.add('element', ElementColormaker);
 
 /**
  * @file Entityindex Colormaker
@@ -77505,7 +78364,7 @@ var EntityindexColormaker = (function (Colormaker$$1) {
 
     return EntityindexColormaker;
 }(Colormaker));
-ColormakerRegistry.add('entityindex', EntityindexColormaker);
+ColormakerRegistry$1.add('entityindex', EntityindexColormaker);
 
 /**
  * @file Entitytype Colormaker
@@ -77543,7 +78402,7 @@ var EntitytypeColormaker = (function (Colormaker$$1) {
 
     return EntitytypeColormaker;
 }(Colormaker));
-ColormakerRegistry.add('entitytype', EntitytypeColormaker);
+ColormakerRegistry$1.add('entitytype', EntitytypeColormaker);
 
 /**
  * @file Geoquality Colormaker
@@ -77601,7 +78460,7 @@ var GeoqualityColormaker = (function (Colormaker$$1) {
 
     return GeoqualityColormaker;
 }(Colormaker));
-ColormakerRegistry.add('geoquality', GeoqualityColormaker);
+ColormakerRegistry$1.add('geoquality', GeoqualityColormaker);
 
 /**
  * @file Hydrophobicity Colormaker
@@ -77647,7 +78506,7 @@ var HydrophobicityColormaker = (function (Colormaker$$1) {
 
     return HydrophobicityColormaker;
 }(Colormaker));
-ColormakerRegistry.add('hydrophobicity', HydrophobicityColormaker);
+ColormakerRegistry$1.add('hydrophobicity', HydrophobicityColormaker);
 
 /**
  * @file Modelindex Colormaker
@@ -77678,7 +78537,7 @@ var ModelindexColormaker = (function (Colormaker$$1) {
 
     return ModelindexColormaker;
 }(Colormaker));
-ColormakerRegistry.add('modelindex', ModelindexColormaker);
+ColormakerRegistry$1.add('modelindex', ModelindexColormaker);
 
 /**
  * @file Moleculetype Colormaker
@@ -77718,7 +78577,7 @@ var MoleculetypeColormaker = (function (Colormaker$$1) {
 
     return MoleculetypeColormaker;
 }(Colormaker));
-ColormakerRegistry.add('moleculetype', MoleculetypeColormaker);
+ColormakerRegistry$1.add('moleculetype', MoleculetypeColormaker);
 
 /**
  * @file Occupancy Colormaker
@@ -77749,7 +78608,7 @@ var OccupancyColormaker = (function (Colormaker$$1) {
 
     return OccupancyColormaker;
 }(Colormaker));
-ColormakerRegistry.add('occupancy', OccupancyColormaker);
+ColormakerRegistry$1.add('occupancy', OccupancyColormaker);
 
 /**
  * @file Partialcharge Colormaker
@@ -77789,7 +78648,7 @@ var PartialchargeColormaker = (function (Colormaker$$1) {
 
     return PartialchargeColormaker;
 }(Colormaker));
-ColormakerRegistry.add('partialcharge', PartialchargeColormaker);
+ColormakerRegistry$1.add('partialcharge', PartialchargeColormaker);
 
 /**
  * @file Random Colormaker
@@ -77831,7 +78690,7 @@ var RandomColormaker = (function (Colormaker$$1) {
 
     return RandomColormaker;
 }(Colormaker));
-ColormakerRegistry.add('random', RandomColormaker);
+ColormakerRegistry$1.add('random', RandomColormaker);
 
 /**
  * @file Residueindex Colormaker
@@ -77866,7 +78725,7 @@ var ResidueindexColormaker = (function (Colormaker$$1) {
 
     return ResidueindexColormaker;
 }(Colormaker));
-ColormakerRegistry.add('residueindex', ResidueindexColormaker);
+ColormakerRegistry$1.add('residueindex', ResidueindexColormaker);
 
 /**
  * @file Resname Colormaker
@@ -77935,7 +78794,7 @@ var ResnameColormaker = (function (Colormaker$$1) {
 
     return ResnameColormaker;
 }(Colormaker));
-ColormakerRegistry.add('resname', ResnameColormaker);
+ColormakerRegistry$1.add('resname', ResnameColormaker);
 
 /**
  * @file Sstruc Colormaker
@@ -78007,7 +78866,7 @@ var SstrucColormaker = (function (Colormaker$$1) {
 
     return SstrucColormaker;
 }(Colormaker));
-ColormakerRegistry.add('sstruc', SstrucColormaker);
+ColormakerRegistry$1.add('sstruc', SstrucColormaker);
 
 /**
  * @file Uniform Colormaker
@@ -78041,7 +78900,7 @@ var UniformColormaker = (function (Colormaker$$1) {
 
     return UniformColormaker;
 }(Colormaker));
-ColormakerRegistry.add('uniform', UniformColormaker);
+ColormakerRegistry$1.add('uniform', UniformColormaker);
 
 /**
  * @file Value Colormaker
@@ -78071,7 +78930,7 @@ var ValueColormaker = (function (Colormaker$$1) {
 
     return ValueColormaker;
 }(Colormaker));
-ColormakerRegistry.add('value', ValueColormaker);
+ColormakerRegistry$1.add('value', ValueColormaker);
 
 /**
  * @file Volume Colormaker
@@ -78149,7 +79008,7 @@ var VolumeColormaker = (function (Colormaker$$1) {
 
     return VolumeColormaker;
 }(Colormaker));
-ColormakerRegistry.add('volume', VolumeColormaker);
+ColormakerRegistry$1.add('volume', VolumeColormaker);
 
 /**
  * @file Shape Component
@@ -78491,7 +79350,10 @@ var StructureRepresentation = (function (Representation$$1) {
                 rebuild = true;
             }
         }
-        if (p.defaultAssembly !== undefined) {
+        if (p.defaultAssembly !== undefined &&
+            p.defaultAssembly !== this.defaultAssembly &&
+            ((this.assembly === 'default' && p.assembly === undefined) ||
+                p.assembly === 'default')) {
             rebuild = true;
         }
         Representation$$1.prototype.setParameters.call(this, p, what, rebuild);
@@ -78818,7 +79680,56 @@ function calcArcPoint(out, center, v1, v2, angle) {
 
 ShaderRegistry.add('shader/SDFFont.vert', "uniform float clipNear;\nuniform float clipRadius;\nuniform vec3 clipCenter;\nuniform float xOffset;\nuniform float yOffset;\nuniform float zOffset;\nuniform bool ortho;\nuniform float canvasHeight;\nuniform float pixelRatio;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvarying vec3 vViewPosition;\n#endif\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\n#include unpack_color\nattribute float primitiveId;\nvarying vec3 vPickingColor;\n#else\n#include color_pars_vertex\n#endif\nattribute vec2 mapping;\nattribute vec2 inputTexCoord;\nattribute float inputSize;\n#include matrix_scale\n#include common\nvoid main(void){\n#if defined( PICKING )\nvPickingColor = unpackColor( primitiveId );\n#else\n#include color_vertex\n#endif\ntexCoord = inputTexCoord;\nfloat scale = matrixScale( modelViewMatrix );\nfloat _zOffset = zOffset * scale;\nif( texCoord.x == 10.0 ){\n_zOffset -= 0.001;\n}\nvec4 cameraPos = modelViewMatrix * vec4( position, 1.0 );\n#ifdef FIXED_SIZE\nif ( ortho ) {\nscale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPosition.z) * 0.1;\n} else {\nscale /= pixelRatio * (( canvasHeight / 2.0 ) / -cameraPos.z) * 0.1;\n}\n#endif\nvec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );\ncameraCornerPos.xy += mapping * inputSize * 0.01 * scale;\ncameraCornerPos.x += xOffset * scale;\ncameraCornerPos.y += yOffset * scale;\nif( ortho ){\ncameraCornerPos.xyz += normalize( -cameraPosition ) * _zOffset;\n} else {\ncameraCornerPos.xyz += normalize( -cameraCornerPos.xyz ) * _zOffset;\n}\ngl_Position = projectionMatrix * cameraCornerPos;\n#if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )\nvViewPosition = -cameraCornerPos.xyz;\n#endif\n#if defined( RADIUS_CLIP )\nvClipCenter = -( modelViewMatrix * vec4( clipCenter, 1.0 ) ).xyz;\n#endif\n#include nearclip_vertex\n#include radiusclip_vertex\n}");
 
-ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\nuniform float opacity;\nuniform bool showBorder;\nuniform vec3 borderColor;\nuniform float borderWidth;\nuniform vec3 backgroundColor;\nuniform float backgroundOpacity;\nuniform float clipNear;\nuniform float clipRadius;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\nconst vec3 vColor = vec3( 0.0 );\n#else\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#endif\n#ifdef SDF\nconst float smoothness = 16.0;\n#else\nconst float smoothness = 256.0;\n#endif\nconst float gamma = 2.2;\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\nif( texCoord.x > 1.0 ){\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\n}else{\nfloat sdf = texture2D( fontTexture, texCoord ).a;\nif( showBorder ) sdf += borderWidth;\nfloat w = clamp(\nsmoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),\n0.0,\n0.5\n);\nfloat a = smoothstep( 0.5 - w, 0.5 + w, sdf );\na = pow( a, 1.0 / gamma );\nif( a < 0.2 ) discard;\na *= opacity;\nvec3 outgoingLight = vColor;\nif( showBorder && sdf < ( 0.5 + borderWidth ) ){\noutgoingLight = borderColor;\n}\ngl_FragColor = vec4( outgoingLight, a );\n}\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
+ShaderRegistry.add('shader/SDFFont.frag', "uniform sampler2D fontTexture;\nuniform float opacity;\nuniform bool showBorder;\nuniform vec3 borderColor;\nuniform float borderWidth;\nuniform vec3 backgroundColor;\nuniform float backgroundOpacity;\nuniform float clipNear;\nuniform float clipRadius;\nvarying vec3 vViewPosition;\nvarying vec2 texCoord;\n#if defined( RADIUS_CLIP )\nvarying vec3 vClipCenter;\n#endif\n#if defined( PICKING )\nuniform float objectId;\nvarying vec3 vPickingColor;\nconst vec3 vColor = vec3( 0.0 );\n#else\n#include common\n#include color_pars_fragment\n#include fog_pars_fragment\n#endif\nconst float gamma = 2.2 * 1.4142 / 128.0;\nconst float padding = 0.75;\nvoid main(){\n#include nearclip_fragment\n#include radiusclip_fragment\nif( texCoord.x > 1.0 ){\ngl_FragColor = vec4( backgroundColor, backgroundOpacity );\n}else{\nfloat sdf = texture2D( fontTexture, texCoord ).a;\nif( showBorder ) sdf += borderWidth;\nfloat a = smoothstep(padding - gamma, padding + gamma, sdf);\nif( a < 0.2 ) discard;\na *= opacity;\nvec3 outgoingLight = vColor;\nif( showBorder && sdf < ( padding + borderWidth ) ){\noutgoingLight = borderColor;\n}\ngl_FragColor = vec4( outgoingLight, a );\n}\n#if defined( PICKING )\ngl_FragColor = vec4( vPickingColor, objectId );\n#else\n#include premultiplied_alpha_fragment\n#include tonemapping_fragment\n#include encodings_fragment\n#include fog_fragment\n#endif\n}");
+
+/**
+ * @file Edt
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+// 2D Euclidean distance transform by Felzenszwalb & Huttenlocher https://cs.brown.edu/~pff/papers/dt-final.pdf
+function edt(data, width, height, f, d, v, z) {
+    for (var x = 0; x < width; x++) {
+        for (var y = 0; y < height; y++) {
+            f[y] = data[y * width + x];
+        }
+        edt1d(f, d, v, z, height);
+        for (var y$1 = 0; y$1 < height; y$1++) {
+            data[y$1 * width + x] = d[y$1];
+        }
+    }
+    for (var y$2 = 0; y$2 < height; y$2++) {
+        for (var x$1 = 0; x$1 < width; x$1++) {
+            f[x$1] = data[y$2 * width + x$1];
+        }
+        edt1d(f, d, v, z, width);
+        for (var x$2 = 0; x$2 < width; x$2++) {
+            data[y$2 * width + x$2] = Math.sqrt(d[x$2]);
+        }
+    }
+}
+// 1D squared distance transform
+function edt1d(f, d, v, z, n) {
+    v[0] = 0;
+    z[0] = Number.MIN_SAFE_INTEGER;
+    z[1] = Number.MAX_SAFE_INTEGER;
+    for (var q = 1, k = 0; q < n; q++) {
+        var s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        while (s <= z[k]) {
+            k--;
+            s = ((f[q] + q * q) - (f[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+        }
+        k++;
+        v[k] = q;
+        z[k] = s;
+        z[k + 1] = Number.MAX_SAFE_INTEGER;
+    }
+    for (var q$1 = 0, k$1 = 0; q$1 < n; q$1++) {
+        while (z[k$1 + 1] < q$1)
+            { k$1++; }
+        d[q$1] = (q$1 - v[k$1]) * (q$1 - v[k$1]) + f[v[k$1]];
+    }
+}
 
 /**
  * @file Text Buffer
@@ -78839,69 +79750,75 @@ var TextAtlasDefaultParams = {
     style: 'normal',
     variant: 'normal',
     weight: 'normal',
-    outline: 0,
-    width: 2048,
-    height: 2048
+    outline: 3,
+    width: 1024,
+    height: 1024
 };
 var TextAtlas = function TextAtlas(params) {
+    var this$1 = this;
     if ( params === void 0 ) params = {};
 
-    // adapted from https://github.com/unconed/mathbox
-    // MIT License Copyright (C) 2013+ Steven Wittens and contributors
     this.gamma = 1;
     this.mapped = {};
     this.scratchW = 0;
     this.scratchH = 0;
     this.currentX = 0;
     this.currentY = 0;
+    this.cutoff = 0.25;
     this.parameters = createParams(params, TextAtlasDefaultParams);
-    if (typeof navigator !== 'undefined') {
-        var ua = navigator.userAgent;
-        if (ua.match(/Chrome/) && ua.match(/OS X/)) {
-            this.gamma = 0.5;
-        }
-    }
-    this.build();
-    this.populate();
-    this.texture = new CanvasTexture(this.canvas2);
-    this.texture.flipY = false;
-    this.texture.needsUpdate = true;
-};
-TextAtlas.prototype.build = function build () {
     var p = this.parameters;
+    this.radius = p.size / 8;
+    this.padding = p.size / 3;
     // Prepare line-height with room for outline and descenders/ascenders
-    var lineHeight = p.size + 2 * p.outline + Math.round(p.size / 4);
-    var maxWidth = p.width / 4;
+    var lineHeight = this.lineHeight = p.size + 2 * p.outline + Math.round(p.size / 4);
+    var maxWidth = this.maxWidth = p.width / 4;
     // Prepare scratch canvas
-    var canvas = document.createElement('canvas');
+    var canvas = this.canvas = document.createElement('canvas');
     canvas.width = maxWidth;
     canvas.height = lineHeight;
-    var ctx = canvas.getContext('2d');
+    var ctx = this.context = this.canvas.getContext('2d');
     ctx.font = (p.style) + " " + (p.variant) + " " + (p.weight) + " " + (p.size) + "px " + (p.font);
-    ctx.fillStyle = '#FF0000';
+    ctx.fillStyle = 'black';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
     ctx.lineJoin = 'round';
-    var colors = [];
-    var dilate = p.outline * 3;
-    for (var i = 0; i < dilate; ++i) {
-        // 8 rgb levels = 1 step = .5 pixel increase
-        var val = Math.max(0, -i * 8 + 128 - i * 8);
-        var hex = ('00' + val.toString(16)).slice(-2);
-        colors.push('#' + hex + hex + hex);
-    }
-    var scratch = new Uint8Array(maxWidth * lineHeight * 2);
-    this.canvas = canvas;
-    this.context = ctx;
-    this.lineHeight = lineHeight;
-    this.maxWidth = maxWidth;
-    this.colors = colors;
-    this.scratch = scratch;
+    // temporary arrays for the distance transform
+    this.gridOuter = new Float64Array(lineHeight * maxWidth);
+    this.gridInner = new Float64Array(lineHeight * maxWidth);
+    this.f = new Float64Array(Math.max(lineHeight, maxWidth));
+    this.d = new Float64Array(Math.max(lineHeight, maxWidth));
+    this.z = new Float64Array(Math.max(lineHeight, maxWidth) + 1);
+    this.v = new Int16Array(Math.max(lineHeight, maxWidth));
+    //
     this.data = new Uint8Array(p.width * p.height * 4);
     this.canvas2 = document.createElement('canvas');
     this.canvas2.width = p.width;
     this.canvas2.height = p.height;
     this.context2 = this.canvas2.getContext('2d');
+    // Replacement Character
+    this.placeholder = this.map(String.fromCharCode(0xFFFD));
+    // Basic Latin (subset)
+    for (var i = 0x0020; i <= 0x007E; ++i) {
+        this$1.map(String.fromCharCode(i));
+    }
+    // TODO: to slow to always prepare them
+    // // Latin-1 Supplement (subset)
+    // for (let i = 0x00A1; i <= 0x00FF; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
+    // // Greek and Coptic (subset)
+    // for (let i = 0x0391; i <= 0x03C9; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
+    // // Cyrillic (subset)
+    // for (let i = 0x0400; i <= 0x044F; ++i) {
+    //   this.map(String.fromCharCode(i))
+    // }
+    // Angstrom Sign
+    this.map(String.fromCharCode(0x212B));
+    this.texture = new CanvasTexture(this.canvas2);
+    this.texture.flipY = false;
+    this.texture.needsUpdate = true;
 };
 TextAtlas.prototype.map = function map (text) {
     var p = this.parameters;
@@ -78929,102 +79846,48 @@ TextAtlas.prototype.get = function get (text) {
     return this.mapped[text] || this.placeholder;
 };
 TextAtlas.prototype.draw = function draw (text) {
+        var this$1 = this;
+
     var p = this.parameters;
     var h = this.lineHeight;
     var o = p.outline;
     var ctx = this.context;
-    var dst = this.scratch;
+    // const dst = this.scratch
     var max = this.maxWidth;
-    var colors = this.colors;
+    // const colors = this.colors
     // Bottom aligned, take outline into account
     var x = o;
     var y = h - p.outline;
     // Measure text
     var m = ctx.measureText(text);
     var w = Math.min(max, Math.ceil(m.width + 2 * x + 1));
+    var n = w * h;
     // Clear scratch area
     ctx.clearRect(0, 0, w, h);
-    var i, il, j, imageData, data;
-    if (p.outline === 0) {
-        ctx.fillText(text, x, y);
-        imageData = ctx.getImageData(0, 0, w, h);
-        data = imageData.data;
-        j = 3; // Skip to alpha channel
-        for (i = 0, il = data.length / 4; i < il; ++i) {
-            dst[i] = data[j];
-            j += 4;
-        }
+    // Draw text
+    ctx.fillText(text, x, y);
+    var imageData = ctx.getImageData(0, 0, w, h);
+    var data = imageData.data;
+    for (var i = 0; i < n; i++) {
+        var a = imageData.data[i * 4 + 3] / 255; // alpha value
+        this$1.gridOuter[i] = a === 1 ? 0 : a === 0 ? Number.MAX_SAFE_INTEGER : Math.pow(Math.max(0, 0.5 - a), 2);
+        this$1.gridInner[i] = a === 1 ? Number.MAX_SAFE_INTEGER : a === 0 ? 0 : Math.pow(Math.max(0, a - 0.5), 2);
     }
-    else {
-        ctx.globalCompositeOperation = 'source-over';
-        // Draw strokes of decreasing width to create
-        // nested outlines (absolute distance)
-        for (i = o + 1; i > 0; --i) {
-            // Eliminate odd strokes once past > 1px,
-            // don't need the detail
-            j = i > 1 ? i * 2 - 2 : i;
-            ctx.strokeStyle = colors[j - 1];
-            ctx.lineWidth = j;
-            ctx.strokeText(text, x, y);
-        }
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = '#FF00FF';
-        ctx.fillText(text, x, y);
-        imageData = ctx.getImageData(0, 0, w, h);
-        data = imageData.data;
-        j = 0;
-        var gamma = this.gamma;
-        for (i = 0, il = data.length / 4; i < il; ++i) {
-            // Get value + mask
-            var a = data[j];
-            var mask = a ? data[j + 1] / a : 1;
-            if (gamma === 0.5) {
-                mask = Math.sqrt(mask);
-            }
-            mask = Math.min(1, Math.max(0, mask));
-            // Blend between positive/outside and negative/inside
-            var b = 256 - a;
-            var c = b + (a - b) * mask;
-            // Clamp (slight expansion to hide errors around the transition)
-            dst[i] = Math.max(0, Math.min(255, c + 2));
-            data[j + 3] = dst[i];
-            j += 4;
-        }
+    edt(this.gridOuter, w, h, this.f, this.d, this.v, this.z);
+    edt(this.gridInner, w, h, this.f, this.d, this.v, this.z);
+    for (var i$1 = 0; i$1 < n; i$1++) {
+        var d = this$1.gridOuter[i$1] - this$1.gridInner[i$1];
+        data[i$1 * 4 + 3] = Math.max(0, Math.min(255, Math.round(255 - 255 * (d / this$1.radius + this$1.cutoff))));
     }
     ctx.putImageData(imageData, 0, 0);
     this.scratchW = w;
     this.scratchH = h;
 };
-TextAtlas.prototype.populate = function populate () {
-        var this$1 = this;
-
-    // Replacement Character
-    this.placeholder = this.map(String.fromCharCode(0xFFFD));
-    // Basic Latin
-    for (var i = 0x0000; i < 0x007F; ++i) {
-        this$1.map(String.fromCharCode(i));
-    }
-    // Latin-1 Supplement
-    for (var i$1 = 0x0080; i$1 < 0x00FF; ++i$1) {
-        this$1.map(String.fromCharCode(i$1));
-    }
-    // Greek and Coptic
-    for (var i$2 = 0x0370; i$2 < 0x03FF; ++i$2) {
-        this$1.map(String.fromCharCode(i$2));
-    }
-    // Cyrillic
-    for (var i$3 = 0x0400; i$3 < 0x04FF; ++i$3) {
-        this$1.map(String.fromCharCode(i$3));
-    }
-    // Angstrom Sign
-    this.map(String.fromCharCode(0x212B));
-};
 var TextBufferDefaultParameters = Object.assign({
     fontFamily: 'sans-serif',
     fontStyle: 'normal',
     fontWeight: 'bold',
-    fontSize: 48,
-    sdf: Browser === 'Chrome',
+    fontSize: 36,
     xOffset: 0.0,
     yOffset: 0.0,
     zOffset: 0.5,
@@ -79044,7 +79907,6 @@ var TextBufferParameterTypes = Object.assign({
     fontStyle: { uniform: true },
     fontWeight: { uniform: true },
     fontSize: { uniform: true },
-    sdf: { updateShader: true, uniform: true },
     xOffset: { uniform: true },
     yOffset: { uniform: true },
     zOffset: { uniform: true },
@@ -79201,8 +80063,7 @@ var TextBuffer = (function (MappedQuadBuffer$$1) {
             font: this.parameters.fontFamily,
             style: this.parameters.fontStyle,
             weight: this.parameters.fontWeight,
-            size: this.parameters.fontSize,
-            outline: this.parameters.sdf ? 5 : 0
+            size: this.parameters.fontSize
         });
         this.texture = this.textAtlas.texture;
     };
@@ -79295,9 +80156,6 @@ var TextBuffer = (function (MappedQuadBuffer$$1) {
     };
     TextBuffer.prototype.getDefines = function getDefines (type) {
         var defines = MappedQuadBuffer$$1.prototype.getDefines.call(this, type);
-        if (this.parameters.sdf) {
-            defines.SDF = 1;
-        }
         if (this.parameters.fixedSize) {
             defines.FIXED_SIZE = 1;
         }
@@ -79307,8 +80165,7 @@ var TextBuffer = (function (MappedQuadBuffer$$1) {
         if (data && (data.fontFamily !== undefined ||
             data.fontStyle !== undefined ||
             data.fontWeight !== undefined ||
-            data.fontSize !== undefined ||
-            data.sdf !== undefined)) {
+            data.fontSize !== undefined)) {
             this.makeTexture();
             this.makeMapping();
             this.texture.needsUpdate = true;
@@ -80062,20 +80919,20 @@ var mappingIndices$1 = new Uint16Array([
  * @interface
  */
 var MappedAlignedBoxBuffer = (function (MappedBuffer$$1) {
-    function MappedAlignedBoxBuffer () {
-        MappedBuffer$$1.apply(this, arguments);
+    function MappedAlignedBoxBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedBuffer$$1.call(this, 'v3', data, params);
     }
 
     if ( MappedBuffer$$1 ) MappedAlignedBoxBuffer.__proto__ = MappedBuffer$$1;
     MappedAlignedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
     MappedAlignedBoxBuffer.prototype.constructor = MappedAlignedBoxBuffer;
 
-    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
-
+    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
     prototypeAccessors.mapping.get = function () { return mapping$1; };
     prototypeAccessors.mappingIndices.get = function () { return mappingIndices$1; };
     prototypeAccessors.mappingIndicesSize.get = function () { return 12; };
-    prototypeAccessors.mappingType.get = function () { return 'v3'; };
     prototypeAccessors.mappingSize.get = function () { return 6; };
     prototypeAccessors.mappingItemSize.get = function () { return 3; };
 
@@ -81125,7 +81982,7 @@ Spline$1.prototype = {
         var iterator = this.getAtomIterator('trace');
         var p = params || {};
         p.structure = polymer.structure;
-        var colormaker = ColormakerRegistry.getScheme(p);
+        var colormaker = ColormakerRegistry$1.getScheme(p);
         function colFn(item, array, offset) {
             colormaker.atomColorToArray(item, array, offset);
         }
@@ -82693,20 +83550,20 @@ var mappingIndices$2 = new Uint16Array([
  * @interface
  */
 var MappedBoxBuffer = (function (MappedBuffer$$1) {
-    function MappedBoxBuffer () {
-        MappedBuffer$$1.apply(this, arguments);
+    function MappedBoxBuffer(data, params) {
+        if ( params === void 0 ) params = {};
+
+        MappedBuffer$$1.call(this, 'v3', data, params);
     }
 
     if ( MappedBuffer$$1 ) MappedBoxBuffer.__proto__ = MappedBuffer$$1;
     MappedBoxBuffer.prototype = Object.create( MappedBuffer$$1 && MappedBuffer$$1.prototype );
     MappedBoxBuffer.prototype.constructor = MappedBoxBuffer;
 
-    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingType: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
-
+    var prototypeAccessors = { mapping: { configurable: true },mappingIndices: { configurable: true },mappingIndicesSize: { configurable: true },mappingSize: { configurable: true },mappingItemSize: { configurable: true } };
     prototypeAccessors.mapping.get = function () { return mapping$2; };
     prototypeAccessors.mappingIndices.get = function () { return mappingIndices$2; };
     prototypeAccessors.mappingIndicesSize.get = function () { return 36; };
-    prototypeAccessors.mappingType.get = function () { return 'v3'; };
     prototypeAccessors.mappingSize.get = function () { return 8; };
     prototypeAccessors.mappingItemSize.get = function () { return 3; };
 
@@ -83007,7 +83864,6 @@ LabelFactory.types = LabelFactoryTypes;
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
  * @property {String} fontStyle - font style, "normal" or "italic"
  * @property {String} fontWeight - font weight, "normal" or "bold"
- * @property {Boolean} sdf - use "signed distance field"-based rendering for sharper edges
  * @property {Float} xOffset - offset in x-direction
  * @property {Float} yOffset - offset in y-direction
  * @property {Float} zOffset - offset in z-direction (i.e. in camera direction)
@@ -83070,9 +83926,6 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
                     'bold': 'bold'
                 },
                 buffer: true
-            },
-            sdf: {
-                type: 'boolean', buffer: true
             },
             xOffset: {
                 type: 'number', precision: 1, max: 20, min: -20, buffer: true
@@ -83145,7 +83998,6 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
         this.fontFamily = defaults(p.fontFamily, 'sans-serif');
         this.fontStyle = defaults(p.fontStyle, 'normal');
         this.fontWeight = defaults(p.fontWeight, 'bold');
-        this.sdf = defaults(p.sdf, Browser === 'Chrome');
         this.xOffset = defaults(p.xOffset, 0.0);
         this.yOffset = defaults(p.yOffset, 0.0);
         this.zOffset = defaults(p.zOffset, 0.5);
@@ -83185,7 +84037,7 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
                 { text = []; }
             if (p.colorParams)
                 { p.colorParams.structure = sview.getStructure(); }
-            var colormaker = ColormakerRegistry.getScheme(p.colorParams);
+            var colormaker = ColormakerRegistry$1.getScheme(p.colorParams);
             var radiusFactory = new RadiusFactory(p.radiusParams);
             var ap1 = sview.getAtomProxy();
             var i = 0;
@@ -83229,7 +84081,6 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
             fontFamily: this.fontFamily,
             fontStyle: this.fontStyle,
             fontWeight: this.fontWeight,
-            sdf: this.sdf,
             xOffset: this.xOffset,
             yOffset: this.yOffset,
             zOffset: this.zOffset,
@@ -84688,7 +85539,7 @@ AVSurface.__deps = [
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-WorkerRegistry.add('molsurf', function func(e, callback) {
+WorkerRegistry$1.add('molsurf', function func(e, callback) {
     var a = e.data.args;
     var p = e.data.params;
     if (a && p) {
@@ -86943,7 +87794,7 @@ var entityKeyList = [
     'MOL_ID', 'MOLECULE', 'CHAIN', 'FRAGMENT', 'SYNONYM',
     'EC', 'ENGINEERED', 'MUTATION', 'OTHER_DETAILS'
 ];
-var reWhitespace$1 = /\s+/;
+var reWhitespace = /\s+/;
 function getModresId(resno, chainname, inscode) {
     var id = "" + resno;
     if (chainname)
@@ -87073,7 +87924,7 @@ var PdbParser = (function (StructureParser$$1) {
                         { continue; }
                     var x = (void 0), y = (void 0), z = (void 0), ls = (void 0), dd = (void 0);
                     if (isPqr) {
-                        ls = line.split(reWhitespace$1);
+                        ls = line.split(reWhitespace);
                         dd = ls.length === 10 ? 1 : 0;
                         atomname = ls[2];
                         if (cAlphaOnly && atomname !== 'CA')
@@ -87254,7 +88105,7 @@ var PdbParser = (function (StructureParser$$1) {
                         seqresDict[seqresChainname] = [];
                         currentSeqresChainname = seqresChainname;
                     }
-                    (ref = seqresDict[seqresChainname]).push.apply(ref, line.substr(19).trim().split(reWhitespace$1));
+                    (ref = seqresDict[seqresChainname]).push.apply(ref, line.substr(19).trim().split(reWhitespace));
                 }
                 else if (recordName === 'MODRES') {
                     // MODRES 2SRC PTR A  527  TYR  O-PHOSPHOTYROSINE
@@ -87503,16 +88354,16 @@ var PdbParser = (function (StructureParser$$1) {
 
     return PdbParser;
 }(StructureParser));
-ParserRegistry.add('pdb', PdbParser);
-ParserRegistry.add('pdb1', PdbParser);
-ParserRegistry.add('ent', PdbParser);
+ParserRegistry$1.add('pdb', PdbParser);
+ParserRegistry$1.add('pdb1', PdbParser);
+ParserRegistry$1.add('ent', PdbParser);
 
 /**
  * @file Cif Parser
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-var reWhitespace = /\s+/;
+var reWhitespace$1 = /\s+/;
 var reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g;
 var reDoubleQuote = /"/g;
 var reTrimQuotes = /^['"]+|['"]+$/g;
@@ -88225,7 +89076,7 @@ var CifParser = (function (StructureParser$$1) {
                             continue;
                         }
                         else if (currentCategory === 'atom_site') {
-                            var ls = line.split(reWhitespace);
+                            var ls = line.split(reWhitespace$1);
                             if (first) {
                                 authAsymId = pointerNames.indexOf('auth_asym_id');
                                 authSeqId = pointerNames.indexOf('auth_seq_id');
@@ -88476,9 +89327,9 @@ var CifParser = (function (StructureParser$$1) {
 
     return CifParser;
 }(StructureParser));
-ParserRegistry.add('cif', CifParser);
-ParserRegistry.add('mcif', CifParser);
-ParserRegistry.add('mmcif', CifParser);
+ParserRegistry$1.add('cif', CifParser);
+ParserRegistry$1.add('mcif', CifParser);
+ParserRegistry$1.add('mmcif', CifParser);
 
 /**
  * @file Gro Parser
@@ -88604,7 +89455,7 @@ var GroParser = (function (StructureParser$$1) {
 
     return GroParser;
 }(StructureParser));
-ParserRegistry.add('gro', GroParser);
+ParserRegistry$1.add('gro', GroParser);
 
 /**
  * @file utf8-utils
@@ -89656,7 +90507,7 @@ var MmtfParser = (function (StructureParser$$1) {
 
     return MmtfParser;
 }(StructureParser));
-ParserRegistry.add('mmtf', MmtfParser);
+ParserRegistry$1.add('mmtf', MmtfParser);
 
 /**
  * @file Mol2 Parser
@@ -89835,7 +90686,7 @@ var Mol2Parser = (function (StructureParser$$1) {
 
     return Mol2Parser;
 }(StructureParser));
-ParserRegistry.add('mol2', Mol2Parser);
+ParserRegistry$1.add('mol2', Mol2Parser);
 
 /**
  * @file Pqr Parser
@@ -89860,7 +90711,7 @@ var PqrParser = (function (PdbParser$$1) {
 
     return PqrParser;
 }(PdbParser));
-ParserRegistry.add('pqr', PqrParser);
+ParserRegistry$1.add('pqr', PqrParser);
 
 /**
  * @file Sdf Parser
@@ -90012,9 +90863,9 @@ var SdfParser = (function (StructureParser$$1) {
 
     return SdfParser;
 }(StructureParser));
-ParserRegistry.add('sdf', SdfParser);
-ParserRegistry.add('sd', SdfParser);
-ParserRegistry.add('mol', SdfParser);
+ParserRegistry$1.add('sdf', SdfParser);
+ParserRegistry$1.add('sd', SdfParser);
+ParserRegistry$1.add('mol', SdfParser);
 
 /**
  * @file Prmtop Parser
@@ -90253,8 +91104,8 @@ var PrmtopParser = (function (StructureParser$$1) {
 
     return PrmtopParser;
 }(StructureParser));
-ParserRegistry.add('prmtop', PrmtopParser);
-ParserRegistry.add('parm7', PrmtopParser);
+ParserRegistry$1.add('prmtop', PrmtopParser);
+ParserRegistry$1.add('parm7', PrmtopParser);
 
 /**
  * @file Psf Parser
@@ -90396,7 +91247,7 @@ var PsfParser = (function (StructureParser$$1) {
 
     return PsfParser;
 }(StructureParser));
-ParserRegistry.add('psf', PsfParser);
+ParserRegistry$1.add('psf', PsfParser);
 
 /**
  * @file Top Parser
@@ -90581,7 +91432,7 @@ var TopParser = (function (StructureParser$$1) {
 
     return TopParser;
 }(StructureParser));
-ParserRegistry.add('top', TopParser);
+ParserRegistry$1.add('top', TopParser);
 
 /**
  * @file Trajectory Parser
@@ -90780,7 +91631,7 @@ var DcdParser = (function (TrajectoryParser$$1) {
 
     return DcdParser;
 }(TrajectoryParser));
-ParserRegistry.add('dcd', DcdParser);
+ParserRegistry$1.add('dcd', DcdParser);
 
 /**
  * @file Netcdf Reader
@@ -91366,9 +92217,9 @@ var NctrajParser = (function (TrajectoryParser$$1) {
 
     return NctrajParser;
 }(TrajectoryParser));
-ParserRegistry.add('nctraj', NctrajParser);
-ParserRegistry.add('ncdf', NctrajParser);
-ParserRegistry.add('nc', NctrajParser);
+ParserRegistry$1.add('nctraj', NctrajParser);
+ParserRegistry$1.add('ncdf', NctrajParser);
+ParserRegistry$1.add('nc', NctrajParser);
 
 /**
  * @file Trr Parser
@@ -91497,7 +92348,7 @@ var TrrParser = (function (TrajectoryParser$$1) {
 
     return TrrParser;
 }(TrajectoryParser));
-ParserRegistry.add('trr', TrrParser);
+ParserRegistry$1.add('trr', TrrParser);
 
 /**
  * @file Xtc Parser
@@ -91827,7 +92678,7 @@ var XtcParser = (function (TrajectoryParser$$1) {
 
     return XtcParser;
 }(TrajectoryParser));
-ParserRegistry.add('xtc', XtcParser);
+ParserRegistry$1.add('xtc', XtcParser);
 
 /**
  * @file Volume Parser
@@ -91946,8 +92797,8 @@ var CubeParser = (function (VolumeParser$$1) {
 
     return CubeParser;
 }(VolumeParser));
-ParserRegistry.add('cub', CubeParser);
-ParserRegistry.add('cube', CubeParser);
+ParserRegistry$1.add('cub', CubeParser);
+ParserRegistry$1.add('cube', CubeParser);
 
 /**
  * @file Dsn6 Parser
@@ -92106,8 +92957,8 @@ var Dsn6Parser = (function (VolumeParser$$1) {
 
     return Dsn6Parser;
 }(VolumeParser));
-ParserRegistry.add('dsn6', Dsn6Parser);
-ParserRegistry.add('brix', Dsn6Parser);
+ParserRegistry$1.add('dsn6', Dsn6Parser);
+ParserRegistry$1.add('brix', Dsn6Parser);
 
 /**
  * @file Dx Parser
@@ -92224,7 +93075,7 @@ var DxParser = (function (VolumeParser$$1) {
 
     return DxParser;
 }(VolumeParser));
-ParserRegistry.add('dx', DxParser);
+ParserRegistry$1.add('dx', DxParser);
 
 /**
  * @file Dxbin Parser
@@ -92268,7 +93119,7 @@ var DxbinParser = (function (DxParser$$1) {
 
     return DxbinParser;
 }(DxParser));
-ParserRegistry.add('dxbin', DxbinParser);
+ParserRegistry$1.add('dxbin', DxbinParser);
 
 /**
  * @file Mrc Parser
@@ -92449,9 +93300,9 @@ var MrcParser = (function (VolumeParser$$1) {
 
     return MrcParser;
 }(VolumeParser));
-ParserRegistry.add('mrc', MrcParser);
-ParserRegistry.add('ccp4', MrcParser);
-ParserRegistry.add('map', MrcParser);
+ParserRegistry$1.add('mrc', MrcParser);
+ParserRegistry$1.add('ccp4', MrcParser);
+ParserRegistry$1.add('map', MrcParser);
 
 /**
  * @file Xplor Parser
@@ -92580,8 +93431,8 @@ var XplorParser = (function (VolumeParser$$1) {
 
     return XplorParser;
 }(VolumeParser));
-ParserRegistry.add('xplor', XplorParser);
-ParserRegistry.add('cns', XplorParser);
+ParserRegistry$1.add('xplor', XplorParser);
+ParserRegistry$1.add('cns', XplorParser);
 
 /**
  * @file Surface Parser
@@ -92922,7 +93773,7 @@ var ObjParser = (function (SurfaceParser$$1) {
 
     return ObjParser;
 }(SurfaceParser));
-ParserRegistry.add('obj', ObjParser);
+ParserRegistry$1.add('obj', ObjParser);
 
 /**
  * @file Ply Parser
@@ -93256,7 +94107,7 @@ var PlyParser = (function (SurfaceParser$$1) {
 
     return PlyParser;
 }(SurfaceParser));
-ParserRegistry.add('ply', PlyParser);
+ParserRegistry$1.add('ply', PlyParser);
 
 /**
  * @file Csv Parser
@@ -93316,7 +94167,7 @@ var CsvParser = (function (Parser$$1) {
 
     return CsvParser;
 }(Parser));
-ParserRegistry.add('csv', CsvParser);
+ParserRegistry$1.add('csv', CsvParser);
 
 /**
  * @file Json Parser
@@ -93356,7 +94207,7 @@ var JsonParser = (function (Parser$$1) {
 
     return JsonParser;
 }(Parser));
-ParserRegistry.add('json', JsonParser);
+ParserRegistry$1.add('json', JsonParser);
 
 /**
  * @file Msgpack Parser
@@ -93394,7 +94245,7 @@ var MsgpackParser = (function (Parser$$1) {
 
     return MsgpackParser;
 }(Parser));
-ParserRegistry.add('msgpack', MsgpackParser);
+ParserRegistry$1.add('msgpack', MsgpackParser);
 
 /**
  * @file Netcdf Parser
@@ -93432,7 +94283,7 @@ var NetcdfParser = (function (Parser$$1) {
 
     return NetcdfParser;
 }(Parser));
-ParserRegistry.add('netcdf', NetcdfParser);
+ParserRegistry$1.add('netcdf', NetcdfParser);
 
 /**
  * @file Text Parser
@@ -93464,8 +94315,8 @@ var TextParser = (function (Parser$$1) {
 
     return TextParser;
 }(Parser));
-ParserRegistry.add('txt', TextParser);
-ParserRegistry.add('text', TextParser);
+ParserRegistry$1.add('txt', TextParser);
+ParserRegistry$1.add('text', TextParser);
 
 /**
  * @file Parse Xml
@@ -93621,7 +94472,7 @@ var XmlParser = (function (Parser$$1) {
 
     return XmlParser;
 }(Parser));
-ParserRegistry.add('xml', XmlParser);
+ParserRegistry$1.add('xml', XmlParser);
 
 /**
  * @file Validation
@@ -93917,7 +94768,7 @@ var ValidationParser = (function (XmlParser$$1) {
 
     return ValidationParser;
 }(XmlParser));
-ParserRegistry.add('validation', ValidationParser);
+ParserRegistry$1.add('validation', ValidationParser);
 
 // https://github.com/nodeca/pako
 // MIT License, Copyright (c) 2014 by Vitaly Puzrin
@@ -97050,7 +97901,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.13";
+var version$1 = "2.0.0-dev.14";
 
 /**
  * @file Version
@@ -97079,8 +97930,8 @@ var Version = version$1;
 //
 //
 if (!window.Promise) {
-    window.Promise = promise;
+    window.Promise = Promise$1;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten$1 as flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
