@@ -122,6 +122,7 @@ import './parser/gro-parser'
 import './parser/mmtf-parser'
 import './parser/mol2-parser'
 import './parser/pdb-parser'
+import './parser/pdbqt-parser'
 import './parser/pqr-parser'
 import './parser/sdf-parser'
 

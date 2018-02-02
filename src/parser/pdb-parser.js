@@ -107,6 +107,7 @@ class PdbParser extends StructureParser {
     }
 
     const isPqr = this.type === 'pqr'
+    const isPdbqt = this.type === 'pdbqt'
 
     const s = this.structure
     const sb = this.structureBuilder
@@ -284,7 +285,7 @@ class PdbParser extends StructureParser {
 
             if (!isLegacy) {
               element = line.substr(76, 2).trim()
-              if (!chainname) {
+              if (!chainname && !isPdbqt) {
                 chainname = line.substr(72, 4).trim()  // segid
               }
             }
