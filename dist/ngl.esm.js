@@ -51165,6 +51165,28 @@ var Log = {
     time: Function.prototype.bind.call(console.time, console),
     timeEnd: Function.prototype.bind.call(console.timeEnd, console)
 };
+var MeasurementDefaultParams = {
+    color: 'green',
+    labelColor: 'grey',
+    labelAttachment: 'bottom-center',
+    labelSize: 0.7,
+    labelZOffset: 0.5,
+    labelYOffset: 0.1,
+    labelBorder: true,
+    labelBorderColor: 'lightgrey',
+    labelBorderWidth: 0.25,
+    lineOpacity: 0.8,
+    linewidth: 5.0,
+    opacity: 0.6,
+    labelUnit: 'angstrom',
+    arcVisible: true,
+    planeVisible: false
+};
+function setMeasurementDefaultParams(params) {
+    if ( params === void 0 ) params = {};
+
+    Object.assign(MeasurementDefaultParams, params);
+}
 var Debug = boolean(getQuery('debug'));
 function setDebug(value) {
     Debug = value;
@@ -76455,28 +76477,14 @@ var StructureComponent = (function (Component$$1) {
         this.pickDict = createSimpleDict();
         this.spacefillRepresentation = this.addRepresentation('spacefill', {
             sele: 'none',
-            opacity: 0.6,
-            color: 'green',
+            opacity: MeasurementDefaultParams.opacity,
+            color: MeasurementDefaultParams.color,
             disablePicking: true,
             radiusType: 'data'
         }, true);
-        var measurementParams = {
-            color: 'green',
-            labelColor: 'grey',
-            labelAttachment: 'bottom-center',
-            labelSize: 0.7,
-            labelZOffset: 0.5,
-            labelYOffset: 0.1,
-            labelBorder: true,
-            labelBorderColor: 'lightgrey',
-            labelBorderWidth: 0.25,
-            lineOpacity: 0.8,
-            linewidth: 5.0,
-            opacity: 0.6
-        };
-        this.distanceRepresentation = this.addRepresentation('distance', Object.assign({ labelUnit: 'angstrom' }, measurementParams), true);
-        this.angleRepresentation = this.addRepresentation('angle', Object.assign({ arcVisible: true }, measurementParams), true);
-        this.dihedralRepresentation = this.addRepresentation('dihedral', Object.assign({ planeVisible: false }, measurementParams), true);
+        this.distanceRepresentation = this.addRepresentation('distance', MeasurementDefaultParams, true);
+        this.angleRepresentation = this.addRepresentation('angle', MeasurementDefaultParams, true);
+        this.dihedralRepresentation = this.addRepresentation('dihedral', MeasurementDefaultParams, true);
         this.measureRepresentations = new RepresentationCollection([
             this.spacefillRepresentation,
             this.distanceRepresentation,
@@ -87883,10 +87891,10 @@ var PdbParser = (function (StructureParser$$1) {
         var atomMap = s.atomMap;
         var atomStore = s.atomStore;
         atomStore.resize(Math.round(this.streamer.data.length / 80));
-        if (isPqr) {
-            atomStore.addField('partialCharge', 1, 'float32');
-            atomStore.addField('radius', 1, 'float32');
-        }
+        if (isPqr || isPdbqt)
+            { atomStore.addField('partialCharge', 1, 'float32'); }
+        if (isPqr)
+            { atomStore.addField('radius', 1, 'float32'); }
         var ap1 = s.getAtomProxy();
         var ap2 = s.getAtomProxy();
         var idx = 0;
@@ -87998,6 +88006,9 @@ var PdbParser = (function (StructureParser$$1) {
                     }
                     else {
                         atomStore.bfactor[idx] = isNaN(bfactor) ? 0 : bfactor;
+                        if (isPdbqt) {
+                            atomStore.partialCharge[idx] = parseFloat(line.substr(70, 6));
+                        }
                     }
                     var modresId = getModresId(resno, chainname, inscode);
                     // TODO instead of looking at MODRES look at SEQRES and
@@ -88144,7 +88155,7 @@ var PdbParser = (function (StructureParser$$1) {
                         Array.prototype.push.apply(currentEntityData.chainList, value.split(/\s*,\s*/));
                     }
                 }
-                else if (line.startsWith('TER')) {
+                else if (line.trim() === 'TER') {
                     var cp = s.getChainProxy(s.chainStore.count - 1);
                     chainDict[cp.chainname] = cp.index;
                     chainIdx += 1;
@@ -88194,7 +88205,7 @@ var PdbParser = (function (StructureParser$$1) {
                 else if (recordName === 'MODEL ') {
                     pendingStart = true;
                 }
-                else if (recordName === 'ENDMDL' || line.startsWith('END')) {
+                else if (recordName === 'ENDMDL' || line.trim() === 'END') {
                     if (pendingStart)
                         { continue; }
                     if (asTrajectory && !doFrames) {
@@ -90696,7 +90707,6 @@ ParserRegistry$1.add('mol2', Mol2Parser);
 // - atom partial charges (empty column in pdb format)
 // - atom types (bfactor column in pdb format)
 // http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file
-// TODO parse additional/changed fields properly
 var PdbqtParser = (function (PdbParser$$1) {
     function PdbqtParser () {
         PdbParser$$1.apply(this, arguments);
@@ -97929,7 +97939,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.17";
+var version$1 = "2.0.0-dev.18";
 
 /**
  * @file Version
@@ -97961,5 +97971,5 @@ if (!window.Promise) {
     window.Promise = Promise$1;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten$1 as flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, Shape$1 as Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten$1 as flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
