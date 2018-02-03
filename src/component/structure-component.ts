@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 
-import { ComponentRegistry } from '../globals'
+import { ComponentRegistry, MeasurementDefaultParams } from '../globals'
 import {
   defaults, /*deepEqual, */createRingBuffer, RingBuffer, createSimpleDict, SimpleDict
 } from '../utils'
@@ -91,34 +91,20 @@ class StructureComponent extends Component {
 
     this.spacefillRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
-      opacity: 0.6,
-      color: 'green',
+      opacity: MeasurementDefaultParams.opacity,
+      color: MeasurementDefaultParams.color,
       disablePicking: true,
       radiusType: 'data'
     }, true)
 
-    const measurementParams = {
-      color: 'green',
-      labelColor: 'grey',
-      labelAttachment: 'bottom-center',
-      labelSize: 0.7,
-      labelZOffset: 0.5,
-      labelYOffset: 0.1,
-      labelBorder: true,
-      labelBorderColor: 'lightgrey',
-      labelBorderWidth: 0.25,
-      lineOpacity: 0.8,
-      linewidth: 5.0,
-      opacity: 0.6
-    }
     this.distanceRepresentation = this.addRepresentation(
-      'distance', Object.assign({ labelUnit: 'angstrom' }, measurementParams), true
+      'distance', MeasurementDefaultParams, true
     )
     this.angleRepresentation = this.addRepresentation(
-      'angle', Object.assign({ arcVisible: true }, measurementParams), true
+      'angle', MeasurementDefaultParams, true
     )
     this.dihedralRepresentation = this.addRepresentation(
-      'dihedral', Object.assign({ planeVisible: false }, measurementParams), true
+      'dihedral', MeasurementDefaultParams, true
     )
 
     this.measureRepresentations = new RepresentationCollection([

@@ -57,6 +57,28 @@ export const Log = {
   timeEnd: Function.prototype.bind.call(console.timeEnd, console)
 }
 
+export let MeasurementDefaultParams = {
+  color: 'green',
+  labelColor: 'grey',
+  labelAttachment: 'bottom-center',
+  labelSize: 0.7,
+  labelZOffset: 0.5,
+  labelYOffset: 0.1,
+  labelBorder: true,
+  labelBorderColor: 'lightgrey',
+  labelBorderWidth: 0.25,
+  lineOpacity: 0.8,
+  linewidth: 5.0,
+  opacity: 0.6,
+
+  labelUnit: 'angstrom',
+  arcVisible: true,
+  planeVisible: false
+}
+export function setMeasurementDefaultParams (params = {}) {
+  Object.assign(MeasurementDefaultParams, params)
+}
+
 export let Debug = boolean(getQuery('debug'))
 export function setDebug (value: boolean) {
   Debug = value
