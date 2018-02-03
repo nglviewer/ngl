@@ -79345,7 +79345,7 @@ var StructureRepresentation = (function (Representation$$1) {
 
         var p = params || {};
         this.setRadius(p.radius, p);
-        if (p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
+        if (p.radiusType !== undefined || p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
             what.radius = true;
             if (!ExtensionFragDepth || this.disableImpostor) {
                 rebuild = true;
@@ -97929,7 +97929,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.16";
+var version$1 = "2.0.0-dev.17";
 
 /**
  * @file Version
