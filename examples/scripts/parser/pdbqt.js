@@ -1,7 +1,9 @@
 
-stage.loadFile('data://dxc.pdbqt').then(function (o) {
+stage.loadFile('data://dxc.pdbqt', {
+  sele: '/0 or /1 or /2'
+}).then(function (o) {
   o.addRepresentation('licorice', {
-    colorScheme: 'modelIndex'
+    colorScheme: 'partialCharge'
   })
-  o.autoView()
+  stage.autoView()
 })

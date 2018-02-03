@@ -178,10 +178,8 @@ class PdbParser extends StructureParser {
     const atomMap = s.atomMap
     const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
-    if (isPqr) {
-      atomStore.addField('partialCharge', 1, 'float32')
-      atomStore.addField('radius', 1, 'float32')
-    }
+    if (isPqr || isPdbqt) atomStore.addField('partialCharge', 1, 'float32')
+    if (isPqr) atomStore.addField('radius', 1, 'float32')
 
     const ap1 = s.getAtomProxy()
     const ap2 = s.getAtomProxy()
@@ -306,6 +304,9 @@ class PdbParser extends StructureParser {
             atomStore.radius[ idx ] = parseFloat(ls[ 10 - dd ])
           } else {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
+            if (isPdbqt) {
+              atomStore.partialCharge[ idx ] = parseFloat(line.substr(70, 6))
+            }
           }
 
           const modresId = getModresId(resno, chainname, inscode)
@@ -453,7 +454,7 @@ class PdbParser extends StructureParser {
               value.split(/\s*,\s*/)
             )
           }
-        } else if (line.startsWith('TER')) {
+        } else if (line.trim() === 'TER') {
           const cp = s.getChainProxy(s.chainStore.count - 1)
           chainDict[ cp.chainname ] = cp.index
           chainIdx += 1
@@ -501,7 +502,7 @@ class PdbParser extends StructureParser {
           s.title += (s.title ? ' ' : '') + line.substr(10, 70).trim()
         } else if (recordName === 'MODEL ') {
           pendingStart = true
-        } else if (recordName === 'ENDMDL' || line.startsWith('END')) {
+        } else if (recordName === 'ENDMDL' || line.trim() === 'END') {
           if (pendingStart) continue
 
           if (asTrajectory && !doFrames) {

@@ -11,7 +11,6 @@ import PdbParser from './pdb-parser.js'
 // - atom partial charges (empty column in pdb format)
 // - atom types (bfactor column in pdb format)
 // http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file
-// TODO parse additional/changed fields properly
 
 class PdbqtParser extends PdbParser {
   get type () { return 'pdbqt' }
