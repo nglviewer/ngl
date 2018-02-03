@@ -83,7 +83,6 @@ class StructureComponent extends Component {
     })
 
     this.initSelection(this.parameters.sele)
-    this.setDefaultAssembly(this.parameters.defaultAssembly)
 
     //
 
@@ -128,6 +127,10 @@ class StructureComponent extends Component {
       this.angleRepresentation,
       this.dihedralRepresentation
     ])
+
+    //
+
+    this.setDefaultAssembly(this.parameters.defaultAssembly)
   }
 
   /**
