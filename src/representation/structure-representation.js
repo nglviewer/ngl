@@ -307,7 +307,7 @@ class StructureRepresentation extends Representation {
 
     this.setRadius(p.radius, p)
 
-    if (p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
+    if (p.radiusType !== undefined || p.radiusData !== undefined || p.radiusSize !== undefined || p.radiusScale !== undefined) {
       what.radius = true
       if (!ExtensionFragDepth || this.disableImpostor) {
         rebuild = true
