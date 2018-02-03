@@ -188,10 +188,10 @@ class StructureComponent extends Component {
     if (this.structure.biomolDict[value] === undefined) value = ''
     // only set default assembly when changed
     if (this.parameters.defaultAssembly !== value) {
+      const reprParams = { defaultAssembly: value }
+      this.reprList.forEach(repr => repr.setParameters(reprParams))
+      this.measureRepresentations.setParameters(reprParams)
       this.parameters.defaultAssembly = value
-      this.reprList.forEach(repr => {
-        repr.setParameters({ defaultAssembly: this.parameters.defaultAssembly })
-      })
       this.signals.defaultAssemblyChanged.dispatch(value)
     }
     return this

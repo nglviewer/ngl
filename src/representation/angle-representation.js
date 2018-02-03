@@ -84,10 +84,10 @@ class AngleRepresentation extends MeasurementRepresentation {
     super.init(p)
   }
 
-  create () {
-    if (!this.structureView.atomCount || !this.atomTriple.length) return
+  createData (sview) {
+    if (!sview.atomCount || !this.atomTriple.length) return
 
-    const atomPosition = atomTriplePositions(this.structureView, this.atomTriple)
+    const atomPosition = atomTriplePositions(sview, this.atomTriple)
     const angleData = getAngleData(atomPosition)
     const n = this.n = angleData.labelPosition.length / 3
 
@@ -140,15 +140,14 @@ class AngleRepresentation extends MeasurementRepresentation {
       visible: this.sectorVisible
     }))
 
-    this.dataList.push({
-      sview: this.structureView,
+    return {
       bufferList: [
         this.textBuffer,
         this.vectorBuffer,
         this.arcBuffer,
         this.sectorBuffer
       ]
-    })
+    }
   }
 
   updateData (what, data) {

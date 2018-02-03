@@ -181,12 +181,12 @@ class DistanceRepresentation extends MeasurementRepresentation {
     return bondData
   }
 
-  create () {
-    if (!this.structureView.atomCount || !this.atomPair.length) return
+  createData (sview) {
+    if (!sview.atomCount || !this.atomPair.length) return
 
     const n = this.atomPair.length
     const c = new Color(this.labelColor)
-    const distanceData = this.getDistanceData(this.structureView, this.atomPair)
+    const distanceData = this.getDistanceData(sview, this.atomPair)
 
     this.textBuffer = new TextBuffer({
       position: distanceData.position,
@@ -201,7 +201,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
 
     const bondData = this.getBondData(
-      this.structureView,
+      sview,
       { position: true, color: true, picking: true, radius: this.useCylinder },
       bondParams
     )
@@ -227,13 +227,12 @@ class DistanceRepresentation extends MeasurementRepresentation {
       )
     }
 
-    this.dataList.push({
-      sview: this.structureView,
+    return {
       bondSet: distanceData.bondSet,
       bondStore: distanceData.bondStore,
       position: distanceData.position,
       bufferList: [ this.textBuffer, this.distanceBuffer ]
-    })
+    }
   }
 
   updateData (what, data) {

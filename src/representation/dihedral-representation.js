@@ -83,10 +83,10 @@ class DihedralRepresentation extends MeasurementRepresentation {
     super.init(p)
   }
 
-  create () {
-    if (!this.structureView.atomCount || !this.atomQuad.length) return
+  createData (sview) {
+    if (!sview.atomCount || !this.atomQuad.length) return
 
-    const atomPosition = parseNestedAtoms(this.structureView, this.atomQuad)
+    const atomPosition = parseNestedAtoms(sview, this.atomQuad)
     const dihedralData = getDihedralData(
       atomPosition, { planeVisible: this.planeVisible }
     )
@@ -135,15 +135,14 @@ class DihedralRepresentation extends MeasurementRepresentation {
       visible: this.sectorVisible
     }))
 
-    this.dataList.push({
-      sview: this.structureView,
+    return {
       bufferList: [
         this.textBuffer,
         this.lineBuffer,
         this.planeBuffer,
         this.sectorBuffer
       ]
-    })
+    }
   }
 
   updateData (what, data) {

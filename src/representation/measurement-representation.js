@@ -126,8 +126,7 @@ class MeasurementRepresentation extends StructureRepresentation {
         type: 'integer', max: 50, min: 1, buffer: true
       }
     }, this.parameters, {
-      flatShaded: null,
-      assembly: null
+      flatShaded: null
     })
   }
 
