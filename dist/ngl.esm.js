@@ -53285,9 +53285,9 @@ function quicksortCmp(arr, cmp, begin, end) {
     var i, j;
     while (true) {
         if (right - left <= 25) {
-            for (j = left + 1; j <= right; ++j) {
-                tmp = arr[j];
-                i = j - 1;
+            for (var k = left + 1; k <= right; ++k) {
+                tmp = arr[k];
+                i = k - 1;
                 while (i >= left && cmp(arr[i], tmp) > 0) {
                     arr[i + 1] = arr[i];
                     --i;
@@ -66437,8 +66437,6 @@ Helixorient.prototype.getPosition = function getPosition () {
     var rise = new Float32Array(n);
     var twist = new Float32Array(n);
     var resdir = new Float32Array(3 * n);
-    var tmp, j, i;
-    var diff13Length, diff24Length;
     var r12 = new Vector3();
     var r23 = new Vector3();
     var r34 = new Vector3();
@@ -66456,12 +66454,12 @@ Helixorient.prototype.getPosition = function getPosition () {
     var a2 = structure.getAtomProxy(polymer.getAtomIndexByType(0, type));
     var a3 = structure.getAtomProxy(polymer.getAtomIndexByType(1, type));
     var a4 = structure.getAtomProxy(polymer.getAtomIndexByType(2, type));
-    for (var i$1 = 0; i$1 < n3; ++i$1) {
+    for (var i = 0; i < n3; ++i) {
         a1.index = a2.index;
         a2.index = a3.index;
         a3.index = a4.index;
-        a4.index = polymer.getAtomIndexByType(i$1 + 3, type); // TODO
-        j = 3 * i$1;
+        a4.index = polymer.getAtomIndexByType(i + 3, type); // TODO
+        var j = 3 * i;
         // ported from GROMACS src/tools/gmx_helixorient.c
         r12.subVectors(a2, a1); // TODO
         r23.subVectors(a3, a2); // TODO
@@ -66470,21 +66468,21 @@ Helixorient.prototype.getPosition = function getPosition () {
         diff24.subVectors(r23, r34);
         _axis.crossVectors(diff13, diff24).normalize();
         _axis.toArray(axis, j); // TODO
-        if (i$1 > 0) {
-            diff[i$1] = _axis.angleTo(_prevAxis);
+        if (i > 0) {
+            diff[i] = _axis.angleTo(_prevAxis);
         }
-        tmp = Math.cos(diff13.angleTo(diff24));
-        twist[i$1] = 180.0 / Math.PI * Math.acos(tmp);
-        diff13Length = diff13.length();
-        diff24Length = diff24.length();
-        radius[i$1] = (Math.sqrt(diff24Length * diff13Length) /
+        var tmp = Math.cos(diff13.angleTo(diff24));
+        twist[i] = 180.0 / Math.PI * Math.acos(tmp);
+        var diff13Length = diff13.length();
+        var diff24Length = diff24.length();
+        radius[i] = (Math.sqrt(diff24Length * diff13Length) /
             // clamp, to avoid instabilities for when
             // angle between diff13 and diff24 is near 0
             Math.max(2.0, 2.0 * (1.0 - tmp)));
-        rise[i$1] = Math.abs(r23.dot(_axis));
+        rise[i] = Math.abs(r23.dot(_axis));
         //
-        v1.copy(diff13).multiplyScalar(radius[i$1] / diff13Length);
-        v2.copy(diff24).multiplyScalar(radius[i$1] / diff24Length);
+        v1.copy(diff13).multiplyScalar(radius[i] / diff13Length);
+        v2.copy(diff24).multiplyScalar(radius[i] / diff24Length);
         v1.subVectors(a2, v1); // TODO
         v2.subVectors(a3, v2); // TODO
         v1.toArray(center, j + 3); // TODO
@@ -66522,13 +66520,13 @@ Helixorient.prototype.getPosition = function getPosition () {
     projectPointOnVector(vt, _axis, v1);
     vt.toArray(center, 3 * n - 3); // TODO
     // calc last three resdir
-    for (i = n - 3; i < n; ++i) {
-        v1.fromArray(center, 3 * i); // TODO
+    for (var i$1 = n - 3; i$1 < n; ++i$1) {
+        v1.fromArray(center, 3 * i$1); // TODO
         // _center.copy( res[ i ].getTraceAtom() );
-        a1.index = polymer.getAtomIndexByType(i, type); // TODO
+        a1.index = polymer.getAtomIndexByType(i$1, type); // TODO
         _center.copy(a1); // TODO
         _resdir.subVectors(_center, v1);
-        _resdir.toArray(resdir, 3 * i); // TODO
+        _resdir.toArray(resdir, 3 * i$1); // TODO
     }
     // average measures to define them on the residues
     var resRadius = new Float32Array(n);
@@ -66553,11 +66551,11 @@ Helixorient.prototype.getPosition = function getPosition () {
     var resAxis = new Float32Array(3 * n);
     copyArray(axis, resAxis, 0, 0, 3);
     copyArray(axis, resAxis, 0, 3, 3);
-    for (i = 2; i < n - 2; ++i) {
-        v1.fromArray(axis, 3 * (i - 2)); // TODO
-        v2.fromArray(axis, 3 * (i - 1)); // TODO
+    for (var i$3 = 2; i$3 < n - 2; ++i$3) {
+        v1.fromArray(axis, 3 * (i$3 - 2)); // TODO
+        v2.fromArray(axis, 3 * (i$3 - 1)); // TODO
         _axis.addVectors(v2, v1).multiplyScalar(0.5).normalize();
-        _axis.toArray(resAxis, 3 * i); // TODO
+        _axis.toArray(resAxis, 3 * i$3); // TODO
     }
     copyArray(axis, resAxis, 3 * n - 12, 3 * n - 6, 3);
     copyArray(axis, resAxis, 3 * n - 12, 3 * n - 3, 3);
@@ -69164,7 +69162,9 @@ function calculateBondsBetween(structure, onlyAddBackbone, useExistingBonds) {
                         { return; }
                     spatialHash.eachWithin(ap.x, ap.y, ap.z, 4, function (idx) {
                         ap2.index = idx;
-                        if (ap.residueIndex !== ap2.residueIndex && !ap2.isMetal()) {
+                        if (ap.modelIndex === ap2.modelIndex &&
+                            ap.residueIndex !== ap2.residueIndex &&
+                            !ap2.isMetal()) {
                             bondStore.addBondIfConnected(ap, ap2, 1); // assume single bond
                         }
                     });
@@ -76119,24 +76119,23 @@ Alignment.prototype.initMatrices = function initMatrices () {
     this.S = [];
     this.V = [];
     this.H = [];
-    var i, j;
-    for (i = 0; i <= this.n; ++i) {
+    for (var i = 0; i <= this.n; ++i) {
         this$1.S[i] = [];
         this$1.V[i] = [];
         this$1.H[i] = [];
-        for (j = 0; j <= this.m; ++j) {
+        for (var j = 0; j <= this.m; ++j) {
             this$1.S[i][j] = 0;
             this$1.V[i][j] = 0;
             this$1.H[i][j] = 0;
         }
     }
-    for (i = 0; i <= this.n; ++i) {
-        this$1.S[i][0] = this$1.gap(0);
-        this$1.H[i][0] = -Infinity;
+    for (var i$1 = 0; i$1 <= this.n; ++i$1) {
+        this$1.S[i$1][0] = this$1.gap(0);
+        this$1.H[i$1][0] = -Infinity;
     }
-    for (j = 0; j <= this.m; ++j) {
-        this$1.S[0][j] = this$1.gap(0);
-        this$1.V[0][j] = -Infinity;
+    for (var j$1 = 0; j$1 <= this.m; ++j$1) {
+        this$1.S[0][j$1] = this$1.gap(0);
+        this$1.V[0][j$1] = -Infinity;
     }
     this.S[0][0] = 0;
     // Log.log(this.S, this.V, this.H);
@@ -76182,14 +76181,13 @@ Alignment.prototype.calc = function calc () {
     var n = this.n;
     var m = this.m;
     var Vi1, Si1, Vi, Hi, Si;
-    var i, j;
-    for (i = 1; i <= n; ++i) {
+    for (var i = 1; i <= n; ++i) {
         Si1 = S[i - 1];
         Vi1 = V[i - 1];
         Vi = V[i];
         Hi = H[i];
         Si = S[i];
-        for (j = 1; j <= m; ++j) {
+        for (var j = 1; j <= m; ++j) {
             Vi[j] = Math.max(Si1[j] + gap0, Vi1[j] + gapExtensionPenalty);
             Hi[j] = Math.max(Si[j - 1] + gap0, Hi[j - 1] + gapExtensionPenalty);
             Si[j] = Math.max(Si1[j - 1] + scoreFn(i - 1, j - 1), // match
@@ -76452,7 +76450,6 @@ var StructureComponent = (function (Component$$1) {
             defaultAssemblyChanged: new signals_1()
         });
         this.initSelection(this.parameters.sele);
-        this.setDefaultAssembly(this.parameters.defaultAssembly);
         //
         this.pickBuffer = createRingBuffer(4);
         this.pickDict = createSimpleDict();
@@ -76486,6 +76483,8 @@ var StructureComponent = (function (Component$$1) {
             this.angleRepresentation,
             this.dihedralRepresentation
         ]);
+        //
+        this.setDefaultAssembly(this.parameters.defaultAssembly);
     }
 
     if ( Component$$1 ) StructureComponent.__proto__ = Component$$1;
@@ -76542,17 +76541,15 @@ var StructureComponent = (function (Component$$1) {
      * @return {undefined}
      */
     StructureComponent.prototype.setDefaultAssembly = function setDefaultAssembly (value) {
-        var this$1 = this;
-
         // filter out non-exsisting assemblies
         if (this.structure.biomolDict[value] === undefined)
             { value = ''; }
         // only set default assembly when changed
         if (this.parameters.defaultAssembly !== value) {
+            var reprParams = { defaultAssembly: value };
+            this.reprList.forEach(function (repr) { return repr.setParameters(reprParams); });
+            this.measureRepresentations.setParameters(reprParams);
             this.parameters.defaultAssembly = value;
-            this.reprList.forEach(function (repr) {
-                repr.setParameters({ defaultAssembly: this$1.parameters.defaultAssembly });
-            });
             this.signals.defaultAssemblyChanged.dispatch(value);
         }
         return this;
@@ -79512,8 +79509,7 @@ var MeasurementRepresentation = (function (StructureRepresentation$$1) {
                 type: 'integer', max: 50, min: 1, buffer: true
             }
         }, this.parameters, {
-            flatShaded: null,
-            assembly: null
+            flatShaded: null
         });
     }
 
@@ -80517,10 +80513,10 @@ var AngleRepresentation = (function (MeasurementRepresentation$$1) {
         this.vectorVisible = defaults(p.vectorVisible, true);
         MeasurementRepresentation$$1.prototype.init.call(this, p);
     };
-    AngleRepresentation.prototype.create = function create () {
-        if (!this.structureView.atomCount || !this.atomTriple.length)
+    AngleRepresentation.prototype.createData = function createData (sview) {
+        if (!sview.atomCount || !this.atomTriple.length)
             { return; }
-        var atomPosition = atomTriplePositions(this.structureView, this.atomTriple);
+        var atomPosition = atomTriplePositions(sview, this.atomTriple);
         var angleData = getAngleData(atomPosition);
         var n = this.n = angleData.labelPosition.length / 3;
         var labelColor = new Color(this.labelColor);
@@ -80560,15 +80556,14 @@ var AngleRepresentation = (function (MeasurementRepresentation$$1) {
         }, this.getBufferParams({
             visible: this.sectorVisible
         }));
-        this.dataList.push({
-            sview: this.structureView,
+        return {
             bufferList: [
                 this.textBuffer,
                 this.vectorBuffer,
                 this.arcBuffer,
                 this.sectorBuffer
             ]
-        });
+        };
     };
     AngleRepresentation.prototype.updateData = function updateData (what, data) {
         MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
@@ -82817,10 +82812,10 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         this.sectorVisible = defaults(p.sectorVisible, true);
         MeasurementRepresentation$$1.prototype.init.call(this, p);
     };
-    DihedralRepresentation.prototype.create = function create () {
-        if (!this.structureView.atomCount || !this.atomQuad.length)
+    DihedralRepresentation.prototype.createData = function createData (sview) {
+        if (!sview.atomCount || !this.atomQuad.length)
             { return; }
-        var atomPosition = parseNestedAtoms(this.structureView, this.atomQuad);
+        var atomPosition = parseNestedAtoms(sview, this.atomQuad);
         var dihedralData = getDihedralData(atomPosition, { planeVisible: this.planeVisible });
         var n = this.n = dihedralData.labelText.length;
         var labelColor = new Color(this.labelColor);
@@ -82857,15 +82852,14 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         }, this.getBufferParams({
             visible: this.sectorVisible
         }));
-        this.dataList.push({
-            sview: this.structureView,
+        return {
             bufferList: [
                 this.textBuffer,
                 this.lineBuffer,
                 this.planeBuffer,
                 this.sectorBuffer
             ]
-        });
+        };
     };
     DihedralRepresentation.prototype.updateData = function updateData (what, data) {
         MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
@@ -83236,12 +83230,12 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
         }
         return bondData;
     };
-    DistanceRepresentation.prototype.create = function create () {
-        if (!this.structureView.atomCount || !this.atomPair.length)
+    DistanceRepresentation.prototype.createData = function createData (sview) {
+        if (!sview.atomCount || !this.atomPair.length)
             { return; }
         var n = this.atomPair.length;
         var c = new Color(this.labelColor);
-        var distanceData = this.getDistanceData(this.structureView, this.atomPair);
+        var distanceData = this.getDistanceData(sview, this.atomPair);
         this.textBuffer = new TextBuffer({
             position: distanceData.position,
             size: uniformArray(n, this.labelSize),
@@ -83252,7 +83246,7 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
             bondSet: distanceData.bondSet,
             bondStore: distanceData.bondStore
         };
-        var bondData = this.getBondData(this.structureView, { position: true, color: true, picking: true, radius: this.useCylinder }, bondParams);
+        var bondData = this.getBondData(sview, { position: true, color: true, picking: true, radius: this.useCylinder }, bondParams);
         if (this.useCylinder) {
             this.distanceBuffer = new CylinderBuffer(bondData, this.getBufferParams({
                 openEnded: this.openEnded,
@@ -83268,13 +83262,12 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
                 opacity: this.lineOpacity
             }));
         }
-        this.dataList.push({
-            sview: this.structureView,
+        return {
             bondSet: distanceData.bondSet,
             bondStore: distanceData.bondStore,
             position: distanceData.position,
             bufferList: [this.textBuffer, this.distanceBuffer]
-        });
+        };
     };
     DistanceRepresentation.prototype.updateData = function updateData (what, data) {
         MeasurementRepresentation$$1.prototype.updateData.call(this, what, data);
@@ -84356,7 +84349,6 @@ RepresentationRegistry.add('line', LineRepresentation);
 function Grid(length, width, height, DataCtor, elemSize) {
     DataCtor = DataCtor || Int32Array;
     elemSize = elemSize || 1;
-    var j;
     var data = new DataCtor(length * width * height * elemSize);
     function index(x, y, z) {
         return ((((x * width) + y) * height) + z) * elemSize;
@@ -84367,7 +84359,7 @@ function Grid(length, width, height, DataCtor, elemSize) {
         var arguments$1 = arguments;
 
         var i = index(x, y, z);
-        for (j = 0; j < elemSize; ++j) {
+        for (var j = 0; j < elemSize; ++j) {
             data[i + j] = arguments$1[3 + j];
         }
     };
@@ -84377,7 +84369,7 @@ function Grid(length, width, height, DataCtor, elemSize) {
             { array = []; }
         if (offset === undefined)
             { offset = 0; }
-        for (j = 0; j < elemSize; ++j) {
+        for (var j = 0; j < elemSize; ++j) {
             array[offset + j] = data[i + j];
         }
     };
@@ -84385,7 +84377,7 @@ function Grid(length, width, height, DataCtor, elemSize) {
         var i = index(x, y, z);
         if (offset === undefined)
             { offset = 0; }
-        for (j = 0; j < elemSize; ++j) {
+        for (var j = 0; j < elemSize; ++j) {
             data[i + j] = array[offset + j];
         }
     };
@@ -87834,6 +87826,7 @@ var PdbParser = (function (StructureParser$$1) {
             isLegacy = true;
         }
         var isPqr = this.type === 'pqr';
+        var isPdbqt = this.type === 'pdbqt';
         var s = this.structure;
         var sb = this.structureBuilder;
         var hex = this.hex;
@@ -87986,7 +87979,7 @@ var PdbParser = (function (StructureParser$$1) {
                         occupancy = parseFloat(line.substr(54, 6));
                         if (!isLegacy) {
                             element = line.substr(76, 2).trim();
-                            if (!chainname) {
+                            if (!chainname && !isPdbqt) {
                                 chainname = line.substr(72, 4).trim(); // segid
                             }
                         }
@@ -90693,6 +90686,35 @@ var Mol2Parser = (function (StructureParser$$1) {
     return Mol2Parser;
 }(StructureParser));
 ParserRegistry$1.add('mol2', Mol2Parser);
+
+/**
+ * @file Pdbqt Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+// autodock variant of PDB format with
+// - atom partial charges (empty column in pdb format)
+// - atom types (bfactor column in pdb format)
+// http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file
+// TODO parse additional/changed fields properly
+var PdbqtParser = (function (PdbParser$$1) {
+    function PdbqtParser () {
+        PdbParser$$1.apply(this, arguments);
+    }
+
+    if ( PdbParser$$1 ) PdbqtParser.__proto__ = PdbParser$$1;
+    PdbqtParser.prototype = Object.create( PdbParser$$1 && PdbParser$$1.prototype );
+    PdbqtParser.prototype.constructor = PdbqtParser;
+
+    var prototypeAccessors = { type: { configurable: true } };
+
+    prototypeAccessors.type.get = function () { return 'pdbqt'; };
+
+    Object.defineProperties( PdbqtParser.prototype, prototypeAccessors );
+
+    return PdbqtParser;
+}(PdbParser));
+ParserRegistry$1.add('pdbqt', PdbqtParser);
 
 /**
  * @file Pqr Parser
@@ -97907,7 +97929,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.15";
+var version$1 = "2.0.0-dev.16";
 
 /**
  * @file Version
