@@ -119,26 +119,24 @@ class Alignment {
     this.V = []
     this.H = []
 
-    var i, j
-
-    for (i = 0; i <= this.n; ++i) {
+    for (let i = 0; i <= this.n; ++i) {
       this.S[ i ] = []
       this.V[ i ] = []
       this.H[ i ] = []
 
-      for (j = 0; j <= this.m; ++j) {
+      for (let j = 0; j <= this.m; ++j) {
         this.S[ i ][ j ] = 0
         this.V[ i ][ j ] = 0
         this.H[ i ][ j ] = 0
       }
     }
 
-    for (i = 0; i <= this.n; ++i) {
+    for (let i = 0; i <= this.n; ++i) {
       this.S[ i ][ 0 ] = this.gap(0)
       this.H[ i ][ 0 ] = -Infinity
     }
 
-    for (j = 0; j <= this.m; ++j) {
+    for (let j = 0; j <= this.m; ++j) {
       this.S[ 0 ][ j ] = this.gap(0)
       this.V[ 0 ][ j ] = -Infinity
     }
@@ -186,22 +184,20 @@ class Alignment {
 
     this.initMatrices()
 
-    var gap0 = this.gap(0)
-    var scoreFn = this.makeScoreFn()
-    var gapExtensionPenalty = this.gapExtensionPenalty
+    const gap0 = this.gap(0)
+    const scoreFn = this.makeScoreFn()
+    const gapExtensionPenalty = this.gapExtensionPenalty
 
-    var V = this.V
-    var H = this.H
-    var S = this.S
+    const V = this.V
+    const H = this.H
+    const S = this.S
 
-    var n = this.n
-    var m = this.m
+    const n = this.n
+    const m = this.m
 
-    var Vi1, Si1, Vi, Hi, Si
+    let Vi1, Si1, Vi, Hi, Si
 
-    var i, j
-
-    for (i = 1; i <= n; ++i) {
+    for (let i = 1; i <= n; ++i) {
       Si1 = S[ i - 1 ]
       Vi1 = V[ i - 1 ]
 
@@ -209,7 +205,7 @@ class Alignment {
       Hi = H[ i ]
       Si = S[ i ]
 
-      for (j = 1; j <= m; ++j) {
+      for (let j = 1; j <= m; ++j) {
         Vi[j] = Math.max(
           Si1[ j ] + gap0,
           Vi1[ j ] + gapExtensionPenalty

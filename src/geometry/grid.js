@@ -8,9 +8,7 @@ function Grid (length, width, height, DataCtor, elemSize) {
   DataCtor = DataCtor || Int32Array
   elemSize = elemSize || 1
 
-  var j
-
-  var data = new DataCtor(length * width * height * elemSize)
+  const data = new DataCtor(length * width * height * elemSize)
 
   function index (x, y, z) {
     return ((((x * width) + y) * height) + z) * elemSize
@@ -21,30 +19,30 @@ function Grid (length, width, height, DataCtor, elemSize) {
   this.index = index
 
   this.set = function (x, y, z) {
-    var i = index(x, y, z)
+    const i = index(x, y, z)
 
-    for (j = 0; j < elemSize; ++j) {
+    for (let j = 0; j < elemSize; ++j) {
       data[ i + j ] = arguments[ 3 + j ]
     }
   }
 
   this.toArray = function (x, y, z, array, offset) {
-    var i = index(x, y, z)
+    const i = index(x, y, z)
 
     if (array === undefined) array = []
     if (offset === undefined) offset = 0
 
-    for (j = 0; j < elemSize; ++j) {
+    for (let j = 0; j < elemSize; ++j) {
       array[ offset + j ] = data[ i + j ]
     }
   }
 
   this.fromArray = function (x, y, z, array, offset) {
-    var i = index(x, y, z)
+    const i = index(x, y, z)
 
     if (offset === undefined) offset = 0
 
-    for (j = 0; j < elemSize; ++j) {
+    for (let j = 0; j < elemSize; ++j) {
       data[ i + j ] = array[ offset + j ]
     }
   }

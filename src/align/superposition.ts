@@ -128,8 +128,8 @@ class Superposition {
       return
     }
 
-    var coords = new Matrix(3, n)
-    var tmp = new Matrix(n, 3)
+    const coords = new Matrix(3, n)
+    const tmp = new Matrix(n, 3)
 
     // prep coords
 
@@ -142,8 +142,8 @@ class Superposition {
     transpose(coords, tmp)
     addRows(coords, this.mean2)
 
-    var i = 0
-    var cd = coords.data
+    let i = 0
+    const cd = coords.data
 
     if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {

@@ -74,7 +74,7 @@ class CylinderImpostorBuffer extends MappedAlignedBoxBuffer {
   }
 
   getDefines (type?: BufferTypes) {
-    var defines = MappedAlignedBoxBuffer.prototype.getDefines.call(this, type)
+    const defines = MappedAlignedBoxBuffer.prototype.getDefines.call(this, type)
 
     if (!this.parameters.openEnded) {
       defines.CAP = 1

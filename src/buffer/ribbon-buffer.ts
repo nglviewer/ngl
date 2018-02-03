@@ -23,9 +23,9 @@ interface RibbonBufferData extends BufferData {
 }
 
 function getSize(data: RibbonBufferData){
-  var n = (data.position.length / 3) - 1
-  var n4 = n * 4
-  var x = n4 * 3
+  const n = (data.position.length / 3) - 1
+  const n4 = n * 4
+  const x = n4 * 3
   return x
 }
 
@@ -116,9 +116,9 @@ class RibbonBuffer extends MeshBuffer {
       attributes.primitiveId.needsUpdate = true
     }
 
-    var v, i, k, p, l, v3
-    var currSize
-    var prevSize = size ? size[ 0 ] : null
+    let v, i, k, p, l, v3
+    let currSize
+    let prevSize = size ? size[ 0 ] : null
 
     for (v = 0; v < n; ++v) {
       v3 = v * 3

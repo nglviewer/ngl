@@ -156,7 +156,7 @@ class Kdtree {
         points[ pointIndex + 1 ],
         points[ pointIndex + 2 ]
       ]
-      var ownDistance = this.metric(point, ownPoint)
+      const ownDistance = this.metric(point, ownPoint)
 
       function saveNode (nodeIndex: number, distance: number) {
         bestNodes.push([ nodeIndex, distance ])

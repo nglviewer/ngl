@@ -76,8 +76,8 @@ class ArrowBuffer {
     this.splitPosition = new Float32Array(data.position1.length)
     this.cylinderRadius = new Float32Array(data.radius.length)
 
-    var attr = this.makeAttributes(data)
-    var bufferParams = {
+    const attr = this.makeAttributes(data)
+    const bufferParams = {
       radialSegments: this.parameters.radialSegments,
       openEnded: this.parameters.openEnded,
       disableImpostor: this.parameters.disableImpostor
@@ -131,17 +131,17 @@ class ArrowBuffer {
     }
 
     if (data.position1 && data.position2) {
-      var vFrom = new Vector3()
-      var vTo = new Vector3()
-      var vDir = new Vector3()
-      var vSplit = new Vector3()
+      const vFrom = new Vector3()
+      const vTo = new Vector3()
+      const vDir = new Vector3()
+      const vSplit = new Vector3()
       for (i = 0, il = splitPosition.length; i < il; i += 3) {
         vFrom.fromArray(data.position1 as any, i)
         vTo.fromArray(data.position2 as any, i)
         vDir.subVectors(vFrom, vTo)
-        var fullLength = vDir.length()
-        var coneLength = cylinderRadius[ i / 3 ] * aspectRatio * 2
-        var length = Math.min(fullLength, coneLength)
+        const fullLength = vDir.length()
+        const coneLength = cylinderRadius[ i / 3 ] * aspectRatio * 2
+        const length = Math.min(fullLength, coneLength)
         vDir.setLength(length)
         vSplit.copy(vTo).add(vDir)
         vSplit.toArray(splitPosition as any, i)
@@ -186,7 +186,7 @@ class ArrowBuffer {
   }
 
   setAttributes (data: Partial<ArrowBufferData> = {}) {
-    var attr = this.makeAttributes(data)
+    const attr = this.makeAttributes(data)
 
     this.cylinderBuffer.setAttributes(attr.cylinder)
     this.coneBuffer.setAttributes(attr.cone)

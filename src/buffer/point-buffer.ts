@@ -14,8 +14,8 @@ import { smoothstep } from '../math/math-utils'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
 function distance (x0: number, y0: number, x1: number, y1: number) {
-  var dx = x1 - x0
-  var dy = y1 - y0
+  const dx = x1 - x0
+  const dy = y1 - y0
   return Math.sqrt(dx * dx + dy * dy)
 }
 

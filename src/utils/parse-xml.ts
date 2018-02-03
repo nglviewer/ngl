@@ -69,7 +69,7 @@ export function parseXml (xml: string) {
 
     // attributes
     while (!(eos() || is('>') || is('?>') || is('/>'))) {
-      var attr = attribute()
+      const attr = attribute()
       if (!attr) return node
       node.attributes[attr.name] = attr.value
     }

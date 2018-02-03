@@ -139,8 +139,8 @@ const nHCharge = 0.25
  */
 function backboneNHPosition (ap: AtomProxy, position = new Vector3()) {
   let h = false
-  var ca = false
-  var c = false
+  let ca = false
+  let c = false
   position.set(2 * ap.x, 2 * ap.y, 2 * ap.z)
 
   ap.eachBondedAtom(function (a2: AtomProxy) {

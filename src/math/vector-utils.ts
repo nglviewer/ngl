@@ -79,7 +79,7 @@ export function calculateMeanVector3 (array: NumberArray) {
 }
 
 export function isPointOnSegment (p: Vector3, l1: Vector3, l2: Vector3) {
-  var len = l1.distanceTo(l2)
+  const len = l1.distanceTo(l2)
 
   return p.distanceTo(l1) <= len && p.distanceTo(l2) <= len
 }

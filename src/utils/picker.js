@@ -170,7 +170,7 @@ class BondPicker extends Picker {
   get data () { return this.structure }
 
   getObject (pid) {
-    var bp = this.structure.getBondProxy(this.getIndex(pid))
+    const bp = this.structure.getBondProxy(this.getIndex(pid))
     bp.bondStore = this.bondStore
     return bp
   }

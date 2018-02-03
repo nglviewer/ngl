@@ -38,8 +38,8 @@ class SstrucColormaker extends Colormaker {
   }
 
   atomColor (ap: AtomProxy) {
-    var sstruc = ap.sstruc
-    var rp = this.residueProxy
+    const sstruc = ap.sstruc
+    const rp = this.residueProxy
 
     if (sstruc === 'h') {
       return StructureColors.alphaHelix

@@ -41,7 +41,7 @@ export default class Stats {
   }
 
   end () {
-    var time = window.performance.now()
+    const time = window.performance.now()
 
     this.count += 1
     this.frames += 1

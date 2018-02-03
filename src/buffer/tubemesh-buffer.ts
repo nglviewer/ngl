@@ -11,8 +11,8 @@ import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
 import { BufferDefaultParameters, BufferData } from './buffer'
 
-var vTangent = new Vector3()
-var vMeshNormal = new Vector3()
+const vTangent = new Vector3()
+const vMeshNormal = new Vector3()
 
 interface TubeMeshBufferData extends BufferData {
   binormal: Float32Array
@@ -84,16 +84,16 @@ class TubeMeshBuffer extends MeshBuffer {
   }
 
   setAttributes (data: Partial<TubeMeshBufferData> = {}) {
-    var aspectRatio = this.parameters.aspectRatio
+    const aspectRatio = this.parameters.aspectRatio
 
-    var n = this.size2
-    var n1 = n - 1
-    var radialSegments = this.parameters.radialSegments
+    const n = this.size2
+    const n1 = n - 1
+    const radialSegments = this.parameters.radialSegments
 
-    var attributes = this.geometry.attributes as any
+    const attributes = this.geometry.attributes as any
 
-    var position, normal, binormal, tangent, color, size, primitiveId
-    var meshPosition, meshColor, meshNormal, meshPrimitiveId
+    let position, normal, binormal, tangent, color, size, primitiveId
+    let meshPosition, meshColor, meshNormal, meshPrimitiveId
 
     if (data.position) {
       position = data.position

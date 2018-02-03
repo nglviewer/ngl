@@ -50,7 +50,7 @@ class CsvParser extends Parser {
       const n = chunk.length
 
       for (let i = 0; i < n; ++i) {
-        var line = chunk[ i ].trim()
+        const line = chunk[ i ].trim()
         if (line.startsWith(this.comment)) continue
         const values = line.split(reDelimiter)
 

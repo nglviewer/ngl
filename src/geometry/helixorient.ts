@@ -160,9 +160,6 @@ class Helixorient {
     const twist = new Float32Array(n)
     const resdir = new Float32Array(3 * n)
 
-    let tmp, j, i
-    let diff13Length, diff24Length
-
     const r12 = new Vector3()
     const r23 = new Vector3()
     const r34 = new Vector3()
@@ -192,7 +189,7 @@ class Helixorient {
       a3.index = a4.index
       a4.index = polymer.getAtomIndexByType(i + 3, type)!  // TODO
 
-      j = 3 * i
+      const j = 3 * i
 
       // ported from GROMACS src/tools/gmx_helixorient.c
 
@@ -210,11 +207,11 @@ class Helixorient {
         diff[ i ] = _axis.angleTo(_prevAxis)
       }
 
-      tmp = Math.cos(diff13.angleTo(diff24))
+      const tmp = Math.cos(diff13.angleTo(diff24))
       twist[ i ] = 180.0 / Math.PI * Math.acos(tmp)
 
-      diff13Length = diff13.length()
-      diff24Length = diff24.length()
+      const diff13Length = diff13.length()
+      const diff24Length = diff24.length()
 
       radius[ i ] = (
         Math.sqrt(diff24Length * diff13Length) /
@@ -276,7 +273,7 @@ class Helixorient {
     vt.toArray(center as any, 3 * n - 3)  // TODO
 
     // calc last three resdir
-    for (i = n - 3; i < n; ++i) {
+    for (let i = n - 3; i < n; ++i) {
       v1.fromArray(center as any, 3 * i)  // TODO
       // _center.copy( res[ i ].getTraceAtom() );
       a1.index = polymer.getAtomIndexByType(i, type)!  // TODO
@@ -311,14 +308,14 @@ class Helixorient {
     resTwist[ n - 2 ] = twist[ n - 4 ]
     resRise[ n - 2 ] = rise[ n - 4 ]
 
-        // average helix axes to define them on the residues
+    // average helix axes to define them on the residues
 
-    var resAxis = new Float32Array(3 * n)
+    const resAxis = new Float32Array(3 * n)
 
     copyArray(axis, resAxis, 0, 0, 3)
     copyArray(axis, resAxis, 0, 3, 3)
 
-    for (i = 2; i < n - 2; ++i) {
+    for (let i = 2; i < n - 2; ++i) {
       v1.fromArray(axis as any, 3 * (i - 2))  // TODO
       v2.fromArray(axis as any, 3 * (i - 1))  // TODO
 

@@ -32,16 +32,16 @@ class BfactorColormaker extends Colormaker {
     }
 
     if (!params.domain) {
-      var selection
-      var min = Infinity
-      var max = -Infinity
+      let selection
+      let min = Infinity
+      let max = -Infinity
 
       if (params.sele) {
         selection = new Selection(params.sele)
       }
 
       params.structure.eachAtom(function (a) {
-        var bfactor = a.bfactor
+        const bfactor = a.bfactor
         min = Math.min(min, bfactor)
         max = Math.max(max, bfactor)
       }, selection)

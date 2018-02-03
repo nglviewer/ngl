@@ -17,8 +17,8 @@ import {
  */
 class EntitytypeColormaker extends Colormaker {
   atomColor (a: AtomProxy) {
-    var e = a.entity
-    var et = e ? e.entityType : undefined
+    const e = a.entity
+    const et = e ? e.entityType : undefined
     switch (et) {
       case PolymerEntity:
         return 0x7fc97f

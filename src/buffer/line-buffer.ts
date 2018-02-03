@@ -10,8 +10,8 @@ import '../shader/Line.frag'
 import Buffer, { BufferParameters, BufferData } from './buffer'
 
 function getSize(data: LineBufferData){
-  var size = data.position1.length / 3
-  var attrSize = size * 4
+  const size = data.position1.length / 3
+  const attrSize = size * 4
   return attrSize * 3
 }
 
@@ -55,10 +55,10 @@ class LineBuffer extends Buffer {
   }
 
   setAttributes (data: Partial<LineBufferData> = {}) {
-    var position1, position2, color, color2
-    var aPosition, aColor
+    let position1, position2, color, color2
+    let aPosition, aColor
 
-    var attributes = this.geometry.attributes as any  // TODO
+    const attributes = this.geometry.attributes as any  // TODO
 
     if (data.position1 && data.position2) {
       position1 = data.position1
@@ -74,12 +74,12 @@ class LineBuffer extends Buffer {
       attributes.color.needsUpdate = true
     }
 
-    var n = this.size
+    const n = this.size
 
-    var i, j
-    var x, y, z, x1, y1, z1, x2, y2, z2
+    let i, j
+    let x, y, z, x1, y1, z1, x2, y2, z2
 
-    for (var v = 0; v < n; v++) {
+    for (let v = 0; v < n; v++) {
       j = v * 3
       i = v * 4 * 3
 

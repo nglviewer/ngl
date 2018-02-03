@@ -131,7 +131,7 @@ class MeasurementRepresentation extends StructureRepresentation {
   }
 
   init (params) {
-    var p = params || {}
+    const p = params || {}
     this.labelVisible = defaults(p.labelVisible, true)
     this.labelSize = defaults(p.labelSize, 2.0)
     this.labelColor = defaults(p.labelColor, 0xFFFFFF)
@@ -180,8 +180,8 @@ class MeasurementRepresentation extends StructureRepresentation {
   }
 
   setParameters (params) {
-    var rebuild = false
-    var what = {}
+    const rebuild = false
+    const what = {}
 
     if (params && params.labelSize) {
       what.labelSize = true
@@ -277,7 +277,7 @@ function parseNestedAtoms (sview, atoms) {
   let p = 0
   atoms.forEach(function (group) {
     let _break = false
-    for (var j = 0; j < order; j++) {
+    for (let j = 0; j < order; j++) {
       if (seleMode) {
         sele.setString(group[ j ])
         const atomIndices = sview.getAtomIndices(sele)

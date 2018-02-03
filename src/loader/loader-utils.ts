@@ -39,7 +39,7 @@ export function getFileInfo (file: LoaderInput) {
     path = file
   }
   const queryIndex = path.lastIndexOf('?')
-  var query = queryIndex !== -1 ? path.substring(queryIndex) : ''
+  const query = queryIndex !== -1 ? path.substring(queryIndex) : ''
   path = path.substring(0, queryIndex === -1 ? path.length : queryIndex)
 
   const name = path.replace(/^.*[\\/]/, '')

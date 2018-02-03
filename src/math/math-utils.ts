@@ -18,7 +18,7 @@ const uuid = new Array(36)
 
 export function generateUUID () {
   let rnd = 0
-  var r
+  let r
 
   for (let i = 0; i < 36; i++) {
     if (i === 8 || i === 13 || i === 18 || i === 23) {
@@ -63,10 +63,10 @@ export function lerp (start: number, stop: number, alpha: number) {
 }
 
 export function spline (p0: number, p1: number, p2: number, p3: number, t: number, tension: number) {
-  var v0 = (p2 - p0) * tension
-  var v1 = (p3 - p1) * tension
-  var t2 = t * t
-  var t3 = t * t2
+  const v0 = (p2 - p0) * tension
+  const v1 = (p3 - p1) * tension
+  const t2 = t * t
+  const t3 = t * t2
   return (2 * p1 - 2 * p2 + v0 + v1) * t3 +
          (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 +
          v0 * t + p1

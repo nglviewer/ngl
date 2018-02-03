@@ -132,7 +132,7 @@ const ElementColors: { [k: string]: number } = {
   'D': 0xFFFFC0,
   'T': 0xFFFFA0
 }
-var DefaultElementColor = 0xFFFFFF
+const DefaultElementColor = 0xFFFFFF
 
 /**
  * Color by element
@@ -145,7 +145,7 @@ class ElementColormaker extends Colormaker {
   }
 
   atomColor (a: AtomProxy) {
-    var element = a.element
+    const element = a.element
 
     if (element === 'C') {
       return this.parameters.value

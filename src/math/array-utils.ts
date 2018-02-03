@@ -296,7 +296,7 @@ export function quicksortIP (arr: NumberArray, eleSize: number, orderElement: nu
       right = stack[ sp-- ] // ?
       left = stack[ sp-- ]
     } else {
-      var median = (left + right) >> 1
+      const median = (left + right) >> 1
 
       i = left + 1
       j = right
@@ -366,13 +366,13 @@ export function quicksortCmp<T> (arr: T[], cmp?: (a: T, b: T) => number, begin =
     arr[ b ] = tmp2
   }
 
-  var i, j
+  let i, j
 
   while (true) {
     if (right - left <= 25) {
-      for (j = left + 1; j <= right; ++j) {
-        tmp = arr[ j ]
-        i = j - 1
+      for (let k = left + 1; k <= right; ++k) {
+        tmp = arr[ k ]
+        i = k - 1
 
         while (i >= left && cmp(arr[ i ], tmp) > 0) {
           arr[ i + 1 ] = arr[ i ]
