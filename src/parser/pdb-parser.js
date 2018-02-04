@@ -282,9 +282,13 @@ class PdbParser extends StructureParser {
             occupancy = parseFloat(line.substr(54, 6))
 
             if (!isLegacy) {
-              element = line.substr(76, 2).trim()
-              if (!chainname && !isPdbqt) {
-                chainname = line.substr(72, 4).trim()  // segid
+              if (isPdbqt) {
+                element = line.substr(12, 2).trim()
+              } else {
+                element = line.substr(76, 2).trim()
+                if (!chainname) {
+                  chainname = line.substr(72, 4).trim()  // segid
+                }
               }
             }
           }
