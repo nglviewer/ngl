@@ -458,7 +458,7 @@ class PdbParser extends StructureParser {
               value.split(/\s*,\s*/)
             )
           }
-        } else if (line.trim() === 'TER') {
+        } else if (line.startsWith('TER')) {
           const cp = s.getChainProxy(s.chainStore.count - 1)
           chainDict[ cp.chainname ] = cp.index
           chainIdx += 1
