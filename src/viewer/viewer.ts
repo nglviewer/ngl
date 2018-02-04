@@ -1020,8 +1020,8 @@ export default class Viewer {
       fog.near = Math.max(0.1, fog.near)
       fog.far = Math.max(1, fog.far)
     } else if (this.camera.type === 'OrthographicCamera') {
-      if (p.clipNear === 0 && p.clipDist > 0 && this.cDist + this.camera.zoom > 2 * -p.clipDist) {
-        this.camera.near += this.camera.zoom + p.clipDist
+      if (p.clipDist > 0) {
+        this.camera.near = Math.max(p.clipDist, this.camera.near)
       }
     }
   }
