@@ -54636,8 +54636,8 @@ Viewer.prototype.__updateClipping = function __updateClipping () {
         fog.far = Math.max(1, fog.far);
     }
     else if (this.camera.type === 'OrthographicCamera') {
-        if (p.clipNear === 0 && p.clipDist > 0 && this.cDist + this.camera.zoom > 2 * -p.clipDist) {
-            this.camera.near += this.camera.zoom + p.clipDist;
+        if (p.clipDist > 0) {
+            this.camera.near = Math.max(p.clipDist, this.camera.near);
         }
     }
 };
@@ -88160,7 +88160,7 @@ var PdbParser = (function (StructureParser$$1) {
                         Array.prototype.push.apply(currentEntityData.chainList, value.split(/\s*,\s*/));
                     }
                 }
-                else if (line.trim() === 'TER') {
+                else if (line.startsWith('TER')) {
                     var cp = s.getChainProxy(s.chainStore.count - 1);
                     chainDict[cp.chainname] = cp.index;
                     chainIdx += 1;
@@ -97944,7 +97944,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.19";
+var version$1 = "2.0.0-dev.20";
 
 /**
  * @file Version
