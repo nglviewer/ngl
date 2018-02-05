@@ -8,6 +8,7 @@ import { Vector3, Color, Box3 } from 'three'
 
 import { BufferRegistry, PickerRegistry } from '../globals'
 import Shape from './shape'
+import { getFixedLengthDashData } from './dash'
 
 function addElement (elm: any, array: any[]) {
   if (elm.toArray !== undefined) {
@@ -201,6 +202,14 @@ export class CylinderPrimitive extends Primitive {
   static expandBoundingBox (box: Box3, data: any) {
     box.expandByPoint(tmpVec.fromArray(data.position1))
     box.expandByPoint(tmpVec.fromArray(data.position2))
+  }
+
+  static bufferFromShape (shape: Shape, params: any) {
+    let data = this.dataFromShape(shape)
+    if (this.type === 'cylinder' && params.dashedCylinder) {
+      data = getFixedLengthDashData(data)
+    }
+    return new this.Buffer(data, params)
   }
 }
 

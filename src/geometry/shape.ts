@@ -11,7 +11,7 @@ import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
   TetrahedronPrimitive, TextPrimitive, TorusPrimitive
-} from '../geometry/primitive'
+} from './primitive'
 import { MeshPicker } from '../utils/picker'
 import Buffer from '../buffer/buffer'
 import MeshBuffer from '../buffer/mesh-buffer'
@@ -31,6 +31,7 @@ const ShapeDefaultParameters = {
   radialSegments: 50,
   disableImpostor: false,
   openEnded: false,
+  dashedCylinder: false,
   labelParams: {} as Partial<TextBufferParameters>
 }
 type ShapeParameters = typeof ShapeDefaultParameters

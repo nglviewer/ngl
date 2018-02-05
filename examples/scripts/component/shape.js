@@ -1,5 +1,5 @@
 
-var shape = new NGL.Shape('shape')
+var shape = new NGL.Shape('shape', { dashedCylinder: true })
 shape.addMesh(
     [ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1 ],
     [ 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0 ],

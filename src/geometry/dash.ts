@@ -61,7 +61,7 @@ export function getFixedCountDashData<T extends CylinderBufferData|WideLineBuffe
     d.radius = replicateArrayEntries((data as any).radius, s)  // TODO
   }
 
-  if (data.picking) {
+  if (data.picking && data.picking.array) {
     data.picking.array = replicateArrayEntries(data.picking.array, s)
     d.picking = data.picking
   }
@@ -79,7 +79,7 @@ export function getFixedLengthDashData<T extends CylinderBufferData|WideLineBuff
   const pos2: number[] = []
   const col: number[] = []
   const rad: number[]|undefined = (data as any).radius ? [] : undefined
-  const pick: number[]|undefined = (data as any).picking ? [] : undefined
+  const pick: number[]|undefined = ((data as any).picking && (data as any).picking.array) ? [] : undefined
   const id: number[]|undefined = (data as any).primitiveId ? [] : undefined
 
   const v = new Vector3()
@@ -153,7 +153,7 @@ export function getFixedLengthWrappedDashData<T extends CylinderBufferData|WideL
   const pos2: number[] = []
   const col: number[] = []
   const rad: number[]|undefined = (data as any).radius ? [] : undefined
-  const pick: number[]|undefined = (data as any).picking ? [] : undefined
+  const pick: number[]|undefined = ((data as any).picking && (data as any).picking.array) ? [] : undefined
   const id: number[]|undefined = (data as any).primitiveId ? [] : undefined
 
   const v = new Vector3()
