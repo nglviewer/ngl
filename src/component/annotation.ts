@@ -60,20 +60,15 @@ export default class Annotation {
     this.element = document.createElement('div')
     Object.assign(this.element.style, {
       display: 'block',
-      position: 'fixed',
-      zIndex: 1 + parseInt(this.viewer.container.style.zIndex || '0'),
+      position: 'absolute',
       pointerEvents: 'none',
-      backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
-      color: 'lightgrey',
-      padding: '8px',
-      fontFamily: 'sans-serif',
       left: '-10000px'
     })
 
     this.viewer.container.appendChild(this.element)
     this.setContent(content)
     this.updateVisibility()
-    this.viewer.signals.ticked.add(this._update, this)
+    this.viewer.signals.rendered.add(this._update, this)
     this.component.signals.matrixChanged.add(this._updateViewerPosition, this)
   }
 
@@ -90,10 +85,17 @@ export default class Annotation {
     }
 
     if (value instanceof HTMLElement) {
-      this.element.innerHTML = ''
       this.element.appendChild(value)
     } else {
-      this.element.innerHTML = value
+      const content = document.createElement('div')
+      content.innerText = value
+      Object.assign(content.style, {
+        backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
+        color: 'lightgrey',
+        padding: '8px',
+        fontFamily: 'sans-serif',
+      })
+      this.element.appendChild(content)
     }
 
     this._clientRect = this.element.getBoundingClientRect()
@@ -147,11 +149,11 @@ export default class Annotation {
       s.display = 'block'
     }
 
+    const depth = this._cameraPosition.length()
     const fog = this.viewer.scene.fog as any  // TODO
 
-    s.opacity = (1 - smoothstep(
-      fog.near, fog.far, this._cameraPosition.length()
-    )).toString()
+    s.opacity = (1 - smoothstep(fog.near, fog.far, depth)).toString()
+    s.zIndex = (Math.round((fog.far - depth) * 100)).toString()
 
     this.stage.viewerControls.getPositionOnCanvas(vp, cp)
 

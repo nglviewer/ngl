@@ -123,7 +123,8 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 }
 
 interface ViewerSignals {
-  ticked: Signal
+  ticked: Signal,
+  rendered: Signal
 }
 
 interface ViewerParameters {
@@ -230,7 +231,8 @@ export default class Viewer {
 
   constructor (idOrElement: string|HTMLElement) {
     this.signals = {
-      ticked: new Signal()
+      ticked: new Signal(),
+      rendered: new Signal()
     }
 
     if (typeof idOrElement === 'string') {
@@ -1170,6 +1172,7 @@ export default class Viewer {
 
     this.rendering = false
     this.renderPending = false
+    this.signals.rendered.dispatch()
 
     // Log.timeEnd('Viewer.render')
     // Log.log(this.info.memory, this.info.render)
