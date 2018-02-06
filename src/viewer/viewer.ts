@@ -256,9 +256,9 @@ export default class Viewer {
       const box = this.container.parentElement.getBoundingClientRect()
       this.width = box.width || 1
       this.height = box.height || 1
+      this.container.parentElement.style.overflow = 'hidden'
     }
     this.container.style.position = 'relative'
-    this.container.style.overflow = 'hidden'
 
     this._initParams()
     this._initStats()
