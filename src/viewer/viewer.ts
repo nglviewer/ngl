@@ -258,6 +258,7 @@ export default class Viewer {
       this.height = box.height || 1
     }
     this.container.style.position = 'relative'
+    this.container.style.overflow = 'hidden'
 
     this._initParams()
     this._initStats()
