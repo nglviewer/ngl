@@ -53949,7 +53949,8 @@ var Viewer = function Viewer(idOrElement) {
     };
     this.distVector = new Vector3();
     this.signals = {
-        ticked: new signals_1()
+        ticked: new signals_1(),
+        rendered: new signals_1()
     };
     if (typeof idOrElement === 'string') {
         var elm = document.getElementById(idOrElement);
@@ -54761,6 +54762,7 @@ Viewer.prototype.render = function render (picking) {
     this.lastRenderedPicking = picking;
     this.rendering = false;
     this.renderPending = false;
+    this.signals.rendered.dispatch();
     // Log.timeEnd('Viewer.render')
     // Log.log(this.info.memory, this.info.render)
 };
@@ -57249,6 +57251,211 @@ function v3negate(out, a) {
 }
 
 /**
+ * @file Dash
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @private
+ */
+function getFixedCountDashData(data, segmentCount) {
+    if ( segmentCount === void 0 ) segmentCount = 9;
+
+    var s = Math.floor(segmentCount / 2);
+    var n = data.position1.length / 3;
+    var sn = s * n;
+    var sn3 = sn * 3;
+    var step = 1 / segmentCount;
+    var direction = calculateDirectionArray(data.position1, data.position2);
+    var position1 = new Float32Array(sn3);
+    var position2 = new Float32Array(sn3);
+    var v = new Vector3();
+    for (var i = 0; i < n; ++i) {
+        var i3 = i * 3;
+        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
+        var x = data.position1[i3];
+        var y = data.position1[i3 + 1];
+        var z = data.position1[i3 + 2];
+        for (var j = 0; j < s; ++j) {
+            var j3 = s * i3 + j * 3;
+            var f1 = step * (j * 2 + 1);
+            var f2 = step * (j * 2 + 2);
+            position1[j3] = x + v.x * f1;
+            position1[j3 + 1] = y + v.y * f1;
+            position1[j3 + 2] = z + v.z * f1;
+            position2[j3] = x + v.x * f2;
+            position2[j3 + 1] = y + v.y * f2;
+            position2[j3 + 2] = z + v.z * f2;
+        }
+    }
+    var position = calculateCenterArray(position1, position2);
+    var color = replicateArray3Entries(data.color, s); // TODO
+    var color2 = color;
+    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
+    if (data.radius) {
+        d.radius = replicateArrayEntries(data.radius, s); // TODO
+    }
+    if (data.picking && data.picking.array) {
+        data.picking.array = replicateArrayEntries(data.picking.array, s);
+        d.picking = data.picking;
+    }
+    if (data.primitiveId) {
+        d.primitiveId = replicateArrayEntries(data.primitiveId, s);
+    }
+    return d;
+}
+function getFixedLengthDashData(data, segmentLength) {
+    if ( segmentLength === void 0 ) segmentLength = 0.1;
+
+    var direction = calculateDirectionArray(data.position1, data.position2);
+    var pos1 = [];
+    var pos2 = [];
+    var col = [];
+    var rad = data.radius ? [] : undefined;
+    var pick = (data.picking && data.picking.array) ? [] : undefined;
+    var id = data.primitiveId ? [] : undefined;
+    var v = new Vector3();
+    var n = data.position1.length / 3;
+    var k = 0;
+    for (var i = 0; i < n; ++i) {
+        var i3 = i * 3;
+        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
+        var vl = v.length();
+        var segmentCount = vl / segmentLength;
+        var s = Math.floor(segmentCount / 2);
+        var step = 1 / segmentCount;
+        var x = data.position1[i3];
+        var y = data.position1[i3 + 1];
+        var z = data.position1[i3 + 2];
+        for (var j = 0; j < s; ++j) {
+            var j3 = k * 3 + j * 3;
+            var f1 = step * (j * 2 + 1);
+            var f2 = step * (j * 2 + 2);
+            pos1[j3] = x + v.x * f1;
+            pos1[j3 + 1] = y + v.y * f1;
+            pos1[j3 + 2] = z + v.z * f1;
+            pos2[j3] = x + v.x * f2;
+            pos2[j3 + 1] = y + v.y * f2;
+            pos2[j3 + 2] = z + v.z * f2;
+            if (data.color) {
+                col[j3] = data.color[i3];
+                col[j3 + 1] = data.color[i3 + 1];
+                col[j3 + 2] = data.color[i3 + 2];
+            }
+            if (rad)
+                { rad[k * i + j] = data.radius[i]; }
+            if (pick)
+                { pick[k * i + j] = data.picking.array[i]; }
+            if (id)
+                { id[k * i + j] = data.primitiveId[i]; }
+        }
+        k += s;
+    }
+    var position1 = new Float32Array(pos1);
+    var position2 = new Float32Array(pos2);
+    var position = calculateCenterArray(position1, position2);
+    var color = new Float32Array(col);
+    var color2 = color;
+    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
+    if (rad)
+        { d.radius = new Float32Array(rad); }
+    if (pick && data.picking) {
+        data.picking.array = new Float32Array(pick);
+        d.picking = data.picking;
+    }
+    if (id)
+        { d.primitiveId = new Float32Array(id); }
+    return d;
+}
+function getFixedLengthWrappedDashData(data, segmentLength) {
+    if ( segmentLength === void 0 ) segmentLength = 0.1;
+
+    var direction = calculateDirectionArray(data.position1, data.position2);
+    var pos1 = [];
+    var pos2 = [];
+    var col = [];
+    var rad = data.radius ? [] : undefined;
+    var pick = (data.picking && data.picking.array) ? [] : undefined;
+    var id = data.primitiveId ? [] : undefined;
+    var v = new Vector3();
+    var n = data.position1.length / 3;
+    var remaining = segmentLength;
+    var drawing = true;
+    var k = 0;
+    var k3 = 0;
+    var kprev = 0;
+    for (var i = 0; i < n; ++i) {
+        var i3 = i * 3;
+        var x = data.position1[i3];
+        var y = data.position1[i3 + 1];
+        var z = data.position1[i3 + 2];
+        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
+        var vl = v.length();
+        if (drawing) {
+            pos1[k3] = x;
+            pos1[k3 + 1] = y;
+            pos1[k3 + 2] = z;
+        }
+        var dist = remaining;
+        var inv = 1 / vl;
+        while (dist < vl) {
+            var a = drawing ? pos2 : pos1;
+            a[k3] = x + v.x * dist * inv;
+            a[k3 + 1] = y + v.y * dist * inv;
+            a[k3 + 2] = z + v.z * dist * inv;
+            if (drawing) {
+                k++;
+                k3 = k * 3;
+            }
+            drawing = !drawing;
+            remaining = segmentLength;
+            dist += segmentLength;
+        }
+        if (drawing) {
+            pos2[k3] = data.position2[i3];
+            pos2[k3 + 1] = data.position2[i3 + 1];
+            pos2[k3 + 2] = data.position2[i3 + 2];
+            k++;
+            k3 = k * 3;
+        }
+        remaining = dist - vl;
+        for (var j = kprev; j < k; j++) {
+            if (data.color) {
+                var j3 = j * 3;
+                col[j3] = data.color[i3];
+                col[j3 + 1] = data.color[i3 + 1];
+                col[j3 + 2] = data.color[i3 + 2];
+            }
+            if (rad)
+                { rad[j] = data.radius[i]; }
+            if (pick)
+                { pick[j] = data.picking.array[i]; }
+            if (id)
+                { id[j] = data.primitiveId[i]; }
+        }
+        kprev = k;
+    }
+    if (!drawing && n > 0) {
+        var k3$1 = k * 3;
+        pos2[k3$1] = data.position2[3 * n - 3];
+        pos2[k3$1 + 1] = data.position2[3 * n - 2];
+        pos2[k3$1 + 1] = data.position2[3 * n - 1];
+    }
+    var position1 = new Float32Array(pos1);
+    var position2 = new Float32Array(pos2);
+    var position = calculateCenterArray(position1, position2);
+    var color = new Float32Array(col);
+    var color2 = color;
+    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
+    if (rad)
+        { d.radius = new Float32Array(rad); }
+    if (pick && data.picking) {
+        data.picking.array = new Float32Array(pick);
+        d.picking = data.picking;
+    }
+    if (id)
+        { d.primitiveId = new Float32Array(id); }
+    return d;
+}
+
+/**
  * @file Primitive
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
@@ -57460,6 +57667,13 @@ var CylinderPrimitive = (function (Primitive) {
     CylinderPrimitive.expandBoundingBox = function expandBoundingBox (box, data) {
         box.expandByPoint(tmpVec$1.fromArray(data.position1));
         box.expandByPoint(tmpVec$1.fromArray(data.position2));
+    };
+    CylinderPrimitive.bufferFromShape = function bufferFromShape (shape, params) {
+        var data = this.dataFromShape(shape);
+        if (this.type === 'cylinder' && params.dashedCylinder) {
+            data = getFixedLengthDashData(data);
+        }
+        return new this.Buffer(data, params);
     };
 
     return CylinderPrimitive;
@@ -65597,19 +65811,14 @@ var Annotation = function Annotation(component, position, content, params) {
     this.element = document.createElement('div');
     Object.assign(this.element.style, {
         display: 'block',
-        position: 'fixed',
-        zIndex: 1 + parseInt(this.viewer.container.style.zIndex || '0'),
+        position: 'absolute',
         pointerEvents: 'none',
-        backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
-        color: 'lightgrey',
-        padding: '8px',
-        fontFamily: 'sans-serif',
         left: '-10000px'
     });
     this.viewer.container.appendChild(this.element);
     this.setContent(content);
     this.updateVisibility();
-    this.viewer.signals.ticked.add(this._update, this);
+    this.viewer.signals.rendered.add(this._update, this);
     this.component.signals.matrixChanged.add(this._updateViewerPosition, this);
 };
 /**
@@ -65624,11 +65833,18 @@ Annotation.prototype.setContent = function setContent (value) {
         this.element.style.display = 'block';
     }
     if (value instanceof HTMLElement) {
-        this.element.innerHTML = '';
         this.element.appendChild(value);
     }
     else {
-        this.element.innerHTML = value;
+        var content = document.createElement('div');
+        content.innerText = value;
+        Object.assign(content.style, {
+            backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
+            color: 'lightgrey',
+            padding: '8px',
+            fontFamily: 'sans-serif',
+        });
+        this.element.appendChild(content);
     }
     this._clientRect = this.element.getBoundingClientRect();
     if (displayValue === 'none') {
@@ -65673,8 +65889,10 @@ Annotation.prototype._update = function _update () {
     else {
         s.display = 'block';
     }
+    var depth = this._cameraPosition.length();
     var fog = this.viewer.scene.fog; // TODO
-    s.opacity = (1 - smoothstep(fog.near, fog.far, this._cameraPosition.length())).toString();
+    s.opacity = (1 - smoothstep(fog.near, fog.far, depth)).toString();
+    s.zIndex = (Math.round((fog.far - depth) * 100)).toString();
     this.stage.viewerControls.getPositionOnCanvas(vp, cp);
     s.bottom = (this.offsetX + cp.y + cr.height / 2) + 'px';
     s.left = (this.offsetY + cp.x - cr.width / 2) + 'px';
@@ -72322,6 +72540,7 @@ var ShapeDefaultParameters = {
     radialSegments: 50,
     disableImpostor: false,
     openEnded: false,
+    dashedCylinder: false,
     labelParams: {}
 };
 /**
@@ -77002,7 +77221,7 @@ var Stage = function Stage(idOrElement, params) {
     Object.assign(this.tooltip.style, {
         display: 'none',
         position: 'fixed',
-        zIndex: 2 + parseInt(this.viewer.container.style.zIndex || '0'),
+        zIndex: '1000000',
         pointerEvents: 'none',
         backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
         color: 'lightgrey',
@@ -80249,211 +80468,6 @@ var WideLineBuffer = (function (MappedQuadBuffer$$1) {
 
     return WideLineBuffer;
 }(MappedQuadBuffer));
-
-/**
- * @file Dash
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
- * @private
- */
-function getFixedCountDashData(data, segmentCount) {
-    if ( segmentCount === void 0 ) segmentCount = 9;
-
-    var s = Math.floor(segmentCount / 2);
-    var n = data.position1.length / 3;
-    var sn = s * n;
-    var sn3 = sn * 3;
-    var step = 1 / segmentCount;
-    var direction = calculateDirectionArray(data.position1, data.position2);
-    var position1 = new Float32Array(sn3);
-    var position2 = new Float32Array(sn3);
-    var v = new Vector3();
-    for (var i = 0; i < n; ++i) {
-        var i3 = i * 3;
-        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
-        var x = data.position1[i3];
-        var y = data.position1[i3 + 1];
-        var z = data.position1[i3 + 2];
-        for (var j = 0; j < s; ++j) {
-            var j3 = s * i3 + j * 3;
-            var f1 = step * (j * 2 + 1);
-            var f2 = step * (j * 2 + 2);
-            position1[j3] = x + v.x * f1;
-            position1[j3 + 1] = y + v.y * f1;
-            position1[j3 + 2] = z + v.z * f1;
-            position2[j3] = x + v.x * f2;
-            position2[j3 + 1] = y + v.y * f2;
-            position2[j3 + 2] = z + v.z * f2;
-        }
-    }
-    var position = calculateCenterArray(position1, position2);
-    var color = replicateArray3Entries(data.color, s); // TODO
-    var color2 = color;
-    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
-    if (data.radius) {
-        d.radius = replicateArrayEntries(data.radius, s); // TODO
-    }
-    if (data.picking) {
-        data.picking.array = replicateArrayEntries(data.picking.array, s);
-        d.picking = data.picking;
-    }
-    if (data.primitiveId) {
-        d.primitiveId = replicateArrayEntries(data.primitiveId, s);
-    }
-    return d;
-}
-function getFixedLengthDashData(data, segmentLength) {
-    if ( segmentLength === void 0 ) segmentLength = 0.1;
-
-    var direction = calculateDirectionArray(data.position1, data.position2);
-    var pos1 = [];
-    var pos2 = [];
-    var col = [];
-    var rad = data.radius ? [] : undefined;
-    var pick = data.picking ? [] : undefined;
-    var id = data.primitiveId ? [] : undefined;
-    var v = new Vector3();
-    var n = data.position1.length / 3;
-    var k = 0;
-    for (var i = 0; i < n; ++i) {
-        var i3 = i * 3;
-        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
-        var vl = v.length();
-        var segmentCount = vl / segmentLength;
-        var s = Math.floor(segmentCount / 2);
-        var step = 1 / segmentCount;
-        var x = data.position1[i3];
-        var y = data.position1[i3 + 1];
-        var z = data.position1[i3 + 2];
-        for (var j = 0; j < s; ++j) {
-            var j3 = k * 3 + j * 3;
-            var f1 = step * (j * 2 + 1);
-            var f2 = step * (j * 2 + 2);
-            pos1[j3] = x + v.x * f1;
-            pos1[j3 + 1] = y + v.y * f1;
-            pos1[j3 + 2] = z + v.z * f1;
-            pos2[j3] = x + v.x * f2;
-            pos2[j3 + 1] = y + v.y * f2;
-            pos2[j3 + 2] = z + v.z * f2;
-            if (data.color) {
-                col[j3] = data.color[i3];
-                col[j3 + 1] = data.color[i3 + 1];
-                col[j3 + 2] = data.color[i3 + 2];
-            }
-            if (rad)
-                { rad[k * i + j] = data.radius[i]; }
-            if (pick)
-                { pick[k * i + j] = data.picking.array[i]; }
-            if (id)
-                { id[k * i + j] = data.primitiveId[i]; }
-        }
-        k += s;
-    }
-    var position1 = new Float32Array(pos1);
-    var position2 = new Float32Array(pos2);
-    var position = calculateCenterArray(position1, position2);
-    var color = new Float32Array(col);
-    var color2 = color;
-    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
-    if (rad)
-        { d.radius = new Float32Array(rad); }
-    if (pick && data.picking) {
-        data.picking.array = new Float32Array(pick);
-        d.picking = data.picking;
-    }
-    if (id)
-        { d.primitiveId = new Float32Array(id); }
-    return d;
-}
-function getFixedLengthWrappedDashData(data, segmentLength) {
-    if ( segmentLength === void 0 ) segmentLength = 0.1;
-
-    var direction = calculateDirectionArray(data.position1, data.position2);
-    var pos1 = [];
-    var pos2 = [];
-    var col = [];
-    var rad = data.radius ? [] : undefined;
-    var pick = data.picking ? [] : undefined;
-    var id = data.primitiveId ? [] : undefined;
-    var v = new Vector3();
-    var n = data.position1.length / 3;
-    var remaining = segmentLength;
-    var drawing = true;
-    var k = 0;
-    var k3 = 0;
-    var kprev = 0;
-    for (var i = 0; i < n; ++i) {
-        var i3 = i * 3;
-        var x = data.position1[i3];
-        var y = data.position1[i3 + 1];
-        var z = data.position1[i3 + 2];
-        v.set(direction[i3], direction[i3 + 1], direction[i3 + 2]);
-        var vl = v.length();
-        if (drawing) {
-            pos1[k3] = x;
-            pos1[k3 + 1] = y;
-            pos1[k3 + 2] = z;
-        }
-        var dist = remaining;
-        var inv = 1 / vl;
-        while (dist < vl) {
-            var a = drawing ? pos2 : pos1;
-            a[k3] = x + v.x * dist * inv;
-            a[k3 + 1] = y + v.y * dist * inv;
-            a[k3 + 2] = z + v.z * dist * inv;
-            if (drawing) {
-                k++;
-                k3 = k * 3;
-            }
-            drawing = !drawing;
-            remaining = segmentLength;
-            dist += segmentLength;
-        }
-        if (drawing) {
-            pos2[k3] = data.position2[i3];
-            pos2[k3 + 1] = data.position2[i3 + 1];
-            pos2[k3 + 2] = data.position2[i3 + 2];
-            k++;
-            k3 = k * 3;
-        }
-        remaining = dist - vl;
-        for (var j = kprev; j < k; j++) {
-            if (data.color) {
-                var j3 = j * 3;
-                col[j3] = data.color[i3];
-                col[j3 + 1] = data.color[i3 + 1];
-                col[j3 + 2] = data.color[i3 + 2];
-            }
-            if (rad)
-                { rad[j] = data.radius[i]; }
-            if (pick)
-                { pick[j] = data.picking.array[i]; }
-            if (id)
-                { id[j] = data.primitiveId[i]; }
-        }
-        kprev = k;
-    }
-    if (!drawing && n > 0) {
-        var k3$1 = k * 3;
-        pos2[k3$1] = data.position2[3 * n - 3];
-        pos2[k3$1 + 1] = data.position2[3 * n - 2];
-        pos2[k3$1 + 1] = data.position2[3 * n - 1];
-    }
-    var position1 = new Float32Array(pos1);
-    var position2 = new Float32Array(pos2);
-    var position = calculateCenterArray(position1, position2);
-    var color = new Float32Array(col);
-    var color2 = color;
-    var d = { position: position, position1: position1, position2: position2, color: color, color2: color2 };
-    if (rad)
-        { d.radius = new Float32Array(rad); }
-    if (pick && data.picking) {
-        data.picking.array = new Float32Array(pick);
-        d.picking = data.picking;
-    }
-    if (id)
-        { d.primitiveId = new Float32Array(id); }
-    return d;
-}
 
 /**
  * @file Angle Representation
@@ -97944,7 +97958,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.20";
+var version$1 = "2.0.0-dev.21";
 
 /**
  * @file Version
