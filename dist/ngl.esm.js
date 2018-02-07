@@ -55496,7 +55496,7 @@ PickingProxy.prototype.getLabel = function getLabel () {
     var atom = this.atom || this.closeAtom;
     var msg = 'nothing';
     if (this.arrow) {
-        msg = "arrow: " + (this.arrow.name || this.pid) + " (" + (this.arrow.shape.name) + ")";
+        msg = this.arrow.name;
     }
     else if (atom) {
         msg = "atom: " + (atom.qualifiedName()) + " (" + (atom.structure.name) + ")";
@@ -55508,10 +55508,10 @@ PickingProxy.prototype.getLabel = function getLabel () {
         msg = "bond: " + (this.bond.atom1.qualifiedName()) + " - " + (this.bond.atom2.qualifiedName()) + " (" + (this.bond.structure.name) + ")";
     }
     else if (this.box) {
-        msg = "box: " + (this.box.name || this.pid) + " (" + (this.box.shape.name) + ")";
+        msg = this.box.name;
     }
     else if (this.cone) {
-        msg = "cone: " + (this.cone.name || this.pid) + " (" + (this.cone.shape.name) + ")";
+        msg = this.cone.name;
     }
     else if (this.clash) {
         msg = "clash: " + (this.clash.clash.sele1) + " - " + (this.clash.clash.sele2);
@@ -55520,16 +55520,16 @@ PickingProxy.prototype.getLabel = function getLabel () {
         msg = (this.contact.type) + ": " + (this.contact.atom1.qualifiedName()) + " - " + (this.contact.atom2.qualifiedName()) + " (" + (this.contact.atom1.structure.name) + ")";
     }
     else if (this.cylinder) {
-        msg = "cylinder: " + (this.cylinder.name || this.pid) + " (" + (this.cylinder.shape.name) + ")";
+        msg = this.cylinder.name;
     }
     else if (this.distance) {
         msg = "distance: " + (this.distance.atom1.qualifiedName()) + " - " + (this.distance.atom2.qualifiedName()) + " (" + (this.distance.structure.name) + ")";
     }
     else if (this.ellipsoid) {
-        msg = "ellipsoid: " + (this.ellipsoid.name || this.pid) + " ($this.ellipsoid.shape.name})";
+        msg = this.ellipsoid.name;
     }
     else if (this.octahedron) {
-        msg = "octahedron: " + (this.octahedron.name || this.pid) + " (" + (this.octahedron.shape.name) + ")";
+        msg = this.octahedron.name;
     }
     else if (this.mesh) {
         msg = "mesh: " + (this.mesh.name || this.mesh.serial) + " (" + (this.mesh.shape.name) + ")";
@@ -55538,16 +55538,16 @@ PickingProxy.prototype.getLabel = function getLabel () {
         msg = "slice: " + (this.slice.value.toPrecision(3)) + " (" + (this.slice.volume.name) + ")";
     }
     else if (this.sphere) {
-        msg = "sphere: " + (this.sphere.name || this.pid) + " (" + (this.sphere.shape.name) + ")";
+        msg = this.sphere.name;
     }
     else if (this.surface) {
         msg = "surface: " + (this.surface.surface.name);
     }
     else if (this.tetrahedron) {
-        msg = "tetrahedron: " + (this.tetrahedron.name || this.pid) + " (" + (this.tetrahedron.shape.name) + ")";
+        msg = this.tetrahedron.name;
     }
     else if (this.torus) {
-        msg = "torus: " + (this.torus.name || this.pid) + " (" + (this.torus.shape.name) + ")";
+        msg = this.torus.name;
     }
     else if (this.unitcell) {
         msg = "unitcell: " + (this.unitcell.unitcell.spacegroup) + " (" + (this.unitcell.structure.name) + ")";
@@ -57309,7 +57309,7 @@ function getFixedLengthDashData(data, segmentLength) {
     var pos2 = [];
     var col = [];
     var rad = data.radius ? [] : undefined;
-    var pick = (data.picking && data.picking.array) ? [] : undefined;
+    var pick = data.picking ? [] : undefined;
     var id = data.primitiveId ? [] : undefined;
     var v = new Vector3();
     var n = data.position1.length / 3;
@@ -57341,8 +57341,14 @@ function getFixedLengthDashData(data, segmentLength) {
             }
             if (rad)
                 { rad[k * i + j] = data.radius[i]; }
-            if (pick)
-                { pick[k * i + j] = data.picking.array[i]; }
+            if (pick) {
+                if (data.picking.array) {
+                    pick[k * i + j] = data.picking.array[i];
+                }
+                else {
+                    pick[k * i + j] = i;
+                }
+            }
             if (id)
                 { id[k * i + j] = data.primitiveId[i]; }
         }
@@ -57372,7 +57378,7 @@ function getFixedLengthWrappedDashData(data, segmentLength) {
     var pos2 = [];
     var col = [];
     var rad = data.radius ? [] : undefined;
-    var pick = (data.picking && data.picking.array) ? [] : undefined;
+    var pick = data.picking ? [] : undefined;
     var id = data.primitiveId ? [] : undefined;
     var v = new Vector3();
     var n = data.position1.length / 3;
@@ -57425,8 +57431,14 @@ function getFixedLengthWrappedDashData(data, segmentLength) {
             }
             if (rad)
                 { rad[j] = data.radius[i]; }
-            if (pick)
-                { pick[j] = data.picking.array[i]; }
+            if (pick) {
+                if (data.picking.array) {
+                    pick[j] = data.picking.array[i];
+                }
+                else {
+                    pick[j] = i;
+                }
+            }
             if (id)
                 { id[j] = data.primitiveId[i]; }
         }
@@ -57523,10 +57535,11 @@ Primitive.valueFromShape = function valueFromShape (shape, pid, name) {
 Primitive.objectFromShape = function objectFromShape (shape, pid) {
         var this$1 = this;
 
-    var o = {
-        shape: shape,
-        name: this.valueFromShape(shape, pid, 'name')
-    };
+    var name = this.valueFromShape(shape, pid, 'name');
+    if (name === undefined) {
+        name = (this.type) + ": " + pid + " (" + (shape.name) + ")";
+    }
+    var o = { shape: shape, name: name };
     Object.keys(this.fields).forEach(function (name) {
         o[name] = this$1.valueFromShape(shape, pid, name);
     });
@@ -58854,6 +58867,7 @@ var OuterShellElectronCounts = {
 };
 var DefaultOuterShellElectronCount = 2;
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
+// https://www.nature.com/articles/nsb1096-842
 var ResidueHydrophobicity = {
     // AA  DGwif   DGwoct  Oct-IF
     'ALA': [0.17, 0.50, 0.33],
@@ -60988,10 +61002,10 @@ var ShapePicker = (function (Picker) {
     prototypeAccessors$1.data.get = function () { return this.shape; };
     prototypeAccessors$1.type.get = function () { return this.primitive.type; };
     ShapePicker.prototype.getObject = function getObject (pid) {
-        return this.primitive.objectFromShape(this.shape, pid);
+        return this.primitive.objectFromShape(this.shape, this.getIndex(pid));
     };
     ShapePicker.prototype._getPosition = function _getPosition (pid) {
-        return this.primitive.positionFromShape(this.shape, pid);
+        return this.primitive.positionFromShape(this.shape, this.getIndex(pid));
     };
 
     Object.defineProperties( ShapePicker.prototype, prototypeAccessors$1 );
@@ -97958,7 +97972,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.21";
+var version$1 = "2.0.0-dev.22";
 
 /**
  * @file Version
