@@ -79,7 +79,7 @@ export function getFixedLengthDashData<T extends CylinderBufferData|WideLineBuff
   const pos2: number[] = []
   const col: number[] = []
   const rad: number[]|undefined = (data as any).radius ? [] : undefined
-  const pick: number[]|undefined = ((data as any).picking && (data as any).picking.array) ? [] : undefined
+  const pick: number[]|undefined = (data as any).picking ? [] : undefined
   const id: number[]|undefined = (data as any).primitiveId ? [] : undefined
 
   const v = new Vector3()
@@ -121,7 +121,13 @@ export function getFixedLengthDashData<T extends CylinderBufferData|WideLineBuff
       }
 
       if (rad) rad[ k * i + j ] = (data as any).radius[ i ]
-      if (pick) pick[ k * i + j ] = (data as any).picking.array[ i ]
+      if (pick) {
+        if ((data as any).picking.array) {
+          pick[ k * i + j ] = (data as any).picking.array[ i ]
+        } else {
+          pick[ k * i + j ] = i
+        }
+      }
       if (id) id[ k * i + j ] = (data as any).primitiveId[ i ]
     }
 
@@ -153,7 +159,7 @@ export function getFixedLengthWrappedDashData<T extends CylinderBufferData|WideL
   const pos2: number[] = []
   const col: number[] = []
   const rad: number[]|undefined = (data as any).radius ? [] : undefined
-  const pick: number[]|undefined = ((data as any).picking && (data as any).picking.array) ? [] : undefined
+  const pick: number[]|undefined = (data as any).picking ? [] : undefined
   const id: number[]|undefined = (data as any).primitiveId ? [] : undefined
 
   const v = new Vector3()
@@ -216,7 +222,13 @@ export function getFixedLengthWrappedDashData<T extends CylinderBufferData|WideL
       }
 
       if (rad) rad[ j ] = (data as any).radius[ i ]
-      if (pick) pick[ j ] = (data as any).picking.array[ i ]
+      if (pick) {
+        if ((data as any).picking.array) {
+          pick[ j ] = (data as any).picking.array[ i ]
+        } else {
+          pick[ j ] = i
+        }
+      }
       if (id) id[ j ] = (data as any).primitiveId[ i ]
     }
 

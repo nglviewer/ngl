@@ -103,11 +103,11 @@ class ShapePicker extends Picker {
   get type () { return this.primitive.type }
 
   getObject (pid) {
-    return this.primitive.objectFromShape(this.shape, pid)
+    return this.primitive.objectFromShape(this.shape, this.getIndex(pid))
   }
 
   _getPosition (pid) {
-    return this.primitive.positionFromShape(this.shape, pid)
+    return this.primitive.positionFromShape(this.shape, this.getIndex(pid))
   }
 }
 
