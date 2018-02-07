@@ -235,30 +235,27 @@ export default class Viewer {
       rendered: new Signal()
     }
 
-    const wrapper = document.createElement('div')  
     if (typeof idOrElement === 'string') {
       const elm = document.getElementById(idOrElement)
       if (elm === null) {
-        this.container = wrapper
-      } else {
-        this.container = elm.appendChild(wrapper)
+        this.container = document.createElement('div')
+      }else {
+        this.container = elm
       }
     } else if (idOrElement instanceof HTMLElement) {
-      this.container = idOrElement.appendChild(wrapper)
+      this.container = idOrElement
     } else {
-      this.container = wrapper
+      this.container = document.createElement('div')
     }
 
-    if (this.container.parentElement === document.body || this.container.parentElement === null) {
+    if (this.container === document.body) {
       this.width = window.innerWidth || 1
       this.height = window.innerHeight || 1
     } else {
-      const box = this.container.parentElement.getBoundingClientRect()
+      const box = this.container.getBoundingClientRect()
       this.width = box.width || 1
       this.height = box.height || 1
-      this.container.parentElement.style.overflow = 'hidden'
     }
-    this.container.style.position = 'relative'
 
     this._initParams()
     this._initStats()
@@ -851,10 +848,10 @@ export default class Viewer {
   }
 
   handleResize () {
-    if (this.container.parentElement === document.body || this.container.parentElement === null) {
+    if (this.container === document.body) {
       this.setSize(window.innerWidth, window.innerHeight)
     } else {
-      const box = this.container.parentElement.getBoundingClientRect()
+      const box = this.container.getBoundingClientRect()
       this.setSize(box.width, box.height)
     }
   }
