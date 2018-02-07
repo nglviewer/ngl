@@ -572,9 +572,9 @@ class Stage {
    * @return {undefined}
    */
   setSize (width: string, height: string) {
-    const container = this.viewer.container.parentElement
+    const container = this.viewer.container
 
-    if (container !== document.body && container !== null) {
+    if (container !== document.body) {
       if (width !== undefined) container.style.width = width
       if (height !== undefined) container.style.height = height
       this.handleResize()
@@ -596,7 +596,7 @@ class Stage {
     }
 
     const self = this
-    element = element || this.viewer.container.parentElement
+    element = element || this.viewer.container
     this.lastFullscreenElement = element
 
     //
