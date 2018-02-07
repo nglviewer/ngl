@@ -87,7 +87,7 @@
     "rollup-watch": "^4.3.1",
     "signals": "^1.0.0",
     "slimerjs": "git+https://github.com/laurentj/slimerjs.git#009e159ad2cd565a962665af690b6d0497e067f1",
-    "sprintf-js": "^1.1.1",
+    "sprintf-js": "git+https://github.com/alexei/sprintf.js.git#36b04b33975e597b03737c3ed0a2a49ec1b2e8c4",
     "standard": "^10.0.3",
     "three": "^0.89.0",
     "ts-jest": "^22.0.3",
