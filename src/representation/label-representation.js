@@ -27,6 +27,8 @@ import TextBuffer from '../buffer/text-buffer'
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
+ * @property {String[]} labelFormat - sprintf-js format string, any attribute of
+ *                                  {@link  AtomProxy} can be used
  * @property {String} labelGrouping - grouping of the label, one of:
  *                                 "atom", "residue".
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
