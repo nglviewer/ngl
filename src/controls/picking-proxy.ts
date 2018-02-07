@@ -288,7 +288,7 @@ class PickingProxy {
     const atom = this.atom || this.closeAtom
     let msg = 'nothing'
     if (this.arrow) {
-      msg = `arrow: ${this.arrow.name || this.pid} (${this.arrow.shape.name})`
+      msg = this.arrow.name
     } else if (atom) {
       msg = `atom: ${atom.qualifiedName()} (${atom.structure.name})`
     } else if (this.axes) {
@@ -296,33 +296,33 @@ class PickingProxy {
     } else if (this.bond) {
       msg = `bond: ${this.bond.atom1.qualifiedName()} - ${this.bond.atom2.qualifiedName()} (${this.bond.structure.name})`
     } else if (this.box) {
-      msg = `box: ${this.box.name || this.pid} (${this.box.shape.name})`
+      msg = this.box.name
     } else if (this.cone) {
-      msg = `cone: ${this.cone.name || this.pid} (${this.cone.shape.name})`
+      msg = this.cone.name
     } else if (this.clash) {
       msg = `clash: ${this.clash.clash.sele1} - ${this.clash.clash.sele2}`
     } else if (this.contact) {
       msg = `${this.contact.type}: ${this.contact.atom1.qualifiedName()} - ${this.contact.atom2.qualifiedName()} (${this.contact.atom1.structure.name})`
     } else if (this.cylinder) {
-      msg = `cylinder: ${this.cylinder.name || this.pid} (${this.cylinder.shape.name})`
+      msg = this.cylinder.name
     } else if (this.distance) {
       msg = `distance: ${this.distance.atom1.qualifiedName()} - ${this.distance.atom2.qualifiedName()} (${this.distance.structure.name})`
     } else if (this.ellipsoid) {
-      msg = `ellipsoid: ${this.ellipsoid.name || this.pid} ($this.ellipsoid.shape.name})`
+      msg = this.ellipsoid.name
     } else if (this.octahedron) {
-      msg = `octahedron: ${this.octahedron.name || this.pid} (${this.octahedron.shape.name})`
+      msg = this.octahedron.name
     } else if (this.mesh) {
       msg = `mesh: ${this.mesh.name || this.mesh.serial} (${this.mesh.shape.name})`
     } else if (this.slice) {
       msg = `slice: ${this.slice.value.toPrecision(3)} (${this.slice.volume.name})`
     } else if (this.sphere) {
-      msg = `sphere: ${this.sphere.name || this.pid} (${this.sphere.shape.name})`
+      msg = this.sphere.name
     } else if (this.surface) {
       msg = `surface: ${this.surface.surface.name}`
     } else if (this.tetrahedron) {
-      msg = `tetrahedron: ${this.tetrahedron.name || this.pid} (${this.tetrahedron.shape.name})`
+      msg = this.tetrahedron.name
     } else if (this.torus) {
-      msg = `torus: ${this.torus.name || this.pid} (${this.torus.shape.name})`
+      msg = this.torus.name
     } else if (this.unitcell) {
       msg = `unitcell: ${this.unitcell.unitcell.spacegroup} (${this.unitcell.structure.name})`
     } else if (this.unknown) {

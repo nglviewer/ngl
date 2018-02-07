@@ -79,10 +79,11 @@ abstract class Primitive {
   }
 
   static objectFromShape (shape: Shape, pid: number) {
-    const o: any = {
-      shape,
-      name: this.valueFromShape(shape, pid, 'name')
+    let name = this.valueFromShape(shape, pid, 'name')
+    if (name === undefined) {
+      name = `${this.type}: ${pid} (${shape.name})`
     }
+    const o: any = { shape, name }
 
     Object.keys(this.fields).forEach(name => {
       o[name] = this.valueFromShape(shape, pid, name)
