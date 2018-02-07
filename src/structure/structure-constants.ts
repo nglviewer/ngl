@@ -884,6 +884,7 @@ export const OuterShellElectronCounts: { [e: number]: number | undefined } = {
 export const DefaultOuterShellElectronCount = 2
 
 // http://blanco.biomol.uci.edu/Whole_residue_HFscales.txt
+// https://www.nature.com/articles/nsb1096-842
 export const ResidueHydrophobicity: { [k: string]: [number, number, number] } = {
   // AA  DGwif   DGwoct  Oct-IF
   'ALA': [ 0.17, 0.50, 0.33 ],
