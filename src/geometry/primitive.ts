@@ -205,7 +205,7 @@ export class CylinderPrimitive extends Primitive {
     box.expandByPoint(tmpVec.fromArray(data.position2))
   }
 
-  static bufferFromShape (shape: Shape, params: any) {
+  static bufferFromShape (shape: Shape, params: any = {}) {
     let data = this.dataFromShape(shape)
     if (this.type === 'cylinder' && params.dashedCylinder) {
       data = getFixedLengthDashData(data)

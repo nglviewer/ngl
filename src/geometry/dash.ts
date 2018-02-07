@@ -120,15 +120,15 @@ export function getFixedLengthDashData<T extends CylinderBufferData|WideLineBuff
         col[ j3 + 2 ] = data.color[ i3 + 2 ]
       }
 
-      if (rad) rad[ k * i + j ] = (data as any).radius[ i ]
+      if (rad) rad[ k + j ] = (data as any).radius[ i ]
       if (pick) {
         if ((data as any).picking.array) {
-          pick[ k * i + j ] = (data as any).picking.array[ i ]
+          pick[ k + j ] = (data as any).picking.array[ i ]
         } else {
-          pick[ k * i + j ] = i
+          pick[ k + j ] = i
         }
       }
-      if (id) id[ k * i + j ] = (data as any).primitiveId[ i ]
+      if (id) id[ k + j ] = (data as any).primitiveId[ i ]
     }
 
     k += s
@@ -207,7 +207,7 @@ export function getFixedLengthWrappedDashData<T extends CylinderBufferData|WideL
       pos2[ k3 ] = data.position2[ i3 ]
       pos2[ k3 + 1 ] = data.position2[ i3 + 1 ]
       pos2[ k3 + 2 ] = data.position2[ i3 + 2 ]
-      k ++
+      k++
       k3 = k * 3
     }
 
