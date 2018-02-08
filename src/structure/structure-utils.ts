@@ -790,19 +790,12 @@ export function buildUnitcellAssembly (structure: Structure) {
 
   const uc = structure.unitcell
 
-  const centerFrac = structure.center.clone().applyMatrix4(uc.cartToFrac)
+  const structureCenterFrac = structure.center.clone().applyMatrix4(uc.cartToFrac)
+  const centerFrac = structureCenterFrac.clone().floor()
   const symopDict: { [K: string]: Matrix4 } = getSymmetryOperations(uc.spacegroup)
 
-  const positionFrac = new Vector3()
   const centerFracSymop = new Vector3()
   const positionFracSymop = new Vector3()
-
-  if (centerFrac.x > 1) positionFrac.x -= 1
-  if (centerFrac.x < 0) positionFrac.x += 1
-  if (centerFrac.y > 1) positionFrac.y -= 1
-  if (centerFrac.y < 0) positionFrac.y += 1
-  if (centerFrac.z > 1) positionFrac.z -= 1
-  if (centerFrac.z < 0) positionFrac.z += 1
 
   function getMatrixList (shift?: Vector3) {
     const matrixList: Matrix4[] = []
@@ -810,16 +803,10 @@ export function buildUnitcellAssembly (structure: Structure) {
     Object.keys(symopDict).forEach(function (name) {
       const m = symopDict[ name ].clone()
 
-      centerFracSymop.copy(centerFrac).applyMatrix4(m)
+      centerFracSymop.copy(structureCenterFrac).applyMatrix4(m).floor()
       positionFracSymop.setFromMatrixPosition(m)
-      positionFracSymop.sub(positionFrac)
-
-      if (centerFracSymop.x > 1) positionFracSymop.x -= 1
-      if (centerFracSymop.x < 0) positionFracSymop.x += 1
-      if (centerFracSymop.y > 1) positionFracSymop.y -= 1
-      if (centerFracSymop.y < 0) positionFracSymop.y += 1
-      if (centerFracSymop.z > 1) positionFracSymop.z -= 1
-      if (centerFracSymop.z < 0) positionFracSymop.z += 1
+      positionFracSymop.sub(centerFracSymop)
+      positionFracSymop.add(centerFrac)
 
       if (shift) positionFracSymop.add(shift)
 
@@ -841,8 +828,8 @@ export function buildUnitcellAssembly (structure: Structure) {
       new Matrix4(), ...structure.biomolDict.NCS.partList[ 0 ].matrixList
     )
     const ncsUnitcellMatrixList: Matrix4[] = []
-    unitcellMatrixList.forEach(function (sm) {
-      ncsMatrixList.forEach(function (nm) {
+    unitcellMatrixList.forEach(sm => {
+      ncsMatrixList.forEach(nm => {
         ncsUnitcellMatrixList.push(sm.clone().multiply(nm))
       })
     })

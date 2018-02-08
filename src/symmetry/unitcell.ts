@@ -53,7 +53,7 @@ class Unitcell {
 
   spacegroup: string
 
-  cartToFrac: Matrix4
+  cartToFrac = new Matrix4()
   fracToCart = new Matrix4()
 
   volume: number
@@ -111,9 +111,9 @@ class Unitcell {
         this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
         0, 0, 0, 1
       ).transpose()
-      this.cartToFrac = new Matrix4().getInverse(this.fracToCart)
+      this.cartToFrac.getInverse(this.fracToCart)
     } else {
-      this.cartToFrac = params.cartToFrac
+      this.cartToFrac.copy(params.cartToFrac)
       this.fracToCart.getInverse(this.cartToFrac)
     }
   }
@@ -123,15 +123,13 @@ class Unitcell {
 
     if (structure.unitcell) {
       const uc = structure.unitcell
-      const centerFrac = structure.center.clone()
-              .applyMatrix4(uc.cartToFrac)
-              .floor().multiplyScalar(2).addScalar(1)
+      const centerFrac = structure.center.clone().applyMatrix4(uc.cartToFrac).floor()
       const v = new Vector3()
 
       let cornerOffset = 0
       const addCorner = function (x: number, y: number, z: number) {
         v.set(x, y, z)
-          .multiply(centerFrac)
+          .add(centerFrac)
           .applyMatrix4(uc.fracToCart)
           .toArray(vertexPosition as any, cornerOffset)
         cornerOffset += 3
