@@ -51759,42 +51759,42 @@ var sprintf = createCommonjsModule(function (module, exports) {
     }
 
     function sprintf_format(parse_tree, argv) {
-        var cursor = 1, tree_length = parse_tree.length, arg, output = '', i, k, match, pad, pad_character, pad_length, is_positive, sign;
+        var cursor = 1, tree_length = parse_tree.length, arg, output = '', i, k, ph, pad, pad_character, pad_length, is_positive, sign;
         for (i = 0; i < tree_length; i++) {
             if (typeof parse_tree[i] === 'string') {
                 output += parse_tree[i];
             }
-            else if (Array.isArray(parse_tree[i])) {
-                match = parse_tree[i]; // convenience purposes only
-                if (match[2]) { // keyword argument
+            else if (typeof parse_tree[i] === 'object') {
+                ph = parse_tree[i]; // convenience purposes only
+                if (ph.keys) { // keyword argument
                     arg = argv[cursor];
-                    for (k = 0; k < match[2].length; k++) {
-                        if (!arg.hasOwnProperty(match[2][k])) {
-                            throw new Error(sprintf('[sprintf] property "%s" does not exist', match[2][k]))
+                    for (k = 0; k < ph.keys.length; k++) {
+                        if (arg == undefined) {
+                            throw new Error(sprintf('[sprintf] Cannot access property "%s" of undefined value "%s"', ph.keys[k], ph.keys[k-1]))
                         }
-                        arg = arg[match[2][k]];
+                        arg = arg[ph.keys[k]];
                     }
                 }
-                else if (match[1]) { // positional argument (explicit)
-                    arg = argv[match[1]];
+                else if (ph.param_no) { // positional argument (explicit)
+                    arg = argv[ph.param_no];
                 }
                 else { // positional argument (implicit)
                     arg = argv[cursor++];
                 }
 
-                if (re.not_type.test(match[8]) && re.not_primitive.test(match[8]) && arg instanceof Function) {
+                if (re.not_type.test(ph.type) && re.not_primitive.test(ph.type) && arg instanceof Function) {
                     arg = arg();
                 }
 
-                if (re.numeric_arg.test(match[8]) && (typeof arg !== 'number' && isNaN(arg))) {
+                if (re.numeric_arg.test(ph.type) && (typeof arg !== 'number' && isNaN(arg))) {
                     throw new TypeError(sprintf('[sprintf] expecting number but found %T', arg))
                 }
 
-                if (re.number.test(match[8])) {
+                if (re.number.test(ph.type)) {
                     is_positive = arg >= 0;
                 }
 
-                switch (match[8]) {
+                switch (ph.type) {
                     case 'b':
                         arg = parseInt(arg, 10).toString(2);
                         break
@@ -51806,38 +51806,38 @@ var sprintf = createCommonjsModule(function (module, exports) {
                         arg = parseInt(arg, 10);
                         break
                     case 'j':
-                        arg = JSON.stringify(arg, null, match[6] ? parseInt(match[6]) : 0);
+                        arg = JSON.stringify(arg, null, ph.width ? parseInt(ph.width) : 0);
                         break
                     case 'e':
-                        arg = match[7] ? parseFloat(arg).toExponential(match[7]) : parseFloat(arg).toExponential();
+                        arg = ph.precision ? parseFloat(arg).toExponential(ph.precision) : parseFloat(arg).toExponential();
                         break
                     case 'f':
-                        arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg);
+                        arg = ph.precision ? parseFloat(arg).toFixed(ph.precision) : parseFloat(arg);
                         break
                     case 'g':
-                        arg = match[7] ? String(Number(arg.toPrecision(match[7]))) : parseFloat(arg);
+                        arg = ph.precision ? String(Number(arg.toPrecision(ph.precision))) : parseFloat(arg);
                         break
                     case 'o':
                         arg = (parseInt(arg, 10) >>> 0).toString(8);
                         break
                     case 's':
                         arg = String(arg);
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
+                        arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
                         break
                     case 't':
                         arg = String(!!arg);
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
+                        arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
                         break
                     case 'T':
                         arg = Object.prototype.toString.call(arg).slice(8, -1).toLowerCase();
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
+                        arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
                         break
                     case 'u':
                         arg = parseInt(arg, 10) >>> 0;
                         break
                     case 'v':
                         arg = arg.valueOf();
-                        arg = (match[7] ? arg.substring(0, match[7]) : arg);
+                        arg = (ph.precision ? arg.substring(0, ph.precision) : arg);
                         break
                     case 'x':
                         arg = (parseInt(arg, 10) >>> 0).toString(16);
@@ -51846,21 +51846,21 @@ var sprintf = createCommonjsModule(function (module, exports) {
                         arg = (parseInt(arg, 10) >>> 0).toString(16).toUpperCase();
                         break
                 }
-                if (re.json.test(match[8])) {
+                if (re.json.test(ph.type)) {
                     output += arg;
                 }
                 else {
-                    if (re.number.test(match[8]) && (!is_positive || match[3])) {
+                    if (re.number.test(ph.type) && (!is_positive || ph.sign)) {
                         sign = is_positive ? '+' : '-';
                         arg = arg.toString().replace(re.sign, '');
                     }
                     else {
                         sign = '';
                     }
-                    pad_character = match[4] ? match[4] === '0' ? '0' : match[4].charAt(1) : ' ';
-                    pad_length = match[6] - (sign + arg).length;
-                    pad = match[6] ? (pad_length > 0 ? pad_character.repeat(pad_length) : '') : '';
-                    output += match[5] ? sign + arg + pad : (pad_character === '0' ? sign + pad + arg : pad + sign + arg);
+                    pad_character = ph.pad_char ? ph.pad_char === '0' ? '0' : ph.pad_char.charAt(1) : ' ';
+                    pad_length = ph.width - (sign + arg).length;
+                    pad = ph.width ? (pad_length > 0 ? pad_character.repeat(pad_length) : '') : '';
+                    output += ph.align ? sign + arg + pad : (pad_character === '0' ? sign + pad + arg : pad + sign + arg);
                 }
             }
         }
@@ -51911,7 +51911,20 @@ var sprintf = createCommonjsModule(function (module, exports) {
                 if (arg_names === 3) {
                     throw new Error('[sprintf] mixing positional and named placeholders is not (yet) supported')
                 }
-                parse_tree.push(match);
+
+                parse_tree.push(
+                    {
+                        placeholder: match[0],
+                        param_no:    match[1],
+                        keys:        match[2],
+                        sign:        match[3],
+                        pad_char:    match[4],
+                        align:       match[5],
+                        width:       match[6],
+                        precision:   match[7],
+                        type:        match[8]
+                    }
+                );
             }
             else {
                 throw new SyntaxError('[sprintf] unexpected placeholder')
@@ -54805,7 +54818,36 @@ function getTouchDistance(event) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 function getMouseButtons(event) {
-    return (typeof event === 'object' && 'buttons' in event) ? event.buttons : 0;
+    if (typeof event === 'object') {
+        if ('buttons' in event) {
+            return event.buttons;
+        }
+        else if ('which' in event) {
+            var b = event.which;
+            if (b === 2) {
+                return 4;
+            }
+            else if (b === 3) {
+                return 2;
+            }
+            else if (b > 0) {
+                return 1 << (b - 1);
+            }
+        }
+        else if ('button' in event) {
+            var b$1 = event.button;
+            if (b$1 === 1) {
+                return 4;
+            }
+            else if (b$1 === 2) {
+                return 2;
+            }
+            else if (b$1 >= 0) {
+                return 1 << b$1;
+            }
+        }
+    }
+    return 0;
 }
 /**
  * Mouse observer
@@ -57340,17 +57382,17 @@ function getFixedLengthDashData(data, segmentLength) {
                 col[j3 + 2] = data.color[i3 + 2];
             }
             if (rad)
-                { rad[k * i + j] = data.radius[i]; }
+                { rad[k + j] = data.radius[i]; }
             if (pick) {
                 if (data.picking.array) {
-                    pick[k * i + j] = data.picking.array[i];
+                    pick[k + j] = data.picking.array[i];
                 }
                 else {
-                    pick[k * i + j] = i;
+                    pick[k + j] = i;
                 }
             }
             if (id)
-                { id[k * i + j] = data.primitiveId[i]; }
+                { id[k + j] = data.primitiveId[i]; }
         }
         k += s;
     }
@@ -57682,6 +57724,8 @@ var CylinderPrimitive = (function (Primitive) {
         box.expandByPoint(tmpVec$1.fromArray(data.position2));
     };
     CylinderPrimitive.bufferFromShape = function bufferFromShape (shape, params) {
+        if ( params === void 0 ) params = {};
+
         var data = this.dataFromShape(shape);
         if (this.type === 'cylinder' && params.dashedCylinder) {
             data = getFixedLengthDashData(data);
@@ -69437,42 +69481,19 @@ function buildUnitcellAssembly(structure) {
     if (Debug)
         { Log.time('buildUnitcellAssembly'); }
     var uc = structure.unitcell;
-    var centerFrac = structure.center.clone().applyMatrix4(uc.cartToFrac);
+    var structureCenterFrac = structure.center.clone().applyMatrix4(uc.cartToFrac);
+    var centerFrac = structureCenterFrac.clone().floor();
     var symopDict = getSymmetryOperations(uc.spacegroup);
-    var positionFrac = new Vector3();
     var centerFracSymop = new Vector3();
     var positionFracSymop = new Vector3();
-    if (centerFrac.x > 1)
-        { positionFrac.x -= 1; }
-    if (centerFrac.x < 0)
-        { positionFrac.x += 1; }
-    if (centerFrac.y > 1)
-        { positionFrac.y -= 1; }
-    if (centerFrac.y < 0)
-        { positionFrac.y += 1; }
-    if (centerFrac.z > 1)
-        { positionFrac.z -= 1; }
-    if (centerFrac.z < 0)
-        { positionFrac.z += 1; }
     function getMatrixList(shift) {
         var matrixList = [];
         Object.keys(symopDict).forEach(function (name) {
             var m = symopDict[name].clone();
-            centerFracSymop.copy(centerFrac).applyMatrix4(m);
+            centerFracSymop.copy(structureCenterFrac).applyMatrix4(m).floor();
             positionFracSymop.setFromMatrixPosition(m);
-            positionFracSymop.sub(positionFrac);
-            if (centerFracSymop.x > 1)
-                { positionFracSymop.x -= 1; }
-            if (centerFracSymop.x < 0)
-                { positionFracSymop.x += 1; }
-            if (centerFracSymop.y > 1)
-                { positionFracSymop.y -= 1; }
-            if (centerFracSymop.y < 0)
-                { positionFracSymop.y += 1; }
-            if (centerFracSymop.z > 1)
-                { positionFracSymop.z -= 1; }
-            if (centerFracSymop.z < 0)
-                { positionFracSymop.z += 1; }
+            positionFracSymop.sub(centerFracSymop);
+            positionFracSymop.add(centerFrac);
             if (shift)
                 { positionFracSymop.add(shift); }
             m.setPosition(positionFracSymop);
@@ -83810,13 +83831,16 @@ var LabelFactoryTypes = {
     'res': 'one letter code + no',
     'residue': '[residue name] + no + inscode',
     'text': 'text',
+    'format': 'format',
     'qualified': 'qualified name'
 };
-var LabelFactory = function LabelFactory(type, text) {
+var LabelFactory = function LabelFactory(type, text, format) {
     if ( text === void 0 ) text = {};
+    if ( format === void 0 ) format = '';
 
     this.type = type;
     this.text = text;
+    this.format = format;
 };
 LabelFactory.prototype.atomLabel = function atomLabel (a) {
     var type = this.type;
@@ -83864,6 +83888,9 @@ LabelFactory.prototype.atomLabel = function atomLabel (a) {
         case 'text':
             l = this.text[a.index];
             break;
+        case 'format':
+            l = sprintf_1(this.format, a);
+            break;
         // case "qualified":
         default:
             l = a.qualifiedName();
@@ -83894,6 +83921,8 @@ LabelFactory.types = LabelFactoryTypes;
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
+ * @property {String[]} labelFormat - sprintf-js format string, any attribute of
+ *                                  {@link  AtomProxy} can be used
  * @property {String} labelGrouping - grouping of the label, one of:
  *                                 "atom", "residue".
  * @property {String} fontFamily - font family, one of: "sans-serif", "monospace", "serif"
@@ -83928,6 +83957,9 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
             },
             labelText: {
                 type: 'hidden', rebuild: true
+            },
+            labelFormat: {
+                type: 'text', rebuild: true
             },
             labelGrouping: {
                 type: 'select',
@@ -84029,6 +84061,7 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
         var p = params || {};
         this.labelType = defaults(p.labelType, 'res');
         this.labelText = defaults(p.labelText, {});
+        this.labelFormat = defaults(p.labelFormat, '');
         this.labelGrouping = defaults(p.labelGrouping, 'atom');
         this.fontFamily = defaults(p.fontFamily, 'sans-serif');
         this.fontStyle = defaults(p.fontStyle, 'normal');
@@ -84049,7 +84082,7 @@ var LabelRepresentation = (function (StructureRepresentation$$1) {
     };
     LabelRepresentation.prototype.getTextData = function getTextData (sview, what) {
         var p = this.getAtomParams(what);
-        var labelFactory = new LabelFactory(this.labelType, this.labelText);
+        var labelFactory = new LabelFactory(this.labelType, this.labelText, this.labelFormat);
         var position, size, color, text;
         if (this.labelGrouping === 'atom') {
             var atomData = sview.getAtomData(p);
@@ -87668,6 +87701,7 @@ var DefaultBoxParams = {
 var Unitcell = function Unitcell(params) {
     if ( params === void 0 ) params = DefaultBoxParams;
 
+    this.cartToFrac = new Matrix4();
     this.fracToCart = new Matrix4();
     this.a = params.a;
     this.b = params.b;
@@ -87692,10 +87726,10 @@ var Unitcell = function Unitcell(params) {
         var cStar = (this.a * this.b * sinGamma) / this.volume;
         var cosAlphaStar = ((cosBeta * cosGamma - cosAlpha) / (sinBeta * sinGamma));
         this.fracToCart.set(this.a, 0, 0, 0, this.b * cosGamma, this.b * sinGamma, 0, 0, this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0, 0, 0, 0, 1).transpose();
-        this.cartToFrac = new Matrix4().getInverse(this.fracToCart);
+        this.cartToFrac.getInverse(this.fracToCart);
     }
     else {
-        this.cartToFrac = params.cartToFrac;
+        this.cartToFrac.copy(params.cartToFrac);
         this.fracToCart.getInverse(this.cartToFrac);
     }
 };
@@ -87703,14 +87737,12 @@ Unitcell.prototype.getPosition = function getPosition (structure) {
     var vertexPosition = new Float32Array(3 * 8);
     if (structure.unitcell) {
         var uc = structure.unitcell;
-        var centerFrac = structure.center.clone()
-            .applyMatrix4(uc.cartToFrac)
-            .floor().multiplyScalar(2).addScalar(1);
+        var centerFrac = structure.center.clone().applyMatrix4(uc.cartToFrac).floor();
         var v = new Vector3();
         var cornerOffset = 0;
         var addCorner = function (x, y, z) {
             v.set(x, y, z)
-                .multiply(centerFrac)
+                .add(centerFrac)
                 .applyMatrix4(uc.fracToCart)
                 .toArray(vertexPosition, cornerOffset);
             cornerOffset += 3;
@@ -97972,7 +98004,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.22";
+var version$1 = "2.0.0-dev.23";
 
 /**
  * @file Version
