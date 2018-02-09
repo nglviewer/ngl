@@ -62,6 +62,7 @@ export default class Annotation {
       display: 'block',
       position: 'absolute',
       pointerEvents: 'none',
+      whiteSpace: 'nowrap',
       left: '-10000px'
     })
 
