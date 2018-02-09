@@ -53988,7 +53988,11 @@ var Viewer = function Viewer(idOrElement) {
         var box = this.container.getBoundingClientRect();
         this.width = box.width || 1;
         this.height = box.height || 1;
+        this.container.style.overflow = 'hidden';
     }
+    this.wrapper = document.createElement('div');
+    this.wrapper.style.position = 'relative';
+    this.container.appendChild(this.wrapper);
     this._initParams();
     this._initStats();
     this._initCamera();
@@ -54088,7 +54092,7 @@ Viewer.prototype._initRenderer = function _initRenderer () {
         });
     }
     catch (e) {
-        this.container.innerHTML = WebglErrorMessage;
+        this.wrapper.innerHTML = WebglErrorMessage;
         return false;
     }
     this.renderer.setPixelRatio(dpr);
@@ -54104,7 +54108,7 @@ Viewer.prototype._initRenderer = function _initRenderer () {
         this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
         (this.renderer.extensions.get('OES_texture_float') &&
             testTextureSupport(gl.FLOAT)));
-    this.container.appendChild(this.renderer.domElement);
+    this.wrapper.appendChild(this.renderer.domElement);
     var dprWidth = width * dpr;
     var dprHeight = height * dpr;
     // picking texture
@@ -65871,9 +65875,10 @@ var Annotation = function Annotation(component, position, content, params) {
         display: 'block',
         position: 'absolute',
         pointerEvents: 'none',
+        whiteSpace: 'nowrap',
         left: '-10000px'
     });
-    this.viewer.container.appendChild(this.element);
+    this.viewer.wrapper.appendChild(this.element);
     this.setContent(content);
     this.updateVisibility();
     this.viewer.signals.rendered.add(this._update, this);
@@ -65960,7 +65965,7 @@ Annotation.prototype._update = function _update () {
  * @return {undefined}
  */
 Annotation.prototype.dispose = function dispose () {
-    this.viewer.container.removeChild(this.element);
+    this.viewer.wrapper.removeChild(this.element);
     this.viewer.signals.ticked.remove(this._update, this);
     this.component.signals.matrixChanged.remove(this._updateViewerPosition, this);
 };
@@ -98004,7 +98009,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.23";
+var version$1 = "2.0.0-dev.24";
 
 /**
  * @file Version
