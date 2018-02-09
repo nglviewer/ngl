@@ -65,7 +65,7 @@ export default class Annotation {
       left: '-10000px'
     })
 
-    this.viewer.container.appendChild(this.element)
+    this.viewer.wrapper.appendChild(this.element)
     this.setContent(content)
     this.updateVisibility()
     this.viewer.signals.rendered.add(this._update, this)
@@ -166,7 +166,7 @@ export default class Annotation {
    * @return {undefined}
    */
   dispose () {
-    this.viewer.container.removeChild(this.element)
+    this.viewer.wrapper.removeChild(this.element)
     this.viewer.signals.ticked.remove(this._update, this)
     this.component.signals.matrixChanged.remove(this._updateViewerPosition, this)
   }

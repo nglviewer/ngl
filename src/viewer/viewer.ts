@@ -163,6 +163,7 @@ export default class Viewer {
   signals: ViewerSignals
 
   container: HTMLElement
+  wrapper: HTMLElement
 
   private rendering: boolean
   private renderPending: boolean
@@ -255,7 +256,12 @@ export default class Viewer {
       const box = this.container.getBoundingClientRect()
       this.width = box.width || 1
       this.height = box.height || 1
+      this.container.style.overflow = 'hidden'
     }
+
+    this.wrapper = document.createElement('div')
+    this.wrapper.style.position = 'relative'
+    this.container.appendChild(this.wrapper)
 
     this._initParams()
     this._initStats()
@@ -387,7 +393,7 @@ export default class Viewer {
         antialias: true
       })
     } catch (e) {
-      this.container.innerHTML = WebglErrorMessage
+      this.wrapper.innerHTML = WebglErrorMessage
       return false
     }
     this.renderer.setPixelRatio(dpr)
@@ -409,7 +415,7 @@ export default class Viewer {
         testTextureSupport(gl.FLOAT))
     )
 
-    this.container.appendChild(this.renderer.domElement)
+    this.wrapper.appendChild(this.renderer.domElement)
 
     const dprWidth = width * dpr
     const dprHeight = height * dpr
