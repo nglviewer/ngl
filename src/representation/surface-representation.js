@@ -219,7 +219,10 @@ class SurfaceRepresentation extends Representation {
 
       buffer = new WideLineBuffer(
         lineData,
-        this.getBufferParams({ wireframe: false })
+        this.getBufferParams({
+          linewidth: this.linewidth,
+          wireframe: false
+        })
       )
     } else {
       surfaceData.normal = this.surface.getNormal()
@@ -245,7 +248,9 @@ class SurfaceRepresentation extends Representation {
 
     what = what || {}
 
+    const contour = this.contour
     const surfaceData = {}
+    let lineData = {}
 
     if (what.position) {
       surfaceData.position = this.surface.getPosition()
@@ -257,7 +262,7 @@ class SurfaceRepresentation extends Representation {
       )
     }
 
-    if (what.index) {
+    if (what.index || (contour && (what.color || what.position))) {
       surfaceData.index = this.surface.getIndex()
     }
 
@@ -265,8 +270,12 @@ class SurfaceRepresentation extends Representation {
       surfaceData.normal = this.surface.getNormal()
     }
 
+    if (contour && (what.position || what.color)) {
+      lineData = surfaceDataToLineData(surfaceData, what)
+    }
+
     this.bufferList.forEach(function (buffer) {
-      buffer.setAttributes(surfaceData)
+      buffer.setAttributes(contour ? lineData : surfaceData)
     })
   }
 

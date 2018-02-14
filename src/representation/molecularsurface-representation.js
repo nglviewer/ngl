@@ -217,6 +217,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       const widelineBuffer = new WideLineBuffer(
         lineData,
         this.getBufferParams({
+          linewidth: this.linewidth,
           wireframe: false
         })
       )
@@ -245,6 +246,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
   updateData (what, data) {
     const surfaceData = {}
+    const contour = this.contour
 
     if (what.position) {
       this.__forceNewMolsurf = true
@@ -256,11 +258,16 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       surfaceData.color = data.info.surface.getColor(this.getColorParams())
     }
 
-    if (what.index) {
+    if (what.index || (contour && what.color)) {
       surfaceData.index = data.info.surface.getFilteredIndex(this.filterSele, data.sview)
     }
 
-    data.bufferList[ 0 ].setAttributes(surfaceData)
+    if (contour && what.color) {
+      const lineData = surfaceDataToLineData(surfaceData, what)
+      data.bufferList[ 0 ].setAttributes(lineData)
+    } else {
+      data.bufferList[ 0 ].setAttributes(surfaceData)
+    }
   }
 
   setParameters (params, what, rebuild) {
