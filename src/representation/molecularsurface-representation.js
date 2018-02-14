@@ -116,7 +116,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     this.scaleFactor = defaults(p.scaleFactor, 2.0)
     this.cutoff = defaults(p.cutoff, 0.0)
     this.contour = defaults(p.contour, false)
-    this.linewidth = defaults(p.linewidth, 2.0)
+    this.linewidth = defaults(p.linewidth, 1.0)
     this.background = defaults(p.background, false)
     this.opaqueBack = defaults(p.opaqueBack, true)
     this.filterSele = defaults(p.filterSele, '')
@@ -212,10 +212,10 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     const bufferList = []
 
     if (surface.contour) {
-      const lineParams = surfaceDataToLineData(surfaceData)
+      const lineData = surfaceDataToLineData(surfaceData)
 
       const widelineBuffer = new WideLineBuffer(
-        lineParams,
+        lineData,
         this.getBufferParams({
           wireframe: false
         })

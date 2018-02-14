@@ -9,9 +9,10 @@ import { Vector3, Box3 } from 'three'
 import { defaults } from '../utils'
 import Representation from './representation.js'
 import Volume from '../surface/volume.js'
+import { surfaceDataToLineData } from '../surface/surface-utils.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
-import ContourBuffer from '../buffer/contour-buffer.js'
+import WideLineBuffer from '../buffer/wideline-buffer.js'
 
 /**
  * Surface representation parameter object. Extends {@link RepresentationParameters}
@@ -78,6 +79,9 @@ class SurfaceRepresentation extends Representation {
       contour: {
         type: 'boolean', rebuild: true
       },
+      linewidth: {
+        type: 'number', precision: 1, min: 0.1, max: 50.0, buffer: true
+      },
       useWorker: {
         type: 'boolean', rebuild: true
       },
@@ -128,6 +132,7 @@ class SurfaceRepresentation extends Representation {
     this.boxSize = defaults(p.boxSize, 0)
     this.colorVolume = defaults(p.colorVolume, undefined)
     this.contour = defaults(p.contour, false)
+    this.linewidth = defaults(p.linewidth, 1.0)
     this.useWorker = defaults(p.useWorker, true)
     this.wrap = defaults(p.wrap, false)
 
@@ -201,25 +206,27 @@ class SurfaceRepresentation extends Representation {
   }
 
   create () {
-    const sd = {
+    let buffer
+
+    const surfaceData = {
       position: this.surface.getPosition(),
       color: this.surface.getColor(this.getColorParams()),
       index: this.surface.getIndex()
     }
 
-    let buffer
-
     if (this.contour) {
-      buffer = new ContourBuffer(
-        sd,
+      const lineData = surfaceDataToLineData(surfaceData)
+
+      buffer = new WideLineBuffer(
+        lineData,
         this.getBufferParams({ wireframe: false })
       )
     } else {
-      sd.normal = this.surface.getNormal()
-      sd.picking = this.surface.getPicking()
+      surfaceData.normal = this.surface.getNormal()
+      surfaceData.picking = this.surface.getPicking()
 
       const surfaceBuffer = new SurfaceBuffer(
-        sd,
+        surfaceData,
         this.getBufferParams({
           background: this.background,
           opaqueBack: this.opaqueBack,
