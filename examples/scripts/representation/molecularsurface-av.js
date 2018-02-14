@@ -30,5 +30,4 @@ stage.loadFile('data://2vts.mmtf').then(function (o) {
     -23.85, -24.05, 7.95, 0,
     -27.16, -8.65, -63.38, 1
   ])
-  stage.setParameters({sampleLevel: 2})
 })
