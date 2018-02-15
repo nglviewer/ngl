@@ -100,6 +100,8 @@ interface Structure {
 
   getView(selection: Selection): StructureView
 
+  _hasCoords?: boolean
+
   _bp: BondProxy
   _ap: AtomProxy
   _rp: ResidueProxy
@@ -990,12 +992,15 @@ class Structure implements Structure{
   }
 
   hasCoords () {
-    var atomStore = this.atomStore
-    return (
-      arrayMin(atomStore.x) !== 0 || arrayMax(atomStore.x) !== 0 ||
-      arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
-      arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
-    )
+    if (this._hasCoords === undefined) {
+      const atomStore = this.atomStore
+      this._hasCoords = (
+        arrayMin(atomStore.x) !== 0 || arrayMax(atomStore.x) !== 0 ||
+        arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
+        arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
+      )
+    }
+    return this._hasCoords;
   }
 
   getSequence (selection?: Selection) {

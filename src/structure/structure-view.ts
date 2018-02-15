@@ -89,6 +89,9 @@ class StructureView extends Structure {
   get bondHash () { return this.structure.bondHash }
   get spatialHash () { return this.structure.spatialHash }
 
+  get _hasCoords () { return this.structure._hasCoords }
+  set _hasCoords (value) { this.structure._hasCoords = value }
+
   /**
    * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
    * @emits {Structure.signals.refreshed} when refreshed
