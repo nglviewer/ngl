@@ -1065,6 +1065,8 @@ class Structure implements Structure{
       ap.positionFromArray(position, i)
       i += 3
     }, undefined)
+
+    this._hasCoords = undefined  // to trigger recalculation
   }
 
   refreshPosition () {
