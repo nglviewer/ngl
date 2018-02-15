@@ -234,6 +234,8 @@ function makeTest (selection: SelectionRule|null, fn: TestEntityFn) {
       } else {
         if (s.keyword === kwd.ALL) {
           if (and) { continue } else { return t }
+        } else if (s.keyword === kwd.NONE) {
+          if (and) { continue } else { return f }
         }
 
         ret = fn(entity, s)

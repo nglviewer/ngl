@@ -11,6 +11,7 @@ import {
   SelectionTest, SelectionRule,
   makeAtomTest, makeResidueTest, makeChainTest, makeModelTest
 } from './selection-test'
+import { SelectAllKeyword, SelectNoneKeyword } from './selection-constants'
 
 type SelectionSignals = {
   stringChanged: Signal
@@ -75,6 +76,14 @@ class Selection {
     if (!silent) {
       this.signals.stringChanged.dispatch(this.string)
     }
+  }
+
+  isAllSelection () {
+    return SelectAllKeyword.includes(this.string.toUpperCase())
+  }
+
+  isNoneSelection () {
+    return SelectNoneKeyword.includes(this.string.toUpperCase())
   }
 }
 
