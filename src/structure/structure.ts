@@ -248,12 +248,18 @@ class Structure implements Structure{
     const atomSet = this.atomSet
 
     if (atomSet) {
-      const bp = this.getBondProxy()
+      if (atomSet.isAllSet()) {
+        bondSet.setAll()
+      } else if (atomSet.isAllClear()) {
+        bondSet.clearAll()
+      } else {
+        const bp = this.getBondProxy()
 
-      for (let i = 0; i < n; ++i) {
-        bp.index = i
-        if (atomSet.isSet(bp.atomIndex1, bp.atomIndex2)) {
-          bondSet.set(bp.index)
+        for (let i = 0; i < n; ++i) {
+          bp.index = i
+          if (atomSet.isSet(bp.atomIndex1, bp.atomIndex2)) {
+            bondSet.set(bp.index)
+          }
         }
       }
     } else {
@@ -334,12 +340,16 @@ class Structure implements Structure{
       if (seleString in this.atomSetCache) {
         return this.atomSetCache[ seleString ]
       } else {
-        const atomSet = new BitArray(n)
-        this.eachAtom(function (ap: AtomProxy) {
-          atomSet.set(ap.index)
-        }, selection)
-        this.atomSetCache[ seleString ] = atomSet
-        return atomSet
+        if (seleString === '') {
+          return new BitArray(n, true)
+        } else {
+          const atomSet = new BitArray(n)
+          this.eachAtom(function (ap: AtomProxy) {
+            atomSet.set(ap.index)
+          }, selection)
+          this.atomSetCache[ seleString ] = atomSet
+          return atomSet
+        }
       }
     } else if (selection === false) {
       return new BitArray(n)

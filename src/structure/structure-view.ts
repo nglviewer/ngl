@@ -101,24 +101,58 @@ class StructureView extends Structure {
     if (Debug) Log.time('StructureView.refresh')
 
     this.atomSetCache = {}
+    const structure = this.structure
 
-    this.atomSet = this.getAtomSet(this.selection, true)
-    if (this.structure.atomSet) {
-      this.atomSet = this.atomSet.intersection(this.structure.atomSet)
+    if (this.selection.isAllSelection() &&
+        structure !== this && structure.atomSet && structure.bondSet
+    ) {
+      this.atomSet = structure.atomSet.clone()
+      this.bondSet = structure.bondSet.clone()
+
+      for (let name in this.atomSetDict) {
+        const atomSet = this.atomSetDict[ name ]
+        this.atomSetCache[ '__' + name ] = atomSet.clone()
+      }
+
+      this.atomCount = structure.atomCount
+      this.bondCount = structure.bondCount
+
+      this.boundingBox.copy(structure.boundingBox)
+      this.center.copy(structure.center)
+    } else if (this.selection.isNoneSelection() &&
+        structure !== this && structure.atomSet && structure.bondSet
+    ) {
+      this.atomSet = new BitArray(structure.atomCount)
+      this.bondSet = new BitArray(structure.bondCount)
+
+      for (let name in this.atomSetDict) {
+        this.atomSetCache[ '__' + name ] = new BitArray(structure.atomCount)
+      }
+
+      this.atomCount = 0
+      this.bondCount = 0
+
+      this.boundingBox.makeEmpty()
+      this.center.set(0, 0, 0)
+    } else {
+      this.atomSet = this.getAtomSet(this.selection, true)
+      if (structure.atomSet) {
+        this.atomSet = this.atomSet.intersection(structure.atomSet)
+      }
+
+      this.bondSet = this.getBondSet()
+
+      for (let name in this.atomSetDict) {
+        const atomSet = this.atomSetDict[ name ]
+        this.atomSetCache[ '__' + name ] = atomSet.makeIntersection(this.atomSet)
+      }
+
+      this.atomCount = this.atomSet.getSize()
+      this.bondCount = this.bondSet.getSize()
+
+      this.boundingBox = this.getBoundingBox()
+      this.center = this.boundingBox.getCenter()
     }
-
-    this.bondSet = this.getBondSet()
-
-    for (let name in this.atomSetDict) {
-      const atomSet = this.atomSetDict[ name ]
-      this.atomSetCache[ '__' + name ] = atomSet.makeIntersection(this.atomSet)
-    }
-
-    this.atomCount = this.atomSet.getSize()
-    this.bondCount = this.bondSet.getSize()
-
-    this.boundingBox = this.getBoundingBox()
-    this.center = this.boundingBox.getCenter()
 
     if (Debug) Log.timeEnd('StructureView.refresh')
 
