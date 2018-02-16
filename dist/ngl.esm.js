@@ -49783,8 +49783,10 @@ var kwd;
     kwd[kwd["RING"] = 17] = "RING";
     kwd[kwd["AROMATICRING"] = 18] = "AROMATICRING";
     kwd[kwd["METAL"] = 19] = "METAL";
+    kwd[kwd["NONE"] = 20] = "NONE";
 })(kwd || (kwd = {}));
 var SelectAllKeyword = ['*', '', 'ALL'];
+var SelectNoneKeyword = ['NONE'];
 var AtomOnlyKeywords = [
     kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING, kwd.METAL
 ];
@@ -50472,6 +50474,14 @@ function makeTest(selection, fn) {
                         return t;
                     }
                 }
+                else if (s.keyword === kwd.NONE) {
+                    if (and) {
+                        continue;
+                    }
+                    else {
+                        return f;
+                    }
+                }
                 ret = fn(entity, s);
                 // console.log( entity.qualifiedName(), ret, s, selection.negate, "t", t, "f", f )
                 if (ret === -1) {
@@ -50691,6 +50701,12 @@ Selection.prototype.setString = function setString (string, silent) {
     if (!silent) {
         this.signals.stringChanged.dispatch(this.string);
     }
+};
+Selection.prototype.isAllSelection = function isAllSelection () {
+    return SelectAllKeyword.includes(this.string.toUpperCase());
+};
+Selection.prototype.isNoneSelection = function isNoneSelection () {
+    return SelectNoneKeyword.includes(this.string.toUpperCase());
 };
 
 Object.defineProperties( Selection.prototype, prototypeAccessors$1 );
@@ -71780,11 +71796,19 @@ Structure.prototype.getBondSet = function getBondSet () {
     var bondSet = new BitArray(n);
     var atomSet = this.atomSet;
     if (atomSet) {
-        var bp = this.getBondProxy();
-        for (var i = 0; i < n; ++i) {
-            bp.index = i;
-            if (atomSet.isSet(bp.atomIndex1, bp.atomIndex2)) {
-                bondSet.set(bp.index);
+        if (atomSet.isAllSet()) {
+            bondSet.setAll();
+        }
+        else if (atomSet.isAllClear()) {
+            bondSet.clearAll();
+        }
+        else {
+            var bp = this.getBondProxy();
+            for (var i = 0; i < n; ++i) {
+                bp.index = i;
+                if (atomSet.isSet(bp.atomIndex1, bp.atomIndex2)) {
+                    bondSet.set(bp.index);
+                }
             }
         }
     }
@@ -71859,12 +71883,17 @@ Structure.prototype.getAtomSet = function getAtomSet (selection) {
             return this.atomSetCache[seleString];
         }
         else {
-            var atomSet = new BitArray(n);
-            this.eachAtom(function (ap) {
-                atomSet.set(ap.index);
-            }, selection);
-            this.atomSetCache[seleString] = atomSet;
-            return atomSet;
+            if (seleString === '') {
+                return new BitArray(n, true);
+            }
+            else {
+                var atomSet = new BitArray(n);
+                this.eachAtom(function (ap) {
+                    atomSet.set(ap.index);
+                }, selection);
+                this.atomSetCache[seleString] = atomSet;
+                return atomSet;
+            }
         }
     }
     else if (selection === false) {
@@ -72477,10 +72506,13 @@ Structure.prototype.atomCenter = function atomCenter (selection) {
     }
 };
 Structure.prototype.hasCoords = function hasCoords () {
-    var atomStore = this.atomStore;
-    return (arrayMin(atomStore.x) !== 0 || arrayMax$1(atomStore.x) !== 0 ||
-        arrayMin(atomStore.y) !== 0 || arrayMax$1(atomStore.y) !== 0 ||
-        arrayMin(atomStore.z) !== 0 || arrayMax$1(atomStore.z) !== 0);
+    if (this._hasCoords === undefined) {
+        var atomStore = this.atomStore;
+        this._hasCoords = (arrayMin(atomStore.x) !== 0 || arrayMax$1(atomStore.x) !== 0 ||
+            arrayMin(atomStore.y) !== 0 || arrayMax$1(atomStore.y) !== 0 ||
+            arrayMin(atomStore.z) !== 0 || arrayMax$1(atomStore.z) !== 0);
+    }
+    return this._hasCoords;
 };
 Structure.prototype.getSequence = function getSequence (selection) {
     var seq = [];
@@ -72527,6 +72559,7 @@ Structure.prototype.updatePosition = function updatePosition (position) {
         ap.positionFromArray(position, i);
         i += 3;
     }, undefined);
+    this._hasCoords = undefined; // to trigger recalculation
 };
 Structure.prototype.refreshPosition = function refreshPosition () {
     this.getBoundingBox(undefined, this.boundingBox);
@@ -76146,7 +76179,7 @@ var StructureView = (function (Structure$$1) {
     StructureView.prototype = Object.create( Structure$$1 && Structure$$1.prototype );
     StructureView.prototype.constructor = StructureView;
 
-    var prototypeAccessors = { type: { configurable: true },name: { configurable: true },path: { configurable: true },title: { configurable: true },id: { configurable: true },data: { configurable: true },atomSetDict: { configurable: true },biomolDict: { configurable: true },entityList: { configurable: true },unitcell: { configurable: true },frames: { configurable: true },boxes: { configurable: true },validation: { configurable: true },bondStore: { configurable: true },backboneBondStore: { configurable: true },rungBondStore: { configurable: true },atomStore: { configurable: true },residueStore: { configurable: true },chainStore: { configurable: true },modelStore: { configurable: true },atomMap: { configurable: true },residueMap: { configurable: true },bondHash: { configurable: true },spatialHash: { configurable: true } };
+    var prototypeAccessors = { type: { configurable: true },name: { configurable: true },path: { configurable: true },title: { configurable: true },id: { configurable: true },data: { configurable: true },atomSetDict: { configurable: true },biomolDict: { configurable: true },entityList: { configurable: true },unitcell: { configurable: true },frames: { configurable: true },boxes: { configurable: true },validation: { configurable: true },bondStore: { configurable: true },backboneBondStore: { configurable: true },rungBondStore: { configurable: true },atomStore: { configurable: true },residueStore: { configurable: true },chainStore: { configurable: true },modelStore: { configurable: true },atomMap: { configurable: true },residueMap: { configurable: true },bondHash: { configurable: true },spatialHash: { configurable: true },_hasCoords: { configurable: true } };
     StructureView.prototype.init = function init () { };
     prototypeAccessors.type.get = function () { return 'StructureView'; };
     prototypeAccessors.name.get = function () { return this.structure.name; };
@@ -76172,6 +76205,8 @@ var StructureView = (function (Structure$$1) {
     prototypeAccessors.residueMap.get = function () { return this.structure.residueMap; };
     prototypeAccessors.bondHash.get = function () { return this.structure.bondHash; };
     prototypeAccessors.spatialHash.get = function () { return this.structure.spatialHash; };
+    prototypeAccessors._hasCoords.get = function () { return this.structure._hasCoords; };
+    prototypeAccessors._hasCoords.set = function (value) { this.structure._hasCoords = value; };
     /**
      * Updates atomSet, bondSet, atomSetCache, atomCount, bondCount, boundingBox, center.
      * @emits {Structure.signals.refreshed} when refreshed
@@ -76183,19 +76218,47 @@ var StructureView = (function (Structure$$1) {
         if (Debug)
             { Log.time('StructureView.refresh'); }
         this.atomSetCache = {};
-        this.atomSet = this.getAtomSet(this.selection, true);
-        if (this.structure.atomSet) {
-            this.atomSet = this.atomSet.intersection(this.structure.atomSet);
+        var structure = this.structure;
+        if (this.selection.isAllSelection() &&
+            structure !== this && structure.atomSet && structure.bondSet) {
+            this.atomSet = structure.atomSet.clone();
+            this.bondSet = structure.bondSet.clone();
+            for (var name in this$1.atomSetDict) {
+                var atomSet = this$1.atomSetDict[name];
+                this$1.atomSetCache['__' + name] = atomSet.clone();
+            }
+            this.atomCount = structure.atomCount;
+            this.bondCount = structure.bondCount;
+            this.boundingBox.copy(structure.boundingBox);
+            this.center.copy(structure.center);
         }
-        this.bondSet = this.getBondSet();
-        for (var name in this$1.atomSetDict) {
-            var atomSet = this$1.atomSetDict[name];
-            this$1.atomSetCache['__' + name] = atomSet.makeIntersection(this$1.atomSet);
+        else if (this.selection.isNoneSelection() &&
+            structure !== this && structure.atomSet && structure.bondSet) {
+            this.atomSet = new BitArray(structure.atomCount);
+            this.bondSet = new BitArray(structure.bondCount);
+            for (var name$1 in this$1.atomSetDict) {
+                this$1.atomSetCache['__' + name$1] = new BitArray(structure.atomCount);
+            }
+            this.atomCount = 0;
+            this.bondCount = 0;
+            this.boundingBox.makeEmpty();
+            this.center.set(0, 0, 0);
         }
-        this.atomCount = this.atomSet.getSize();
-        this.bondCount = this.bondSet.getSize();
-        this.boundingBox = this.getBoundingBox();
-        this.center = this.boundingBox.getCenter();
+        else {
+            this.atomSet = this.getAtomSet(this.selection, true);
+            if (structure.atomSet) {
+                this.atomSet = this.atomSet.intersection(structure.atomSet);
+            }
+            this.bondSet = this.getBondSet();
+            for (var name$2 in this$1.atomSetDict) {
+                var atomSet$1 = this$1.atomSetDict[name$2];
+                this$1.atomSetCache['__' + name$2] = atomSet$1.makeIntersection(this$1.atomSet);
+            }
+            this.atomCount = this.atomSet.getSize();
+            this.bondCount = this.bondSet.getSize();
+            this.boundingBox = this.getBoundingBox();
+            this.center = this.boundingBox.getCenter();
+        }
         if (Debug)
             { Log.timeEnd('StructureView.refresh'); }
         this.signals.refreshed.dispatch();
@@ -98009,7 +98072,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.24";
+var version$1 = "2.0.0-dev.25";
 
 /**
  * @file Version
