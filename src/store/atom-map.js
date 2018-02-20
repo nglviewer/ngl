@@ -35,7 +35,7 @@ class AtomMap {
       this.list.push(atomType)
     } else {
       let index = 0
-      while (isNaN(parseInt(atomname.substr(index))) && atomname.length <= index) {
+      while (isNaN(parseInt(atomname.substr(index))) && atomname.length > index) {
         index++
       }
       let _atomname = atomname.substr(0, index)

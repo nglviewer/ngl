@@ -65319,7 +65319,7 @@ AtomMap.prototype.add = function add (atomname, element) {
     this.list.push(atomType);
   } else {
     var index = 0;
-    while (isNaN(parseInt(atomname.substr(index))) && atomname.length <= index) {
+    while (isNaN(parseInt(atomname.substr(index))) && atomname.length > index) {
       index++;
     }
     var _atomname = atomname.substr(0, index);
