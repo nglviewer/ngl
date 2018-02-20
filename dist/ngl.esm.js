@@ -46602,7 +46602,7 @@ function almostIdentity (value, start, stop) {
 
   rgb2temperature = function() {
     var b, eps, g, maxTemp, minTemp, r, ref, rgb, temp;
-    ref = unpack(arguments), r = ref[0], g = ref[1], b = ref[2];
+    ref = unpack(arguments), r = ref[0], b = ref[2];
     minTemp = 1000;
     maxTemp = 40000;
     eps = 0.4;
@@ -65317,6 +65317,20 @@ AtomMap.prototype.add = function add (atomname, element) {
     id = this.list.length;
     this.dict[ hash ] = id;
     this.list.push(atomType);
+  } else {
+    var index = 0;
+    while (isNaN(parseInt(atomname.substr(index))) && atomname.length > index) {
+      index++;
+    }
+    var _atomname = atomname.substr(0, index);
+    var _number = parseInt(atomname.substr(index));
+    if (isNaN(_number)) { _number = 0; }
+    atomname = _atomname + (_number + 1).toString();
+    while (this.dict[ getHash(atomname) ] !== undefined) {
+      _number++;
+      atomname = _atomname + (_number + 1).toString();
+    }
+    return this.add(atomname)
   }
   return id
 };
