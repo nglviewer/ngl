@@ -734,7 +734,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     createOption('Debug on', onDebugOnClick),
     createOption('Debug off', onDebugOffClick),
     createDivider(),
-    createOption('Prefereces', onPreferencesOptionClick, 'sliders')
+    createOption('Preferences', onPreferencesOptionClick, 'sliders')
   ]
 
   var optionsPanel = UI.MenubarHelper.createOptionsPanel(menuConfig)
