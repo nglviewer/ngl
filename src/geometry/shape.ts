@@ -142,7 +142,6 @@ class Shape {
     return this
   }
 
-
   /**
    * Add a sphere
    * @example

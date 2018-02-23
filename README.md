@@ -68,6 +68,7 @@ This project would not be possible without many fine open-source projects. Espec
 
 Funding sources:
 
+* [RCSB PDB](https://www.rcsb.org) funding by a grant [DBI-1338415; PI: SK Burley] from the NSF, the NIH, and the US DoE
 * NCI/NIH award number U01 CA198942
 * DFG Projekt HI 1502
 
