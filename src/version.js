@@ -4,14 +4,12 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import { version } from "../package.json";
-
+import { version } from '../package.json'
 
 /**
  * Version name
  * @type {String}
  */
-const Version = version;
+const Version = version
 
-
-export default Version;
+export default Version

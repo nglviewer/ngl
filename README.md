@@ -3,6 +3,8 @@
 [![Changelog](https://img.shields.io/badge/changelog--lightgrey.svg?style=flat)](https://github.com/arose/ngl/blob/master/CHANGELOG.md)
 [![npm version](https://badge.fury.io/js/ngl.svg)](https://badge.fury.io/js/ngl)
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)
+[![Standard](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat)](https://standardjs.com)
+[![Gitter](https://badges.gitter.im/nglviewer/Lobby.svg)](https://gitter.im/nglviewer/Lobby)
 
 
 NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.
@@ -27,48 +29,19 @@ Features
 
 * Molecular structures (mmCIF, PDB, PQR, GRO, SDF, MOL2, MMTF)
 * Density volumes (MRC/MAP/CCP4, DX/DXBIN, CUBE, BRIX/DSN6, XPLOR/CNS)
-* User interaction (mouse picking, selection language, image export)
-* Coordinate trajectories (DCD/PSF, animation, remote access via [MDSrv](https://github.com/arose/mdsrv/))
+* User interaction (mouse picking, selection language, animation, image export)
+* Coordinate trajectories (DCD & PSF, NCTRAJ & PRMTOP, TRR/XTC & TOP, remote access via [MDSrv](https://github.com/arose/mdsrv/))
 * Embeddable (single file, API)
 
 
-
-Table of contents
-=================
-
-* [Usage](#usage)
-* [Browser support](#browser-support)
-* [Acknowledgments](#acknowledgments)
-
-
-
 Usage
-=====
+-----
 
 Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
 
 
-
-Browser support
-===============
-
-The NGL Viewer requires your browser to support WebGL. To see if your browser supports WebGL and what you might need to do to activate it, visit the [Get WebGL](https://get.webgl.org/) page.
-
-Generally, WebGL is available in recent browser versions of Mozilla Firefox (>29) or Google Chrome (>27). The Internet Explorer supports WebGL only since version 11. The Safari Browser since version 8 (though WebGL can be activated in earlier version: first enable the Develop menu in Safari’s Advanced preferences, then secondly in the now visible Develop menu enable WebGL).
-
-See also [this page](https://www.khronos.org/webgl/wiki/BlacklistsAndWhitelists) for details on which graphics card drivers are supported by the browsers.
-
-__WebGL draft extensions__: For a smoother appearance of cylinders and spheres your browser needs to have the `EXT_frag_depth` extension available. The [WebGL Report](http://webglreport.com/) should list the extension if active. If not, you can enable WebGL draft extensions in your browser following these instructions:
-
-* Chrome: browse to `about:flags`, enable the `Enable WebGL Draft Extensions` option, then relaunch.
-* Firefox: browse to `about:config` and set `webgl.enable-draft-extensions` to `true`.
-* Safari: Currently, the `EXT_frag_depth` extension is not supported.
-* Internet Explorer: Currently, the `EXT_frag_depth` extension is not supported.
-
-
-
 Acknowledgments
-===============
+---------------
 
 This project would not be possible without many fine open-source projects. Especially the [three.js](http://threejs.org/) project provides a great foundation.
 
@@ -99,7 +72,7 @@ Funding sources:
 
 
 Cite
-====
+----
 
 When using NGL please cite:
 

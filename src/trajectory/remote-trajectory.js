@@ -4,153 +4,135 @@
  * @private
  */
 
+import { Log, DatasourceRegistry } from '../globals.js'
+import Trajectory from './trajectory.js'
 
-import { Log, DatasourceRegistry } from "../globals.js";
-import Trajectory from "./trajectory.js";
+/**
+ * Remote trajectory class. Gets data from an MDsrv instance.
+ */
+class RemoteTrajectory extends Trajectory {
+  constructor (trajPath, structure, params) {
+    super(trajPath, structure, params)
+    this._init(structure)
+  }
 
+  get type () { return 'remote' }
 
-class RemoteTrajectory extends Trajectory{
+  _makeAtomIndices () {
+    const atomIndices = []
 
-    get type (){ return "remote"; }
+    if (this.structure.type === 'StructureView') {
+      const indices = this.structure.getAtomIndices()
+      const n = indices.length
 
-    makeAtomIndices(){
+      let p = indices[ 0 ]
+      let q = indices[ 0 ]
 
-        var atomIndices = [];
+      for (let i = 1; i < n; ++i) {
+        const r = indices[ i ]
 
-        if( this.structure.type === "StructureView" ){
-
-            var indices = this.structure.getAtomIndices();
-
-            var i, r;
-            var p = indices[ 0 ];
-            var q = indices[ 0 ];
-            var n = indices.length;
-
-            for( i = 1; i < n; ++i ){
-
-                r = indices[ i ];
-
-                if( q + 1 < r ){
-
-                    atomIndices.push( [ p, q + 1 ] );
-                    p = r;
-
-                }
-
-                q = r;
-
-            }
-
-            atomIndices.push( [ p, q + 1 ] );
-
-        }else{
-
-            atomIndices.push( [ 0, this.atomCount ] );
-
+        if (q + 1 < r) {
+          atomIndices.push([ p, q + 1 ])
+          p = r
         }
 
-        this.atomIndices = atomIndices;
+        q = r
+      }
 
+      atomIndices.push([ p, q + 1 ])
+    } else {
+      atomIndices.push([ 0, this.atomCount ])
     }
 
-    _loadFrame( i, callback ){
+    this.atomIndices = atomIndices
+  }
 
-        // TODO implement max frameCache size, re-use arrays
+  _loadFrame (i, callback) {
+    // TODO implement max frameCache size, re-use arrays
 
-        var request = new XMLHttpRequest();
+    const request = new window.XMLHttpRequest()
 
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getFrameUrl( this.trajPath, i );
-        var params = ds.getFrameParams( this.trajPath, this.atomIndices );
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getFrameUrl(this.trajPath, i)
+    const params = ds.getFrameParams(this.trajPath, this.atomIndices)
 
-        request.open( "POST", url, true );
-        request.responseType = "arraybuffer";
-        request.setRequestHeader(
-            "Content-type", "application/x-www-form-urlencoded"
-        );
+    request.open('POST', url, true)
+    request.responseType = 'arraybuffer'
+    request.setRequestHeader(
+      'Content-type', 'application/x-www-form-urlencoded'
+    )
 
-        request.addEventListener( 'load', function(){
+    request.addEventListener('load', () => {
+      const arrayBuffer = request.response
+      if (!arrayBuffer) {
+        Log.error(`empty arrayBuffer for '${url}'`)
+        return
+      }
 
-            var arrayBuffer = request.response;
-            if( !arrayBuffer ){
-                Log.error( "empty arrayBuffer for '" + url + "'" );
-                return;
-            }
+      const frameCount = new Int32Array(arrayBuffer, 0, 1)[ 0 ]
+      // const time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
+      const box = new Float32Array(arrayBuffer, 2 * 4, 9)
+      const coords = new Float32Array(arrayBuffer, 11 * 4)
 
-            var numframes = new Int32Array( arrayBuffer, 0, 1 )[ 0 ];
-            // var time = new Float32Array( arrayBuffer, 1 * 4, 1 )[ 0 ];
-            var box = new Float32Array( arrayBuffer, 2 * 4, 9 );
-            var coords = new Float32Array( arrayBuffer, 11 * 4 );
+      this._process(i, box, coords, frameCount)
+      if (typeof callback === 'function') {
+        callback()
+      }
+    }, false)
 
-            this.process( i, box, coords, numframes );
-            if( typeof callback === "function" ){
-                callback();
-            }
+    request.send(params)
+  }
 
-        }.bind( this ), false );
+  _loadFrameCount () {
+    const request = new window.XMLHttpRequest()
 
-        request.send( params );
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getCountUrl(this.trajPath)
 
+    request.open('GET', url, true)
+    request.addEventListener('load', () => {
+      this._setFrameCount(parseInt(request.response))
+    }, false)
+    request.send(null)
+  }
+
+  getPath (index, callback) {
+    if (this.pathCache[ index ]) {
+      callback(this.pathCache[ index ])
+      return
     }
 
-    getNumframes(){
+    Log.time('loadPath')
 
-        var request = new XMLHttpRequest();
+    const request = new window.XMLHttpRequest()
 
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getNumframesUrl( this.trajPath );
+    const ds = DatasourceRegistry.trajectory
+    const url = ds.getPathUrl(this.trajPath, index)
+    const params = ''
 
-        request.open( "GET", url, true );
-        request.addEventListener( 'load', function(){
-            this.setNumframes( parseInt( request.response ) );
-        }.bind( this ), false );
-        request.send( null );
+    request.open('POST', url, true)
+    request.responseType = 'arraybuffer'
+    request.setRequestHeader(
+      'Content-type', 'application/x-www-form-urlencoded'
+    )
 
-    }
+    request.addEventListener('load', () => {
+      Log.timeEnd('loadPath')
 
-    getPath( index, callback ){
+      const arrayBuffer = request.response
+      if (!arrayBuffer) {
+        Log.error("empty arrayBuffer for '" + url + "'")
+        return
+      }
 
-        if( this.pathCache[ index ] ){
-            callback( this.pathCache[ index ] );
-            return;
-        }
+      const path = new Float32Array(arrayBuffer)
+      // Log.log( path )
+      this.pathCache[ index ] = path
+      callback(path)
+    }, false)
 
-        Log.time( "loadPath" );
-
-        var request = new XMLHttpRequest();
-
-        var ds = DatasourceRegistry.trajectory;
-        var url = ds.getPathUrl( this.trajPath, index );
-        var params = "";
-
-        request.open( "POST", url, true );
-        request.responseType = "arraybuffer";
-        request.setRequestHeader(
-            "Content-type", "application/x-www-form-urlencoded"
-        );
-
-        request.addEventListener( 'load', function(){
-
-            Log.timeEnd( "loadPath" );
-
-            var arrayBuffer = request.response;
-            if( !arrayBuffer ){
-                Log.error( "empty arrayBuffer for '" + url + "'" );
-                return;
-            }
-
-            var path = new Float32Array( arrayBuffer );
-            // Log.log( path )
-            this.pathCache[ index ] = path;
-            callback( path );
-
-        }.bind( this ), false );
-
-        request.send( params );
-
-    }
-
+    request.send(params)
+  }
 }
 
-
-export default RemoteTrajectory;
+export default RemoteTrajectory

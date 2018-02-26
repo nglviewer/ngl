@@ -4,43 +4,33 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import { defaults } from '../utils.js'
+import Parser from './parser.js'
+import Volume from '../surface/volume.js'
 
-import { defaults } from "../utils.js";
-import Parser from "./parser.js";
-import Volume from "../surface/volume.js";
+class VolumeParser extends Parser {
+  constructor (streamer, params) {
+    const p = params || {}
 
+    super(streamer, p)
 
-class VolumeParser extends Parser{
+    this.volume = new Volume(this.name, this.path)
+    this.voxelSize = defaults(p.voxelSize, 1)
+  }
 
-    constructor( streamer, params ){
+  get type () { return 'volume' }
+  get __objName () { return 'volume' }
 
-        const p = params || {};
+  _afterParse () {
+    this.volume.setMatrix(this.getMatrix())
+    super._afterParse()
+  }
 
-        super( streamer, p );
-
-        this.volume = new Volume( this.name, this.path );
-        this.voxelSize  = defaults( p.voxelSize, 1 );
-
-    }
-
-    get type (){ return "volume"; }
-    get __objName(){ return "volume"; }
-
-    _afterParse(){
-
-        this.volume.setMatrix( this.getMatrix() );
-
-    }
-
-    getMatrix(){
-
-        return new Matrix4();
-
-    }
-
+  getMatrix () {
+    return new Matrix4()
+  }
 }
 
-
-export default VolumeParser;
+export default VolumeParser

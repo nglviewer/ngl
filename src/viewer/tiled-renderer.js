@@ -4,136 +4,124 @@
  * @private
  */
 
+function TiledRenderer (renderer, camera, viewer, params) {
+  const p = params || {}
 
-function TiledRenderer( renderer, camera, viewer, params ){
+  let factor = p.factor !== undefined ? p.factor : 2
+  const antialias = p.antialias !== undefined ? p.antialias : false
 
-    var p = params || {};
+  const onProgress = p.onProgress
+  const onFinish = p.onFinish
 
-    var factor = p.factor!==undefined ? p.factor : 2;
-    var antialias = p.antialias!==undefined ? p.antialias : false;
+  //
 
-    var onProgress = p.onProgress;
-    var onFinish = p.onFinish;
+  if (antialias) factor *= 2
+  const n = factor * factor
 
-    //
+  // canvas
 
-    if( antialias ) factor *= 2;
-    var n = factor * factor;
+  const canvas = document.createElement('canvas')
+  const width = viewer.width
+  const height = viewer.height
 
-    // canvas
+  if (antialias) {
+    canvas.width = width * factor / 2
+    canvas.height = height * factor / 2
+  } else {
+    canvas.width = width * factor
+    canvas.height = height * factor
+  }
 
-    var canvas = document.createElement( 'canvas' );
-    var width = viewer.width;
-    var height = viewer.height;
+  const ctx = canvas.getContext('2d')
 
-    if( antialias ){
-        canvas.width = width * factor / 2;
-        canvas.height = height * factor / 2;
-    }else{
-        canvas.width = width * factor;
-        canvas.height = height * factor;
+  const viewerSampleLevel = viewer.sampleLevel
+  viewer.setSampling(-1)
+
+  function renderTile (i) {
+    const x = i % factor
+    const y = Math.floor(i / factor)
+
+    const offsetX = x * width
+    const offsetY = y * height
+
+    viewer.camera.setViewOffset(
+      width * factor,
+      height * factor,
+      offsetX,
+      offsetY,
+      width,
+      height
+    )
+
+    viewer.render()
+
+    if (antialias) {
+      ctx.drawImage(
+        renderer.domElement,
+        Math.floor(offsetX / 2),
+        Math.floor(offsetY / 2),
+        Math.ceil(width / 2),
+        Math.ceil(height / 2)
+      )
+    } else {
+      ctx.drawImage(
+        renderer.domElement,
+        Math.floor(offsetX),
+        Math.floor(offsetY),
+        Math.ceil(width),
+        Math.ceil(height)
+      )
     }
 
-    var ctx = canvas.getContext( '2d' );
+    if (typeof onProgress === 'function') {
+      onProgress(i + 1, n, false)
+    }
+  }
 
-    var viewerSampleLevel = viewer.sampleLevel;
-    viewer.setSampling( -1 );
+  function finalize () {
+    viewer.setSampling(viewerSampleLevel)
+    viewer.camera.view = null
 
-    function renderTile( i ){
+    if (typeof onFinish === 'function') {
+      onFinish(n + 1, n, false)
+    }
+  }
 
-        var x = i % factor;
-        var y = Math.floor( i / factor );
+  function render () {
+    for (let i = 0; i <= n; ++i) {
+      if (i === n) {
+        finalize()
+      } else {
+        renderTile(i)
+      }
+    }
+  }
 
-        var offsetX = x * width;
-        var offsetY = y * height;
+  function renderAsync () {
+    let count = 0
 
-        viewer.camera.setViewOffset(
-            width * factor,
-            height * factor,
-            offsetX,
-            offsetY,
-            width,
-            height
-        );
-
-        viewer.render();
-
-        if( antialias ){
-            ctx.drawImage(
-                renderer.domElement,
-                Math.floor( offsetX / 2 ),
-                Math.floor( offsetY / 2 ),
-                Math.ceil( width / 2 ),
-                Math.ceil( height / 2 )
-            );
-        }else{
-            ctx.drawImage(
-                renderer.domElement,
-                Math.floor( offsetX ),
-                Math.floor( offsetY ),
-                Math.ceil( width ),
-                Math.ceil( height )
-            );
-        }
-
-        if( typeof onProgress === "function" ){
-            onProgress( i + 1, n, false );
-        }
-
+    function fn () {
+      if (count === n) {
+        finalize()
+      } else {
+        renderTile(count)
+      }
+      count += 1
     }
 
-    function finalize(){
-
-        viewer.setSampling( viewerSampleLevel );
-        viewer.camera.view = null;
-
-        if( typeof onFinish === "function" ){
-            onFinish( n + 1, n, false );
-        }
-
+    for (let i = 0; i <= n; ++i) {
+      setTimeout(fn, 0)
     }
+  }
 
-    function render(){
+  // API
 
-        for( var i = 0; i <= n; ++i ){
-            if( i === n ){
-                finalize();
-            }else{
-                renderTile( i );
-            }
-        }
+  this.render = render
+  this.renderAsync = renderAsync
 
-    }
-
-    function renderAsync(){
-
-        var count = 0;
-
-        function fn(){
-            if( count === n ){
-                finalize();
-            }else{
-                renderTile( count );
-            }
-            count += 1;
-        }
-
-        for( var i = 0; i <= n; ++i ){
-            setTimeout( fn, 0, i );
-        }
-
-    }
-
-    // API
-
-    this.render = render;
-    this.renderAsync = renderAsync;
-
-    this.canvas = canvas;
-
+  this.canvas = canvas
 }
 
-TiledRenderer.prototype.constructor = TiledRenderer;
+TiledRenderer.prototype.constructor = TiledRenderer
 
-
-export default TiledRenderer;
+export default TiledRenderer

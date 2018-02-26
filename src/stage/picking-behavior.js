@@ -4,41 +4,36 @@
  * @private
  */
 
+class PickingBehavior {
+  constructor (stage) {
+    this.stage = stage
+    this.mouse = stage.mouseObserver
+    this.controls = stage.mouseControls
 
-class PickingBehavior{
+    this.mouse.signals.clicked.add(this._onClick, this)
+    this.mouse.signals.hovered.add(this._onHover, this)
+  }
 
-    constructor( stage ){
+  _onClick (x, y) {
+    const pickingProxy = this.stage.pickingControls.pick(x, y)
+    this.stage.signals.clicked.dispatch(pickingProxy)
+    this.controls.run('clickPick', pickingProxy)
+  }
 
-        this.stage = stage;
-        this.mouse = stage.mouseObserver;
-        this.controls = stage.mouseControls;
-
-        this.mouse.signals.clicked.add( this._onClick, this );
-        this.mouse.signals.hovered.add( this._onHover, this );
-
+  _onHover (x, y) {
+    const pickingProxy = this.stage.pickingControls.pick(x, y)
+    if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
+      this.stage.transformComponent = pickingProxy.component
+      this.stage.transformAtom = pickingProxy.atom
     }
+    this.stage.signals.hovered.dispatch(pickingProxy)
+    this.controls.run('hoverPick', pickingProxy)
+  }
 
-    _onClick( x, y ){
-        const pickingProxy = this.stage.pickingControls.pick( x, y );
-        this.stage.signals.clicked.dispatch( pickingProxy );
-        this.controls.run( "clickPick", pickingProxy );
-    }
-
-    _onHover( x, y ){
-        const pickingProxy = this.stage.pickingControls.pick( x, y );
-        if( pickingProxy && this.mouse.down.equals( this.mouse.position ) ){
-            this.stage.transformComponent = pickingProxy.component;
-        }
-        this.stage.signals.hovered.dispatch( pickingProxy );
-        this.controls.run( "hoverPick", pickingProxy );
-    }
-
-    dispose(){
-        this.mouse.signals.clicked.remove( this._onClick, this );
-        this.mouse.signals.hovered.remove( this._onHover, this );
-    }
-
+  dispose () {
+    this.mouse.signals.clicked.remove(this._onClick, this)
+    this.mouse.signals.hovered.remove(this._onHover, this)
+  }
 }
 
-
-export default PickingBehavior;
+export default PickingBehavior

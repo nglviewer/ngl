@@ -4,20 +4,15 @@
  * @private
  */
 
-
-import { ParserRegistry } from "../globals.js";
-import PdbParser from "./pdb-parser.js";
-
+import { ParserRegistry } from '../globals.js'
+import PdbParser from './pdb-parser.js'
 
 // http://www.poissonboltzmann.org/docs/file-format-info/
 
-class PqrParser extends PdbParser{
-
-    get type (){ return "pqr"; }
-
+class PqrParser extends PdbParser {
+  get type () { return 'pqr' }
 }
 
-ParserRegistry.add( "pqr", PqrParser );
+ParserRegistry.add('pqr', PqrParser)
 
-
-export default PqrParser;
+export default PqrParser

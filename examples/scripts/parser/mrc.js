@@ -1,2 +1,2 @@
 
-stage.loadFile( "data://betaGal.mrc", { defaultRepresentation: true } );
+stage.loadFile('data://betaGal.mrc', { defaultRepresentation: true })

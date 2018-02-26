@@ -4,50 +4,42 @@
  * @private
  */
 
+import AtomType from './atom-type.js'
+import { guessElement } from '../structure/structure-utils.js'
 
-import AtomType from "./atom-type.js";
-import { guessElement } from "../structure/structure-utils.js";
-
-
-function getHash( atomname, element ){
-    return atomname + "|" + element;
+function getHash (atomname, element) {
+  return atomname + '|' + element
 }
 
+class AtomMap {
+  constructor (structure) {
+    this.structure = structure
 
-class AtomMap{
+    this.dict = {}
+    this.list = []
+  }
 
-    constructor( structure ){
-
-        this.structure = structure;
-
-        this.dict = {};
-        this.list = [];
-
+  add (atomname, element) {
+    atomname = atomname.toUpperCase()
+    if (!element) {
+      element = guessElement(atomname)
+    } else {
+      element = element.toUpperCase()
     }
-
-    add( atomname, element ){
-        atomname = atomname.toUpperCase();
-        if( !element ){
-            element = guessElement( atomname );
-        }else{
-            element = element.toUpperCase();
-        }
-        const hash = getHash( atomname, element );
-        let id = this.dict[ hash ];
-        if( id === undefined ){
-            const atomType = new AtomType( this.structure, atomname, element );
-            id = this.list.length;
-            this.dict[ hash ] = id;
-            this.list.push( atomType );
-        }
-        return id;
+    const hash = getHash(atomname, element)
+    let id = this.dict[ hash ]
+    if (id === undefined) {
+      const atomType = new AtomType(this.structure, atomname, element)
+      id = this.list.length
+      this.dict[ hash ] = id
+      this.list.push(atomType)
     }
+    return id
+  }
 
-    get( id ){
-        return this.list[ id ];
-    }
-
+  get (id) {
+    return this.list[ id ]
+  }
 }
 
-
-export default AtomMap;
+export default AtomMap

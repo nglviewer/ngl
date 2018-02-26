@@ -4,49 +4,42 @@
  * @private
  */
 
-
-import Store from "./store.js";
-
+import Store from './store.js'
 
 /**
  * Residue store
  */
-class ResidueStore extends Store{
+class ResidueStore extends Store {
+  get _defaultFields () {
+    return [
+      [ 'chainIndex', 1, 'uint32' ],
+      [ 'atomOffset', 1, 'uint32' ],
+      [ 'atomCount', 1, 'uint16' ],
+      [ 'residueTypeId', 1, 'uint16' ],
 
-    get __fields(){
+      [ 'resno', 1, 'int32' ],
+      [ 'sstruc', 1, 'uint8' ],
+      [ 'inscode', 1, 'uint8' ]
+    ]
+  }
 
-        return [
-            [ "chainIndex", 1, "uint32" ],
-            [ "atomOffset", 1, "uint32" ],
-            [ "atomCount", 1, "uint16" ],
-            [ "residueTypeId", 1, "uint16" ],
+  setSstruc (i, str) {
+    this.sstruc[ i ] = str.charCodeAt(0)
+  }
 
-            [ "resno", 1, "int32" ],
-            [ "sstruc", 1, "uint8" ],
-            [ "inscode", 1, "uint8" ]
-        ];
+  getSstruc (i) {
+    const code = this.sstruc[ i ]
+    return code ? String.fromCharCode(code) : ''
+  }
 
-    }
+  setInscode (i, str) {
+    this.inscode[ i ] = str.charCodeAt(0)
+  }
 
-    setSstruc( i, str ){
-        this.sstruc[ i ] = str.charCodeAt( 0 );
-    }
-
-    getSstruc( i ){
-        const code = this.sstruc[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    }
-
-    setInscode( i, str ){
-        this.inscode[ i ] = str.charCodeAt( 0 );
-    }
-
-    getInscode( i ){
-        const code = this.inscode[ i ];
-        return code ? String.fromCharCode( code ) : "";
-    }
-
+  getInscode (i) {
+    const code = this.inscode[ i ]
+    return code ? String.fromCharCode(code) : ''
+  }
 }
 
-
-export default ResidueStore;
+export default ResidueStore

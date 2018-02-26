@@ -4,126 +4,113 @@
  * @private
  */
 
+import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils.js'
+import StructureRepresentation from './structure-representation.js'
+import SphereBuffer from '../buffer/sphere-buffer.js'
+import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
-import { RepresentationRegistry } from "../globals.js";
-import { defaults } from "../utils.js";
-import StructureRepresentation from "./structure-representation.js";
-import SphereBuffer from "../buffer/sphere-buffer.js";
-import CylinderBuffer from "../buffer/cylinder-buffer.js";
+/**
+ * Unitcell Representation
+ */
+class UnitcellRepresentation extends StructureRepresentation {
+  constructor (structure, viewer, params) {
+    super(structure, viewer, params)
 
+    this.type = 'unitcell'
 
-class UnitcellRepresentation extends StructureRepresentation{
+    this.parameters = Object.assign({
 
-    constructor( structure, viewer, params ){
+      radius: {
+        type: 'number', precision: 3, max: 10.0, min: 0.001
+      },
+      sphereDetail: true,
+      radialSegments: true,
+      disableImpostor: true
 
-        super( structure, viewer, params );
+    }, this.parameters, {
+      assembly: null
+    })
 
-        this.type = "unitcell";
+    this.init(params)
+  }
 
-        this.parameters = Object.assign( {
+  init (params) {
+    const p = params || {}
 
-            radius: {
-                type: "number", precision: 3, max: 10.0, min: 0.001
-            },
-            sphereDetail: true,
-            radialSegments: true,
-            disableImpostor: true
-
-        }, this.parameters, {
-            assembly: null
-        } );
-
-        this.init( params );
-
+    let defaultRadius = 0.5
+    if (this.structure.unitcell) {
+      defaultRadius = Math.cbrt(this.structure.unitcell.volume) / 200
     }
 
-    init( params ){
+    p.radius = defaults(p.radius, defaultRadius)
+    p.colorValue = defaults(p.colorValue, 'orange')
 
-        const p = params || {};
+    super.init(p)
+  }
 
-        let defaultRadius = 0.5;
-        if( this.structure.unitcell ){
-            defaultRadius = Math.cbrt( this.structure.unitcell.volume ) / 200;
-        }
+  getUnitcellData (structure) {
+    return structure.unitcell.getData(structure)
+  }
 
-        p.radius = defaults( p.radius, defaultRadius );
-        p.colorValue = defaults( p.colorValue, "orange" );
+  create () {
+    const structure = this.structureView.getStructure()
+    if (!structure.unitcell) return
+    const unitcellData = this.getUnitcellData(structure)
 
-        super.init( p );
+    this.sphereBuffer = new SphereBuffer(
+      unitcellData.vertex,
+      this.getBufferParams({
+        sphereDetail: this.sphereDetail,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
 
+    this.cylinderBuffer = new CylinderBuffer(
+      unitcellData.edge,
+      this.getBufferParams({
+        openEnded: true,
+        radialSegments: this.radialSegments,
+        disableImpostor: this.disableImpostor,
+        dullInterior: true
+      })
+    )
+
+    this.dataList.push({
+      sview: this.structureView,
+      bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
+    })
+  }
+
+  updateData (what, data) {
+    const structure = data.sview.getStructure()
+    const unitcellData = this.getUnitcellData(structure)
+    const sphereData = {}
+    const cylinderData = {}
+
+    if (!what || what.position) {
+      sphereData.position = unitcellData.vertexPosition
+      cylinderData.position1 = unitcellData.edgePosition1
+      cylinderData.position2 = unitcellData.edgePosition2
     }
 
-    getUnitcellData( structure ){
-
-        return structure.unitcell.getData( structure );
-
+    if (!what || what.color) {
+      sphereData.color = unitcellData.vertexColor
+      cylinderData.color = unitcellData.edgeColor
+      cylinderData.color2 = unitcellData.edgeColor
     }
 
-    create(){
-
-        const structure = this.structureView.getStructure();
-        if( !structure.unitcell ) return;
-        const unitcellData = this.getUnitcellData( structure );
-
-        this.sphereBuffer = new SphereBuffer(
-            unitcellData.vertex,
-            this.getBufferParams( {
-                sphereDetail: this.sphereDetail,
-                disableImpostor: this.disableImpostor,
-                dullInterior: true
-            } )
-        );
-
-        this.cylinderBuffer = new CylinderBuffer(
-            unitcellData.edge,
-            this.getBufferParams( {
-                openEnded: true,
-                radialSegments: this.radialSegments,
-                disableImpostor: this.disableImpostor,
-                dullInterior: true
-            } )
-        );
-
-        this.dataList.push( {
-            sview: this.structureView,
-            bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
-        } );
-
+    if (!what || what.radius) {
+      sphereData.radius = unitcellData.vertexRadius
+      cylinderData.radius = unitcellData.edgeRadius
     }
 
-    updateData( what, data ){
-
-        const structure = data.sview.getStructure();
-        const unitcellData = this.getUnitcellData( structure );
-        const sphereData = {};
-        const cylinderData = {};
-
-        if( !what || what.position ){
-            sphereData.position = unitcellData.vertexPosition;
-            cylinderData.position1 = unitcellData.edgePosition1;
-            cylinderData.position2 = unitcellData.edgePosition2;
-        }
-
-        if( !what || what.color ){
-            sphereData.color = unitcellData.vertexColor;
-            cylinderData.color = unitcellData.edgeColor;
-            cylinderData.color2 = unitcellData.edgeColor;
-        }
-
-        if( !what || what.radius ){
-            sphereData.radius = unitcellData.vertexRadius;
-            cylinderData.radius = unitcellData.edgeRadius;
-        }
-
-        this.sphereBuffer.setAttributes( sphereData );
-        this.cylinderBuffer.setAttributes( cylinderData );
-
-    }
-
+    this.sphereBuffer.setAttributes(sphereData)
+    this.cylinderBuffer.setAttributes(cylinderData)
+  }
 }
 
+RepresentationRegistry.add('unitcell', UnitcellRepresentation)
 
-RepresentationRegistry.add( "unitcell", UnitcellRepresentation );
-
-
-export default UnitcellRepresentation;
+export default UnitcellRepresentation

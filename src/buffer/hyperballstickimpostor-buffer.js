@@ -4,15 +4,13 @@
  * @private
  */
 
+import { Matrix4 } from '../../lib/three.es6.js'
 
-import { Matrix4 } from "../../lib/three.es6.js";
+import '../shader/HyperballStickImpostor.vert'
+import '../shader/HyperballStickImpostor.frag'
 
-import "../shader/HyperballStickImpostor.vert";
-import "../shader/HyperballStickImpostor.frag";
-
-import { defaults } from "../utils.js";
-import BoxBuffer from "./box-buffer.js";
-
+import { defaults } from '../utils.js'
+import MappedBoxBuffer from './mappedbox-buffer.js'
 
 /**
  * Hyperball stick impostor buffer.
@@ -27,8 +25,7 @@ import BoxBuffer from "./box-buffer.js";
  *     radius2: new Float32Array( [ 2 ] )
  * } );
  */
-class HyperballStickImpostorBuffer extends BoxBuffer{
-
+class HyperballStickImpostorBuffer extends MappedBoxBuffer {
     /**
      * @param  {Object} data - attribute object
      * @param  {Float32Array} data.position1 - from positions
@@ -40,51 +37,45 @@ class HyperballStickImpostorBuffer extends BoxBuffer{
      * @param  {Picker} data.picking - picking ids
      * @param  {BufferParameters} params - parameter object
      */
-    constructor( data, params ){
+  constructor (data, params) {
+    super(data, params)
 
-        super( data, params );
+    var d = data || {}
+    var p = params || {}
 
-        var d = data || {};
-        var p = params || {};
+    var shrink = defaults(p.shrink, 0.14)
 
-        var shrink = defaults( p.shrink, 0.14 );
+    this.addUniforms({
+      'modelViewProjectionMatrix': { value: new Matrix4() },
+      'modelViewProjectionMatrixInverse': { value: new Matrix4() },
+      'modelViewMatrixInverseTranspose': { value: new Matrix4() },
+      'shrink': { value: shrink }
+    })
 
-        this.addUniforms( {
-            "modelViewProjectionMatrix": { value: new Matrix4() },
-            "modelViewProjectionMatrixInverse": { value: new Matrix4() },
-            "modelViewMatrixInverseTranspose": { value: new Matrix4() },
-            "shrink": { value: shrink },
-        } );
+    this.addAttributes({
+      'position1': { type: 'v3', value: null },
+      'position2': { type: 'v3', value: null },
+      'color2': { type: 'c', value: null },
+      'radius': { type: 'f', value: null },
+      'radius2': { type: 'f', value: null }
+    })
 
-        this.addAttributes( {
-            "position1": { type: "v3", value: null },
-            "position2": { type: "v3", value: null },
-            "color2": { type: "c", value: null },
-            "radius": { type: "f", value: null },
-            "radius2": { type: "f", value: null }
-        } );
+    this.setAttributes(d)
 
-        this.setAttributes( d );
+    this.makeMapping()
+  }
 
-        this.makeMapping();
+  get parameters () {
+    return Object.assign({
 
-    }
+      shrink: { uniform: true }
 
-    get parameters (){
+    }, super.parameters)
+  }
 
-        return Object.assign( {
-
-            shrink: { uniform: true }
-
-        }, super.parameters );
-
-    }
-
-    get isImpostor (){ return true; }
-    get vertexShader (){ return "HyperballStickImpostor.vert"; }
-    get fragmentShader (){ return "HyperballStickImpostor.frag"; }
-
+  get isImpostor () { return true }
+  get vertexShader () { return 'HyperballStickImpostor.vert' }
+  get fragmentShader () { return 'HyperballStickImpostor.frag' }
 }
 
-
-export default HyperballStickImpostorBuffer;
+export default HyperballStickImpostorBuffer
