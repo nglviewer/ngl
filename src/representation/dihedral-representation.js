@@ -171,7 +171,8 @@ class DihedralRepresentation extends MeasurementRepresentation {
 
     if (params && (
       params.lineVisible !== undefined ||
-      params.sectorVisible !== undefined)) {
+      params.sectorVisible !== undefined ||
+      params.planeVisible !== undefined)) {
       this.setVisibility(this.visible)
     }
 
