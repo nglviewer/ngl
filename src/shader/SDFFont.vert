@@ -45,6 +45,8 @@ void main(void){
 
     float scale = matrixScale( modelViewMatrix );
 
+    float _xOffset = xOffset * scale;
+    float _yOffset = yOffset * scale;
     float _zOffset = zOffset * scale;
     if( texCoord.x == 10.0 ){
         _zOffset -= 0.001;
@@ -62,8 +64,8 @@ void main(void){
 
     vec4 cameraCornerPos = vec4( cameraPos.xyz, 1.0 );
     cameraCornerPos.xy += mapping * inputSize * 0.01 * scale;
-    cameraCornerPos.x += xOffset * scale;
-    cameraCornerPos.y += yOffset * scale;
+    cameraCornerPos.x += _xOffset;
+    cameraCornerPos.y += _yOffset;
     if( ortho ){
         cameraCornerPos.xyz += normalize( -cameraPosition ) * _zOffset;
     } else {
