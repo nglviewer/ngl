@@ -111,6 +111,7 @@ import ConeBuffer from './buffer/cone-buffer'
 import CylinderBuffer from './buffer/cylinder-buffer'
 import EllipsoidBuffer from './buffer/ellipsoid-buffer'
 import OctahedronBuffer from './buffer/octahedron-buffer'
+import PointBuffer from './buffer/point-buffer'
 import SphereBuffer from './buffer/sphere-buffer'
 import TetrahedronBuffer from './buffer/tetrahedron-buffer'
 import TextBuffer from './buffer/text-buffer'
@@ -231,6 +232,7 @@ export {
   CylinderBuffer,
   EllipsoidBuffer,
   OctahedronBuffer,
+  PointBuffer,
   SphereBuffer,
   TetrahedronBuffer,
   TextBuffer,
