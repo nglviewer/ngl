@@ -48,6 +48,7 @@ class RocketRepresentation extends StructureRepresentation {
     p.radiusSize = defaults(p.radiusSize, 1.5)
     p.radiusScale = defaults(p.radiusScale, 1.0)
     p.openEnded = defaults(p.openEnded, false)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.localAngle = defaults(p.localAngle, 30)
     this.centerDist = defaults(p.centerDist, 2.5)

@@ -3,6 +3,8 @@
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
+uniform vec3 interiorColor;
+uniform float interiorDarkening;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
@@ -71,40 +73,34 @@ bool Impostor( out vec3 cameraPos, out vec3 cameraNormal ){
     if( det < 0.0 ){
         discard;
         return false;
-    }else{
-        float sqrtDet = sqrt( det );
-        float posT = mix( B + sqrtDet, B + sqrtDet, ortho );
-        float negT = mix( B - sqrtDet, sqrtDet - B, ortho );
-
-        cameraPos = rayDirection * negT + rayOrigin;
-
-        #ifdef NEAR_CLIP
-            if( calcDepth( cameraPos ) <= 0.0 ){
-                cameraPos = rayDirection * posT + rayOrigin;
-                interior = true;
-                return false;
-            }else if( calcClip( cameraPos ) > 0.0 ){
-                cameraPos = rayDirection * posT + rayOrigin;
-                interior = true;
-                flag2 = true;
-                return false;
-            }else{
-                cameraNormal = normalize( cameraPos - cameraSpherePos );
-            }
-        #else
-            if( calcDepth( cameraPos ) <= 0.0 ){
-                cameraPos = rayDirection * posT + rayOrigin;
-                interior = true;
-                return false;
-            }else{
-                cameraNormal = normalize( cameraPos - cameraSpherePos );
-            }
-        #endif
-
-        return true;
     }
 
-    return false; // ensure that each control flow has a return
+    float sqrtDet = sqrt( det );
+    float posT = mix( B + sqrtDet, B + sqrtDet, ortho );
+    float negT = mix( B - sqrtDet, sqrtDet - B, ortho );
+
+    cameraPos = rayDirection * negT + rayOrigin;
+
+    #ifdef NEAR_CLIP
+        if( calcDepth( cameraPos ) <= 0.0 ){
+            cameraPos = rayDirection * posT + rayOrigin;
+            interior = true;
+        }else if( calcClip( cameraPos ) > 0.0 ){
+            cameraPos = rayDirection * posT + rayOrigin;
+            interior = true;
+            flag2 = true;
+        }
+    #else
+        if( calcDepth( cameraPos ) <= 0.0 ){
+            cameraPos = rayDirection * posT + rayOrigin;
+            interior = true;
+        }
+    #endif
+
+    cameraNormal = normalize( cameraPos - cameraSpherePos );
+    cameraNormal *= float(!interior) * 2.0 - 1.0;
+
+    return !interior;
 
 }
 
@@ -154,35 +150,6 @@ void main(void){
 
     #else
 
-        // vec3 specColor = vColor;  // vec3( 1.0, 1.0, 1.0 );
-        // vec3 lightDir = vec3( 0.0, 0.0, 1.0 );
-        // vec3 vNormal = cameraNormal;
-
-        // float lambertian = max(dot(lightDir,vNormal), 0.0);
-        // float specular = 0.0;
-
-        // if(lambertian > 0.0) {
-
-        //     vec3 reflectDir = reflect(-lightDir, vNormal);
-        //     vec3 viewDir = normalize(-cameraPos);
-
-        //     float specAngle = max(dot(reflectDir, viewDir), 0.0);
-        //     specular = pow(specAngle, 4.0);
-
-        //     // the exponent controls the shininess (try mode 2)
-        //     specular = pow(specAngle, 16.0);
-
-        //     // according to the rendering equation we would need to multiply
-        //     // with the the "lambertian", but this has little visual effect
-        //     specular *= lambertian;
-
-
-        // }
-
-        // gl_FragColor = vec4( lambertian*vColor + specular*specColor, opacity );
-
-        //
-
         vec3 vNormal = cameraNormal;
         vec3 vViewPosition = -cameraPos;
 
@@ -193,17 +160,24 @@ void main(void){
         #include color_fragment
         #include roughnessmap_fragment
         #include metalnessmap_fragment
-        #include normal_flip
         #include normal_fragment
-        if( interior ){
-            normal = vec3( 0.0, 0.0, 0.4 );
-        }
 
         // #include lights_phong_fragment
         #include lights_physical_fragment
         #include lights_template
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        if( interior ){
+            #ifdef USE_INTERIOR_COLOR
+                outgoingLight.xyz = interiorColor;
+            #else
+                #ifdef DIFFUSE_INTERIOR
+                    outgoingLight.xyz = vColor;
+                #endif
+            #endif
+            outgoingLight.xyz *= 1.0 - interiorDarkening;
+        }
 
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 

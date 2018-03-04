@@ -32,6 +32,7 @@ class ValidationRepresentation extends StructureRepresentation {
   init (params) {
     const p = params || {}
     p.colorValue = defaults(p.colorValue, '#f0027f')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

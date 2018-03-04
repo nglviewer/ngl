@@ -124,6 +124,7 @@ class ContactRepresentation extends StructureRepresentation {
   init (params) {
     var p = params || {}
     p.radiusSize = defaults(p.radiusSize, 0.05)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.hydrogenBond = defaults(p.hydrogenBond, true)
     this.weakHydrogenBond = defaults(p.weakHydrogenBond, false)

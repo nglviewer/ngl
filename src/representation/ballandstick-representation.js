@@ -96,6 +96,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
     var p = params || {}
     p.radiusType = defaults(p.radiusType, 'size')
     p.radiusSize = defaults(p.radiusSize, 0.15)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.aspectRatio = defaults(p.aspectRatio, 2.0)
     this.lineOnly = defaults(p.lineOnly, false)

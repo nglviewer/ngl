@@ -39,6 +39,10 @@ import Counter from '../utils/counter.js'
  * @property {Float} [roughness] - how rough the material is, between 0 and 1
  * @property {Float} [metalness] - how metallic the material is, between 0 and 1
  * @property {Color} [diffuse] - diffuse color for lighting
+ * @property {Color} [diffuseInterior] - diffuse interior, i.e. ignore normal
+ * @property {Color} [useInteriorColor] - use interior color
+ * @property {Color} [interiorColor] - interior color
+ * @property {Color} [interiorDarkening] - interior darkening: 0 no darking, 1 fully darkened
  * @property {Boolean} [disablePicking] - disable picking
  */
 
@@ -124,6 +128,19 @@ class Representation {
         type: 'color', buffer: true
       },
 
+      diffuseInterior: {
+        type: 'boolean', buffer: true
+      },
+      useInteriorColor: {
+        type: 'boolean', buffer: true
+      },
+      interiorColor: {
+        type: 'color', buffer: true
+      },
+      interiorDarkening: {
+        type: 'range', step: 0.01, max: 1, min: 0, buffer: true
+      },
+
       matrix: {
         type: 'hidden', buffer: true
       },
@@ -190,6 +207,11 @@ class Representation {
     this.roughness = defaults(p.roughness, 0.4)
     this.metalness = defaults(p.metalness, 0.0)
     this.diffuse = defaults(p.diffuse, 0xffffff)
+
+    this.diffuseInterior = defaults(p.diffuseInterior, false)
+    this.useInteriorColor = defaults(p.useInteriorColor, false)
+    this.interiorColor = defaults(p.interiorColor, 0x222222)
+    this.interiorDarkening = defaults(p.interiorDarkening, 0)
 
     this.lazy = defaults(p.lazy, false)
     this.lazyProps = {
@@ -282,6 +304,11 @@ class Representation {
       roughness: this.roughness,
       metalness: this.metalness,
       diffuse: this.diffuse,
+
+      diffuseInterior: this.diffuseInterior,
+      useInteriorColor: this.useInteriorColor,
+      interiorColor: this.interiorColor,
+      interiorDarkening: this.interiorDarkening,
 
       matrix: this.matrix,
 

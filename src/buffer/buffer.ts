@@ -56,7 +56,6 @@ type Uniforms = { [k: string]: Uniform|{ value: any } }
 
 export const BufferDefaultParameters = {
   opaqueBack: false,
-  dullInterior: false,  // render back-side opaque
   side: 'double' as BufferSide,  // which triangle sides to render
   opacity: 1.0,  // translucency: 1 is fully opaque, 0 is fully transparent
   depthWrite: true,
@@ -68,6 +67,10 @@ export const BufferDefaultParameters = {
   roughness: 0.4,  // how rough the material is, between 0 and 1
   metalness: 0.0,  // how metallic the material is, between 0 and 1
   diffuse: 0xffffff,  // diffuse color for lighting
+  diffuseInterior: false,
+  useInteriorColor: false,  // render back-side with interior color
+  interiorColor: 0xdddddd,  // interior color
+  interiorDarkening: 0,  // interior darkening factor
   forceTransparent: false,  // force the material to allow transparency
   matrix: new Matrix4(),  // additional transformation matrix
   disablePicking: false,  // disable picking
@@ -78,7 +81,6 @@ export type BufferParameters = typeof BufferDefaultParameters
 
 export const BufferParameterTypes = {
   opaqueBack: { updateShader: true },
-  dullInterior: { updateShader: true },
   side: { updateShader: true, property: true },
   opacity: { uniform: true },
   depthWrite: { property: true },
@@ -91,6 +93,10 @@ export const BufferParameterTypes = {
   roughness: { uniform: true },
   metalness: { uniform: true },
   diffuse: { uniform: true },
+  diffuseInterior: { updateShader: true },
+  useInteriorColor: { updateShader: true },
+  interiorColor: { uniform: true },
+  interiorDarkening: { uniform: true },
   matrix: {}
 }
 
@@ -170,7 +176,9 @@ class Buffer {
       {
         emissive: { value: new Color(0x000000) },
         roughness: { value: this.parameters.roughness },
-        metalness: { value: this.parameters.metalness }
+        metalness: { value: this.parameters.metalness },
+        interiorColor: { value: new Color(this.parameters.interiorColor) },
+        interiorDarkening: { value: this.parameters.interiorDarkening },
       },
       UniformsLib.lights
     ])
@@ -537,8 +545,11 @@ class Buffer {
       if (this.parameters.opaqueBack) {
         defines.OPAQUE_BACK = 1
       }
-      if (this.parameters.dullInterior) {
-        defines.DULL_INTERIOR = 1
+      if (this.parameters.diffuseInterior) {
+        defines.DIFFUSE_INTERIOR = 1
+      }
+      if (this.parameters.useInteriorColor) {
+        defines.USE_INTERIOR_COLOR = 1
       }
     }
 

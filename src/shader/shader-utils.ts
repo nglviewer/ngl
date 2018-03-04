@@ -6,8 +6,8 @@
 
 import { ShaderChunk } from 'three'
 
-import './chunk/dull_interior_fragment.glsl'
 import './chunk/fog_fragment.glsl'
+import './chunk/interior_fragment.glsl'
 import './chunk/matrix_scale.glsl'
 import './chunk/nearclip_vertex.glsl'
 import './chunk/nearclip_fragment.glsl'
@@ -20,7 +20,8 @@ import { ShaderRegistry } from '../globals'
 
 type ShaderDefine = (
   'NEAR_CLIP'|'RADIUS_CLIP'|'PICKING'|'NOLIGHT'|'FLAT_SHADED'|'OPAQUE_BACK'|
-  'DULL_INTERIOR'|'USE_SIZEATTENUATION'|'USE_MAP'|'ALPHATEST'|'SDF'|'FIXED_SIZE'|
+  'DIFFUSE_INTERIOR'|'USE_INTERIOR_COLOR'|
+  'USE_SIZEATTENUATION'|'USE_MAP'|'ALPHATEST'|'SDF'|'FIXED_SIZE'|
   'CUBIC_INTERPOLATION'|'BSPLINE_FILTER'|'CATMULROM_FILTER'|'MITCHELL_FILTER'
 )
 export type ShaderDefines = {
@@ -62,8 +63,10 @@ export function getShader (name: string, defines: ShaderDefines = {}) {
     shaderText = shaderText.replace(reInclude, function (match, p1) {
       const path = `shader/chunk/${p1}.glsl`
       const chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
-
-      return chunk || ''
+      if (!chunk) {
+        throw new Error(`empty chunk, '${p1}'`)
+      }
+      return chunk
     })
 
     shaderCache[ hash ] = definesText + shaderText

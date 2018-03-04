@@ -34,6 +34,7 @@ class HelixorientRepresentation extends StructureRepresentation {
     p.radiusType = defaults(p.radiusType, 'size')
     p.radiusSize = defaults(p.radiusSize, 0.15)
     p.radiusScale = defaults(p.radiusScale, 1.0)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

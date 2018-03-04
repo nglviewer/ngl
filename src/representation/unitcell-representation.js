@@ -45,6 +45,7 @@ class UnitcellRepresentation extends StructureRepresentation {
 
     p.radiusSize = defaults(p.radiusSize, defaultRadius)
     p.colorValue = defaults(p.colorValue, 'orange')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

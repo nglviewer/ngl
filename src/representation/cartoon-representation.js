@@ -66,6 +66,7 @@ class CartoonRepresentation extends StructureRepresentation {
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
     p.radiusType = defaults(p.radiusType, 'sstruc')
     p.radiusScale = defaults(p.radiusScale, 0.7)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.aspectRatio = defaults(p.aspectRatio, 5.0)
     this.tension = defaults(p.tension, NaN)
@@ -130,8 +131,7 @@ class CartoonRepresentation extends StructureRepresentation {
           this.getBufferParams({
             radialSegments: this.radialSegments,
             aspectRatio: aspectRatio,
-            capped: this.capped,
-            dullInterior: true
+            capped: this.capped
           })
         )
       )

@@ -71,10 +71,10 @@ class AxesRepresentation extends StructureRepresentation {
   }
 
   init (params) {
-    var p = params || {}
-
+    const p = params || {}
     p.radiusSize = defaults(p.radiusSize, 0.5)
     p.colorValue = defaults(p.colorValue, 'lightgreen')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.showAxes = defaults(p.showAxes, true)
     this.showBox = defaults(p.showBox, false)
@@ -83,8 +83,8 @@ class AxesRepresentation extends StructureRepresentation {
   }
 
   getPrincipalAxes (/* sview */) {
-    var selection
-    var assembly = this.getAssembly()
+    let selection
+    const assembly = this.getAssembly()
 
     if (assembly) {
       selection = assembly.partList[ 0 ].getSelection()
@@ -94,11 +94,11 @@ class AxesRepresentation extends StructureRepresentation {
   }
 
   getAxesData (sview) {
-    var pa = this.getPrincipalAxes(sview)
-    var c = new Color(this.colorValue)
+    const pa = this.getPrincipalAxes(sview)
+    const c = new Color(this.colorValue)
 
-    var vn = 0
-    var en = 0
+    let vn = 0
+    let en = 0
 
     if (this.showAxes) {
       vn += 6
@@ -110,19 +110,19 @@ class AxesRepresentation extends StructureRepresentation {
       en += 12
     }
 
-    var vertexPosition = new Float32Array(3 * vn)
-    var vertexColor = uniformArray3(vn, c.r, c.g, c.b)
-    var vertexRadius = uniformArray(vn, this.radiusSize)
+    const vertexPosition = new Float32Array(3 * vn)
+    const vertexColor = uniformArray3(vn, c.r, c.g, c.b)
+    const vertexRadius = uniformArray(vn, this.radiusSize)
 
-    var edgePosition1 = new Float32Array(3 * en)
-    var edgePosition2 = new Float32Array(3 * en)
-    var edgeColor = uniformArray3(en, c.r, c.g, c.b)
-    var edgeRadius = uniformArray(en, this.radiusSize)
+    const edgePosition1 = new Float32Array(3 * en)
+    const edgePosition2 = new Float32Array(3 * en)
+    const edgeColor = uniformArray3(en, c.r, c.g, c.b)
+    const edgeRadius = uniformArray(en, this.radiusSize)
 
-    var offset = 0
+    let offset = 0
 
     if (this.showAxes) {
-      var addAxis = function (v1, v2) {
+      const addAxis = function (v1, v2) {
         v1.toArray(vertexPosition, offset * 2)
         v2.toArray(vertexPosition, offset * 2 + 3)
         v1.toArray(edgePosition1, offset)
@@ -136,13 +136,13 @@ class AxesRepresentation extends StructureRepresentation {
     }
 
     if (this.showBox) {
-      var v = new Vector3()
-      var { d1a, d2a, d3a, d1b, d2b, d3b } = pa.getProjectedScaleForAtoms(sview)
+      const v = new Vector3()
+      const { d1a, d2a, d3a, d1b, d2b, d3b } = pa.getProjectedScaleForAtoms(sview)
 
-      console.log(d1a, d2a, d3a, d1b, d2b, d3b)
+      // console.log(d1a, d2a, d3a, d1b, d2b, d3b)
 
-      var offset2 = offset * 2
-      var addCorner = function (d1, d2, d3) {
+      let offset2 = offset * 2
+      const addCorner = function (d1, d2, d3) {
         v.copy(pa.center)
           .addScaledVector(pa.normVecA, d1)
           .addScaledVector(pa.normVecB, d2)
@@ -159,8 +159,8 @@ class AxesRepresentation extends StructureRepresentation {
       addCorner(d1b, d2a, d3a)
       addCorner(d1b, d2a, d3b)
 
-      var edgeOffset = offset
-      var addEdge = function (a, b) {
+      let edgeOffset = offset
+      const addEdge = function (a, b) {
         v.fromArray(vertexPosition, offset * 2 + a * 3)
           .toArray(edgePosition1, edgeOffset)
         v.fromArray(vertexPosition, offset * 2 + b * 3)
@@ -202,7 +202,7 @@ class AxesRepresentation extends StructureRepresentation {
   }
 
   create () {
-    var axesData = this.getAxesData(this.structureView)
+    const axesData = this.getAxesData(this.structureView)
 
     this.sphereBuffer = new SphereBuffer(
       axesData.vertex,
@@ -230,9 +230,9 @@ class AxesRepresentation extends StructureRepresentation {
   }
 
   updateData (what, data) {
-    var axesData = this.getAxesData(data.sview)
-    var sphereData = {}
-    var cylinderData = {}
+    const axesData = this.getAxesData(data.sview)
+    const sphereData = {}
+    const cylinderData = {}
 
     if (!what || what.position) {
       sphereData.position = axesData.vertex.position

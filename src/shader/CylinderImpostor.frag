@@ -31,6 +31,8 @@
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
+uniform vec3 interiorColor;
+uniform float interiorDarkening;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
@@ -275,14 +277,22 @@ void main(){
 
         // don't use #include normal_fragment
         vec3 normal = normalize( vNormal );
-        if( interior ){
-            normal = vec3( 0.0, 0.0, 0.4 );
-        }
 
         #include lights_physical_fragment
         #include lights_template
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        if( interior ){
+            #ifdef USE_INTERIOR_COLOR
+                outgoingLight.xyz = interiorColor;
+            #else
+                #ifdef DIFFUSE_INTERIOR
+                    outgoingLight.xyz = vColor;
+                #endif
+            #endif
+            outgoingLight.xyz *= 1.0 - interiorDarkening;
+        }
 
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 
