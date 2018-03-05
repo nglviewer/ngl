@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 import {
-  PerspectiveCamera, OrthographicCamera,
+  PerspectiveCamera, OrthographicCamera, StereoCamera,
   Box3, Vector3, Matrix4, Color,
   WebGLRenderer, WebGLRenderTarget,
   NearestFilter, LinearFilter, AdditiveBlending,
@@ -34,7 +34,7 @@ import { getShader } from '../shader/shader-utils'
 import { JitterVectors } from './viewer-constants'
 import {
   makeImage, ImageParameters,
-  sortProjectedPosition, updateMaterialUniforms
+  sortProjectedPosition, updateMaterialUniforms, updateCameraUniforms
 } from './viewer-utils'
 import { testTextureSupport } from './gl-utils'
 
@@ -79,7 +79,6 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   }
 
   if (u.modelViewProjectionMatrix) {
-    camera.updateProjectionMatrix()
     u.modelViewProjectionMatrix.value.multiplyMatrices(
       camera.projectionMatrix, this.modelViewMatrix
     )
@@ -95,7 +94,6 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
         tmpMatrix
       )
     } else {
-      camera.updateProjectionMatrix()
       tmpMatrix.multiplyMatrices(
         camera.projectionMatrix, this.modelViewMatrix
       )
@@ -122,6 +120,8 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   }
 }
 
+export type CameraType = 'perspective'|'orthographic'|'stereo'
+
 interface ViewerSignals {
   ticked: Signal,
   rendered: Signal
@@ -134,7 +134,7 @@ interface ViewerParameters {
 
   backgroundColor: Color
 
-  cameraType: 'perspective'|'orthographic'
+  cameraType: CameraType
   cameraFov: number
   cameraZ: number
 
@@ -179,6 +179,7 @@ export default class Viewer {
 
   perspectiveCamera: PerspectiveCamera
   private orthographicCamera: OrthographicCamera
+  private stereoCamera: StereoCamera
   camera: PerspectiveCamera|OrthographicCamera
 
   width: number
@@ -323,10 +324,16 @@ export default class Viewer {
     this.orthographicCamera.position.z = this.parameters.cameraZ
     this.orthographicCamera.lookAt(lookAt)
 
-    if (this.parameters.cameraType === 'orthographic') {
+    this.stereoCamera = new StereoCamera()
+    this.stereoCamera.aspect = 0.5
+
+    const cameraType = this.parameters.cameraType
+    if (cameraType === 'orthographic') {
       this.camera = this.orthographicCamera
-    } else {  // parameters.cameraType === "perspective"
+    } else if(cameraType === 'perspective' || cameraType === 'stereo') {
       this.camera = this.perspectiveCamera
+    } else {
+      throw new Error(`Unknown cameraType '${cameraType}'`)
     }
     this.camera.updateProjectionMatrix()
   }
@@ -790,7 +797,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setCamera (type: 'orthographic'|'perspective', fov?: number) {
+  setCamera (type: CameraType, fov?: number) {
     const p = this.parameters
 
     if (type) p.cameraType = type
@@ -803,12 +810,14 @@ export default class Viewer {
         this.camera.up.copy(this.perspectiveCamera.up)
         this.updateZoom()
       }
-    } else {  // p.cameraType === "perspective"
+    } else if (p.cameraType === 'perspective' || p.cameraType === 'stereo') {
       if (this.camera !== this.perspectiveCamera) {
         this.camera = this.perspectiveCamera
         this.camera.position.copy(this.orthographicCamera.position)
         this.camera.up.copy(this.orthographicCamera.up)
       }
+    } else {
+      throw new Error(`Unknown cameraType '${p.cameraType}'`)
     }
 
     this.perspectiveCamera.fov = p.cameraFov
@@ -907,6 +916,15 @@ export default class Viewer {
   }
 
   pick (x: number, y: number) {
+    if (this.parameters.cameraType === 'stereo') {
+      // TODO picking broken for stereo camera
+      return {
+        'pid': 0,
+        'instance': undefined,
+        'picker': undefined
+      }
+    }
+
     x *= window.devicePixelRatio
     y *= window.devicePixelRatio
 
@@ -952,11 +970,7 @@ export default class Viewer {
     //   Log.log( "devicePixelRatio", window.devicePixelRatio );
     // }
 
-    return {
-      'pid': pid,
-      'instance': instance,
-      'picker': picker
-    }
+    return { pid, instance, picker }
   }
 
   requestRender () {
@@ -1035,13 +1049,13 @@ export default class Viewer {
   }
 
   private __updateCamera () {
-    this.camera.updateMatrix()
-    this.camera.updateMatrixWorld(true)
-    this.camera.matrixWorldInverse.getInverse(this.camera.matrixWorld)
-    this.camera.updateProjectionMatrix()
+    const camera = this.camera
+    camera.updateMatrix()
+    camera.updateMatrixWorld(true)
+    camera.updateProjectionMatrix()
 
-    updateMaterialUniforms(this.scene, this.camera, this.renderer, this.cDist, this.bRadius)
-    sortProjectedPosition(this.scene, this.camera)
+    updateMaterialUniforms(this.scene, camera, this.renderer, this.cDist, this.bRadius)
+    sortProjectedPosition(this.scene, camera)
   }
 
   private __setVisibility (model: boolean, picking: boolean, background: boolean, helper: boolean) {
@@ -1052,34 +1066,34 @@ export default class Viewer {
   }
 
   private __updateLights () {
-    this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100)
-
-    this.spotLight.position.copy(this.camera.position).add(this.distVector)
     this.spotLight.color.set(this.parameters.lightColor)
     this.spotLight.intensity = this.parameters.lightIntensity
+
+    this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100)
+    this.spotLight.position.copy(this.camera.position).add(this.distVector)
 
     this.ambientLight.color.set(this.parameters.ambientColor)
     this.ambientLight.intensity = this.parameters.ambientIntensity
   }
 
-  private __renderPickingGroup () {
+  private __renderPickingGroup (camera: PerspectiveCamera|OrthographicCamera) {
     this.renderer.clearTarget(this.pickingTarget, true, true, true)
     this.__setVisibility(false, true, false, false)
-    this.renderer.render(this.scene, this.camera, this.pickingTarget)
+    this.renderer.render(this.scene, camera, this.pickingTarget)
     this.updateInfo()
 
     //  back to standard render target
     this.renderer.setRenderTarget(null!)  // TODO
 
     // if (Debug) {
-    //   this.__setVisibility( false, true, false, true );
+    //   this.__setVisibility(false, true, false, true);
 
     //   this.renderer.clear();
-    //   this.renderer.render( this.scene, this.camera );
+    //   this.renderer.render(this.scene, camera);
     // }
   }
 
-  private __renderModelGroup (renderTarget?: WebGLRenderTarget) {
+  private __renderModelGroup (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     if (renderTarget) {
       this.renderer.clearTarget(renderTarget, true, true, true)
     } else {
@@ -1087,7 +1101,7 @@ export default class Viewer {
     }
 
     this.__setVisibility(false, false, true, false)
-    this.renderer.render(this.scene, this.camera, renderTarget)
+    this.renderer.render(this.scene, camera, renderTarget)
     if (renderTarget) {
       this.renderer.clearTarget(renderTarget, false, true, false)
     } else {
@@ -1096,11 +1110,11 @@ export default class Viewer {
     this.updateInfo()
 
     this.__setVisibility(true, false, false, Debug)
-    this.renderer.render(this.scene, this.camera, renderTarget)
+    this.renderer.render(this.scene, camera, renderTarget)
     this.updateInfo()
   }
 
-  private __renderSuperSample () {
+  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera) {
     // based on the Supersample Anti-Aliasing Render Pass
     // contributed to three.js by bhouston / http://clara.io/
     //
@@ -1114,17 +1128,21 @@ export default class Viewer {
 
     this.compositeUniforms.tForeground.value = this.sampleTarget.texture
 
-    const width = this.sampleTarget.width
+    let width = this.sampleTarget.width
     const height = this.sampleTarget.height
+    if (this.parameters.cameraType === 'stereo') {
+      width /= 2
+    }
 
     // render the scene multiple times, each slightly jitter offset
     // from the last and accumulate the results.
     for (let i = 0; i < offsetList.length; ++i) {
       const offset = offsetList[ i ]
-      this.camera.setViewOffset(
+      camera.setViewOffset(
         width, height, offset[ 0 ], offset[ 1 ], width, height
       )
-      this.__updateCamera()
+      camera.updateProjectionMatrix()
+      updateCameraUniforms(this.scene, camera)
 
       let sampleWeight = baseSampleWeight
       // the theory is that equal weights for each sample lead to an
@@ -1136,7 +1154,7 @@ export default class Viewer {
       sampleWeight += roundingRange * uniformCenteredDistribution
       this.compositeUniforms.scale.value = sampleWeight
 
-      this.__renderModelGroup(this.sampleTarget)
+      this.__renderModelGroup(camera, this.sampleTarget)
       this.renderer.render(
         this.compositeScene, this.compositeCamera, this.holdTarget, (i === 0)
       )
@@ -1145,8 +1163,42 @@ export default class Viewer {
     this.compositeUniforms.scale.value = 1.0
     this.compositeUniforms.tForeground.value = this.holdTarget.texture
 
-    this.camera.clearViewOffset()
+    camera.clearViewOffset()
     this.renderer.render(this.compositeScene, this.compositeCamera, null!, true)
+  }
+
+  private __renderStereo (picking = false) {
+    const stereoCamera = this.stereoCamera
+    stereoCamera.update(this.perspectiveCamera);
+
+    const renderer = this.renderer
+    const size = renderer.getSize()
+
+    renderer.setScissorTest(true)
+
+    renderer.setScissor(0, 0, size.width / 2, size.height)
+    renderer.setViewport(0, 0, size.width / 2, size.height)
+    updateCameraUniforms(this.scene, stereoCamera.cameraL)
+    this.__render(picking, stereoCamera.cameraL)
+
+    renderer.setScissor(size.width / 2, 0, size.width / 2, size.height)
+    renderer.setViewport(size.width / 2, 0, size.width / 2, size.height)
+    updateCameraUniforms(this.scene, stereoCamera.cameraR)
+    this.__render(picking, stereoCamera.cameraR)
+
+    renderer.setScissorTest(false)
+    renderer.setViewport(0, 0, size.width, size.height)
+  }
+
+  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera) {
+    if (picking) {
+      if (!this.lastRenderedPicking) this.__renderPickingGroup(camera)
+    } else if (this.sampleLevel > 0 && this.parameters.cameraType !== 'stereo') {
+      // TODO super sample broken for stereo camera
+      this.__renderSuperSample(camera)
+    } else {
+      this.__renderModelGroup(camera)
+    }
   }
 
   render (picking = false) {
@@ -1162,17 +1214,13 @@ export default class Viewer {
     this.__updateClipping()
     this.__updateCamera()
     this.__updateLights()
-
-    // render
-
     this.updateInfo(true)
 
-    if (picking) {
-      if (!this.lastRenderedPicking) this.__renderPickingGroup()
-    } else if (this.sampleLevel > 0) {
-      this.__renderSuperSample()
+    // render
+    if (this.parameters.cameraType === 'stereo') {
+      this.__renderStereo(picking)
     } else {
-      this.__renderModelGroup()
+      this.__render(picking, this.camera)
     }
     this.lastRenderedPicking = picking
 

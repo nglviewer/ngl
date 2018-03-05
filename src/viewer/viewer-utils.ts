@@ -368,3 +368,24 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
     }
   })
 }
+
+export function updateCameraUniforms (group: Object3D, camera: Camera) {
+  projectionMatrixInverse.getInverse(camera.projectionMatrix)
+  projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
+
+  group.traverse(function (o: any) {
+    const m = o.material
+    if (!m) return
+
+    const u = m.uniforms
+    if (!u) return
+
+    if (u.projectionMatrixInverse) {
+      u.projectionMatrixInverse.value.copy(projectionMatrixInverse)
+    }
+
+    if (u.projectionMatrixTranspose) {
+      u.projectionMatrixTranspose.value.copy(projectionMatrixTranspose)
+    }
+  })
+}

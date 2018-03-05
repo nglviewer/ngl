@@ -48,7 +48,7 @@ export const UIStageParameters: { [k in keyof StageParameters]: ParamType } = {
   clipDist: IntegerParam(200, 0),
   fogNear: RangeParam(1, 100, 0),
   fogFar: RangeParam(1, 100, 0),
-  cameraType: SelectParam('perspective', 'orthographic'),
+  cameraType: SelectParam('perspective', 'orthographic', 'stereo'),
   cameraFov: RangeParam(1, 120, 15),
   lightColor: ColorParam(),
   lightIntensity: NumberParam(2, 10, 0),

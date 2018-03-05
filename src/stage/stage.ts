@@ -129,7 +129,7 @@ const StageDefaultParameters = {
   fogNear: 50,
   fogFar: 100,
   cameraFov: 40,
-  cameraType: 'perspective' as 'perspective'|'orthographic',
+  cameraType: 'perspective' as 'perspective'|'orthographic'|'stereo',
   lightColor: 0xdddddd as string|number,
   lightIntensity: 1.0,
   ambientColor: 0xdddddd as string|number,

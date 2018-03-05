@@ -575,6 +575,10 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     stage.setParameters({ cameraType: 'orthographic' })
   }
 
+  function onStereoCameraOptionClick () {
+    stage.setParameters({ cameraType: 'stereo' })
+  }
+
   function onFullScreenOptionClick () {
     stage.toggleFullscreen(document.body)
   }
@@ -629,6 +633,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     createDivider(),
     createOption('Perspective', onPerspectiveCameraOptionClick),
     createOption('Orthographic', onOrthographicCameraOptionClick),
+    createOption('Stereo', onStereoCameraOptionClick),
     createDivider(),
     createOption('Full screen', onFullScreenOptionClick, 'expand'),
     createOption('Center', onCenterOptionClick, 'bullseye'),
