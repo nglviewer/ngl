@@ -53744,6 +53744,24 @@ function updateMaterialUniforms(group, camera, renderer, cDist, bRadius) {
         }
     });
 }
+function updateCameraUniforms(group, camera) {
+    projectionMatrixInverse.getInverse(camera.projectionMatrix);
+    projectionMatrixTranspose.copy(camera.projectionMatrix).transpose();
+    group.traverse(function (o) {
+        var m = o.material;
+        if (!m)
+            { return; }
+        var u = m.uniforms;
+        if (!u)
+            { return; }
+        if (u.projectionMatrixInverse) {
+            u.projectionMatrixInverse.value.copy(projectionMatrixInverse);
+        }
+        if (u.projectionMatrixTranspose) {
+            u.projectionMatrixTranspose.value.copy(projectionMatrixTranspose);
+        }
+    });
+}
 
 /**
  * @file Viewer
@@ -53928,7 +53946,6 @@ function onBeforeRender(renderer, scene, camera, geometry, material /* group */)
         updateList.push('modelViewMatrixInverseTranspose');
     }
     if (u.modelViewProjectionMatrix) {
-        camera.updateProjectionMatrix();
         u.modelViewProjectionMatrix.value.multiplyMatrices(camera.projectionMatrix, this.modelViewMatrix);
         updateList.push('modelViewProjectionMatrix');
     }
@@ -53938,7 +53955,6 @@ function onBeforeRender(renderer, scene, camera, geometry, material /* group */)
             u.modelViewProjectionMatrixInverse.value.getInverse(tmpMatrix);
         }
         else {
-            camera.updateProjectionMatrix();
             tmpMatrix.multiplyMatrices(camera.projectionMatrix, this.modelViewMatrix);
             u.modelViewProjectionMatrixInverse.value.getInverse(tmpMatrix);
         }
@@ -54056,11 +54072,17 @@ Viewer.prototype._initCamera = function _initCamera () {
     this.orthographicCamera = new OrthographicCamera(width / -2, width / 2, height / 2, height / -2);
     this.orthographicCamera.position.z = this.parameters.cameraZ;
     this.orthographicCamera.lookAt(lookAt);
-    if (this.parameters.cameraType === 'orthographic') {
+    this.stereoCamera = new StereoCamera();
+    this.stereoCamera.aspect = 0.5;
+    var cameraType = this.parameters.cameraType;
+    if (cameraType === 'orthographic') {
         this.camera = this.orthographicCamera;
     }
-    else {
+    else if (cameraType === 'perspective' || cameraType === 'stereo') {
         this.camera = this.perspectiveCamera;
+    }
+    else {
+        throw new Error(("Unknown cameraType '" + cameraType + "'"));
     }
     this.camera.updateProjectionMatrix();
 };
@@ -54479,12 +54501,15 @@ Viewer.prototype.setCamera = function setCamera (type, fov) {
             this.updateZoom();
         }
     }
-    else {
+    else if (p.cameraType === 'perspective' || p.cameraType === 'stereo') {
         if (this.camera !== this.perspectiveCamera) {
             this.camera = this.perspectiveCamera;
             this.camera.position.copy(this.orthographicCamera.position);
             this.camera.up.copy(this.orthographicCamera.up);
         }
+    }
+    else {
+        throw new Error(("Unknown cameraType '" + (p.cameraType) + "'"));
     }
     this.perspectiveCamera.fov = p.cameraFov;
     this.camera.updateProjectionMatrix();
@@ -54569,6 +54594,14 @@ Viewer.prototype.animate = function animate () {
     window.requestAnimationFrame(this.animate);
 };
 Viewer.prototype.pick = function pick (x, y) {
+    if (this.parameters.cameraType === 'stereo') {
+        // TODO picking broken for stereo camera
+        return {
+            'pid': 0,
+            'instance': undefined,
+            'picker': undefined
+        };
+    }
     x *= window.devicePixelRatio;
     y *= window.devicePixelRatio;
     var pid, instance, picker;
@@ -54607,11 +54640,7 @@ Viewer.prototype.pick = function pick (x, y) {
     //   Log.log( "picked position", x, y );
     //   Log.log( "devicePixelRatio", window.devicePixelRatio );
     // }
-    return {
-        'pid': pid,
-        'instance': instance,
-        'picker': picker
-    };
+    return { pid: pid, instance: instance, picker: picker };
 };
 Viewer.prototype.requestRender = function requestRender () {
         var this$1 = this;
@@ -54679,12 +54708,12 @@ Viewer.prototype.__updateClipping = function __updateClipping () {
     }
 };
 Viewer.prototype.__updateCamera = function __updateCamera () {
-    this.camera.updateMatrix();
-    this.camera.updateMatrixWorld(true);
-    this.camera.matrixWorldInverse.getInverse(this.camera.matrixWorld);
-    this.camera.updateProjectionMatrix();
-    updateMaterialUniforms(this.scene, this.camera, this.renderer, this.cDist, this.bRadius);
-    sortProjectedPosition(this.scene, this.camera);
+    var camera = this.camera;
+    camera.updateMatrix();
+    camera.updateMatrixWorld(true);
+    camera.updateProjectionMatrix();
+    updateMaterialUniforms(this.scene, camera, this.renderer, this.cDist, this.bRadius);
+    sortProjectedPosition(this.scene, camera);
 };
 Viewer.prototype.__setVisibility = function __setVisibility (model, picking, background, helper) {
     this.modelGroup.visible = model;
@@ -54693,27 +54722,27 @@ Viewer.prototype.__setVisibility = function __setVisibility (model, picking, bac
     this.helperGroup.visible = helper;
 };
 Viewer.prototype.__updateLights = function __updateLights () {
-    this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100);
-    this.spotLight.position.copy(this.camera.position).add(this.distVector);
     this.spotLight.color.set(this.parameters.lightColor);
     this.spotLight.intensity = this.parameters.lightIntensity;
+    this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100);
+    this.spotLight.position.copy(this.camera.position).add(this.distVector);
     this.ambientLight.color.set(this.parameters.ambientColor);
     this.ambientLight.intensity = this.parameters.ambientIntensity;
 };
-Viewer.prototype.__renderPickingGroup = function __renderPickingGroup () {
+Viewer.prototype.__renderPickingGroup = function __renderPickingGroup (camera) {
     this.renderer.clearTarget(this.pickingTarget, true, true, true);
     this.__setVisibility(false, true, false, false);
-    this.renderer.render(this.scene, this.camera, this.pickingTarget);
+    this.renderer.render(this.scene, camera, this.pickingTarget);
     this.updateInfo();
     //  back to standard render target
     this.renderer.setRenderTarget(null); // TODO
     // if (Debug) {
-    //   this.__setVisibility( false, true, false, true );
+    //   this.__setVisibility(false, true, false, true);
     //   this.renderer.clear();
-    //   this.renderer.render( this.scene, this.camera );
+    //   this.renderer.render(this.scene, camera);
     // }
 };
-Viewer.prototype.__renderModelGroup = function __renderModelGroup (renderTarget) {
+Viewer.prototype.__renderModelGroup = function __renderModelGroup (camera, renderTarget) {
     if (renderTarget) {
         this.renderer.clearTarget(renderTarget, true, true, true);
     }
@@ -54721,7 +54750,7 @@ Viewer.prototype.__renderModelGroup = function __renderModelGroup (renderTarget)
         this.renderer.clear();
     }
     this.__setVisibility(false, false, true, false);
-    this.renderer.render(this.scene, this.camera, renderTarget);
+    this.renderer.render(this.scene, camera, renderTarget);
     if (renderTarget) {
         this.renderer.clearTarget(renderTarget, false, true, false);
     }
@@ -54730,10 +54759,10 @@ Viewer.prototype.__renderModelGroup = function __renderModelGroup (renderTarget)
     }
     this.updateInfo();
     this.__setVisibility(true, false, false, Debug);
-    this.renderer.render(this.scene, this.camera, renderTarget);
+    this.renderer.render(this.scene, camera, renderTarget);
     this.updateInfo();
 };
-Viewer.prototype.__renderSuperSample = function __renderSuperSample () {
+Viewer.prototype.__renderSuperSample = function __renderSuperSample (camera) {
         var this$1 = this;
 
     // based on the Supersample Anti-Aliasing Render Pass
@@ -54748,12 +54777,16 @@ Viewer.prototype.__renderSuperSample = function __renderSuperSample () {
     this.compositeUniforms.tForeground.value = this.sampleTarget.texture;
     var width = this.sampleTarget.width;
     var height = this.sampleTarget.height;
+    if (this.parameters.cameraType === 'stereo') {
+        width /= 2;
+    }
     // render the scene multiple times, each slightly jitter offset
     // from the last and accumulate the results.
     for (var i = 0; i < offsetList.length; ++i) {
         var offset = offsetList[i];
-        this$1.camera.setViewOffset(width, height, offset[0], offset[1], width, height);
-        this$1.__updateCamera();
+        camera.setViewOffset(width, height, offset[0], offset[1], width, height);
+        camera.updateProjectionMatrix();
+        updateCameraUniforms(this$1.scene, camera);
         var sampleWeight = baseSampleWeight;
         // the theory is that equal weights for each sample lead to an
         // accumulation of rounding errors.
@@ -54763,13 +54796,47 @@ Viewer.prototype.__renderSuperSample = function __renderSuperSample () {
         var uniformCenteredDistribution = -0.5 + (i + 0.5) / offsetList.length;
         sampleWeight += roundingRange * uniformCenteredDistribution;
         this$1.compositeUniforms.scale.value = sampleWeight;
-        this$1.__renderModelGroup(this$1.sampleTarget);
+        this$1.__renderModelGroup(camera, this$1.sampleTarget);
         this$1.renderer.render(this$1.compositeScene, this$1.compositeCamera, this$1.holdTarget, (i === 0));
     }
     this.compositeUniforms.scale.value = 1.0;
     this.compositeUniforms.tForeground.value = this.holdTarget.texture;
-    this.camera.clearViewOffset();
+    camera.clearViewOffset();
     this.renderer.render(this.compositeScene, this.compositeCamera, null, true);
+};
+Viewer.prototype.__renderStereo = function __renderStereo (picking) {
+        if ( picking === void 0 ) picking = false;
+
+    var stereoCamera = this.stereoCamera;
+    stereoCamera.update(this.perspectiveCamera);
+    var renderer = this.renderer;
+    var size = renderer.getSize();
+    renderer.setScissorTest(true);
+    renderer.setScissor(0, 0, size.width / 2, size.height);
+    renderer.setViewport(0, 0, size.width / 2, size.height);
+    updateCameraUniforms(this.scene, stereoCamera.cameraL);
+    this.__render(picking, stereoCamera.cameraL);
+    renderer.setScissor(size.width / 2, 0, size.width / 2, size.height);
+    renderer.setViewport(size.width / 2, 0, size.width / 2, size.height);
+    updateCameraUniforms(this.scene, stereoCamera.cameraR);
+    this.__render(picking, stereoCamera.cameraR);
+    renderer.setScissorTest(false);
+    renderer.setViewport(0, 0, size.width, size.height);
+};
+Viewer.prototype.__render = function __render (picking, camera) {
+        if ( picking === void 0 ) picking = false;
+
+    if (picking) {
+        if (!this.lastRenderedPicking)
+            { this.__renderPickingGroup(camera); }
+    }
+    else if (this.sampleLevel > 0 && this.parameters.cameraType !== 'stereo') {
+        // TODO super sample broken for stereo camera
+        this.__renderSuperSample(camera);
+    }
+    else {
+        this.__renderModelGroup(camera);
+    }
 };
 Viewer.prototype.render = function render (picking) {
         if ( picking === void 0 ) picking = false;
@@ -54783,17 +54850,13 @@ Viewer.prototype.render = function render (picking) {
     this.__updateClipping();
     this.__updateCamera();
     this.__updateLights();
-    // render
     this.updateInfo(true);
-    if (picking) {
-        if (!this.lastRenderedPicking)
-            { this.__renderPickingGroup(); }
-    }
-    else if (this.sampleLevel > 0) {
-        this.__renderSuperSample();
+    // render
+    if (this.parameters.cameraType === 'stereo') {
+        this.__renderStereo(picking);
     }
     else {
-        this.__renderModelGroup();
+        this.__render(picking, this.camera);
     }
     this.lastRenderedPicking = picking;
     this.rendering = false;
@@ -98113,7 +98176,7 @@ var UIStageParameters = {
     clipDist: IntegerParam(200, 0),
     fogNear: RangeParam(1, 100, 0),
     fogFar: RangeParam(1, 100, 0),
-    cameraType: SelectParam('perspective', 'orthographic'),
+    cameraType: SelectParam('perspective', 'orthographic', 'stereo'),
     cameraFov: RangeParam(1, 120, 15),
     lightColor: ColorParam(),
     lightIntensity: NumberParam(2, 10, 0),
@@ -98124,7 +98187,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.26";
+var version$1 = "2.0.0-dev.27";
 
 /**
  * @file Version
