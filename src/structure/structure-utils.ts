@@ -991,7 +991,7 @@ export function concatStructures (name: string, ...structures: Structure[]) {
   structures.forEach(structure => {
     structure.eachAtom(a => {
       atomStore.growIfFull()
-      atomStore.atomTypeId[ idx ] = atomMap.add(a.atomname)
+      atomStore.atomTypeId[ idx ] = atomMap.add(a.atomname, a.element)
 
       atomStore.x[ idx ] = a.x
       atomStore.y[ idx ] = a.y
