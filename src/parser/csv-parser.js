@@ -6,7 +6,7 @@
 
 import { defaults } from '../utils'
 import { ParserRegistry } from '../globals'
-import Parser from './parser.js'
+import Parser from './parser'
 
 /**
  * CSV parser

@@ -5,9 +5,9 @@
  */
 
 import { defaults } from '../utils'
-import Parser from './parser.js'
-import Structure from '../structure/structure.js'
-import StructureBuilder from '../structure/structure-builder.js'
+import Parser from './parser'
+import Structure from '../structure/structure'
+import StructureBuilder from '../structure/structure-builder'
 
 class StructureParser extends Parser {
   constructor (streamer, params) {

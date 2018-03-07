@@ -7,7 +7,7 @@
 import { Matrix4 } from 'three'
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import VolumeParser from './volume-parser.js'
+import VolumeParser from './volume-parser'
 
 const reWhitespace = /\s+/
 

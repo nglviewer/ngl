@@ -9,7 +9,7 @@ import { Matrix4 } from 'three'
 import { Debug, Log, ParserRegistry } from '../globals'
 import { ensureBuffer } from '../utils'
 import { degToRad } from '../math/math-utils'
-import VolumeParser from './volume-parser.js'
+import VolumeParser from './volume-parser'
 
 class Dsn6Parser extends VolumeParser {
   get type () { return 'dsn6' }

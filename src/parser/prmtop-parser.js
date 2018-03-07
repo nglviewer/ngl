@@ -5,11 +5,11 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import StructureParser from './structure-parser.js'
+import StructureParser from './structure-parser'
 import {
     assignResidueTypeBonds, calculateBondsBetween,
     calculateBondsWithin, calculateChainnames
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 const amberChargeUnitFactor = 18.2223
 

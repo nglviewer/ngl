@@ -5,9 +5,9 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import Parser from './parser.js'
+import Parser from './parser'
 
-import { decodeMsgpack } from '../../lib/mmtf.es6.js'
+import { decodeMsgpack } from '../../lib/mmtf.es6'
 
 class MsgpackParser extends Parser {
   constructor (streamer, params) {

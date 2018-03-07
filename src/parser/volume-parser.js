@@ -7,8 +7,8 @@
 import { Matrix4 } from 'three'
 
 import { defaults } from '../utils'
-import Parser from './parser.js'
-import Volume from '../surface/volume.js'
+import Parser from './parser'
+import Volume from '../surface/volume'
 
 class VolumeParser extends Parser {
   constructor (streamer, params) {

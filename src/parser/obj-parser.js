@@ -7,7 +7,7 @@
 import { BufferGeometry, BufferAttribute } from 'three'
 
 import { ParserRegistry } from '../globals'
-import SurfaceParser from './surface-parser.js'
+import SurfaceParser from './surface-parser'
 
 /**
  * OBJLoader

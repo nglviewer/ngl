@@ -5,7 +5,7 @@
  */
 
 import { ParserRegistry } from '../globals'
-import PdbParser from './pdb-parser.js'
+import PdbParser from './pdb-parser'
 
 // autodock variant of PDB format with
 // - atom partial charges (empty column in pdb format)

@@ -7,16 +7,16 @@
 import { Matrix4 } from 'three'
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import StructureParser from './structure-parser.js'
+import StructureParser from './structure-parser'
 import {
     buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
-} from '../structure/structure-utils.js'
-import { ChemCompHetero } from '../structure/structure-constants.js'
-import Entity from '../structure/entity.js'
-import Unitcell from '../symmetry/unitcell.js'
-import Assembly from '../symmetry/assembly.js'
+} from '../structure/structure-utils'
+import { ChemCompHetero } from '../structure/structure-constants'
+import Entity from '../structure/entity'
+import Unitcell from '../symmetry/unitcell'
+import Assembly from '../symmetry/assembly'
 
-import { decodeMsgpack, decodeMmtf } from '../../lib/mmtf.es6.js'
+import { decodeMsgpack, decodeMmtf } from '../../lib/mmtf.es6'
 
 const SstrucMap = {
   '0': 'i'.charCodeAt(0),  // pi helix

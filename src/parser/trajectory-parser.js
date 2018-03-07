@@ -4,8 +4,8 @@
  * @private
  */
 
-import Parser from './parser.js'
-import Frames from '../trajectory/frames.js'
+import Parser from './parser'
+import Frames from '../trajectory/frames'
 
 class TrajectoryParser extends Parser {
   constructor (streamer, params) {

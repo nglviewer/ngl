@@ -5,7 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import Parser from './parser.js'
+import Parser from './parser'
 import NetcdfReader from '../utils/netcdf-reader'
 
 class NetcdfParser extends Parser {

@@ -5,7 +5,7 @@
  */
 
 import { ParserRegistry } from '../globals'
-import PdbParser from './pdb-parser.js'
+import PdbParser from './pdb-parser'
 
 // http://www.poissonboltzmann.org/docs/file-format-info/
 

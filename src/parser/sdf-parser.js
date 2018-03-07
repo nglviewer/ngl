@@ -5,8 +5,8 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import { assignResidueTypeBonds } from '../structure/structure-utils.js'
-import StructureParser from './structure-parser.js'
+import { assignResidueTypeBonds } from '../structure/structure-utils'
+import StructureParser from './structure-parser'
 
 const reItem = /> <(.+)>/
 

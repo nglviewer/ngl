@@ -5,10 +5,10 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import StructureParser from './structure-parser.js'
+import StructureParser from './structure-parser'
 import {
   calculateBonds, calculateChainnames, calculateSecondaryStructure
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 class GroParser extends StructureParser {
   get type () { return 'gro' }

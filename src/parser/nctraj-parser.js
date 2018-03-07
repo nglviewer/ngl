@@ -5,7 +5,7 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import TrajectoryParser from './trajectory-parser.js'
+import TrajectoryParser from './trajectory-parser'
 import NetcdfReader from '../utils/netcdf-reader'
 
 class NctrajParser extends TrajectoryParser {

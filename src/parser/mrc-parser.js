@@ -8,7 +8,7 @@ import { Vector3, Matrix4 } from 'three'
 
 import { Debug, Log, ParserRegistry } from '../globals'
 import { ensureBuffer } from '../utils'
-import VolumeParser from './volume-parser.js'
+import VolumeParser from './volume-parser'
 
 class MrcParser extends VolumeParser {
   get type () { return 'mrc' }

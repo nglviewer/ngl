@@ -5,12 +5,12 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import StructureParser from './structure-parser.js'
-import { WaterNames } from '../structure/structure-constants.js'
+import StructureParser from './structure-parser'
+import { WaterNames } from '../structure/structure-constants'
 import {
   assignResidueTypeBonds, calculateBondsBetween,
   calculateBondsWithin, getChainname
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 const SystemMode = 1
 const MoleculesMode = 2

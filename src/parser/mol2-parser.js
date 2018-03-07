@@ -9,8 +9,8 @@ import {
   assignResidueTypeBonds,
   calculateChainnames, calculateSecondaryStructure,
   calculateBondsBetween, calculateBondsWithin
-} from '../structure/structure-utils.js'
-import StructureParser from './structure-parser.js'
+} from '../structure/structure-utils'
+import StructureParser from './structure-parser'
 
 const reWhitespace = /\s+/
 const bondTypes = {

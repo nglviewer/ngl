@@ -5,7 +5,7 @@
  */
 
 import { ParserRegistry } from '../globals'
-import Parser from './parser.js'
+import Parser from './parser'
 
 class TextParser extends Parser {
   constructor (streamer, params) {
