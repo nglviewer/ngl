@@ -9,6 +9,7 @@ import { Vector2, Matrix4 } from 'three'
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
 
+import { BufferRegistry } from '../globals'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
@@ -49,6 +50,8 @@ class WideLineBuffer extends MappedQuadBuffer {
   constructor (data: WideLineBufferData, params: Partial<WideLineBufferParameters> = {}) {
     super(data, params)
 
+    if (!data.color2 && data.color) data.color2 = data.color
+
     this.addUniforms({
       'linewidth': { value: this.parameters.linewidth },
       'resolution': { value: new Vector2() },
@@ -65,5 +68,7 @@ class WideLineBuffer extends MappedQuadBuffer {
     this.makeMapping()
   }
 }
+
+BufferRegistry.add('wideline', WideLineBuffer)
 
 export default WideLineBuffer

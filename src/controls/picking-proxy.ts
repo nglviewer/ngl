@@ -246,6 +246,10 @@ class PickingProxy {
   /**
    * @type {Object}
    */
+  get point () { return this._objectIfType('point') as ShapePrimitive }
+  /**
+   * @type {Object}
+   */
   get mesh () { return this._objectIfType('mesh') as { name: string, shape: Shape, serial: number } }
   /**
    * @type {Object}
@@ -279,6 +283,10 @@ class PickingProxy {
    * @type {Object}
    */
   get volume () { return this._objectIfType('volume') as { volume: Volume, value: number } }
+  /**
+   * @type {Object}
+   */
+  get wideline () { return this._objectIfType('wideline') as ShapePrimitive }
 
   _objectIfType (type: string) {
     return this.type === type ? this.object : undefined
@@ -311,6 +319,8 @@ class PickingProxy {
       msg = this.ellipsoid.name
     } else if (this.octahedron) {
       msg = this.octahedron.name
+    } else if (this.point) {
+      msg = this.point.name
     } else if (this.mesh) {
       msg = `mesh: ${this.mesh.name || this.mesh.serial} (${this.mesh.shape.name})`
     } else if (this.slice) {
@@ -329,6 +339,8 @@ class PickingProxy {
       msg = 'unknown'
     } else if (this.volume) {
       msg = `volume: ${this.volume.value.toPrecision(3)} (${this.volume.volume.name})`
+    } else if (this.wideline) {
+      msg = this.wideline.name
     }
     return msg
   }

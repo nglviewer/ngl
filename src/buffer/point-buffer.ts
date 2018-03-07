@@ -9,6 +9,7 @@ import { DataTexture } from 'three'
 import '../shader/Point.vert'
 import '../shader/Point.frag'
 
+import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
@@ -174,5 +175,7 @@ class PointBuffer extends Buffer {
     if (this.tex) this.tex.dispose()
   }
 }
+
+BufferRegistry.add('point', PointBuffer)
 
 export default PointBuffer

@@ -271,3 +271,47 @@ export class TextPrimitive extends Primitive {
     box.expandByPoint(tmpVec.fromArray(data.position))
   }
 }
+
+/**
+ * Point primitive
+ */
+export class PointPrimitive extends Primitive {
+  static type = 'point'
+
+  static fields = {
+    position: 'v3',
+    color: 'c',
+  }
+
+  static positionFromShape (shape: Shape, pid: number) {
+    return this.valueFromShape(shape, pid, 'position')
+  }
+
+  static expandBoundingBox (box: Box3, data: any) {
+    box.expandByPoint(tmpVec.fromArray(data.position))
+  }
+}
+
+/**
+ * Wideline geometry primitive
+ */
+export class WidelinePrimitive extends Primitive {
+  static type = 'wideline'
+
+  static fields = {
+    position1: 'v3',
+    position2: 'v3',
+    color: 'c'
+  }
+
+  static positionFromShape (shape: Shape, pid: number) {
+    const p1 = this.valueFromShape(shape, pid, 'position1')
+    const p2 = this.valueFromShape(shape, pid, 'position2')
+    return p1.add(p2).multiplyScalar(0.5)
+  }
+
+  static expandBoundingBox (box: Box3, data: any) {
+    box.expandByPoint(tmpVec.fromArray(data.position1))
+    box.expandByPoint(tmpVec.fromArray(data.position2))
+  }
+}

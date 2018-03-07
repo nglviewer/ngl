@@ -8,9 +8,9 @@ import { Box3, Vector3, Color } from 'three'
 
 import { createParams, ensureFloat32Array, getUintArray } from '../utils'
 import {
-  ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
-  TetrahedronPrimitive, TextPrimitive, TorusPrimitive
+  ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive, EllipsoidPrimitive,
+  OctahedronPrimitive, SpherePrimitive, TetrahedronPrimitive, TextPrimitive,
+  TorusPrimitive, PointPrimitive, WidelinePrimitive
 } from './primitive'
 import { MeshPicker } from '../utils/picker'
 import Buffer from '../buffer/buffer'
@@ -21,8 +21,8 @@ const tmpBox = new Box3()
 
 const Primitives = [
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
-  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
-  TetrahedronPrimitive, TextPrimitive, TorusPrimitive
+  EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive, TetrahedronPrimitive,
+  TextPrimitive, TorusPrimitive, PointPrimitive, WidelinePrimitive
 ]
 
 const ShapeDefaultParameters = {
@@ -32,7 +32,11 @@ const ShapeDefaultParameters = {
   disableImpostor: false,
   openEnded: false,
   dashedCylinder: false,
-  labelParams: {} as Partial<TextBufferParameters>
+  labelParams: {} as Partial<TextBufferParameters>,
+  pointSize: 2,
+  sizeAttenuation: false,
+  useTexture: true,
+  lineWidth: 2
 }
 type ShapeParameters = typeof ShapeDefaultParameters
 
@@ -322,7 +326,7 @@ class Shape {
    * @example
    * shape.addText([ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ], 0.5, "Hello");
    *
-   * @param {Vector3|Array} position - from position vector or array
+   * @param {Vector3|Array} position - position vector or array
    * @param {Color|Array} color - color object or array
    * @param {Float} size - size value
    * @param {String} text - text value
@@ -331,6 +335,41 @@ class Shape {
   addText (position: Vector3|[number, number, number], color: Color|[number, number, number], size: number, text: string) {
     TextPrimitive.objectToShape(
       this, { position, color, size, text }
+    )
+    return this
+  }
+
+  /**
+   * Add point
+   * @example
+   * shape.addPoint([ 10, -2, 4 ], [ 0.2, 0.5, 0.8 ]);
+   *
+   * @param {Vector3|Array} position - position vector or array
+   * @param {Color|Array} color - color object or array
+   * @param {String} [name] - text
+   * @return {Shape} this object
+   */
+  addPoint (position: Vector3|[number, number, number], color: Color|[number, number, number], name: string) {
+    PointPrimitive.objectToShape(
+      this, { position, color, name }
+    )
+    return this
+  }
+
+  /**
+   * Add a wideline
+   * @example
+   * shape.addWideline([ 0, 2, 7 ], [ 0, 0, 9 ], [ 1, 1, 0 ]);
+   *
+   * @param {Vector3|Array} position1 - from position vector or array
+   * @param {Vector3|Array} position2 - to position vector or array
+   * @param {Color|Array} color - color object or array
+   * @param {String} [name] - text
+   * @return {Shape} this object
+   */
+  addWideline (position1: Vector3|[number, number, number], position2: Vector3|[number, number, number], color: Color|[number, number, number], name: string) {
+    WidelinePrimitive.objectToShape(
+      this, { position1, position2, color, name }
     )
     return this
   }

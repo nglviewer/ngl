@@ -12,7 +12,7 @@ import Selection from '../selection/selection'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
-  TetrahedronPrimitive, TorusPrimitive
+  TetrahedronPrimitive, TorusPrimitive, PointPrimitive, WidelinePrimitive
 } from '../geometry/primitive'
 import { contactTypeName } from '../chemistry/interactions/contact'
 
@@ -393,6 +393,14 @@ class SlicePicker extends VolumePicker {
   get type () { return 'slice' }
 }
 
+class PointPicker extends ShapePicker {
+  get primitive () { return PointPrimitive }
+}
+
+class WidelinePicker extends ShapePicker {
+  get primitive () { return WidelinePrimitive }
+}
+
 PickerRegistry.add('arrow', ArrowPicker)
 PickerRegistry.add('box', BoxPicker)
 PickerRegistry.add('cone', ConePicker)
@@ -402,6 +410,8 @@ PickerRegistry.add('octahedron', OctahedronPicker)
 PickerRegistry.add('sphere', SpherePicker)
 PickerRegistry.add('tetrahedron', TetrahedronPicker)
 PickerRegistry.add('torus', TorusPicker)
+PickerRegistry.add('point', PointPicker)
+PickerRegistry.add('wideline', WidelinePicker)
 
 export {
   Picker,
@@ -427,5 +437,7 @@ export {
   TorusPicker,
   UnitcellPicker,
   UnknownPicker,
-  VolumePicker
+  VolumePicker,
+  PointPicker,
+  WidelinePicker
 }
