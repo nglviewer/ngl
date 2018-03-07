@@ -4,10 +4,10 @@
  * @private
  */
 
-import { Vector3, Box3, Matrix3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Box3, Matrix3, Matrix4 } from 'three'
 
-import { WorkerRegistry, ColormakerRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { WorkerRegistry, ColormakerRegistry } from '../globals'
+import { defaults } from '../utils'
 import WorkerPool from '../worker/worker-pool.js'
 import { VolumePicker } from '../utils/picker.js'
 import {
@@ -59,8 +59,8 @@ WorkerRegistry.add('surf', function func (e, callback) {
   }
   if (p) {
     const sd = self.volsurf.getSurface(
-            p.isolevel, p.smooth, p.box, p.matrix, p.contour, p.wrap
-        )
+      p.isolevel, p.smooth, p.box, p.matrix, p.contour, p.wrap
+    )
     const transferList = [ sd.position.buffer, sd.index.buffer ]
     if (sd.normal) transferList.push(sd.normal.buffer)
     if (sd.atomindex) transferList.push(sd.atomindex.buffer)
@@ -152,7 +152,7 @@ class Volume {
     this.matrix.copy(matrix)
 
     const bb = this.boundingBox
-    const v = this.center  // temporary re-purposing
+    const v = this.center // temporary re-purposing
 
     const x = this.nx - 1
     const y = this.ny - 1
@@ -485,5 +485,5 @@ class Volume {
 export default Volume
 
 export {
-    VolumeSurface
+  VolumeSurface
 }

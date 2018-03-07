@@ -4,8 +4,8 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'
@@ -118,11 +118,15 @@ class LineRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
+  getAtomRadius (atom) {
+    return 0.1
+  }
+
   getBondParams (what, params) {
     params = Object.assign({
       multipleBond: this.multipleBond,
       bondSpacing: this.bondSpacing,
-      radiusParams: { 'radius': 0.1, 'scale': 1 }
+      radiusParams: { 'type': 'size', 'size': 0.1, 'scale': 1 }
     }, params)
 
     return super.getBondParams(what, params)

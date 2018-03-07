@@ -4,10 +4,10 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
-import { parseXml } from '../utils/parse-xml.js'
-import Parser from './parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { defaults } from '../utils'
+import { parseXml } from '../utils/parse-xml'
+import Parser from './parser'
 
 class XmlParser extends Parser {
   constructor (streamer, params) {

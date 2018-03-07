@@ -1,3 +1,4 @@
+
 stage.loadFile('data://1blu.pdb').then(function (o) {
   var atomTriple = [
     [ '1.C', '2.CA', '2.CB' ],

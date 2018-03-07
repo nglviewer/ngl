@@ -4,12 +4,10 @@
  * @private
  */
 
-import {
-    Geometry, Vector3, Face3, Color
-} from '../../lib/three.es6.js'
+import { Geometry, Vector3, Face3, Color } from 'three'
 
-import { ParserRegistry } from '../globals.js'
-import SurfaceParser from './surface-parser.js'
+import { ParserRegistry } from '../globals'
+import SurfaceParser from './surface-parser'
 
 /**
  * PLYLoader

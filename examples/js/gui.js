@@ -27,40 +27,39 @@ NGL.Widget = function () {
 }
 
 NGL.Widget.prototype = {
-
   constructor: NGL.Widget
-
 }
 
-NGL.createParameterInput = function (p) {
+NGL.createParameterInput = function (p, v) {
   if (!p) return
 
+  var value = v === undefined ? p.value : v
   var input
 
   if (p.type === 'number') {
-    input = new UI.Number(parseFloat(p.value))
+    input = new UI.Number(parseFloat(value))
       .setRange(p.min, p.max)
       .setPrecision(p.precision)
   } else if (p.type === 'integer') {
-    input = new UI.Integer(parseInt(p.value))
+    input = new UI.Integer(parseInt(value))
       .setRange(p.min, p.max)
   } else if (p.type === 'range') {
-    input = new UI.Range(p.min, p.max, p.value, p.step)
-      .setValue(parseFloat(p.value))
+    input = new UI.Range(p.min, p.max, value, p.step)
+      .setValue(parseFloat(value))
   } else if (p.type === 'boolean') {
-    input = new UI.Checkbox(p.value)
+    input = new UI.Checkbox(value)
   } else if (p.type === 'text') {
-    input = new UI.Input(p.value)
+    input = new UI.Input(value)
   } else if (p.type === 'select') {
     input = new UI.Select()
       .setWidth('')
       .setOptions(p.options)
-      .setValue(p.value)
+      .setValue(value)
   } else if (p.type === 'color') {
     input = new UI.ColorPopupMenu(p.label)
-      .setValue(p.value)
+      .setValue(value)
   } else if (p.type === 'vector3') {
-    input = new UI.Vector3(p.value)
+    input = new UI.Vector3(value)
       .setPrecision(p.precision)
   } else if (p.type === 'hidden') {
 
@@ -337,7 +336,7 @@ NGL.ViewportWidget = function (stage) {
   container.dom = viewer.container
   container.setPosition('absolute')
 
-    // event handlers
+  // event handlers
 
   container.dom.addEventListener('dragover', function (e) {
     e.stopPropagation()
@@ -407,9 +406,6 @@ NGL.MenubarWidget = function (stage, preferences) {
   if (NGL.examplesListUrl && NGL.examplesScriptUrl) {
     container.add(new NGL.MenubarExamplesWidget(stage))
   }
-  if (NGL.PluginRegistry && NGL.PluginRegistry.count > 0) {
-    container.add(new NGL.MenubarPluginsWidget(stage))
-  }
   container.add(new NGL.MenubarHelpWidget(stage, preferences))
 
   container.add(
@@ -433,12 +429,13 @@ NGL.MenubarFileWidget = function (stage) {
   function fileInputOnChange (e) {
     var fn = function (file, callback) {
       var ext = file.name.split('.').pop().toLowerCase()
-      if (fileTypesOpen.includes(ext)) {
-        stage.loadFile(file, {
-          defaultRepresentation: true
-        }).then(function () { callback() })
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(file).then(callback)
+      } else if (fileTypesOpen.includes(ext)) {
+        stage.loadFile(file, { defaultRepresentation: true }).then(callback)
       } else {
         console.error('unknown filetype: ' + ext)
+        callback()
       }
     }
     var queue = new NGL.Queue(fn, e.target.files)
@@ -464,12 +461,11 @@ NGL.MenubarFileWidget = function (stage) {
   }
 
   function onImportOptionClick () {
-    var datasource = NGL.DatasourceRegistry.listing
     var dirWidget
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
       if (fileTypesOpen.includes(ext)) {
-        stage.loadFile(datasource.getUrl(info.path), {
+        stage.loadFile(NGL.ListingDatasource.getUrl(info.path), {
           defaultRepresentation: true
         })
         dirWidget.dispose()
@@ -479,7 +475,7 @@ NGL.MenubarFileWidget = function (stage) {
     }
 
     dirWidget = new NGL.DirectoryListingWidget(
-      datasource, stage, 'Import file',
+      NGL.ListingDatasource, stage, 'Import file',
       fileTypesOpen, onListingClick
     )
 
@@ -548,7 +544,7 @@ NGL.MenubarFileWidget = function (stage) {
     createOption('Export image...', onExportImageOptionClick)
   ]
 
-  if (NGL.DatasourceRegistry.listing) {
+  if (NGL.ListingDatasource) {
     menuConfig.splice(
       1, 0, createOption('Import...', onImportOptionClick)
     )
@@ -577,6 +573,10 @@ NGL.MenubarViewWidget = function (stage, preferences) {
 
   function onOrthographicCameraOptionClick () {
     stage.setParameters({ cameraType: 'orthographic' })
+  }
+
+  function onStereoCameraOptionClick () {
+    stage.setParameters({ cameraType: 'stereo' })
   }
 
   function onFullScreenOptionClick () {
@@ -614,7 +614,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
   }
 
   stage.signals.fullscreenChanged.add(function (isFullscreen) {
-    var icon = menuConfig[ 3 ].children[ 0 ]
+    var icon = menuConfig[ 6 ].children[ 0 ]
     if (isFullscreen) {
       icon.switchClass('compress', 'expand')
     } else {
@@ -622,7 +622,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     }
   })
 
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var createDivider = UI.MenubarHelper.createDivider
@@ -633,6 +633,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
     createDivider(),
     createOption('Perspective', onPerspectiveCameraOptionClick),
     createOption('Orthographic', onOrthographicCameraOptionClick),
+    createOption('Stereo', onStereoCameraOptionClick),
     createDivider(),
     createOption('Full screen', onFullScreenOptionClick, 'expand'),
     createOption('Center', onCenterOptionClick, 'bullseye'),
@@ -650,7 +651,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
 }
 
 NGL.MenubarExamplesWidget = function (stage) {
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var optionsPanel = UI.MenubarHelper.createOptionsPanel([])
@@ -667,7 +668,7 @@ NGL.MenubarExamplesWidget = function (stage) {
     }
     response.sort().forEach(function (name) {
       var option = createOption(name, function () {
-        stage.loadFile(NGL.examplesScriptUrl + name + '.js')
+        stage.loadScript(NGL.examplesScriptUrl + name + '.js')
       })
       optionsPanel.add(option)
     })
@@ -675,23 +676,6 @@ NGL.MenubarExamplesWidget = function (stage) {
   xhr.send()
 
   return UI.MenubarHelper.createMenuContainer('Examples', optionsPanel)
-}
-
-NGL.MenubarPluginsWidget = function (stage) {
-    // configure menu contents
-
-  var createOption = UI.MenubarHelper.createOption
-  var menuConfig = []
-
-  NGL.PluginRegistry.names.sort().forEach(function (name) {
-    var option = createOption(name, function () {
-      NGL.PluginRegistry.load(name, stage)
-    })
-    menuConfig.push(option)
-  })
-
-  var optionsPanel = UI.MenubarHelper.createOptionsPanel(menuConfig)
-  return UI.MenubarHelper.createMenuContainer('Plugins', optionsPanel)
 }
 
 NGL.MenubarHelpWidget = function (stage, preferences) {
@@ -727,13 +711,13 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
       .setWidgetPosition( 50, 80 )
   }
 
-    // export image
+  // export image
 
   var preferencesWidget = new NGL.PreferencesWidget(stage, preferences)
     .setDisplay('none')
     .attach()
 
-    // overview
+  // overview
 
   var overviewWidget = new NGL.OverviewWidget(stage, preferences)
     .setDisplay('none')
@@ -743,7 +727,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     onOverviewOptionClick()
   }
 
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var createDivider = UI.MenubarHelper.createDivider
@@ -755,7 +739,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     createOption('Debug on', onDebugOnClick),
     createOption('Debug off', onDebugOffClick),
     createDivider(),
-    createOption('Prefereces', onPreferencesOptionClick, 'sliders')
+    createOption('Preferences', onPreferencesOptionClick, 'sliders')
   ]
 
   var optionsPanel = UI.MenubarHelper.createOptionsPanel(menuConfig)
@@ -979,10 +963,10 @@ NGL.PreferencesWidget = function (stage, preferences) {
 
     //
 
-  Object.keys(stage.parameters).forEach(function (name) {
-    var p = stage.parameters[ name ]
+  Object.keys(NGL.UIStageParameters).forEach(function (name) {
+    var p = NGL.UIStageParameters[ name ]
     if (p.label === undefined) p.label = name
-    var input = NGL.createParameterInput(p)
+    var input = NGL.createParameterInput(p, stage.parameters[ name ])
 
     if (!input) return
 
@@ -1152,14 +1136,6 @@ NGL.SidebarWidget = function (stage) {
         widget = new NGL.ShapeComponentWidget(component, stage)
         break
 
-      case 'script':
-        widget = new NGL.ScriptComponentWidget(component, stage)
-        break
-
-      case 'component':
-        widget = new NGL.ComponentWidget(component, stage)
-        break
-
       default:
         console.warn('NGL.SidebarWidget: component type unknown', component)
         return
@@ -1250,9 +1226,9 @@ NGL.SidebarWidget = function (stage) {
   ]
 
   paramNames.forEach(function (name) {
-    var p = stage.parameters[ name ]
+    var p = NGL.UIStageParameters[ name ]
     if (p.label === undefined) p.label = name
-    var input = NGL.createParameterInput(p)
+    var input = NGL.createParameterInput(p, stage.parameters[ name ])
 
     if (!input) return
 
@@ -1298,58 +1274,6 @@ NGL.SidebarWidget = function (stage) {
 
 // Component
 
-NGL.ComponentWidget = function (component, stage) {
-  var signals = component.signals
-  var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
-
-  signals.statusChanged.add(function (value) {
-    var names = {
-      404: 'Error: file not found'
-    }
-
-    var status = names[ component.status ] || component.status
-
-    container.setCollapsed(false)
-
-    container.add(
-      new UI.Text(status)
-        .setMarginLeft('20px')
-        .setWidth('200px')
-        .setWordWrap('break-word')
-    )
-
-    container.removeStatic(loading)
-    container.addStatic(dispose)
-  })
-
-  // Name
-
-  var name = new UI.EllipsisText(component.name)
-    .setWidth('100px')
-
-  // Loading indicator
-
-  var loading = new UI.Panel()
-    .setDisplay('inline')
-    .add(
-      new UI.Icon('spinner')
-        .addClass('spin')
-        .setMarginLeft('25px')
-    )
-
-    // Dispose
-
-  var dispose = new UI.DisposeIcon()
-    .setMarginLeft('10px')
-    .setDisposeFunction(function () {
-      stage.removeComponent(component)
-    })
-
-  container.addStatic(name, loading)
-
-  return container
-}
-
 NGL.StructureComponentWidget = function (component, stage) {
   var signals = component.signals
   var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
@@ -1359,19 +1283,19 @@ NGL.StructureComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
   signals.trajectoryAdded.add(function (traj) {
-    trajContainer.add(new NGL.TrajectoryComponentWidget(traj, stage))
+    trajContainer.add(new NGL.TrajectoryElementWidget(traj, stage))
   })
 
   signals.defaultAssemblyChanged.add(function () {
-    assembly.setValue(component.defaultAssembly)
+    assembly.setValue(component.parameters.defaultAssembly)
   })
 
-    // Selection
+  // Selection
 
   container.add(
     new UI.SelectionPanel(component.selection)
@@ -1379,7 +1303,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       .setInputWidth('214px')
   )
 
-    // Export PDB
+  // Export PDB
 
   var pdb = new UI.Button('export').onClick(function () {
     var pdbWriter = new NGL.PdbWriter(component.structure)
@@ -1387,7 +1311,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     componentPanel.setMenuDisplay('none')
   })
 
-    // Add representation
+  // Add representation
 
   var repr = new UI.Select()
     .setColor('#444')
@@ -1404,7 +1328,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       componentPanel.setMenuDisplay('none')
     })
 
-    // Assembly
+  // Assembly
 
   var assembly = new UI.Select()
     .setColor('#444')
@@ -1418,15 +1342,13 @@ NGL.StructureComponentWidget = function (component, stage) {
       })
       return assemblyOptions
     })())
-    .setValue(
-        component.defaultAssembly
-    )
+    .setValue(component.parameters.defaultAssembly)
     .onChange(function () {
       component.setDefaultAssembly(assembly.getValue())
       componentPanel.setMenuDisplay('none')
     })
 
-    // Open trajectory
+  // Open trajectory
 
   var trajExt = []
   NGL.ParserRegistry.getTrajectoryExtensions().forEach(function (ext) {
@@ -1456,18 +1378,17 @@ NGL.StructureComponentWidget = function (component, stage) {
     componentPanel.setMenuDisplay('none')
   })
 
-    // Import remote trajectory
+  // Import remote trajectory
 
   var remoteTraj = new UI.Button('import').onClick(function () {
     componentPanel.setMenuDisplay('none')
 
-    // TODO factor list of extensions out
+    // TODO list of extensions should be provided by trajectory datasource
     var remoteTrajExt = [
-        'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
-        'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
-        'arc', 'tng', 'trj', 'trz'
-        ]
-    var datasource = NGL.DatasourceRegistry.listing
+      'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
+      'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
+      'arc', 'tng', 'trj', 'trz'
+      ]
     var dirWidget
 
     function onListingClick (info) {
@@ -1481,7 +1402,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     }
 
     dirWidget = new NGL.DirectoryListingWidget(
-      datasource, stage, 'Import trajectory',
+      NGL.ListingDatasource, stage, 'Import trajectory',
       remoteTrajExt, onListingClick
     )
 
@@ -1492,7 +1413,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       .attach()
   })
 
-    // Superpose
+  // Superpose
 
   function setSuperposeOptions () {
     var superposeOptions = { '': '[ structure ]' }
@@ -1529,6 +1450,12 @@ NGL.StructureComponentWidget = function (component, stage) {
     q.multiply(component.quaternion.clone().inverse())
     stage.animationControls.rotate(q)
     stage.animationControls.move(component.getCenter())
+  })
+
+  // Measurements removal
+
+  var removeMeasurements = new UI.Button('remove').onClick(function () {
+    component.removeAllMeasurements()
   })
 
   // Annotations visibility
@@ -1591,7 +1518,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       component.setRotation(q)
     })
 
-    // Scale
+  // Scale
 
   var scale = new UI.Number(1)
     .setRange(0.01, 100)
@@ -1599,7 +1526,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       component.setScale(scale.getValue())
     })
 
-    // Matrix
+  // Matrix
 
   signals.matrixChanged.add(function () {
     position.setValue(component.position)
@@ -1607,7 +1534,7 @@ NGL.StructureComponentWidget = function (component, stage) {
     scale.setValue(component.scale.x)
   })
 
-    // Component panel
+  // Component panel
 
   var componentPanel = new UI.ComponentPanel(component)
     .setDisplay('inline-block')
@@ -1624,15 +1551,14 @@ NGL.StructureComponentWidget = function (component, stage) {
     )
     .addMenuEntry('Trajectory', traj)
     .addMenuEntry('Principal axes', alignAxes)
+    .addMenuEntry('Measurements', removeMeasurements)
     .addMenuEntry('Annotations', annotationButtons)
     .addMenuEntry('Validation', vali)
     .addMenuEntry('Position', position)
     .addMenuEntry('Rotation', rotation)
     .addMenuEntry('Scale', scale)
 
-  if (NGL.DatasourceRegistry.listing &&
-        NGL.DatasourceRegistry.trajectory
-    ) {
+  if (NGL.ListingDatasource && NGL.TrajectoryDatasource) {
     componentPanel.addMenuEntry('Remote trajectory', remoteTraj)
   }
 
@@ -1654,7 +1580,7 @@ NGL.SurfaceComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1742,7 +1668,7 @@ NGL.VolumeComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1831,7 +1757,7 @@ NGL.ShapeComponentWidget = function (component, stage) {
 
   signals.representationAdded.add(function (repr) {
     reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
+      new NGL.RepresentationElementWidget(repr, stage)
     )
   })
 
@@ -1910,64 +1836,10 @@ NGL.ShapeComponentWidget = function (component, stage) {
   return container
 }
 
-NGL.ScriptComponentWidget = function (component, stage) {
-  var signals = component.signals
-  var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
-
-  var panel = new UI.Panel().setMarginLeft('20px')
-
-  signals.nameChanged.add(function (value) {
-    name.setValue(value)
-  })
-
-  signals.statusChanged.add(function (value) {
-    if (value === 'finished') {
-      container.removeStatic(status)
-      container.addStatic(dispose)
-    }
-  })
-
-  component.script.signals.elementAdded.add(function (value) {
-    panel.add.apply(panel, value)
-  })
-
-  component.script.signals.elementRemoved.add(function (value) {
-    panel.remove.apply(panel, value)
-  })
-
-  // Actions
-
-  var dispose = new UI.DisposeIcon()
-    .setMarginLeft('10px')
-    .setDisposeFunction(function () {
-      stage.removeComponent(component)
-    })
-
-  // Name
-
-  var name = new UI.EllipsisText(component.name)
-    .setWidth('100px')
-
-  // Status
-
-  var status = new UI.Icon('spinner')
-    .addClass('spin')
-    .setMarginLeft('25px')
-
-  container
-    .addStatic(name)
-    .addStatic(status)
-
-  container
-    .add(panel)
-
-  return container
-}
-
 // Representation
 
-NGL.RepresentationComponentWidget = function (component, stage) {
-  var signals = component.signals
+NGL.RepresentationElementWidget = function (element, stage) {
+  var signals = element.signals
 
   var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
     .setMarginLeft('20px')
@@ -1987,23 +1859,23 @@ NGL.RepresentationComponentWidget = function (component, stage) {
 
     // Name
 
-  var name = new UI.EllipsisText(component.name)
+  var name = new UI.EllipsisText(element.name)
     .setWidth('103px')
 
     // Actions
 
-  var toggle = new UI.ToggleIcon(component.visible, 'eye', 'eye-slash')
+  var toggle = new UI.ToggleIcon(element.visible, 'eye', 'eye-slash')
     .setTitle('hide/show')
     .setCursor('pointer')
     .setMarginLeft('25px')
     .onClick(function () {
-      component.setVisibility(!component.visible)
+      element.setVisibility(!element.visible)
     })
 
   var disposeIcon = new UI.DisposeIcon()
     .setMarginLeft('10px')
     .setDisposeFunction(function () {
-      component.dispose()
+      element.dispose()
     })
 
   container
@@ -2013,12 +1885,12 @@ NGL.RepresentationComponentWidget = function (component, stage) {
 
   // Selection
 
-  if ((component.parent.type === 'structure' ||
-          component.parent.type === 'trajectory') &&
-        component.repr.selection && component.repr.selection.type === 'selection'
+  if ((element.parent.type === 'structure' ||
+          element.parent.type === 'trajectory') &&
+        element.repr.selection && element.repr.selection.type === 'selection'
     ) {
     container.add(
-      new UI.SelectionPanel(component.repr.selection)
+      new UI.SelectionPanel(element.repr.selection)
         .setMarginLeft('20px')
         .setInputWidth('194px')
     )
@@ -2028,13 +1900,13 @@ NGL.RepresentationComponentWidget = function (component, stage) {
 
   var menu = new UI.PopupMenu('bars', 'Representation')
     .setMarginLeft('45px')
-    .setEntryLabelWidth('130px')
+    .setEntryLabelWidth('190px')
 
-  menu.addEntry('type', new UI.Text(component.repr.type))
+  menu.addEntry('type', new UI.Text(element.repr.type))
 
     // Parameters
 
-  var repr = component.repr
+  var repr = element.repr
   var rp = repr.getParameters()
 
   Object.keys(repr.parameters).forEach(function (name) {
@@ -2055,8 +1927,8 @@ NGL.RepresentationComponentWidget = function (component, stage) {
     function setParam () {
       var po = {}
       po[ name ] = input.getValue()
-      component.setParameters(po)
-      component.viewer.requestRender()
+      element.setParameters(po)
+      stage.viewer.requestRender()
     }
 
     var ua = navigator.userAgent
@@ -2077,20 +1949,12 @@ NGL.RepresentationComponentWidget = function (component, stage) {
 
 // Trajectory
 
-NGL.TrajectoryComponentWidget = function (component, stage) {
-  var signals = component.signals
-  var traj = component.trajectory
+NGL.TrajectoryElementWidget = function (element, stage) {
+  var signals = element.signals
+  var traj = element.trajectory
 
   var container = new UI.CollapsibleIconPanel('minus-square', 'plus-square')
     .setMarginLeft('20px')
-
-  var reprContainer = new UI.Panel()
-
-  signals.representationAdded.add(function (repr) {
-    reprContainer.add(
-      new NGL.RepresentationComponentWidget(repr, stage)
-    )
-  })
 
   signals.disposed.add(function () {
     menu.dispose()
@@ -2127,8 +1991,8 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
     setFrame(traj.currentFrame)
 
-    if (component.defaultStep !== undefined) {
-      step.setValue(component.defaultStep)
+    if (element.parameters.defaultStep !== undefined) {
+      step.setValue(element.parameters.defaultStep)
     } else {
       // 1000 = n / step
       step.setValue(Math.ceil((value + 1) / 100))
@@ -2143,7 +2007,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   // Name
 
-  var name = new UI.EllipsisText(component.name)
+  var name = new UI.EllipsisText(element.parameters.name)
     .setWidth('103px')
 
   signals.nameChanged.add(function (value) {
@@ -2205,12 +2069,12 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'linear': 'linear',
       'spline': 'spline'
     })
-    .setValue(component.defaultInterpolateType)
+    .setValue(element.parameters.defaultInterpolateType)
     .onChange(function () {
       player.setParameters({interpolateType: interpolateType.getValue()})
     })
 
-  var interpolateStep = new UI.Integer(component.defaultInterpolateStep)
+  var interpolateStep = new UI.Integer(element.parameters.defaultInterpolateStep)
     .setWidth('30px')
     .setRange(1, 50)
     .onChange(function () {
@@ -2224,7 +2088,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'backward': 'backward',
       'bounce': 'bounce'
     })
-    .setValue(component.defaultDirection)
+    .setValue(element.parameters.defaultDirection)
     .onChange(function () {
       player.setParameters({direction: playDirection.getValue()})
     })
@@ -2235,14 +2099,14 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
       'loop': 'loop',
       'once': 'once'
     })
-    .setValue(component.defaultMode)
+    .setValue(element.parameters.defaultMode)
     .onChange(function () {
       player.setParameters({mode: playMode.getValue()})
     })
 
   // player
 
-  var timeout = new UI.Integer(component.defaultTimeout)
+  var timeout = new UI.Integer(element.parameters.defaultTimeout)
     .setWidth('30px')
     .setRange(10, 1000)
     .onChange(function () {
@@ -2298,28 +2162,28 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   var setCenterPbc = new UI.Checkbox(traj.centerPbc)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'centerPbc': setCenterPbc.getValue()
       })
     })
 
   var setRemovePeriodicity = new UI.Checkbox(traj.removePeriodicity)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'removePeriodicity': setRemovePeriodicity.getValue()
       })
     })
 
   var setRemovePbc = new UI.Checkbox(traj.removePbc)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'removePbc': setRemovePbc.getValue()
       })
     })
 
   var setSuperpose = new UI.Checkbox(traj.superpose)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'superpose': setSuperpose.getValue()
       })
     })
@@ -2328,7 +2192,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setWidth('55px')
     .setRange(0, 1000000)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'deltaTime': setDeltaTime.getValue()
       })
     })
@@ -2337,7 +2201,7 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     .setWidth('55px')
     .setRange(0, 1000000000)
     .onChange(function () {
-      component.setParameters({
+      element.setParameters({
         'timeOffset': setTimeOffset.getValue()
       })
     })
@@ -2352,18 +2216,11 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
     traj.setFrame(frame.getValue())
   })
 
-  // Add representation
-
-  var repr = new UI.Button('add')
-    .onClick(function () {
-      component.addRepresentation()
-    })
-
   // Dispose
 
   var dispose = new UI.DisposeIcon()
     .setDisposeFunction(function () {
-      component.parent.removeTrajectory(component)
+      element.parent.removeTrajectory(element)
     })
 
   //
@@ -2377,7 +2234,6 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
   var menu = new UI.PopupMenu('bars', 'Trajectory')
     .setMarginLeft('10px')
     .setEntryLabelWidth('130px')
-    .addEntry('Path', repr)
     .addEntry('Center', setCenterPbc)
     .addEntry('Remove Periodicity', setRemovePeriodicity)
     .addEntry('Remove PBC', setRemovePbc)
@@ -2401,9 +2257,6 @@ NGL.TrajectoryComponentWidget = function (component, stage) {
 
   container
     .add(frameRow)
-
-  container
-    .add(reprContainer)
 
   return container
 }

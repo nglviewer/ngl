@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import Spline from '../geometry/spline.js'
 import StructureRepresentation from './structure-representation.js'
 import RibbonBuffer from '../buffer/ribbon-buffer.js'
@@ -46,8 +46,8 @@ class RibbonRepresentation extends StructureRepresentation {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
-    p.radius = defaults(p.radius, 'sstruc')
-    p.scale = defaults(p.scale, 4.0)
+    p.radiusType = defaults(p.radiusType, 'sstruc')
+    p.radiusScale = defaults(p.radiusScale, 4.0)
 
     if (p.quality === 'low') {
       this.subdiv = 3
@@ -74,6 +74,10 @@ class RibbonRepresentation extends StructureRepresentation {
     }, params)
   }
 
+  getAtomRadius (atom) {
+    return atom.isTrace() ? super.getAtomRadius(atom) : 0
+  }
+
   createData (sview) {
     var bufferList = []
     var polymerList = []
@@ -87,7 +91,7 @@ class RibbonRepresentation extends StructureRepresentation {
       var subOri = spline.getSubdividedOrientation()
       var subCol = spline.getSubdividedColor(this.getColorParams())
       var subPick = spline.getSubdividedPicking()
-      var subSize = spline.getSubdividedSize(this.radius, this.scale)
+      var subSize = spline.getSubdividedSize(this.getRadiusParams())
 
       bufferList.push(
         new RibbonBuffer(
@@ -99,7 +103,7 @@ class RibbonRepresentation extends StructureRepresentation {
             size: subSize.size,
             picking: subPick.picking
           },
-            this.getBufferParams()
+          this.getBufferParams()
         )
       )
     }, sview.getSelection())
@@ -129,7 +133,7 @@ class RibbonRepresentation extends StructureRepresentation {
       }
 
       if (what.radius || what.scale) {
-        var subSize = spline.getSubdividedSize(this.radius, this.scale)
+        var subSize = spline.getSubdividedSize(this.getRadiusParams())
         bufferData.size = subSize.size
       }
 

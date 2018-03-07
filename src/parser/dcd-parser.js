@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { uint8ToString, ensureBuffer } from '../utils.js'
-import TrajectoryParser from './trajectory-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { uint8ToString, ensureBuffer } from '../utils'
+import TrajectoryParser from './trajectory-parser'
 
 const charmmTimeUnitFactor = 20.45482949774598
 

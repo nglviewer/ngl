@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import CartoonRepresentation from './cartoon-representation.js'
 
 /**
@@ -25,7 +25,7 @@ class TubeRepresentation extends CartoonRepresentation {
   init (params) {
     var p = params || {}
     p.aspectRatio = 1.0
-    p.scale = defaults(p.scale, 2.0)
+    p.radiusScale = defaults(p.radiusScale, 2.0)
 
     if (p.quality === 'low') {
       this.radialSegments = 5

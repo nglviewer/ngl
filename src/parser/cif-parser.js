@@ -4,19 +4,19 @@
  * @private
  */
 
-import { Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import StructureParser from './structure-parser.js'
-import { HelixTypes } from './pdb-parser.js'
-import Entity from '../structure/entity.js'
-import Unitcell from '../symmetry/unitcell.js'
-import Assembly from '../symmetry/assembly.js'
-import Selection from '../selection/selection.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import StructureParser from './structure-parser'
+import { HelixTypes } from './pdb-parser'
+import Entity from '../structure/entity'
+import Unitcell from '../symmetry/unitcell'
+import Assembly from '../symmetry/assembly'
+import Selection from '../selection/selection'
 import {
   assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
   calculateBonds, calculateSecondaryStructure
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 const reWhitespace = /\s+/
 const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g

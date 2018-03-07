@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import StructureRepresentation from './structure-representation.js'
 import PointBuffer from '../buffer/point-buffer.js'
 
@@ -106,6 +106,10 @@ class PointRepresentation extends StructureRepresentation {
     }
 
     data.bufferList[ 0 ].setAttributes(pointData)
+  }
+
+  getAtomRadius () {
+    return 0.1
   }
 }
 

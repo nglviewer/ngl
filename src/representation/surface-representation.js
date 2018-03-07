@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Vector3, Box3 } from '../../lib/three.es6.js'
+import { Vector3, Box3 } from 'three'
 
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 import Representation from './representation.js'
 import Volume from '../surface/volume.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
@@ -57,11 +57,14 @@ class SurfaceRepresentation extends Representation {
       negateIsolevel: {
         type: 'boolean'
       },
+      isolevelScroll: {
+        type: 'boolean'
+      },
       smooth: {
         type: 'integer', precision: 1, max: 10, min: 0
       },
       background: {
-        type: 'boolean', rebuild: true  // FIXME
+        type: 'boolean', rebuild: true // FIXME
       },
       opaqueBack: {
         type: 'boolean', buffer: true
@@ -118,6 +121,7 @@ class SurfaceRepresentation extends Representation {
     this.isolevelType = defaults(p.isolevelType, 'sigma')
     this.isolevel = defaults(p.isolevel, 2.0)
     this.negateIsolevel = defaults(p.negateIsolevel, false)
+    this.isolevelScroll = defaults(p.isolevelScroll, false)
     this.smooth = defaults(p.smooth, 0)
     this.background = defaults(p.background, false)
     this.opaqueBack = defaults(p.opaqueBack, true)

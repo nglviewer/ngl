@@ -1,5 +1,5 @@
 uniform mat4 projectionMatrixInverse;
-uniform float nearClip;
+uniform float clipNear;
 
 varying float vRadius;
 varying float vRadiusSq;

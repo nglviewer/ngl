@@ -4,7 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
+import { defaults } from '../utils'
+import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 
@@ -27,6 +28,7 @@ class SpacefillRepresentation extends StructureRepresentation {
 
   init (params) {
     var p = params || {}
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

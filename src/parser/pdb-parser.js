@@ -4,19 +4,19 @@
  * @private
  */
 
-import { Matrix4 } from '../../lib/three.es6.js'
+import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
-import StructureParser from './structure-parser.js'
-import Entity from '../structure/entity.js'
-import Unitcell from '../symmetry/unitcell.js'
-import Assembly from '../symmetry/assembly.js'
-import { WaterNames } from '../structure/structure-constants.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { defaults } from '../utils'
+import StructureParser from './structure-parser'
+import Entity from '../structure/entity'
+import Unitcell from '../symmetry/unitcell'
+import Assembly from '../symmetry/assembly'
+import { WaterNames } from '../structure/structure-constants'
 import {
     assignSecondaryStructure, buildUnitcellAssembly,
     calculateBonds, calculateChainnames, calculateSecondaryStructure
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 // PDB helix record encoding
 const HelixTypes = {
@@ -107,6 +107,7 @@ class PdbParser extends StructureParser {
     }
 
     const isPqr = this.type === 'pqr'
+    const isPdbqt = this.type === 'pdbqt'
 
     const s = this.structure
     const sb = this.structureBuilder
@@ -177,10 +178,8 @@ class PdbParser extends StructureParser {
     const atomMap = s.atomMap
     const atomStore = s.atomStore
     atomStore.resize(Math.round(this.streamer.data.length / 80))
-    if (isPqr) {
-      atomStore.addField('partialCharge', 1, 'float32')
-      atomStore.addField('radius', 1, 'float32')
-    }
+    if (isPqr || isPdbqt) atomStore.addField('partialCharge', 1, 'float32')
+    if (isPqr) atomStore.addField('radius', 1, 'float32')
 
     const ap1 = s.getAtomProxy()
     const ap2 = s.getAtomProxy()
@@ -283,9 +282,13 @@ class PdbParser extends StructureParser {
             occupancy = parseFloat(line.substr(54, 6))
 
             if (!isLegacy) {
-              element = line.substr(76, 2).trim()
-              if (!chainname) {
-                chainname = line.substr(72, 4).trim()  // segid
+              if (isPdbqt) {
+                element = line.substr(12, 2).trim()
+              } else {
+                element = line.substr(76, 2).trim()
+                if (!chainname) {
+                  chainname = line.substr(72, 4).trim()  // segid
+                }
               }
             }
           }
@@ -305,6 +308,9 @@ class PdbParser extends StructureParser {
             atomStore.radius[ idx ] = parseFloat(ls[ 10 - dd ])
           } else {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
+            if (isPdbqt) {
+              atomStore.partialCharge[ idx ] = parseFloat(line.substr(70, 6))
+            }
           }
 
           const modresId = getModresId(resno, chainname, inscode)
@@ -500,7 +506,7 @@ class PdbParser extends StructureParser {
           s.title += (s.title ? ' ' : '') + line.substr(10, 70).trim()
         } else if (recordName === 'MODEL ') {
           pendingStart = true
-        } else if (recordName === 'ENDMDL' || line.startsWith('END')) {
+        } else if (recordName === 'ENDMDL' || line.trim() === 'END') {
           if (pendingStart) continue
 
           if (asTrajectory && !doFrames) {

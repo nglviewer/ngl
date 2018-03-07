@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import StructureRepresentation from './structure-representation.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 
@@ -22,8 +22,8 @@ class ValidationRepresentation extends StructureRepresentation {
 
     }, this.parameters, {
       radiusType: null,
-      radius: null,
-      scale: null
+      radiusSize: null,
+      radiusScale: null
     })
 
     this.init(params)
@@ -32,6 +32,7 @@ class ValidationRepresentation extends StructureRepresentation {
   init (params) {
     const p = params || {}
     p.colorValue = defaults(p.colorValue, '#f0027f')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

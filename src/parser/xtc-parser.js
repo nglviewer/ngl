@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import TrajectoryParser from './trajectory-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import TrajectoryParser from './trajectory-parser'
 
 const MagicInts = new Uint32Array([
   0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64,

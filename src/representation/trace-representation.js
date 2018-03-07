@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import Spline from '../geometry/spline.js'
 import StructureRepresentation from './structure-representation.js'
 import TraceBuffer from '../buffer/trace-buffer.js'
@@ -70,6 +70,10 @@ class TraceRepresentation extends StructureRepresentation {
       directional: false,
       smoothSheet: this.smoothSheet
     }, params)
+  }
+
+  getAtomRadius (atom) {
+    return atom.isTrace() ? 0.1 : 0
   }
 
   createData (sview) {

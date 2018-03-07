@@ -4,12 +4,12 @@
  * @private
  */
 
-import { Matrix4 } from '../../lib/three.es6.js'
+import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import { degToRad } from '../math/math-utils.js'
-import VolumeParser from './volume-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import { degToRad } from '../math/math-utils'
+import VolumeParser from './volume-parser'
 
 class Dsn6Parser extends VolumeParser {
   get type () { return 'dsn6' }

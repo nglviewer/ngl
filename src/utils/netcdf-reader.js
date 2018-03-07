@@ -567,7 +567,7 @@ class NetcdfReader {
   getDataVariable (variableName) {
     let variable
     if (typeof variableName === 'string') {
-            // search the variable
+      // search the variable
       variable = this.header.variables.find(function (val) {
         return val.name === variableName
       })

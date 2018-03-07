@@ -1,22 +1,23 @@
 /**
- * @fileOverview  Dihedral Representation
+ * @file Dihedral Representation
+ * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
  */
-import { Color } from '../../lib/three.es6.js'
+import { Color } from 'three'
 
-import { RepresentationRegistry } from '../globals.js'
-import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation'
+import { defaults } from '../utils'
 
-import DoubleSidedBuffer from '../buffer/doublesided-buffer.js'
-import MeshBuffer from '../buffer/mesh-buffer.js'
-import TextBuffer from '../buffer/text-buffer.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
+import MeshBuffer from '../buffer/mesh-buffer'
+import TextBuffer from '../buffer/text-buffer'
+import WideLineBuffer from '../buffer/wideline-buffer'
 
-import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils.js'
+import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
 import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
-  v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils.js'
-import { RAD2DEG } from '../math/math-constants.js'
+  v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils'
+import { RAD2DEG } from '../math/math-constants'
+import { getFixedLengthWrappedDashData } from '../geometry/dash'
 
 /**
  * @typedef {Object} DihedralRepresentationParameters - dihedral representation parameters
@@ -55,14 +56,8 @@ class DihedralRepresentation extends MeasurementRepresentation {
       atomQuad: {
         type: 'hidden', rebuild: true
       },
-      lineOpacity: {
-        type: 'range', min: 0.0, max: 1.0, step: 0.01
-      },
       lineVisible: {
         type: 'boolean', default: true
-      },
-      linewidth: {
-        type: 'number', precision: 2, max: 10.0, min: 0.5
       },
       planeVisible: {
         type: 'boolean', default: true
@@ -81,25 +76,22 @@ class DihedralRepresentation extends MeasurementRepresentation {
     p.opacity = defaults(p.opacity, 0.5)
 
     this.atomQuad = defaults(p.atomQuad, [])
-    this.lineOpacity = defaults(p.lineOpacity, 1.0)
     this.lineVisible = defaults(p.lineVisible, true)
-    this.linewidth = defaults(p.linewidth, 2.0)
     this.planeVisible = defaults(p.planeVisible, true)
     this.sectorVisible = defaults(p.sectorVisible, true)
 
     super.init(p)
   }
 
-  create () {
-    if (this.structureView.atomCount === 0) return
-    const atomPosition = parseNestedAtoms(this.structureView, this.atomQuad)
+  createData (sview) {
+    if (!sview.atomCount || !this.atomQuad.length) return
+
+    const atomPosition = parseNestedAtoms(sview, this.atomQuad)
     const dihedralData = getDihedralData(
-      atomPosition,
-      {planeVisible: this.planeVisible}
+      atomPosition, { planeVisible: this.planeVisible }
     )
 
     const n = this.n = dihedralData.labelText.length
-
     const labelColor = new Color(this.labelColor)
 
     this.textBuffer = new TextBuffer({
@@ -113,46 +105,44 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.lineLength = dihedralData.linePosition1.length / 3
     const lineColor = uniformArray3(this.lineLength, c.r, c.g, c.b)
 
-    this.lineBuffer = new WideLineBuffer({
-      position1: dihedralData.linePosition1,
-      position2: dihedralData.linePosition2,
-      color: lineColor,
-      color2: lineColor
-    }, this.getBufferParams({
-      linewidth: this.linewidth,
-      visible: this.lineVisible,
-      opacity: this.lineOpacity
-    }))
+    this.lineBuffer = new WideLineBuffer(
+      getFixedLengthWrappedDashData({
+        position1: dihedralData.linePosition1,
+        position2: dihedralData.linePosition2,
+        color: lineColor,
+        color2: lineColor
+      }),
+      this.getBufferParams({
+        linewidth: this.linewidth,
+        visible: this.lineVisible,
+        opacity: this.lineOpacity
+      })
+    )
 
     this.planeLength = dihedralData.planePosition.length / 3
-    this.planeMeshBuffer = new MeshBuffer({
+    this.planeBuffer = new MeshBuffer({
       position: dihedralData.planePosition,
       color: uniformArray3(this.planeLength, c.r, c.g, c.b)
     }, this.getBufferParams({
-      visible: this.planeVisible
+      visible: false // this.planeVisible
     }))
 
-    this.planeDoubleSidedBuffer = new DoubleSidedBuffer(this.planeMeshBuffer)
-
     this.sectorLength = dihedralData.sectorPosition.length / 3
-    this.sectorMeshBuffer = new MeshBuffer({
+    this.sectorBuffer = new MeshBuffer({
       position: dihedralData.sectorPosition,
       color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
     }, this.getBufferParams({
       visible: this.sectorVisible
     }))
 
-    this.sectorDoubleSidedBuffer = new DoubleSidedBuffer(this.sectorMeshBuffer)
-
-    this.dataList.push({
-      sview: this.structureView,
+    return {
       bufferList: [
         this.textBuffer,
         this.lineBuffer,
-        this.planeDoubleSidedBuffer,
-        this.sectorDoubleSidedBuffer
+        this.planeBuffer,
+        this.sectorBuffer
       ]
-    })
+    }
   }
 
   updateData (what, data) {
@@ -168,13 +158,9 @@ class DihedralRepresentation extends MeasurementRepresentation {
       sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b)
     }
 
-    // if (what.sectorOpacity) {
-    //   this.sectorMeshBuffer.opacity = what.sectorOpacity
-    // }
-
     this.lineBuffer.setAttributes(lineData)
-    this.planeMeshBuffer.setAttributes(planeData)
-    this.sectorMeshBuffer.setAttributes(sectorData)
+    this.planeBuffer.setAttributes(planeData)
+    this.sectorBuffer.setAttributes(sectorData)
   }
 
   setParameters (params) {
@@ -190,13 +176,11 @@ class DihedralRepresentation extends MeasurementRepresentation {
     }
 
     if (params && params.lineOpacity) {
-      this.lineBuffer.setParameters(
-        {opacity: params.lineOpacity})
+      this.lineBuffer.setParameters({ opacity: params.lineOpacity })
     }
 
     if (params && params.opacity !== undefined) {
-      this.lineBuffer.setParameters(
-        {opacity: this.lineOpacity})
+      this.lineBuffer.setParameters({ opacity: this.lineOpacity })
     }
 
     if (params && params.linewidth) {
@@ -209,8 +193,17 @@ class DihedralRepresentation extends MeasurementRepresentation {
   setVisibility (value, noRenderRequest) {
     super.setVisibility(value, true)
 
-    this.lineBuffer.setVisibility(this.lineVisible && this.visible)
-    this.sectorDoubleSidedBuffer.setVisibility(this.sectorVisible && this.visible)
+    if (this.lineBuffer) {
+      this.lineBuffer.setVisibility(this.lineVisible && this.visible)
+    }
+
+    if (this.planeBuffer) {
+      this.planeBuffer.setVisibility(this.planeVisible && this.visible)
+    }
+
+    if (this.sectorBuffer) {
+      this.sectorBuffer.setVisibility(this.sectorVisible && this.visible)
+    }
 
     if (!noRenderRequest) this.viewer.requestRender()
 
@@ -319,7 +312,7 @@ function getDihedralData (position, params) {
     v3toArray(tmp, labelPosition, 3 * i)
 
     const nSegments = Math.ceil(angle / angleStep)
-    const nLines = nSegments + 2
+    const nLines = nSegments + 4 // 4 straight lines plus segment edge
 
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
@@ -354,8 +347,10 @@ function getDihedralData (position, params) {
 
     v3add(arcPoint, mid, inPlane1)
 
-    v3toArray(start, line1, 0)
-    v3toArray(arcPoint, line2, 0)
+    v3toArray(p1, line1, 0)
+    v3toArray(start, line2, 0)
+    v3toArray(start, line1, 3)
+    v3toArray(arcPoint, line2, 3)
 
     // Construct plane at start
     v3toArray(start, plane, 0)
@@ -367,7 +362,7 @@ function getDihedralData (position, params) {
 
     const appendArcSection = function (a, j) {
       const si = j * 9
-      const ai = j * 3
+      const ai = (j + 2) * 3 // Lines offset by 1 due to first two straight sections
       v3toArray(mid, sector, si)
       v3toArray(arcPoint, sector, si + 3)
       v3toArray(arcPoint, line1, ai)
@@ -384,18 +379,12 @@ function getDihedralData (position, params) {
     }
     appendArcSection(angle, j++)
 
-    // Add final line: tmp vector holds the end point:
-    if (improperEnd) {
-      v3sub(tmp, p4, p2)
-      v3normalize(tmp, tmp)
-      v3add(tmp, tmp, p2)
-    } else {
-      v3add(tmp, p3, v34)
-    }
-    v3toArray(arcPoint, line1, j * 3)
-    v3toArray(tmp, line2, j * 3)
+    v3toArray(arcPoint, line1, (nLines - 2) * 3)
+    v3toArray(end, line2, (nLines - 2) * 3)
+    v3toArray(end, line1, (nLines - 1) * 3)
+    v3toArray(p4, line2, (nLines - 1) * 3)
 
-    // Construc plane at end
+    // Construct plane at end
     v3toArray(end, plane, 18)
     v3toArray(arcPoint, plane, 21)
     v3toArray(improperEnd ? p2 : p3, plane, 24)

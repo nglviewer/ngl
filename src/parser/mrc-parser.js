@@ -4,11 +4,11 @@
  * @private
  */
 
-import { Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Vector3, Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import VolumeParser from './volume-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import VolumeParser from './volume-parser'
 
 class MrcParser extends VolumeParser {
   get type () { return 'mrc' }

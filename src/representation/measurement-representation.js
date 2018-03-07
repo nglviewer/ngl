@@ -1,8 +1,10 @@
 /**
  * @file Measurement Representation
+ * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
  */
-import { Color } from '../../lib/three.es6.js'
+import { Color } from 'three'
+
 import Selection from '../selection/selection.js'
 import { Browser } from '../globals.js'
 import { defaults } from '../utils.js'
@@ -23,19 +25,18 @@ import { uniformArray, uniformArray3 } from '../math/array-utils.js'
 
 /**
  * Measurement representation
+ * @interface
  */
 class MeasurementRepresentation extends StructureRepresentation {
   /**
    * Handles common label settings and position logic for
-   * distance and angle representations
-   *
+   * distance, angle and dihedral representations
    */
   constructor (structure, viewer, params) {
     super(structure, viewer, params)
 
     this.n = 0 // Subclass create sets value
     this.parameters = Object.assign({
-
       labelVisible: {
         type: 'boolean'
       },
@@ -117,15 +118,23 @@ class MeasurementRepresentation extends StructureRepresentation {
       },
       labelBackgroundOpacity: {
         type: 'range', step: 0.01, max: 1, min: 0, buffer: 'backgroundOpacity'
+      },
+      labelFixedSize: {
+        type: 'boolean', buffer: 'fixedSize'
+      },
+      lineOpacity: {
+        type: 'range', min: 0.0, max: 1.0, step: 0.01
+      },
+      linewidth: {
+        type: 'integer', max: 50, min: 1, buffer: true
       }
     }, this.parameters, {
-      flatShaded: null,
-      assembly: null
+      flatShaded: null
     })
   }
 
   init (params) {
-    var p = params || {}
+    const p = params || {}
     this.labelVisible = defaults(p.labelVisible, true)
     this.labelSize = defaults(p.labelSize, 2.0)
     this.labelColor = defaults(p.labelColor, 0xFFFFFF)
@@ -144,6 +153,9 @@ class MeasurementRepresentation extends StructureRepresentation {
     this.labelBackgroundColor = defaults(p.labelBackgroundColor, 'lightgrey')
     this.labelBackgroundMargin = defaults(p.labelBackgroundMargin, 0.5)
     this.labelBackgroundOpacity = defaults(p.labelBackgroundOpacity, 1.0)
+    this.labelFixedSize = defaults(p.labelFixedSize, false)
+    this.lineOpacity = defaults(p.lineOpacity, 1.0)
+    this.linewidth = defaults(p.linewidth, 2)
 
     super.init(p)
   }
@@ -159,11 +171,11 @@ class MeasurementRepresentation extends StructureRepresentation {
 
   updateData (what, data) {
     const textData = {}
-    if (what.labelSize) {
+    if (!what || what.labelSize) {
       textData.size = uniformArray(this.n, this.labelSize)
     }
 
-    if (what.labelColor) {
+    if (!what || what.labelColor) {
       const c = new Color(this.labelColor)
       textData.color = uniformArray3(this.n, c.r, c.g, c.b)
     }
@@ -172,8 +184,8 @@ class MeasurementRepresentation extends StructureRepresentation {
   }
 
   setParameters (params) {
-    var rebuild = false
-    var what = {}
+    const rebuild = false
+    const what = {}
 
     if (params && params.labelSize) {
       what.labelSize = true
@@ -186,8 +198,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     super.setParameters(params, what, rebuild)
 
     if (params && params.opacity !== undefined) {
-      this.textBuffer.setParameters(
-        {opacity: 1.0}) // Don't allow opaque labels?
+      this.textBuffer.setParameters({ opacity: 1.0 }) // only opaque labels
     }
 
     if (params && params.labelVisible !== undefined) {
@@ -227,10 +238,16 @@ class MeasurementRepresentation extends StructureRepresentation {
       backgroundColor: this.labelBackgroundColor,
       backgroundMargin: this.labelBackgroundMargin,
       backgroundOpacity: this.labelBackgroundOpacity,
+      fixedSize: this.labelFixedSize,
+      disablePicking: true,
       visible: this.labelVisible
     }, params, {
-      opacity: 1.0 // Force labels at 100% opacity
+      opacity: 1.0 // only opaque labels
     }))
+  }
+
+  getAtomRadius () {
+    return 0
   }
 }
 
@@ -265,7 +282,7 @@ function parseNestedAtoms (sview, atoms) {
   let p = 0
   atoms.forEach(function (group) {
     let _break = false
-    for (var j = 0; j < order; j++) {
+    for (let j = 0; j < order; j++) {
       if (seleMode) {
         sele.setString(group[ j ])
         const atomIndices = sview.getAtomIndices(sele)

@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { uint8ToLines, ensureBuffer } from '../utils.js'
-import DxParser from './dx-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { uint8ToLines, ensureBuffer } from '../utils'
+import DxParser from './dx-parser'
 
 class DxbinParser extends DxParser {
   get type () { return 'dxbin' }

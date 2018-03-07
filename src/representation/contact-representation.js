@@ -4,13 +4,12 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { RepresentationRegistry } from '../globals.js'
-import { ContactPicker } from '../utils/picker.js'
-import { calculateCenterArray } from '../math/array-utils.js'
+import { defaults } from '../utils'
+import { RepresentationRegistry } from '../globals'
 import StructureRepresentation from './structure-representation.js'
-import { polarContacts, polarBackboneContacts } from '../geometry/contact-utils.js'
+import { calculateContacts, getContactData } from '../chemistry/interactions/contact'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import { getFixedCountDashData } from '../geometry/dash'
 
 /**
  * Contact representation.
@@ -22,24 +21,101 @@ class ContactRepresentation extends StructureRepresentation {
     this.type = 'contact'
 
     this.parameters = Object.assign({
-
-      contactType: {
-        type: 'select',
-        rebuild: true,
-        options: {
-          'polar': 'polar',
-          'polarBackbone': 'polar backbone'
-        }
+      hydrogenBond: {
+        type: 'boolean', rebuild: true
       },
-      maxDistance: {
+      weakHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
+      waterHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
+      backboneHydrogenBond: {
+        type: 'boolean', rebuild: true
+      },
+      hydrophobic: {
+        type: 'boolean', rebuild: true
+      },
+      halogenBond: {
+        type: 'boolean', rebuild: true
+      },
+      ionicInteraction: {
+        type: 'boolean', rebuild: true
+      },
+      metalCoordination: {
+        type: 'boolean', rebuild: true
+      },
+      cationPi: {
+        type: 'boolean', rebuild: true
+      },
+      piStacking: {
+        type: 'boolean', rebuild: true
+      },
+
+      filterSele: {
+        type: 'text', rebuild: true
+      },
+
+      maxHydrophobicDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
-      maxAngle: {
+      maxHbondDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxHbondSulfurDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxHbondAccAngle: {
         type: 'integer', max: 180, min: 0, rebuild: true
       },
+      maxHbondDonAngle: {
+        type: 'integer', max: 180, min: 0, rebuild: true
+      },
+      maxHbondAccPlaneAngle: {
+        type: 'integer', max: 90, min: 0, rebuild: true
+      },
+      maxHbondDonPlaneAngle: {
+        type: 'integer', max: 90, min: 0, rebuild: true
+      },
+      maxPiStackingDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxPiStackingOffset: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxPiStackingAngle: {
+        type: 'integer', max: 180, min: 0, rebuild: true
+      },
+      maxCationPiDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxCationPiOffset: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxIonicDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxHalogenBondDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      maxHalogenBondAngle: {
+        type: 'integer', max: 180, min: 0, rebuild: true
+      },
+      maxMetalDist: {
+        type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
+      },
+      refineSaltBridges: {
+        type: 'boolean', rebuild: true
+      },
+      masterModelIndex: {
+        type: 'integer', max: 1000, min: -1, rebuild: true
+      },
+      lineOfSightDistFactor: {
+        type: 'number', precision: 1, max: 10, min: 0.0, rebuild: true
+      },
+
       radialSegments: true,
       disableImpostor: true
-
     }, this.parameters)
 
     this.init(params)
@@ -47,96 +123,106 @@ class ContactRepresentation extends StructureRepresentation {
 
   init (params) {
     var p = params || {}
-    p.radius = defaults(p.radius, 0.25)
+    p.radiusSize = defaults(p.radiusSize, 0.05)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
-    this.contactType = defaults(p.contactType, 'polarBackbone')
-    this.maxDistance = defaults(p.maxDistance, 3.5)
-    this.maxAngle = defaults(p.maxAngle, 40)
+    this.hydrogenBond = defaults(p.hydrogenBond, true)
+    this.weakHydrogenBond = defaults(p.weakHydrogenBond, false)
+    this.waterHydrogenBond = defaults(p.waterHydrogenBond, false)
+    this.backboneHydrogenBond = defaults(p.backboneHydrogenBond, false)
+    this.hydrophobic = defaults(p.hydrophobic, false)
+    this.halogenBond = defaults(p.halogenBond, true)
+    this.ionicInteraction = defaults(p.ionicInteraction, true)
+    this.metalCoordination = defaults(p.metalCoordination, true)
+    this.cationPi = defaults(p.cationPi, true)
+    this.piStacking = defaults(p.piStacking, true)
+
+    this.filterSele = defaults(p.filterSele, '')
+
+    this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
+    this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
+    this.maxHbondSulfurDist = defaults(p.maxHbondSulfurDist, 4.1)
+    this.maxHbondAccAngle = defaults(p.maxHbondAccAngle, 45)
+    this.maxHbondDonAngle = defaults(p.maxHbondDonAngle, 45)
+    this.maxHbondAccPlaneAngle = defaults(p.maxHbondAccPlaneAngle, 90)
+    this.maxHbondDonPlaneAngle = defaults(p.maxHbondDonPlaneAngle, 30)
+    this.maxPiStackingDist = defaults(p.maxPiStackingDist, 5.5)
+    this.maxPiStackingOffset = defaults(p.maxPiStackingOffset, 2.0)
+    this.maxPiStackingAngle = defaults(p.maxPiStackingAngle, 30)
+    this.maxCationPiDist = defaults(p.maxCationPiDist, 6.0)
+    this.maxCationPiOffset = defaults(p.maxCationPiOffset, 2.0)
+    this.maxIonicDist = defaults(p.maxIonicDist, 5.0)
+    this.maxHalogenBondDist = defaults(p.maxHalogenBondDist, 3.5)
+    this.maxHalogenBondAngle = defaults(p.maxHalogenBondAngle, 30)
+    this.maxMetalDist = defaults(p.maxMetalDist, 3.0)
+    this.refineSaltBridges = defaults(p.refineSaltBridges, true)
+    this.masterModelIndex = defaults(p.masterModelIndex, -1)
+    this.lineOfSightDistFactor = defaults(p.lineOfSightDistFactor, 1.0)
 
     super.init(p)
   }
 
-  getContactData (sview) {
-    var contactsFnDict = {
-      'polar': polarContacts,
-      'polarBackbone': polarBackboneContacts
-    }
-
-    var contactData = contactsFnDict[ this.contactType ](
-      sview, this.maxDistance, this.maxAngle
-    )
-
-    return contactData
+  getAtomRadius () {
+    return 0
   }
 
-  getBondData (sview, what, params) {
-    var bondData = sview.getBondData(this.getBondParams(what, params))
-    if (bondData.picking) {
-      bondData.picking = new ContactPicker(
-        bondData.picking.array,
-        bondData.picking.structure,
-        params.bondStore
-      )
+  getContactData (sview) {
+    const params = {
+      maxHydrophobicDist: this.maxHydrophobicDist,
+      maxHbondDist: this.maxHbondDist,
+      maxHbondSulfurDist: this.maxHbondSulfurDist,
+      maxHbondAccAngle: this.maxHbondAccAngle,
+      maxHbondDonAngle: this.maxHbondDonAngle,
+      maxHbondAccPlaneAngle: this.maxHbondAccPlaneAngle,
+      maxHbondDonPlaneAngle: this.maxHbondDonPlaneAngle,
+      maxPiStackingDist: this.maxPiStackingDist,
+      maxPiStackingOffset: this.maxPiStackingOffset,
+      maxPiStackingAngle: this.maxPiStackingAngle,
+      maxCationPiDist: this.maxCationPiDist,
+      maxCationPiOffset: this.maxCationPiOffset,
+      maxIonicDist: this.maxIonicDist,
+      maxHalogenBondDist: this.maxHalogenBondDist,
+      maxHalogenBondAngle: this.maxHalogenBondAngle,
+      maxMetalDist: this.maxMetalDist,
+      refineSaltBridges: this.refineSaltBridges,
+      masterModelIndex: this.masterModelIndex,
+      lineOfSightDistFactor: this.lineOfSightDistFactor
     }
-    return bondData
+
+    const dataParams = {
+      hydrogenBond: this.hydrogenBond,
+      weakHydrogenBond: this.weakHydrogenBond,
+      waterHydrogenBond: this.waterHydrogenBond,
+      backboneHydrogenBond: this.backboneHydrogenBond,
+      hydrophobic: this.hydrophobic,
+      halogenBond: this.halogenBond,
+      ionicInteraction: this.ionicInteraction,
+      metalCoordination: this.metalCoordination,
+      cationPi: this.cationPi,
+      piStacking: this.piStacking,
+      radius: this.radiusSize * this.radiusScale,
+      filterSele: this.filterSele
+    }
+
+    const contacts = calculateContacts(sview, params)
+    const contactData = getContactData(contacts, sview, dataParams)
+
+    return getFixedCountDashData(contactData)
   }
 
   createData (sview) {
-    var contactData = this.getContactData(sview)
-
-    var cylinderBuffer = new CylinderBuffer(
-      this.getBondData(sview, undefined, {
-        bondSet: contactData.bondSet,
-        bondStore: contactData.bondStore
-      }),
-      this.getBufferParams({
-        openEnded: false,
-        radialSegments: this.radialSegments,
-        disableImpostor: this.disableImpostor,
-        dullInterior: true
-      })
-    )
-
-    return {
-      bufferList: [ cylinderBuffer ],
-      bondSet: contactData.bondSet,
-      bondStore: contactData.bondStore
-    }
-  }
-
-  updateData (what, data) {
-    if (!what || what.position) {
-      var contactData = this.getContactData(data.sview)
-      data.bondSet = contactData.bondSet
-      data.bondStore = contactData.bondStore
-    }
-
-    var bondParams = {
-      bondSet: data.bondSet,
-      bondStore: data.bondStore
-    }
-
-    var bondData = this.getBondData(data.sview, what, bondParams)
-    var cylinderData = {}
-
-    if (!what || what.position) {
-      cylinderData.position = calculateCenterArray(
-        bondData.position1, bondData.position2
+    const bufferList = [
+      new CylinderBuffer(
+        this.getContactData(sview),
+        this.getBufferParams({
+          sphereDetail: 1,
+          dullInterior: true,
+          disableImpostor: this.disableImpostor
+        })
       )
-      cylinderData.position1 = bondData.position1
-      cylinderData.position2 = bondData.position2
-    }
+    ]
 
-    if (!what || what.color) {
-      cylinderData.color = bondData.color
-      cylinderData.color2 = bondData.color2
-    }
-
-    if (!what || what.radius) {
-      cylinderData.radius = bondData.radius
-    }
-
-    data.bufferList[ 0 ].setAttributes(cylinderData)
+    return { bufferList }
   }
 }
 

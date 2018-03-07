@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import CartoonRepresentation from './cartoon-representation.js'
 import Helixorient from '../geometry/helixorient.js'
 import Spline from '../geometry/spline.js'
@@ -35,7 +35,7 @@ class RopeRepresentation extends CartoonRepresentation {
     var p = params || {}
     p.aspectRatio = 1.0
     p.tension = defaults(p.tension, 0.5)
-    p.scale = defaults(p.scale, 5.0)
+    p.radiusScale = defaults(p.radiusScale, 5.0)
     p.smoothSheet = false
 
     this.smooth = defaults(p.smooth, 2)

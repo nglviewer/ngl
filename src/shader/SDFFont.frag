@@ -5,7 +5,7 @@ uniform vec3 borderColor;
 uniform float borderWidth;
 uniform vec3 backgroundColor;
 uniform float backgroundOpacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 varying vec3 vViewPosition;
@@ -25,12 +25,8 @@ varying vec2 texCoord;
     #include fog_pars_fragment
 #endif
 
-#ifdef SDF
-    const float smoothness = 16.0;
-#else
-    const float smoothness = 256.0;
-#endif
-const float gamma = 2.2;
+const float gamma = 2.2 * 1.4142 / 128.0;
+const float padding = 0.75;
 
 void main(){
 
@@ -47,21 +43,13 @@ void main(){
         float sdf = texture2D( fontTexture, texCoord ).a;
         if( showBorder ) sdf += borderWidth;
 
-        // perform adaptive anti-aliasing of the edges
-        float w = clamp(
-            smoothness * ( abs( dFdx( texCoord.x ) ) + abs( dFdy( texCoord.y ) ) ),
-            0.0,
-            0.5
-        );
-        float a = smoothstep( 0.5 - w, 0.5 + w, sdf );
+        float a = smoothstep(padding - gamma, padding + gamma, sdf);
 
-        // gamma correction for linear attenuation
-        a = pow( a, 1.0 / gamma );
         if( a < 0.2 ) discard;
         a *= opacity;
 
         vec3 outgoingLight = vColor;
-        if( showBorder && sdf < ( 0.5 + borderWidth ) ){
+        if( showBorder && sdf < ( padding + borderWidth ) ){
             outgoingLight = borderColor;
         }
 

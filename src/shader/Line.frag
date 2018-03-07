@@ -1,5 +1,5 @@
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 varying vec3 vViewPosition;

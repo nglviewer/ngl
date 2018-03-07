@@ -19,8 +19,8 @@ stage.loadFile('data://3pqr.ccp4.gz').then(function (o) {
       color: new Float32Array([ 1, 0, 0 ]),
       radius: new Float32Array([ 1 ])
     },
-        { disableImpostor: true }
-    )
+    { disableImpostor: true }
+  )
   o.addBufferRepresentation(sphereBuffer, { flatShaded: true })
 
   stage.viewerControls.signals.changed.add(function () {

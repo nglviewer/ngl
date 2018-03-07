@@ -4,74 +4,71 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import { AtomPicker } from '../utils/picker.js'
 import RadiusFactory from '../utils/radius-factory.js'
 import Helixorient from './helixorient.js'
 import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils.js'
 
-function Helixbundle (polymer) {
-  this.polymer = polymer
+class Helixbundle {
+  constructor (polymer) {
+    this.polymer = polymer
 
-  this.helixorient = new Helixorient(polymer)
-  this.position = this.helixorient.getPosition()
-}
+    this.helixorient = new Helixorient(polymer)
+    this.position = this.helixorient.getPosition()
+  }
 
-Helixbundle.prototype = {
-
-  constructor: Helixbundle,
-
-  getAxis: function (localAngle, centerDist, ssBorder, colorParams, radius, scale) {
+  getAxis (localAngle, centerDist, ssBorder, colorParams, radiusParams) {
     localAngle = localAngle || 30
     centerDist = centerDist || 2.5
     ssBorder = ssBorder === undefined ? false : ssBorder
 
-    var polymer = this.polymer
-    var structure = polymer.structure
-    var n = polymer.residueCount
-    var residueIndexStart = polymer.residueIndexStart
+    const polymer = this.polymer
+    const structure = polymer.structure
+    const n = polymer.residueCount
+    const residueIndexStart = polymer.residueIndexStart
 
-    var pos = this.position
+    const pos = this.position
 
-    var cp = colorParams || {}
+    const cp = colorParams || {}
     cp.structure = structure
 
-    var colormaker = ColormakerRegistry.getScheme(cp)
+    const colormaker = ColormakerRegistry.getScheme(cp)
 
-    var radiusFactory = new RadiusFactory(radius, scale)
+    const radiusFactory = new RadiusFactory(radiusParams)
 
-    var j = 0
-    var k = 0
+    let j = 0
+    let k = 0
 
-    var axis = []
-    var center = []
-    var beg = []
-    var end = []
-    var col = []
-    var pick = []
-    var size = []
-    var residueOffset = []
-    var residueCount = []
+    const axis = []
+    const center = []
+    const beg = []
+    const end = []
+    const col = []
+    const pick = []
+    const size = []
+    const residueOffset = []
+    const residueCount = []
 
-    var tmpAxis = []
-    var tmpCenter = []
+    let tmpAxis = []
+    let tmpCenter = []
 
-    var _axis, _center
-    var _beg = new Vector3()
-    var _end = new Vector3()
+    let _axis, _center
+    const _beg = new Vector3()
+    const _end = new Vector3()
 
-    var rp1 = structure.getResidueProxy()
-    var rp2 = structure.getResidueProxy()
-    var ap = structure.getAtomProxy()
+    const rp1 = structure.getResidueProxy()
+    const rp2 = structure.getResidueProxy()
+    const ap = structure.getAtomProxy()
 
-    var c1 = new Vector3()
-    var c2 = new Vector3()
+    const c1 = new Vector3()
+    const c2 = new Vector3()
 
-    var split = false
+    let split = false
 
-    for (var i = 0; i < n; ++i) {
+    for (let i = 0; i < n; ++i) {
       rp1.index = residueIndexStart + i
       c1.fromArray(pos.center, i * 3)
 
@@ -134,21 +131,20 @@ Helixbundle.prototype = {
       }
     }
 
-    var picking = new Float32Array(pick)
+    const picking = new Float32Array(pick)
 
     return {
-      'axis': new Float32Array(axis),
-      'center': new Float32Array(center),
-      'begin': new Float32Array(beg),
-      'end': new Float32Array(end),
-      'color': new Float32Array(col),
-      'picking': new AtomPicker(picking, structure),
-      'size': new Float32Array(size),
-      'residueOffset': residueOffset,
-      'residueCount': residueCount
+      axis: new Float32Array(axis),
+      center: new Float32Array(center),
+      begin: new Float32Array(beg),
+      end: new Float32Array(end),
+      color: new Float32Array(col),
+      picking: new AtomPicker(picking, structure),
+      size: new Float32Array(size),
+      residueOffset: residueOffset,
+      residueCount: residueCount
     }
   }
-
 }
 
 export default Helixbundle

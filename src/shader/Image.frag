@@ -1,7 +1,7 @@
 uniform sampler2D map;
 uniform float opacity;
 uniform vec2 mapSize;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 varying vec2 vUv;

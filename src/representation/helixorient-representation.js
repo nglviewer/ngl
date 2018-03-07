@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Debug, Log, RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log, RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import Helixorient from '../geometry/helixorient.js'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
@@ -29,27 +29,29 @@ class HelixorientRepresentation extends StructureRepresentation {
   }
 
   init (params) {
-    var p = params || {}
+    const p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'sstruc')
-    p.radius = defaults(p.radius, 0.15)
-    p.scale = defaults(p.scale, 1.0)
+    p.radiusType = defaults(p.radiusType, 'size')
+    p.radiusSize = defaults(p.radiusSize, 0.15)
+    p.radiusScale = defaults(p.radiusScale, 1.0)
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }
 
   createData (sview) {
-    var bufferList = []
-    var polymerList = []
+    const bufferList = []
+    const polymerList = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4) return
       polymerList.push(polymer)
 
-      var helixorient = new Helixorient(polymer)
-      var position = helixorient.getPosition()
-      var color = helixorient.getColor(this.getColorParams())
-      var size = helixorient.getSize(this.radius, this.scale)
-      var picking = helixorient.getPicking()
+      const helixorient = new Helixorient(polymer)
+      const position = helixorient.getPosition()
+      const color = helixorient.getColor(this.getColorParams())
+      const size = helixorient.getSize(this.getRadiusParams())
+      const picking = helixorient.getPicking()
 
       bufferList.push(
         new SphereBuffer(
@@ -59,31 +61,31 @@ class HelixorientRepresentation extends StructureRepresentation {
             radius: size.size,
             picking: picking.picking
           },
-            this.getBufferParams({
-              sphereDetail: this.sphereDetail,
-              disableImpostor: this.disableImpostor,
-              dullInterior: true
-            })
+          this.getBufferParams({
+            sphereDetail: this.sphereDetail,
+            disableImpostor: this.disableImpostor,
+            dullInterior: true
+          })
         ),
         new VectorBuffer(
           {
             position: position.center,
             vector: position.axis
           },
-            this.getBufferParams({
-              color: 'skyblue',
-              scale: 1
-            })
+          this.getBufferParams({
+            color: 'skyblue',
+            scale: 1
+          })
         ),
         new VectorBuffer(
           {
             position: position.center,
             vector: position.resdir
           },
-            this.getBufferParams({
-              color: 'lightgreen',
-              scale: 1
-            })
+          this.getBufferParams({
+            color: 'lightgreen',
+            scale: 1
+          })
         )
       )
     }, sview.getSelection())
@@ -99,15 +101,15 @@ class HelixorientRepresentation extends StructureRepresentation {
 
     what = what || {}
 
-    for (var i = 0, il = data.polymerList.length; i < il; ++i) {
-      var j = i * 3
+    for (let i = 0, il = data.polymerList.length; i < il; ++i) {
+      const j = i * 3
 
-      var bufferData = {}
-      var polymer = data.polymerList[ i ]
-      var helixorient = new Helixorient(polymer)
+      const bufferData = {}
+      const polymer = data.polymerList[ i ]
+      const helixorient = new Helixorient(polymer)
 
       if (what.position) {
-        var position = helixorient.getPosition()
+        const position = helixorient.getPosition()
 
         bufferData.position = position.center
 

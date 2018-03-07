@@ -1,4 +1,6 @@
 
+var edmapUrl = 'https://edmaps.rcsb.org/maps/'
+
 stage.setParameters({
   cameraType: 'orthographic',
   mousePreset: 'coot'
@@ -42,6 +44,24 @@ function createFileButton (label, properties, style) {
   return button
 }
 
+var scroll2fofc, scrollFofc
+
+function isolevelScroll (stage, delta) {
+  var d = Math.sign(delta) / 10
+  stage.eachRepresentation(function (reprElem, comp) {
+    var p
+    if (scroll2fofc && reprElem === surf2fofc) {
+      p = reprElem.getParameters()
+      reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
+    } else if (scrollFofc && (reprElem === surfFofc || reprElem === surfFofcNeg)) {
+      p = reprElem.getParameters()
+      reprElem.setParameters({ isolevel: Math.max(0.01, p.isolevel + d) })
+    }
+  })
+}
+
+stage.mouseControls.add('scroll', isolevelScroll)
+
 var struc
 function loadStructure (input) {
   struc = undefined
@@ -62,12 +82,14 @@ function loadStructure (input) {
     o.autoView()
     o.addRepresentation('line', {
       colorValue: 'yellow',
-      linewidth: 7
+      multipleBond: 'offset',
+      bondSpacing: 1.1,
+      linewidth: 6
     })
     o.addRepresentation('point', {
       colorValue: 'yellow',
       sizeAttenuation: false,
-      pointSize: 7,
+      pointSize: 6,
       alphaTest: 1,
       useTexture: true
     })
@@ -80,10 +102,12 @@ function load2fofc (input) {
     file2fofcText.innerText = '2fofc file: ' + o.name
     isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
     boxSizeRange.value = 10
+    scrollSelect.value = '2fofc'
+    scroll2fofc = true
     if (surfFofc) {
       isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
-      surfFofc.setParameters({ isolevel: 3, boxSize: 10 })
-      surfFofcNeg.setParameters({ isolevel: 3, boxSize: 10 })
+      surfFofc.setParameters({ isolevel: 3, boxSize: 10, contour: true, isolevelScroll: false })
+      surfFofcNeg.setParameters({ isolevel: 3, boxSize: 10, contour: true, isolevelScroll: false })
     }
     surf2fofc = o.addRepresentation('surface', {
       color: 'skyblue',
@@ -91,7 +115,8 @@ function load2fofc (input) {
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: false
     })
   })
 }
@@ -102,17 +127,20 @@ function loadFofc (input) {
     fileFofcText.innerText = 'fofc file: ' + o.name
     isolevelFofcText.innerText = 'fofc level: 3.0\u03C3'
     boxSizeRange.value = 10
+    scrollSelect.value = '2fofc'
+    scrollFofc = false
     if (surf2fofc) {
       isolevel2fofcText.innerText = '2fofc level: 1.5\u03C3'
-      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10 })
+      surf2fofc.setParameters({ isolevel: 1.5, boxSize: 10, contour: true, isolevelScroll: false })
     }
     surfFofc = o.addRepresentation('surface', {
-      color: 'lightgreen',
+      color: 'mediumseagreen',
       isolevel: 3,
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: false
     })
     surfFofcNeg = o.addRepresentation('surface', {
       color: 'tomato',
@@ -121,7 +149,8 @@ function loadFofc (input) {
       boxSize: 10,
       useWorker: false,
       contour: true,
-      opaqueBack: false
+      opaqueBack: false,
+      isolevelScroll: false
     })
   })
 }
@@ -319,6 +348,48 @@ var screenshotButton = createElement('input', {
   }
 }, { top: '282px', left: '12px' })
 addElement(screenshotButton)
+
+var scrollSelect = createSelect([
+    [ '2fofc', 'scroll 2fofc' ],
+    [ 'fofc', 'scroll fofc' ],
+    [ 'both', 'scroll both' ]
+], {
+  onchange: function (e) {
+    var v = e.target.value
+    if (v === '2fofc') {
+      scroll2fofc = true
+      scrollFofc = false
+    } else if (v === 'fofc') {
+      scroll2fofc = false
+      scrollFofc = true
+    } else if (v === 'both') {
+      scroll2fofc = true
+      scrollFofc = true
+    }
+  }
+}, { top: '306px', left: '12px' })
+addElement(scrollSelect)
+
+var loadEdmapText = createElement('span', {
+  innerText: 'load edmap for pdb id',
+  title: 'press enter to load'
+}, { top: '330px', left: '12px', color: 'lightgrey' })
+addElement(loadEdmapText)
+
+var loadEdmapInput = createElement('input', {
+  type: 'text',
+  title: 'press enter to load',
+  onkeypress: function (e) {
+    var value = e.target.value
+    if (e.keyCode === 13) {
+      e.preventDefault()
+      loadStructure('rcsb://' + value)
+      load2fofc(edmapUrl + value + '_2fofc.dsn6')
+      loadFofc(edmapUrl + value + '_fofc.dsn6')
+    }
+  }
+}, { top: '350px', left: '12px', width: '120px' })
+addElement(loadEdmapInput)
 
 var isolevel2fofcText = createElement(
     'span', {}, { bottom: '32px', left: '12px', color: 'lightgrey' }

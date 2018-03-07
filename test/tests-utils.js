@@ -1,5 +1,5 @@
 
-import { uint8ToLines, binarySearchIndexOf } from '../src/utils.js'
+import { uint8ToLines, binarySearchIndexOf } from '../src/utils'
 
 import { assert } from 'chai'
 
