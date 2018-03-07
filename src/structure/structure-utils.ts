@@ -999,6 +999,9 @@ export function concatStructures (name: string, ...structures: Structure[]) {
       atomStore.serial[ idx ] = a.serial
       atomStore.formalCharge[ idx ] = a.formalCharge
       atomStore.partialCharge[ idx ] = a.partialCharge
+      atomStore.altloc[ idx ] = a.altloc
+      atomStore.occupancy[ idx ] = a.occupancy
+      atomStore.bfactor[ idx ] = a.bfactor
 
       sb.addAtom(
         a.modelIndex + modelCount,
