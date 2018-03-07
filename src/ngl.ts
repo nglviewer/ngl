@@ -116,6 +116,7 @@ import SphereBuffer from './buffer/sphere-buffer'
 import TetrahedronBuffer from './buffer/tetrahedron-buffer'
 import TextBuffer from './buffer/text-buffer'
 import TorusBuffer from './buffer/torus-buffer'
+import WidelineBuffer from './buffer/wideline-buffer'
 
 //
 
@@ -144,6 +145,7 @@ import './parser/dxbin-parser'
 import './parser/mrc-parser'
 import './parser/xplor-parser'
 
+import './parser/kin-parser'
 import './parser/obj-parser'
 import './parser/ply-parser'
 
@@ -237,6 +239,7 @@ export {
   TetrahedronBuffer,
   TextBuffer,
   TorusBuffer,
+  WidelineBuffer,
 
   Shape,
 
