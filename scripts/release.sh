@@ -11,7 +11,7 @@ npm run-script gallery;
 ./deploy.sh $LEVEL;
 cd ${DIR}/..;
 if [ "$LEVEL" = "prerelease" ]; then
-	npm publish --tag ts2;
+	npm publish --tag next;
 else
 	npm publish;
 fi

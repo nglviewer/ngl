@@ -17,7 +17,7 @@ else
 fi
 
 if [ "$LEVEL" = "prerelease" ]; then
-	cd ./arose.github.io/ts2/;
+	cd ./arose.github.io/ngldev/;
 else
 	cd ./arose.github.io/ngl/;
 fi
@@ -36,7 +36,7 @@ cp ${DIR}/../dist/ngl.js ./js/ngl.js;
 cd ../;
 git add -A;
 if [ "$LEVEL" = "prerelease" ]; then
-	git commit -m "ts2 update";
+	git commit -m "ngldev update";
 else
 	git commit -m "ngl update";
 fi
