@@ -14,11 +14,21 @@ import { copyArray } from '../math/array-utils'
 import { projectPointOnVector } from '../math/vector-utils'
 import Polymer from '../proxy/polymer'
 
-interface Iterator {
+export interface HelixIterator {
   size: number
   next: () => Vector3
   get: (idx: number) => Vector3
   reset: () => void
+}
+
+export interface HelixPosition {
+  center: Float32Array
+  axis: Float32Array
+  bending: Float32Array
+  radius: Float32Array
+  rise: Float32Array
+  twist: Float32Array
+  resdir: Float32Array
 }
 
 class Helixorient {
@@ -28,7 +38,7 @@ class Helixorient {
     this.size = polymer.residueCount
   }
 
-  getCenterIterator (smooth = 0) {
+  getCenterIterator (smooth = 0): HelixIterator {
     const center = this.getPosition().center
     const size = center.length / 3
 
@@ -42,7 +52,7 @@ class Helixorient {
       new Vector3()
     ]
 
-    function next (this: Iterator) {
+    function next (this: HelixIterator) {
       const vector = this.get(j)
       j += 1
       return vector
@@ -146,7 +156,7 @@ class Helixorient {
     return { size }
   }
 
-  getPosition () {
+  getPosition (): HelixPosition {
     const polymer = this.polymer
     const structure = polymer.structure
     const n = polymer.residueCount
@@ -327,13 +337,13 @@ class Helixorient {
     copyArray(axis, resAxis, 3 * n - 12, 3 * n - 3, 3)
 
     return {
-      'center': center,
-      'axis': resAxis,
-      'bending': resBending,
-      'radius': resRadius,
-      'rise': resRise,
-      'twist': resTwist,
-      'resdir': resdir
+      center,
+      axis: resAxis,
+      bending: resBending,
+      radius: resRadius,
+      rise: resRise,
+      twist: resTwist,
+      resdir: resdir
     }
   }
 

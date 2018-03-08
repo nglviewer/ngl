@@ -8,19 +8,23 @@ import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
 import { AtomPicker } from '../utils/picker.js'
-import RadiusFactory from '../utils/radius-factory.js'
-import Helixorient from './helixorient.js'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory.js'
+import Helixorient, { HelixPosition } from './helixorient.js'
 import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils.js'
+import Polymer from '../proxy/polymer'
+import { ColormakerParameters } from '../color/colormaker';
 
 class Helixbundle {
-  constructor (polymer) {
-    this.polymer = polymer
+  helixorient: Helixorient;
+  position: HelixPosition;
+
+  constructor (readonly polymer: Polymer) {
 
     this.helixorient = new Helixorient(polymer)
     this.position = this.helixorient.getPosition()
   }
 
-  getAxis (localAngle, centerDist, ssBorder, colorParams, radiusParams) {
+  getAxis (localAngle: number, centerDist: number, ssBorder: boolean, colorParams: { scheme: string } & ColormakerParameters, radiusParams: RadiusParams) {
     localAngle = localAngle || 30
     centerDist = centerDist || 2.5
     ssBorder = ssBorder === undefined ? false : ssBorder
@@ -42,18 +46,18 @@ class Helixbundle {
     let j = 0
     let k = 0
 
-    const axis = []
-    const center = []
-    const beg = []
-    const end = []
-    const col = []
+    const axis = new Float32Array(n * 3);
+    const center = new Float32Array(n * 3)
+    const beg = new Vector3()
+    const end = new Vector3()
+    const col = new Vector3()
     const pick = []
     const size = []
     const residueOffset = []
     const residueCount = []
 
-    let tmpAxis = []
-    let tmpCenter = []
+    let tmpAxis = new Float32Array(n * 3)
+    let tmpCenter = new Float32Array(n * 3)
 
     let _axis, _center
     const _beg = new Vector3()
@@ -70,13 +74,13 @@ class Helixbundle {
 
     for (let i = 0; i < n; ++i) {
       rp1.index = residueIndexStart + i
-      c1.fromArray(pos.center, i * 3)
+      c1.fromArray(pos.center as any, i * 3)
 
       if (i === n - 1) {
         split = true
       } else {
         rp2.index = residueIndexStart + i + 1
-        c2.fromArray(pos.center, i * 3 + 3)
+        c2.fromArray(pos.center as any, i * 3 + 3)
 
         if (ssBorder && rp1.sstruc !== rp2.sstruc) {
           split = true
@@ -103,18 +107,18 @@ class Helixbundle {
         _axis = calculateMeanVector3(tmpAxis).normalize()
         _center = calculateMeanVector3(tmpCenter)
 
-        _beg.fromArray(tmpCenter)
+        _beg.fromArray(tmpCenter as any)
         projectPointOnVector(_beg, _axis, _center)
 
-        _end.fromArray(tmpCenter, tmpCenter.length - 3)
+        _end.fromArray(tmpCenter as any, tmpCenter.length - 3)
         projectPointOnVector(_end, _axis, _center)
 
         _axis.subVectors(_end, _beg)
 
-        _axis.toArray(axis, k)
-        _center.toArray(center, k)
-        _beg.toArray(beg, k)
-        _end.toArray(end, k)
+        _axis.toArray(axis as any, k)
+        _center.toArray(center as any, k)
+        _beg.toArray(beg as any, k)
+        _end.toArray(end as any, k)
 
         colormaker.atomColorToArray(ap, col, k)
 
@@ -136,9 +140,9 @@ class Helixbundle {
     return {
       axis: new Float32Array(axis),
       center: new Float32Array(center),
-      begin: new Float32Array(beg),
-      end: new Float32Array(end),
-      color: new Float32Array(col),
+      begin: new Float32Array(beg.toArray()),
+      end: new Float32Array(end.toArray()),
+      color: new Float32Array(col.toArray()),
       picking: new AtomPicker(picking, structure),
       size: new Float32Array(size),
       residueOffset: residueOffset,
