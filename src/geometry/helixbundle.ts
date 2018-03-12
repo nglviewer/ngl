@@ -46,11 +46,11 @@ class Helixbundle {
     let j = 0
     let k = 0
 
-    const axis = new Float32Array(n * 3);
-    const center = new Float32Array(n * 3)
-    const beg = new Vector3()
-    const end = new Vector3()
-    const col = new Vector3()
+    const axis: number[] = []
+    const center: number[] = []
+    const beg: number[] = []
+    const end: number[] = []
+    const col: number[] = []
     const pick = []
     const size = []
     const residueOffset = []
@@ -100,7 +100,7 @@ class Helixbundle {
 
         ap.index = rp1.traceAtomIndex
 
-                // ignore first and last axis
+        // ignore first and last axis
         tmpAxis = pos.axis.subarray(j * 3 + 3, i * 3)
         tmpCenter = pos.center.subarray(j * 3, i * 3 + 3)
 
@@ -140,9 +140,9 @@ class Helixbundle {
     return {
       axis: new Float32Array(axis),
       center: new Float32Array(center),
-      begin: new Float32Array(beg.toArray()),
-      end: new Float32Array(end.toArray()),
-      color: new Float32Array(col.toArray()),
+      begin: new Float32Array(beg),
+      end: new Float32Array(end),
+      color: new Float32Array(col),
       picking: new AtomPicker(picking, structure),
       size: new Float32Array(size),
       residueOffset: residueOffset,
