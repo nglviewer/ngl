@@ -11,6 +11,7 @@ stage.loadFile('data://2vts.mmtf').then(function (o) {
     contour: true,
     colorScheme: 'element',
     colorValue: '#0f0',
+    linewidth: 2.0,
     useWorker: false
   })
   o.addRepresentation('surface', {
@@ -18,6 +19,7 @@ stage.loadFile('data://2vts.mmtf').then(function (o) {
     surfaceType: 'av',
     colorScheme: 'bfactor',
     contour: true,
+    linewidth: 1.0,
     filterSele: '10 OR 11 OR 12 OR 13 OR 14 OR 18 OR 31 OR 33 OR ' +
                     '64 OR 80 OR 81 OR 82 OR 83 OR 84 OR 85 OR 86 OR ' +
                     '129 OR 131 OR 132 OR 134 OR 144 OR 145'

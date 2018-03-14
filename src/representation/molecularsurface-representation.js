@@ -8,8 +8,9 @@ import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import StructureRepresentation from './structure-representation.js'
 import MolecularSurface from '../surface/molecular-surface.js'
+import { surfaceDataToLineData } from '../surface/surface-utils.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
-import ContourBuffer from '../buffer/contour-buffer.js'
+import WideLineBuffer from '../buffer/wideline-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import Selection from '../selection/selection.js'
 
@@ -66,6 +67,9 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       contour: {
         type: 'boolean', rebuild: true
       },
+      linewidth: {
+        type: 'number', max: 50, min: 0.1, precision: 1, buffer: true
+      },
       background: {
         type: 'boolean', rebuild: true  // FIXME
       },
@@ -112,6 +116,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     this.scaleFactor = defaults(p.scaleFactor, 2.0)
     this.cutoff = defaults(p.cutoff, 0.0)
     this.contour = defaults(p.contour, false)
+    this.linewidth = defaults(p.linewidth, 1.0)
     this.background = defaults(p.background, false)
     this.opaqueBack = defaults(p.opaqueBack, true)
     this.filterSele = defaults(p.filterSele, '')
@@ -207,14 +212,17 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     const bufferList = []
 
     if (surface.contour) {
-      const contourBuffer = new ContourBuffer(
-        surfaceData,
+      const lineData = surfaceDataToLineData(surfaceData)
+
+      const widelineBuffer = new WideLineBuffer(
+        lineData,
         this.getBufferParams({
+          linewidth: this.linewidth,
           wireframe: false
         })
       )
 
-      bufferList.push(contourBuffer)
+      bufferList.push(widelineBuffer)
     } else {
       surfaceData.normal = surface.getNormal()
       surfaceData.picking = surface.getPicking(sview.getStructure())
@@ -238,6 +246,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
   updateData (what, data) {
     const surfaceData = {}
+    const contour = this.contour
 
     if (what.position) {
       this.__forceNewMolsurf = true
@@ -249,11 +258,16 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       surfaceData.color = data.info.surface.getColor(this.getColorParams())
     }
 
-    if (what.index) {
+    if (what.index || (contour && what.color)) {
       surfaceData.index = data.info.surface.getFilteredIndex(this.filterSele, data.sview)
     }
 
-    data.bufferList[ 0 ].setAttributes(surfaceData)
+    if (contour && what.color) {
+      const lineData = surfaceDataToLineData(surfaceData, what)
+      data.bufferList[ 0 ].setAttributes(lineData)
+    } else {
+      data.bufferList[ 0 ].setAttributes(surfaceData)
+    }
   }
 
   setParameters (params, what, rebuild) {

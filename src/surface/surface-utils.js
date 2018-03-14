@@ -392,9 +392,69 @@ getSurfaceGrid.__deps = [
   m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
 ]
 
+/**
+ * Convert surface mesh data to line data
+ * @param  {Object} sd surfaceData (position, color, index)
+ * @return {Object}        {position1, position2, color, color2}
+ */
+function surfaceDataToLineData (sd, what) {
+  const position = sd.position
+  const index = sd.index
+  const color = sd.color
+
+  const size = index.length / 2
+
+  let position1
+  let position2
+  let color1
+  let color2
+
+  const lineData = {}
+
+  if (!what || what.position) {
+    lineData.position1 = position1 = new Float32Array(size * 3)
+    lineData.position2 = position2 = new Float32Array(size * 3)
+  }
+  if (!what || what.color) {
+    // Below is correct: color and position use different naming conventino
+    lineData.color = color1 = new Float32Array(size * 3)
+    lineData.color2 = color2 = new Float32Array(size * 3)
+  }
+
+  for (let i = 0; i < size; i++) {
+    const j = 2 * i // index into `index`
+    const k = 3 * i // index into output arrays `position1`
+    const start = index[ j ] * 3 // index into input `position`
+    const end = index[ j + 1 ] * 3
+
+    if (!what || what.position) {
+      position1[ k ] = position[ start ]
+      position1[ k + 1 ] = position[ start + 1 ]
+      position1[ k + 2 ] = position[ start + 2 ]
+
+      position2[ k ] = position[ end ]
+      position2[ k + 1 ] = position[ end + 1 ]
+      position2[ k + 2 ] = position[ end + 2 ]
+    }
+
+    if (!what || what.color) {
+      color1[ k ] = color[ start ]
+      color1[ k + 1 ] = color[ start + 1 ]
+      color1[ k + 2 ] = color[ start + 2 ]
+
+      color2[ k ] = color[ end ]
+      color2[ k + 1 ] = color[ end + 1 ]
+      color2[ k + 2 ] = color[ end + 2 ]
+    }
+  }
+
+  return lineData
+}
+
 export {
   laplacianSmooth,
   computeVertexNormals,
   getRadiusDict,
-  getSurfaceGrid
+  getSurfaceGrid,
+  surfaceDataToLineData
 }
