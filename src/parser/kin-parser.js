@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import Parser from './parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import Parser from './parser'
 
 function hsvToRgb (h, s, v) {
   h /= 360
@@ -143,7 +143,7 @@ function parseStr (line) {
   return line.substring(
       start !== -1 ? start + 1 : 0,
       end !== -1 ? end : undefined
-    ).trim()
+  ).trim()
 }
 
 function parseFlag (line) {
