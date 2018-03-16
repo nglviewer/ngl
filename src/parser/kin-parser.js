@@ -69,6 +69,7 @@ function parseListDef (line) {
   let name
   let defaultColor
   let master = []
+  let width
 
   line = line.replace(reCollapseEqual, '=')
 
@@ -82,6 +83,8 @@ function parseListDef (line) {
       if (es.length === 2) {
         if (es[ 0 ] === 'color') {
           defaultColor = ColorDict[ es[ 1 ] ]
+        } else if (es[ 0 ] === 'width') {
+          width = parseInt(es[ 1 ])
         } else if (es[ 0 ] === 'master') {
           master.push(es[ 1 ].replace(reTrimCurly, ''))
         }
@@ -89,7 +92,12 @@ function parseListDef (line) {
     }
   }
 
-  return [ name, defaultColor, master ]
+  return {
+    listName: name,
+    listColor: defaultColor,
+    listMasters: master,
+    listWidth: width
+  }
 }
 
 function parseListElm (line) {
@@ -105,9 +113,28 @@ function parseListElm (line) {
     parseFloat(ls[ ls.length - 2 ]),
     parseFloat(ls[ ls.length - 1 ])
   ]
-  const color = line[ idx2 + 1 ] === ' ' ? undefined : ColorDict[ ls[ 0 ] ]
+  let color, width, radius
+  for (var lsindex = 4; lsindex <= ls.length; lsindex++) {
+    var literal = ls[ ls.length - lsindex ]
+    if (literal in ColorDict) {
+      color = ColorDict[ ls[ ls.length - lsindex ] ]
+    }
+    if (literal.startsWith('width')) {
+      width = parseInt(literal.substring(5))
+    }
+    if (literal.startsWith('r=')) {
+      radius = parseFloat(literal.split('=')[1])
+    }
+  }
+  // const color = line[ idx2 + 1 ] === ' ' ? undefined : ColorDict[ ls[ 0 ] ]
 
-  return [ label, position, color ]
+  return {
+    label: label,
+    position: position,
+    color: color,
+    radius: radius,
+    width: width
+  }
 }
 
 function parseStr (line) {
@@ -148,6 +175,35 @@ function parseGroup (line) {
   return [ name, flags ]
 }
 
+function convertKinTriangleArrays (ribbonObject) {
+  // have to convert ribbons/triangle lists from stripdrawmode to normal drawmode
+  // index                    [ 0 1 2 3 4 5 6 7 8 91011 ]
+  // label [ 0 1 2 3 4 5 ] to [ 0 1 2 1 2 3 2 3 4 3 4 5 ]
+  // convertedindex                                      [ 0 1 2 3 4 5 6 7 8 91011121314151617181920212223242526 ]
+  // index          [ 0 1 2 3 4 5 6 7 8 91011121314 ]    [ 0 1 2 3 4 5 6 7 8 3 4 5 6 7 8 91011 6 7 8 91011121314 ]
+  // position/color [ 0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 ] to [ 0 0 0 1 1 1 2 2 2 1 1 1 2 2 2 3 3 3 2 2 2 3 3 3 4 4 4 ]
+  let { labelArray, positionArray, colorArray } = ribbonObject
+  let convertedLabels = []
+  for (let i = 0; i < (labelArray.length - 2) * 3; ++i) {
+    convertedLabels[i] = labelArray[i - Math.floor(i / 3) * 2]
+  }
+  let convertedPositions = []
+  for (let i = 0; i < (positionArray.length / 3 - 2) * 9; ++i) {
+    convertedPositions[i] = positionArray[i - Math.floor(i / 9) * 6]
+  }
+  let convertedColors = []
+  for (let i = 0; i < (colorArray.length / 3 - 2) * 9; ++i) {
+    convertedColors[i] = colorArray[i - Math.floor(i / 9) * 6]
+  }
+  return {
+    name: ribbonObject.name,
+    masterArray: ribbonObject.masterArray,
+    labelArray: convertedLabels,
+    positionArray: convertedPositions,
+    colorArray: convertedColors
+  }
+}
+
 class KinParser extends Parser {
   get type () { return 'kin' }
   get __objName () { return 'kinemage' }
@@ -170,22 +226,32 @@ class KinParser extends Parser {
       pointmasterDict: {},
       dotLists: [],
       vectorLists: [],
-      ballLists: []
+      ballLists: [],
+      ribbonLists: []
     }
     this.kinemage = kinemage
 
     let isDotList = false
     let prevDotLabel = ''
-    let dotName, dotDefaultColor, dotMaster
+    let dotDefaultColor
     let dotLabel, dotPosition, dotColor
 
     let isVectorList = false
     let prevVecLabel = ''
     let prevVecPosition, prevVecColor
-    let vecName, vecDefaultColor, vecMaster
+    let vecDefaultColor, vecDefaultWidth
     let vecLabel1, vecLabel2, vecPosition1, vecPosition2, vecColor1, vecColor2
 
     let isBallList = false
+    let prevBallLabel = ''
+    let ballRadius, ballDefaultColor
+    let ballLabel, ballPosition, ballColor
+
+    let isRibbonList = false
+    let prevRibbonPointLabel = ''
+
+    let ribbonListDefaultColor
+    let ribbonPointLabelArray, ribbonPointPositionArray, ribbonPointColorArray
 
     let isText = false
     let isCaption = false
@@ -204,6 +270,7 @@ class KinParser extends Parser {
           isDotList = false
           isVectorList = false
           isBallList = false
+          isRibbonList = false
           isText = false
           isCaption = false
         }
@@ -212,31 +279,33 @@ class KinParser extends Parser {
           isDotList = false
           isVectorList = false
           isBallList = false
+          isRibbonList = false
         } else if (line.startsWith('@dotlist')) {
           // @dotlist {x} color=white master={vdw contact} master={dots}
 
-          [ dotName, dotDefaultColor, dotMaster ] = parseListDef(line)
+          let { listColor, listName, listMasters } = parseListDef(line)
 
           isDotList = true
           prevDotLabel = ''
           dotLabel = []
           dotPosition = []
           dotColor = []
+          dotDefaultColor = listColor
 
           kinemage.dotLists.push({
-            name: dotName,
-            master: dotMaster,
-            label: dotLabel,
-            position: dotPosition,
-            color: dotColor
+            name: listName,
+            masterArray: listMasters,
+            labelArray: dotLabel,
+            positionArray: dotPosition,
+            colorArray: dotColor
           })
         } else if (line.startsWith('@vectorlist')) {
           // @vectorlist {x} color=white master={small overlap} master={dots}
 
-          [ vecName, vecDefaultColor, vecMaster ] = parseListDef(line)
+          let { listMasters, listName, listWidth, listColor } = parseListDef(line)
 
-          if (vecMaster) {
-            vecMaster.forEach(function (name) {
+          if (listMasters) {
+            listMasters.forEach(function (name) {
               if (!kinemage.masterDict[ name ]) {
                 kinemage.masterDict[ name ] = {
                   indent: false,
@@ -248,26 +317,89 @@ class KinParser extends Parser {
 
           isVectorList = true
           prevVecLabel = ''
+          prevVecPosition = null
+          prevVecColor = null
           vecLabel1 = []
           vecLabel2 = []
           vecPosition1 = []
           vecPosition2 = []
           vecColor1 = []
           vecColor2 = []
+          vecDefaultColor = listColor
+          vecDefaultWidth = []
+          if (listWidth) {
+            vecDefaultWidth.push(listWidth)
+          }
 
           kinemage.vectorLists.push({
-            name: vecName,
-            master: vecMaster,
-            label1: vecLabel1,
-            label2: vecLabel2,
-            position1: vecPosition1,
-            position2: vecPosition2,
-            color1: vecColor1,
-            color2: vecColor2
+            name: listName,
+            masterArray: listMasters,
+            label1Array: vecLabel1,
+            label2Array: vecLabel2,
+            position1Array: vecPosition1,
+            position2Array: vecPosition2,
+            color1Array: vecColor1,
+            color2Array: vecColor2,
+            width: vecDefaultWidth
           })
         } else if (line.startsWith('@balllist')) {
+          let { listName, listColor, listMasters } = parseListDef(line)
+
+          if (listMasters) {
+            listMasters.forEach(function (name) {
+              if (!kinemage.masterDict[ name ]) {
+                kinemage.masterDict[ name ] = {
+                  indent: false,
+                  visible: false
+                }
+              }
+            })
+          }
+
           isBallList = true
-          // TODO
+
+          prevBallLabel = ''
+          ballLabel = []
+          ballRadius = []
+          ballPosition = []
+          ballColor = []
+          ballDefaultColor = listColor
+
+          kinemage.ballLists.push({
+            name: listName,
+            masterArray: listMasters,
+            labelArray: ballLabel,
+            radiusArray: ballRadius,
+            positionArray: ballPosition,
+            colorArray: ballColor
+          })
+        } else if (line.startsWith('@ribbonlist')) {
+          let { listMasters, listName, listColor } = parseListDef(line)
+
+          if (listMasters) {
+            listMasters.forEach(function (name) {
+              if (!kinemage.masterDict[ name ]) {
+                kinemage.masterDict[ name ] = {
+                  indent: false,
+                  visible: false
+                }
+              }
+            })
+          }
+          isRibbonList = true
+          prevRibbonPointLabel = ''
+          ribbonPointLabelArray = []
+          ribbonPointPositionArray = []
+          ribbonPointColorArray = []
+          ribbonListDefaultColor = listColor
+
+          kinemage.ribbonLists.push({
+            name: listName,
+            masterArray: listMasters,
+            labelArray: ribbonPointLabelArray,
+            positionArray: ribbonPointPositionArray,
+            colorArray: ribbonPointColorArray
+          })
         } else if (line.startsWith('@text')) {
           isText = true
           kinemage.text.push(line.substr(5))
@@ -277,7 +409,7 @@ class KinParser extends Parser {
         } else if (isDotList) {
           // { CB  THR   1  A}sky  'P' 18.915,14.199,5.024
 
-          let [ label, position, color ] = parseListElm(line)
+          let { label, color, position } = parseListElm(line)
 
           if (label === '"') {
             label = prevDotLabel
@@ -307,55 +439,95 @@ class KinParser extends Parser {
             line2 = line.substr(idx2)
           }
 
-          let [ label1, position1, color1 ] = parseListElm(line1)
+          let { label, color, width, position } = parseListElm(line1)
 
-          if (label1 === '"') {
-            label1 = prevVecLabel
+          if (label === '"') {
+            label = prevVecLabel
           } else {
-            prevVecLabel = label1
+            prevVecLabel = label
           }
 
-          if (color1 === undefined) {
-            color1 = vecDefaultColor
+          if (color === undefined) {
+            color = vecDefaultColor
           }
 
-          vecLabel1.push(label1)
-          vecPosition1.push(...position1)
-          vecColor1.push(...color1)
+          if (width) {
+            vecDefaultWidth.push(width)
+          }
+
+          vecLabel1.push(label)
+          vecPosition1.push(...position)
+          vecColor1.push(...color)
 
           //
 
-          if (idx2 === -1) {
+          if (idx2 === -1 && prevVecPosition) {
             vecLabel2.push(prevVecLabel)
             vecPosition2.push(...prevVecPosition)
             vecColor2.push(...prevVecColor)
 
-            prevVecPosition = position1
-            prevVecColor = color1
+            prevVecLabel = label
+            prevVecPosition = position
+            prevVecColor = color
           } else {
-            let [ label2, position2, color2 ] = parseListElm(line2)
+            let { label, color, position } = parseListElm(line2)
 
-            if (label2 === '"') {
-              label2 = prevVecLabel
+            if (label === '"') {
+              label = prevVecLabel
             } else {
-              prevVecLabel = label2
+              prevVecLabel = label
             }
 
-            if (color2 === undefined) {
-              color2 = vecDefaultColor
+            if (color === undefined) {
+              color = vecDefaultColor
             }
 
-            vecLabel2.push(label2)
-            vecPosition2.push(...position2)
-            vecColor2.push(...color2)
+            vecLabel2.push(label)
+            vecPosition2.push(...position)
+            vecColor2.push(...color)
 
-            prevVecPosition = position2
-            prevVecColor = color2
+            prevVecPosition = position
+            prevVecColor = color
           }
         } else if (isBallList) {
+          // {cb arg A   1   1.431 -106.80} r=1.431  39.085, 8.083, 22.182
 
-        // TODO
+          let { label, radius, color, position } = parseListElm(line)
 
+          if (label === '"') {
+            label = prevBallLabel
+          } else {
+            prevBallLabel = label
+          }
+
+          if (radius === undefined) {
+            radius = 1  // temporary default radius
+          }
+
+          if (color === undefined) {
+            color = ballDefaultColor
+          }
+
+          ballLabel.push(label)
+          ballRadius.push(radius)
+          ballPosition.push(...position)
+          ballColor.push(...color)
+        } else if (isRibbonList) {
+          let { label, color, position } = parseListElm(line)
+
+          if (label === '"') {
+            label = prevRibbonPointLabel
+          } else {
+            prevRibbonPointLabel = label
+          }
+
+          if (color === undefined) {
+            color = ribbonListDefaultColor
+          }
+
+          ribbonPointLabelArray.push(label)
+          ribbonPointPositionArray.push(...position)
+          ribbonPointColorArray.push(...color)
         } else if (isText) {
           kinemage.text.push(line)
         } else if (isCaption) {
@@ -433,8 +605,15 @@ class KinParser extends Parser {
 
     kinemage.text = kinemage.text.join('\n').trim()
     kinemage.caption = kinemage.caption.join('\n').trim()
+    if (kinemage.ribbonLists) {
+      let convertedLists = []
+      kinemage.ribbonLists.forEach(function (listObject) {
+        convertedLists.push(convertKinTriangleArrays(listObject))
+      })
+      kinemage.ribbonLists = convertedLists
+    }
 
-    if (Debug) Log.timeEnd('KinParser._parse ' + this.name)
+    if (Debug) Log.timeEnd(`KinParser._parse ${this.name}`)
   }
 }
 
