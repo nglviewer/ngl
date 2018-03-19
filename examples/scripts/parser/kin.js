@@ -8,33 +8,33 @@ NGL.autoLoad('data://1crnFH-multi.kin').then(function (kinemage) {
     })
 
     kinemage.dotLists.forEach(function (dotList) {
-      if (!dotList.master.includes(master)) return
-      for (var i = 0, il = dotList.position.length / 3; i < il; ++i) {
+      if (!dotList.masterArray.includes(master)) return
+      for (var i = 0, il = dotList.positionArray.length / 3; i < il; ++i) {
         var i3 = i * 3
-        var x = dotList.position[ i3 ]
-        var y = dotList.position[ i3 + 1 ]
-        var z = dotList.position[ i3 + 2 ]
-        var r = dotList.color[ i3 ]
-        var g = dotList.color[ i3 + 1 ]
-        var b = dotList.color[ i3 + 2 ]
-        shape.addPoint([ x, y, z ], [ r, g, b ], dotList.label[ i ])
+        var x = dotList.positionArray[ i3 ]
+        var y = dotList.positionArray[ i3 + 1 ]
+        var z = dotList.positionArray[ i3 + 2 ]
+        var r = dotList.colorArray[ i3 ]
+        var g = dotList.colorArray[ i3 + 1 ]
+        var b = dotList.colorArray[ i3 + 2 ]
+        shape.addPoint([ x, y, z ], [ r, g, b ], dotList.labelArray[ i ])
       }
     })
 
     kinemage.vectorLists.forEach(function (vectorList) {
-      if (!vectorList.master.includes(master)) return
-      for (var i = 0, il = vectorList.position1.length / 3; i < il; ++i) {
+      if (!vectorList.masterArray.includes(master)) return
+      for (var i = 0, il = vectorList.position1Array.length / 3; i < il; ++i) {
         var i3 = i * 3
-        var x1 = vectorList.position1[ i3 ]
-        var y1 = vectorList.position1[ i3 + 1 ]
-        var z1 = vectorList.position1[ i3 + 2 ]
-        var x2 = vectorList.position2[ i3 ]
-        var y2 = vectorList.position2[ i3 + 1 ]
-        var z2 = vectorList.position2[ i3 + 2 ]
-        var r = vectorList.color1[ i3 ]
-        var g = vectorList.color1[ i3 + 1 ]
-        var b = vectorList.color1[ i3 + 2 ]
-        shape.addWideline([ x1, y1, z1 ], [ x2, y2, z2 ], [ r, g, b ], vectorList.label1[ i ])
+        var x1 = vectorList.position1Array[ i3 ]
+        var y1 = vectorList.position1Array[ i3 + 1 ]
+        var z1 = vectorList.position1Array[ i3 + 2 ]
+        var x2 = vectorList.position2Array[ i3 ]
+        var y2 = vectorList.position2Array[ i3 + 1 ]
+        var z2 = vectorList.position2Array[ i3 + 2 ]
+        var r = vectorList.color1Array[ i3 ]
+        var g = vectorList.color1Array[ i3 + 1 ]
+        var b = vectorList.color1Array[ i3 + 2 ]
+        shape.addWideline([ x1, y1, z1 ], [ x2, y2, z2 ], [ r, g, b ], vectorList.label1Array[ i ])
       }
     })
 
