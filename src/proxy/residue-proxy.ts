@@ -371,6 +371,14 @@ class ResidueProxy {
     return this.residueType.moleculeType === SaccharideType
   }
 
+  isStandardAminoacid () {
+    return this.residueType.isStandardAminoacid()
+  }
+
+  isStandardBase () {
+    return this.residueType.isStandardBase()
+  }
+
   /**
    * If residue is part of a helix
    * @return {Boolean} flag

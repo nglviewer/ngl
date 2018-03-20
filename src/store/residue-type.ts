@@ -15,7 +15,7 @@ import {
   ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
   CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
   ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-  AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
+  AA3, PurinBases, RnaBases, DnaBases, Bases, IonNames, WaterNames, SaccharideNames,
   ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from '../structure/structure-constants'
 import Structure from '../structure/structure'
@@ -243,6 +243,14 @@ export default class ResidueType {
     } else {
       return SaccharideNames.includes(this.resname)
     }
+  }
+
+  isStandardAminoacid () {
+    return AA3.includes(this.resname)
+  }
+
+  isStandardBase () {
+    return Bases.includes(this.resname)
   }
 
   hasBackboneAtoms (position: number, type: number) {

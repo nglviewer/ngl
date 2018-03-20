@@ -935,15 +935,15 @@ export const AA1: { [k: string]: string } = {
   'GLU': 'E',
   'THR': 'T',
 
-  'ASH': 'D',
-  'GLH': 'E'
+  'SEC': 'U',  // as per IUPAC definition
+  'PYL': 'O',  // as per IUPAC definition
 }
 
 export const AA3 = Object.keys(AA1)
 
 export const RnaBases = [ 'A', 'C', 'T', 'G', 'U' ]
 
-export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
+export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU' ]
 
 export const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
 
