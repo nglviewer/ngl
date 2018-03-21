@@ -107,15 +107,21 @@ class DistanceRepresentation extends MeasurementRepresentation {
     var ap1 = sview.getAtomProxy()
     var ap2 = sview.getAtomProxy()
 
-    var j = 0
+    var j = 0 // Skipped pairs
+    const selected = sview.getAtomSet()
 
     atomPair.forEach(function (pair, i) {
       var v1 = pair[ 0 ]
       var v2 = pair[ 1 ]
 
       if (Number.isInteger(v1) && Number.isInteger(v2)) {
-        ap1.index = v1
-        ap2.index = v2
+        if (selected.get(v1) && selected.get(v2)) {
+          ap1.index = v1
+          ap2.index = v2
+        } else {
+          j += 1
+          return
+        }
       } else {
         sele1.setString(v1)
         sele2.setString(v2)
