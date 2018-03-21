@@ -14,7 +14,7 @@ interface KeyControlsParams {
 }
 
 interface KeyAction {
-  keyCode: number,
+  key: string,
   callback: KeyActionCallback
 }
 
@@ -37,11 +37,11 @@ class KeyControls {
     this.preset(params.preset || 'default')
   }
 
-  run (keyCode: number) {
+  run (key: string) {
     if (this.disabled) return
 
     this.actionList.forEach(a => {
-      if (a.keyCode === keyCode) {
+      if (a.key === key) {
         a.callback(this.stage)
       }
     })
@@ -61,9 +61,7 @@ class KeyControls {
    * @return {undefined}
    */
   add (char: string, callback: KeyActionCallback) {
-    const keyCode = char.charCodeAt(0)
-
-    this.actionList.push({ keyCode, callback })
+    this.actionList.push({ key: char, callback })
   }
 
   /**
@@ -83,11 +81,10 @@ class KeyControls {
    * @return {undefined}
    */
   remove (char: string, callback: KeyActionCallback) {
-    const keyCode = char.charCodeAt(0)
 
     const actionList = this.actionList.filter(function (a) {
       return !(
-        (a.keyCode === keyCode) &&
+        (a.key === char) &&
         (a.callback === callback || callback === undefined)
       )
     })
