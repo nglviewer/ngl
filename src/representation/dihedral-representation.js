@@ -267,11 +267,13 @@ function getDihedralData (position, params) {
   let i = 0 // Actual output index (after skipping inappropriate)
 
   for (var p = 0; p < nPos; p += 12) {
+    // Set Positions
     v3fromArray(p1, position, p)
     v3fromArray(p2, position, p + 3)
     v3fromArray(p3, position, p + 6)
     v3fromArray(p4, position, p + 9)
 
+    // Vectors between points
     v3sub(v21, p1, p2)
     v3sub(v23, p3, p2)
     if (v3length(v23) === 0.0) {
@@ -287,7 +289,8 @@ function getDihedralData (position, params) {
     v3normalize(v23, v23)
     v3normalize(v34, v34)
 
-    // Which side of plane are p1, p4?
+    // Which side of plane are p1, p4 (are we measuring something that
+    // looks more like an improper? e.g. C, CA, CB, N)
     v3sub(tmp, p1, mid)
     const improperStart = v3dot(tmp, v23) > 0.0
     v3sub(tmp, p4, mid)
@@ -321,12 +324,14 @@ function getDihedralData (position, params) {
     v3toArray(tmp, labelPosition, 3 * i)
 
     const nSegments = Math.ceil(angle / angleStep)
-    // 4 straight lines plus segment edge
+    // For extended display mode, 4 straight lines plus arc/segment edge
+    // For non-extended, 2 straight lines plus segment edge
     const nLines = nSegments + ((params.extendLine) ? 4 : 2)
 
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
     const sector = new Float32Array(nSegments * 9)
+    // 2 planes, 2 triangles each per dihedral (2*2*9)
     const plane = new Float32Array(36)
 
     lineTmp1[ i ] = line1
@@ -381,6 +386,7 @@ function getDihedralData (position, params) {
       v3toArray(arcPoint, plane, 12)
       v3toArray(mid, plane, 15)
     } else {
+      // Not extending lines
       v3toArray(mid, line1, li)
       v3toArray(arcPoint, line2, li)
       li += 3
