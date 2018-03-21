@@ -68,6 +68,7 @@ class KeyBehavior {
     let pressedKey: string;
     if ("key" in KeyboardEvent.prototype) {
       pressedKey = event.key;
+    // some mobile browsers don't support this attribute
     } else {
       pressedKey = String.fromCharCode(event.which || event.keyCode);
     }
