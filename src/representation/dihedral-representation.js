@@ -27,6 +27,7 @@ import { getFixedLengthWrappedDashData } from '../geometry/dash'
  *
  * @property {String} atomQuad - list of quadruplets of selection strings
  *                               or atom indices
+ * @property {Boolean} extendLine - Extend lines in planes
  * @property {Number} lineOpacity - Opacity for the line part of the representation
  * @property {Boolean} lineVisible - Display the line part of the representation
  * @property {Number} linewidth - width for line part of representation
@@ -56,6 +57,9 @@ class DihedralRepresentation extends MeasurementRepresentation {
       atomQuad: {
         type: 'hidden', rebuild: true
       },
+      extendLine: {
+        type: 'boolean', rebuild: true, default: true
+      },
       lineVisible: {
         type: 'boolean', default: true
       },
@@ -76,6 +80,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     p.opacity = defaults(p.opacity, 0.5)
 
     this.atomQuad = defaults(p.atomQuad, [])
+    this.extendLine = defaults(p.extendLine, true)
     this.lineVisible = defaults(p.lineVisible, true)
     this.planeVisible = defaults(p.planeVisible, true)
     this.sectorVisible = defaults(p.sectorVisible, true)
@@ -88,7 +93,10 @@ class DihedralRepresentation extends MeasurementRepresentation {
 
     const atomPosition = parseNestedAtoms(sview, this.atomQuad)
     const dihedralData = getDihedralData(
-      atomPosition, { planeVisible: this.planeVisible }
+      atomPosition, {
+        extendLine: this.extendLine,
+        planeVisible: this.planeVisible
+      }
     )
 
     const n = this.n = dihedralData.labelText.length
@@ -171,7 +179,8 @@ class DihedralRepresentation extends MeasurementRepresentation {
 
     if (params && (
       params.lineVisible !== undefined ||
-      params.sectorVisible !== undefined)) {
+      params.sectorVisible !== undefined ||
+      params.planeVisible !== undefined)) {
       this.setVisibility(this.visible)
     }
 
@@ -258,11 +267,13 @@ function getDihedralData (position, params) {
   let i = 0 // Actual output index (after skipping inappropriate)
 
   for (var p = 0; p < nPos; p += 12) {
+    // Set Positions
     v3fromArray(p1, position, p)
     v3fromArray(p2, position, p + 3)
     v3fromArray(p3, position, p + 6)
     v3fromArray(p4, position, p + 9)
 
+    // Vectors between points
     v3sub(v21, p1, p2)
     v3sub(v23, p3, p2)
     if (v3length(v23) === 0.0) {
@@ -278,7 +289,8 @@ function getDihedralData (position, params) {
     v3normalize(v23, v23)
     v3normalize(v34, v34)
 
-    // Which side of plane are p1, p4?
+    // Which side of plane are p1, p4 (are we measuring something that
+    // looks more like an improper? e.g. C, CA, CB, N)
     v3sub(tmp, p1, mid)
     const improperStart = v3dot(tmp, v23) > 0.0
     v3sub(tmp, p4, mid)
@@ -312,11 +324,14 @@ function getDihedralData (position, params) {
     v3toArray(tmp, labelPosition, 3 * i)
 
     const nSegments = Math.ceil(angle / angleStep)
-    const nLines = nSegments + 4 // 4 straight lines plus segment edge
+    // For extended display mode, 4 straight lines plus arc/segment edge
+    // For non-extended, 2 straight lines plus segment edge
+    const nLines = nSegments + ((params.extendLine) ? 4 : 2)
 
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
     const sector = new Float32Array(nSegments * 9)
+    // 2 planes, 2 triangles each per dihedral (2*2*9)
     const plane = new Float32Array(36)
 
     lineTmp1[ i ] = line1
@@ -324,53 +339,71 @@ function getDihedralData (position, params) {
     sectorTmp[ i ] = sector
     planeTmp[ i ] = plane
 
-    // Start points for lines/planes depend on whether improper:
-    if (improperStart) { // We'll start on the v3->1 line (tmp)
-      v3sub(tmp, p1, p3)
-      v3normalize(tmp, tmp)
-      v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp))
-      v3add(start, start, p3)
-    } else { // start on the 2->1 line
-      v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21))
-      v3add(start, start, p2)
-    }
+    // Start points for lines/planes, only required
+    // if extending lines
+    if (params.extendLine) {
+      if (improperStart) { // We'll start on the v3->1 line (tmp)
+        v3sub(tmp, p1, p3)
+        v3normalize(tmp, tmp)
+        v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp))
+        v3add(start, start, p3)
+      } else { // start on the 2->1 line
+        v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21))
+        v3add(start, start, p2)
+      }
 
-    if (improperEnd) { // Finish on 2->4 line
-      v3sub(tmp, p4, p2)
-      v3normalize(tmp, tmp)
-      v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp))
-      v3add(end, end, p2)
-    } else { // end on the 3->4 line
-      v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34))
-      v3add(end, end, p3)
+      if (improperEnd) { // Finish on 2->4 line
+        v3sub(tmp, p4, p2)
+        v3normalize(tmp, tmp)
+        v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp))
+        v3add(end, end, p2)
+      } else { // end on the 3->4 line
+        v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34))
+        v3add(end, end, p3)
+      }
     }
 
     v3add(arcPoint, mid, inPlane1)
 
-    v3toArray(p1, line1, 0)
-    v3toArray(start, line2, 0)
-    v3toArray(start, line1, 3)
-    v3toArray(arcPoint, line2, 3)
+    // index into line1, line2
+    let li = 0
+    // If extending lines, there's a bit of stuff to do here
+    // figuring out start and end positions
+    if (params.extendLine) {
+      v3toArray(p1, line1, li)
+      v3toArray(start, line2, li)
+      li += 3
+      v3toArray(start, line1, li)
+      v3toArray(arcPoint, line2, li)
+      li += 3
 
-    // Construct plane at start
-    v3toArray(start, plane, 0)
-    v3toArray(arcPoint, plane, 3)
-    v3toArray(improperStart ? p3 : p2, plane, 6)
-    v3toArray(improperStart ? p3 : p2, plane, 9)
-    v3toArray(arcPoint, plane, 12)
-    v3toArray(mid, plane, 15)
+      // Construct plane at start, if not extening lines
+      // this is skipped
+      v3toArray(start, plane, 0)
+      v3toArray(arcPoint, plane, 3)
+      v3toArray(improperStart ? p3 : p2, plane, 6)
+      v3toArray(improperStart ? p3 : p2, plane, 9)
+      v3toArray(arcPoint, plane, 12)
+      v3toArray(mid, plane, 15)
+    } else {
+      // Not extending lines
+      v3toArray(mid, line1, li)
+      v3toArray(arcPoint, line2, li)
+      li += 3
+    }
 
     const appendArcSection = function (a, j) {
       const si = j * 9
-      const ai = (j + 2) * 3 // Lines offset by 1 due to first two straight sections
+
       v3toArray(mid, sector, si)
       v3toArray(arcPoint, sector, si + 3)
-      v3toArray(arcPoint, line1, ai)
+      v3toArray(arcPoint, line1, li)
 
       calcArcPoint(arcPoint, mid, inPlane1, cross, a)
 
       v3toArray(arcPoint, sector, si + 6)
-      v3toArray(arcPoint, line2, ai)
+      v3toArray(arcPoint, line2, li)
+      li += 3
     }
 
     let j = 0
@@ -379,18 +412,24 @@ function getDihedralData (position, params) {
     }
     appendArcSection(angle, j++)
 
-    v3toArray(arcPoint, line1, (nLines - 2) * 3)
-    v3toArray(end, line2, (nLines - 2) * 3)
-    v3toArray(end, line1, (nLines - 1) * 3)
-    v3toArray(p4, line2, (nLines - 1) * 3)
+    if (params.extendLine) {
+      v3toArray(arcPoint, line1, (nLines - 2) * 3)
+      v3toArray(end, line2, (nLines - 2) * 3)
+      v3toArray(end, line1, (nLines - 1) * 3)
+      v3toArray(p4, line2, (nLines - 1) * 3)
 
-    // Construct plane at end
-    v3toArray(end, plane, 18)
-    v3toArray(arcPoint, plane, 21)
-    v3toArray(improperEnd ? p2 : p3, plane, 24)
-    v3toArray(improperEnd ? p2 : p3, plane, 27)
-    v3toArray(arcPoint, plane, 30)
-    v3toArray(mid, plane, 33)
+      // Construct plane at end
+      v3toArray(end, plane, 18)
+      v3toArray(arcPoint, plane, 21)
+      v3toArray(improperEnd ? p2 : p3, plane, 24)
+      v3toArray(improperEnd ? p2 : p3, plane, 27)
+      v3toArray(arcPoint, plane, 30)
+      v3toArray(mid, plane, 33)
+    } else {
+      v3toArray(arcPoint, line1, li)
+      v3toArray(mid, line2, li)
+      li += 3
+    }
 
     totalLines += nLines * 3
     totalSegments += nSegments * 9
