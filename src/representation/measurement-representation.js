@@ -257,10 +257,6 @@ class MeasurementRepresentation extends StructureRepresentation {
  * Parses nested array of either integer atom indices or selection
  * expressions into a flat array of coordinates.
  *
- * NB: Unlike previous version, this peeks at first entry to determine
- * if atoms are given by int index or selection expression. It cannot
- * cope with mixtures
- *
  * @param  {Structure} sview The structure to which the atoms refer
  * @param  {Array} atoms Nested array of atom pairs|triples|quads as
  *   Integer indices or selection expressions
@@ -275,7 +271,7 @@ function parseNestedAtoms (sview, atoms) {
 
   // Peek-ahead at first item to determine order and parse mode
   const order = atoms[ 0 ].length
-  const seleMode = !(Number.isInteger(atoms[ 0 ][ 0 ]))
+  const selected = sview.getAtomSet()
 
   const a = new Float32Array(nSets * order * 3)
 
@@ -283,8 +279,16 @@ function parseNestedAtoms (sview, atoms) {
   atoms.forEach(function (group) {
     let _break = false
     for (let j = 0; j < order; j++) {
-      if (seleMode) {
-        sele.setString(group[ j ])
+      const value = group[ j ]
+      if (Number.isInteger(value)) {
+        if (selected.get(value)) {
+          ap.index = value
+        } else {
+          _break = true
+          break
+        }
+      } else {
+        sele.setString(value)
         const atomIndices = sview.getAtomIndices(sele)
         if (atomIndices.length) {
           ap.index = atomIndices[ 0 ]
@@ -292,9 +296,8 @@ function parseNestedAtoms (sview, atoms) {
           _break = true
           break
         }
-      } else {
-        ap.index = group[ j ]
       }
+
       let offset = p + j * 3
       a[ offset++ ] = ap.x
       a[ offset++ ] = ap.y
