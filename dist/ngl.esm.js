@@ -415,6 +415,28 @@ if (typeof window !== 'undefined') {
         })();
     }
 }
+if (Object.defineProperty !== undefined) {
+    // Missing in IE < 13
+    // MIT license
+    // Copyright (c) 2016 Financial Times
+    // https://github.com/Financial-Times/polyfill-service
+    if (Number.MAX_SAFE_INTEGER === undefined) {
+        Object.defineProperty(Number, 'MAX_SAFE_INTEGER', {
+            enumerable: false,
+            configurable: false,
+            writable: false,
+            value: Math.pow(2, 53) - 1
+        });
+    }
+    if (Number.MIN_SAFE_INTEGER === undefined) {
+        Object.defineProperty(Number, 'MIN_SAFE_INTEGER', {
+            enumerable: false,
+            configurable: false,
+            writable: false,
+            value: -(Math.pow(2, 53) - 1)
+        });
+    }
+}
 
 // Store setTimeout reference so promise-polyfill will be unaffected by
 // other code modifying setTimeout (like sinon.useFakeTimers())
@@ -59140,12 +59162,12 @@ var AA1 = {
     'ASP': 'D',
     'GLU': 'E',
     'THR': 'T',
-    'ASH': 'D',
-    'GLH': 'E'
+    'SEC': 'U',
+    'PYL': 'O',
 };
 var AA3 = Object.keys(AA1);
 var RnaBases = ['A', 'C', 'T', 'G', 'U'];
-var DnaBases = ['DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM'];
+var DnaBases = ['DA', 'DC', 'DT', 'DG', 'DU'];
 var PurinBases = ['A', 'G', 'DA', 'DG'];
 var Bases = RnaBases.concat(DnaBases);
 var WaterNames = [
@@ -60272,6 +60294,7 @@ function addHydrogenBonds(structure, contacts, params) {
  * @file Metal Binding
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
+// import { valenceModel } from '../../structure/data'
 // import { hasAromaticNeighbour } from '../functional-groups'
 var IonicTypeMetals = [
     3 /* LI */, 11 /* NA */, 19 /* K */, 37 /* RB */, 55 /* CS */,
@@ -60286,10 +60309,21 @@ function addMetalBinding(structure, features) {
     structure.eachAtom(function (a) {
         var dative = false;
         var ionic = false;
-        if (a.isProtein()) {
+        var isStandardAminoacid = AA3.includes(a.resname);
+        var isStandardBase = Bases.includes(a.resname);
+        if (!isStandardAminoacid && !isStandardBase) {
+            if (a.isHalogen() || a.number === 8 /* O */ || a.number === 16 /* S */) {
+                dative = true;
+                ionic = true;
+            }
+            else if (a.number === 7 /* N */) {
+                dative = true;
+            }
+        }
+        else if (isStandardAminoacid) {
             // main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids
             if (a.number === 8 /* O */) {
-                if (['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN', 'CSO'].includes(a.resname) && a.isSidechain()) {
+                if (['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN'].includes(a.resname) && a.isSidechain()) {
                     dative = true;
                     ionic = true;
                 }
@@ -60298,7 +60332,7 @@ function addMetalBinding(structure, features) {
                     ionic = true;
                 }
             }
-            else if (a.number === 16 /* S */ && ['CYS', 'CSO'].includes(a.resname)) {
+            else if (a.number === 16 /* S */ && 'CYS' === a.resname) {
                 dative = true;
                 ionic = true;
             }
@@ -60308,16 +60342,7 @@ function addMetalBinding(structure, features) {
                 }
             }
         }
-        else if (!a.isPolymer()) {
-            if (a.isHalogen() || a.number === 8 /* O */ || a.number === 16 /* S */) {
-                dative = true;
-                ionic = true;
-            }
-            else if (a.number === 7 /* N */) {
-                dative = true;
-            }
-        }
-        else if (a.isNucleic()) {
+        else if (isStandardBase) {
             // http://pubs.acs.org/doi/pdf/10.1021/acs.accounts.6b00253
             // http://onlinelibrary.wiley.com/doi/10.1002/anie.200900399/full
             if (a.number === 8 /* O */ && a.isBackbone()) {
@@ -65846,13 +65871,13 @@ var KeyControls = function KeyControls(stage, params) {
     this.disabled = params.disabled || false;
     this.preset(params.preset || 'default');
 };
-KeyControls.prototype.run = function run (keyCode) {
+KeyControls.prototype.run = function run (key) {
         var this$1 = this;
 
     if (this.disabled)
         { return; }
     this.actionList.forEach(function (a) {
-        if (a.keyCode === keyCode) {
+        if (a.key === key) {
             a.callback(this$1.stage);
         }
     });
@@ -65871,8 +65896,7 @@ KeyControls.prototype.run = function run (keyCode) {
  * @return {undefined}
  */
 KeyControls.prototype.add = function add (char, callback) {
-    var keyCode = char.charCodeAt(0);
-    this.actionList.push({ keyCode: keyCode, callback: callback });
+    this.actionList.push({ key: char, callback: callback });
 };
 /**
  * Remove a key action. When the callback function
@@ -65891,9 +65915,8 @@ KeyControls.prototype.add = function add (char, callback) {
  * @return {undefined}
  */
 KeyControls.prototype.remove = function remove (char, callback) {
-    var keyCode = char.charCodeAt(0);
     var actionList = this.actionList.filter(function (a) {
-        return !((a.keyCode === keyCode) &&
+        return !((a.key === char) &&
             (a.callback === callback || callback === undefined));
     });
     this.actionList = actionList;
@@ -66058,7 +66081,15 @@ KeyBehavior.prototype._onKeyup = function _onKeyup () {
  */
 KeyBehavior.prototype._onKeypress = function _onKeypress (event) {
     // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
-    this.controls.run(event.keyCode);
+    var pressedKey;
+    if ("key" in KeyboardEvent.prototype) {
+        pressedKey = event.key;
+        // some mobile browsers don't support this attribute
+    }
+    else {
+        pressedKey = String.fromCharCode(event.which || event.keyCode);
+    }
+    this.controls.run(pressedKey);
 };
 KeyBehavior.prototype._focusDomElement = function _focusDomElement () {
     this.domElement.focus();
@@ -67086,13 +67117,13 @@ Helixorient.prototype.getPosition = function getPosition () {
     copyArray(axis, resAxis, 3 * n - 12, 3 * n - 6, 3);
     copyArray(axis, resAxis, 3 * n - 12, 3 * n - 3, 3);
     return {
-        'center': center,
-        'axis': resAxis,
-        'bending': resBending,
-        'radius': resRadius,
-        'rise': resRise,
-        'twist': resTwist,
-        'resdir': resdir
+        center: center,
+        axis: resAxis,
+        bending: resBending,
+        radius: resRadius,
+        rise: resRise,
+        twist: resTwist,
+        resdir: resdir
     };
 };
 
@@ -67130,8 +67161,8 @@ Helixbundle.prototype.getAxis = function getAxis (localAngle, centerDist, ssBord
     var size = [];
     var residueOffset = [];
     var residueCount = [];
-    var tmpAxis = [];
-    var tmpCenter = [];
+    var tmpAxis = new Float32Array(n * 3);
+    var tmpCenter = new Float32Array(n * 3);
     var _axis, _center;
     var _beg = new Vector3();
     var _end = new Vector3();
@@ -69897,6 +69928,9 @@ function concatStructures(name) {
             atomStore.serial[idx] = a.serial;
             atomStore.formalCharge[idx] = a.formalCharge;
             atomStore.partialCharge[idx] = a.partialCharge;
+            atomStore.altloc[idx] = a.altloc;
+            atomStore.occupancy[idx] = a.occupancy;
+            atomStore.bfactor[idx] = a.bfactor;
             sb.addAtom(a.modelIndex + modelCount, a.chainname, a.chainid, a.resname, a.resno, a.hetero === 1, a.sstruc, a.inscode);
             atomIndexDict[a.index + atomCount] = idx;
             idx += 1;
@@ -70227,6 +70261,12 @@ ResidueType.prototype.isSaccharide = function isSaccharide () {
     else {
         return SaccharideNames.includes(this.resname);
     }
+};
+ResidueType.prototype.isStandardAminoacid = function isStandardAminoacid () {
+    return AA3.includes(this.resname);
+};
+ResidueType.prototype.isStandardBase = function isStandardBase () {
+    return Bases.includes(this.resname);
 };
 ResidueType.prototype.hasBackboneAtoms = function hasBackboneAtoms (position, type) {
     var atomnames = ResidueTypeAtoms[type];
@@ -71144,6 +71184,12 @@ ResidueProxy.prototype.isIon = function isIon () {
  */
 ResidueProxy.prototype.isSaccharide = function isSaccharide () {
     return this.residueType.moleculeType === SaccharideType;
+};
+ResidueProxy.prototype.isStandardAminoacid = function isStandardAminoacid () {
+    return this.residueType.isStandardAminoacid();
+};
+ResidueProxy.prototype.isStandardBase = function isStandardBase () {
+    return this.residueType.isStandardBase();
 };
 /**
  * If residue is part of a helix
@@ -80198,10 +80244,6 @@ var MeasurementRepresentation = (function (StructureRepresentation$$1) {
  * Parses nested array of either integer atom indices or selection
  * expressions into a flat array of coordinates.
  *
- * NB: Unlike previous version, this peeks at first entry to determine
- * if atoms are given by int index or selection expression. It cannot
- * cope with mixtures
- *
  * @param  {Structure} sview The structure to which the atoms refer
  * @param  {Array} atoms Nested array of atom pairs|triples|quads as
  *   Integer indices or selection expressions
@@ -80215,14 +80257,24 @@ function parseNestedAtoms(sview, atoms) {
         { return new Float32Array(0); }
     // Peek-ahead at first item to determine order and parse mode
     var order = atoms[0].length;
-    var seleMode = !(Number.isInteger(atoms[0][0]));
+    var selected = sview.getAtomSet();
     var a = new Float32Array(nSets * order * 3);
     var p = 0;
     atoms.forEach(function (group) {
         var _break = false;
         for (var j = 0; j < order; j++) {
-            if (seleMode) {
-                sele.setString(group[j]);
+            var value = group[j];
+            if (Number.isInteger(value)) {
+                if (selected.get(value)) {
+                    ap.index = value;
+                }
+                else {
+                    _break = true;
+                    break;
+                }
+            }
+            else {
+                sele.setString(value);
                 var atomIndices = sview.getAtomIndices(sele);
                 if (atomIndices.length) {
                     ap.index = atomIndices[0];
@@ -80231,9 +80283,6 @@ function parseNestedAtoms(sview, atoms) {
                     _break = true;
                     break;
                 }
-            }
-            else {
-                ap.index = group[j];
             }
             var offset = p + j * 3;
             a[offset++] = ap.x;
@@ -83137,6 +83186,7 @@ RepresentationRegistry.add('contact', ContactRepresentation);
  *
  * @property {String} atomQuad - list of quadruplets of selection strings
  *                               or atom indices
+ * @property {Boolean} extendLine - Extend lines in planes
  * @property {Number} lineOpacity - Opacity for the line part of the representation
  * @property {Boolean} lineVisible - Display the line part of the representation
  * @property {Number} linewidth - width for line part of representation
@@ -83163,6 +83213,9 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
             atomQuad: {
                 type: 'hidden', rebuild: true
             },
+            extendLine: {
+                type: 'boolean', rebuild: true, default: true
+            },
             lineVisible: {
                 type: 'boolean', default: true
             },
@@ -83184,6 +83237,7 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         p.side = defaults(p.side, 'double');
         p.opacity = defaults(p.opacity, 0.5);
         this.atomQuad = defaults(p.atomQuad, []);
+        this.extendLine = defaults(p.extendLine, true);
         this.lineVisible = defaults(p.lineVisible, true);
         this.planeVisible = defaults(p.planeVisible, true);
         this.sectorVisible = defaults(p.sectorVisible, true);
@@ -83193,7 +83247,10 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         if (!sview.atomCount || !this.atomQuad.length)
             { return; }
         var atomPosition = parseNestedAtoms(sview, this.atomQuad);
-        var dihedralData = getDihedralData(atomPosition, { planeVisible: this.planeVisible });
+        var dihedralData = getDihedralData(atomPosition, {
+            extendLine: this.extendLine,
+            planeVisible: this.planeVisible
+        });
         var n = this.n = dihedralData.labelText.length;
         var labelColor = new Color(this.labelColor);
         this.textBuffer = new TextBuffer({
@@ -83258,7 +83315,8 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
         var what = {};
         MeasurementRepresentation$$1.prototype.setParameters.call(this, params, what, rebuild);
         if (params && (params.lineVisible !== undefined ||
-            params.sectorVisible !== undefined)) {
+            params.sectorVisible !== undefined ||
+            params.planeVisible !== undefined)) {
             this.setVisibility(this.visible);
         }
         if (params && params.lineOpacity) {
@@ -83329,10 +83387,12 @@ function getDihedralData(position, params) {
     var arcPoint = v3new();
     var i = 0; // Actual output index (after skipping inappropriate)
     var loop = function ( p ) {
+        // Set Positions
         v3fromArray(p1, position, p);
         v3fromArray(p2, position, p + 3);
         v3fromArray(p3, position, p + 6);
         v3fromArray(p4, position, p + 9);
+        // Vectors between points
         v3sub(v21, p1, p2);
         v3sub(v23, p3, p2);
         if (v3length(v23) === 0.0) {
@@ -83344,7 +83404,8 @@ function getDihedralData(position, params) {
         v3normalize(v21, v21);
         v3normalize(v23, v23);
         v3normalize(v34, v34);
-        // Which side of plane are p1, p4?
+        // Which side of plane are p1, p4 (are we measuring something that
+        // looks more like an improper? e.g. C, CA, CB, N)
         v3sub(tmp, p1, mid);
         var improperStart = v3dot(tmp, v23) > 0.0;
         v3sub(tmp, p4, mid);
@@ -83370,74 +83431,102 @@ function getDihedralData(position, params) {
         calcArcPoint(tmp, mid, inPlane1, cross, angle / 2.0);
         v3toArray(tmp, labelPosition, 3 * i);
         var nSegments = Math.ceil(angle / angleStep);
-        var nLines = nSegments + 4; // 4 straight lines plus segment edge
+        // For extended display mode, 4 straight lines plus arc/segment edge
+        // For non-extended, 2 straight lines plus segment edge
+        var nLines = nSegments + ((params.extendLine) ? 4 : 2);
         var line1 = new Float32Array(nLines * 3);
         var line2 = new Float32Array(nLines * 3);
         var sector = new Float32Array(nSegments * 9);
+        // 2 planes, 2 triangles each per dihedral (2*2*9)
         var plane = new Float32Array(36);
         lineTmp1[i] = line1;
         lineTmp2[i] = line2;
         sectorTmp[i] = sector;
         planeTmp[i] = plane;
-        // Start points for lines/planes depend on whether improper:
-        if (improperStart) {
-            v3sub(tmp, p1, p3);
-            v3normalize(tmp, tmp);
-            v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp));
-            v3add(start, start, p3);
-        }
-        else {
-            v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21));
-            v3add(start, start, p2);
-        }
-        if (improperEnd) {
-            v3sub(tmp, p4, p2);
-            v3normalize(tmp, tmp);
-            v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp));
-            v3add(end, end, p2);
-        }
-        else {
-            v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34));
-            v3add(end, end, p3);
+        // Start points for lines/planes, only required
+        // if extending lines
+        if (params.extendLine) {
+            if (improperStart) {
+                v3sub(tmp, p1, p3);
+                v3normalize(tmp, tmp);
+                v3multiplyScalar(start, tmp, 1.0 / v3dot(inPlane1, tmp));
+                v3add(start, start, p3);
+            }
+            else {
+                v3multiplyScalar(start, v21, 1.0 / v3dot(inPlane1, v21));
+                v3add(start, start, p2);
+            }
+            if (improperEnd) {
+                v3sub(tmp, p4, p2);
+                v3normalize(tmp, tmp);
+                v3multiplyScalar(end, tmp, 1.0 / v3dot(inPlane2, tmp));
+                v3add(end, end, p2);
+            }
+            else {
+                v3multiplyScalar(end, v34, 1.0 / v3dot(inPlane2, v34));
+                v3add(end, end, p3);
+            }
         }
         v3add(arcPoint, mid, inPlane1);
-        v3toArray(p1, line1, 0);
-        v3toArray(start, line2, 0);
-        v3toArray(start, line1, 3);
-        v3toArray(arcPoint, line2, 3);
-        // Construct plane at start
-        v3toArray(start, plane, 0);
-        v3toArray(arcPoint, plane, 3);
-        v3toArray(improperStart ? p3 : p2, plane, 6);
-        v3toArray(improperStart ? p3 : p2, plane, 9);
-        v3toArray(arcPoint, plane, 12);
-        v3toArray(mid, plane, 15);
+        // index into line1, line2
+        var li = 0;
+        // If extending lines, there's a bit of stuff to do here
+        // figuring out start and end positions
+        if (params.extendLine) {
+            v3toArray(p1, line1, li);
+            v3toArray(start, line2, li);
+            li += 3;
+            v3toArray(start, line1, li);
+            v3toArray(arcPoint, line2, li);
+            li += 3;
+            // Construct plane at start, if not extening lines
+            // this is skipped
+            v3toArray(start, plane, 0);
+            v3toArray(arcPoint, plane, 3);
+            v3toArray(improperStart ? p3 : p2, plane, 6);
+            v3toArray(improperStart ? p3 : p2, plane, 9);
+            v3toArray(arcPoint, plane, 12);
+            v3toArray(mid, plane, 15);
+        }
+        else {
+            // Not extending lines
+            v3toArray(mid, line1, li);
+            v3toArray(arcPoint, line2, li);
+            li += 3;
+        }
         var appendArcSection = function (a, j) {
             var si = j * 9;
-            var ai = (j + 2) * 3; // Lines offset by 1 due to first two straight sections
             v3toArray(mid, sector, si);
             v3toArray(arcPoint, sector, si + 3);
-            v3toArray(arcPoint, line1, ai);
+            v3toArray(arcPoint, line1, li);
             calcArcPoint(arcPoint, mid, inPlane1, cross, a);
             v3toArray(arcPoint, sector, si + 6);
-            v3toArray(arcPoint, line2, ai);
+            v3toArray(arcPoint, line2, li);
+            li += 3;
         };
         var j = 0;
         for (var a = angleStep; a < angle; a += angleStep) {
             appendArcSection(a, j++);
         }
         appendArcSection(angle, j++);
-        v3toArray(arcPoint, line1, (nLines - 2) * 3);
-        v3toArray(end, line2, (nLines - 2) * 3);
-        v3toArray(end, line1, (nLines - 1) * 3);
-        v3toArray(p4, line2, (nLines - 1) * 3);
-        // Construct plane at end
-        v3toArray(end, plane, 18);
-        v3toArray(arcPoint, plane, 21);
-        v3toArray(improperEnd ? p2 : p3, plane, 24);
-        v3toArray(improperEnd ? p2 : p3, plane, 27);
-        v3toArray(arcPoint, plane, 30);
-        v3toArray(mid, plane, 33);
+        if (params.extendLine) {
+            v3toArray(arcPoint, line1, (nLines - 2) * 3);
+            v3toArray(end, line2, (nLines - 2) * 3);
+            v3toArray(end, line1, (nLines - 1) * 3);
+            v3toArray(p4, line2, (nLines - 1) * 3);
+            // Construct plane at end
+            v3toArray(end, plane, 18);
+            v3toArray(arcPoint, plane, 21);
+            v3toArray(improperEnd ? p2 : p3, plane, 24);
+            v3toArray(improperEnd ? p2 : p3, plane, 27);
+            v3toArray(arcPoint, plane, 30);
+            v3toArray(mid, plane, 33);
+        }
+        else {
+            v3toArray(arcPoint, line1, li);
+            v3toArray(mid, line2, li);
+            li += 3;
+        }
         totalLines += nLines * 3;
         totalSegments += nSegments * 9;
         totalPlanes += 36;
@@ -83547,13 +83636,20 @@ var DistanceRepresentation = (function (MeasurementRepresentation$$1) {
         var bondStore = new BondStore();
         var ap1 = sview.getAtomProxy();
         var ap2 = sview.getAtomProxy();
-        var j = 0;
+        var j = 0; // Skipped pairs
+        var selected = sview.getAtomSet();
         atomPair.forEach(function (pair, i) {
             var v1 = pair[0];
             var v2 = pair[1];
             if (Number.isInteger(v1) && Number.isInteger(v2)) {
-                ap1.index = v1;
-                ap2.index = v2;
+                if (selected.get(v1) && selected.get(v2)) {
+                    ap1.index = v1;
+                    ap2.index = v2;
+                }
+                else {
+                    j += 1;
+                    return;
+                }
             }
             else {
                 sele1.setString(v1);
@@ -93951,6 +94047,7 @@ function parseListDef(line) {
     var name;
     var defaultColor;
     var master = [];
+    var width;
     line = line.replace(reCollapseEqual, '=');
     var lm = line.match(reCurlyWhitespace);
     for (var j = 1; j < lm.length; ++j) {
@@ -93964,13 +94061,21 @@ function parseListDef(line) {
                 if (es[0] === 'color') {
                     defaultColor = ColorDict[es[1]];
                 }
+                else if (es[0] === 'width') {
+                    width = parseInt(es[1]);
+                }
                 else if (es[0] === 'master') {
                     master.push(es[1].replace(reTrimCurly, ''));
                 }
             }
         }
     }
-    return [name, defaultColor, master];
+    return {
+        listName: name,
+        listColor: defaultColor,
+        listMasters: master,
+        listWidth: width
+    };
 }
 function parseListElm(line) {
     line = line.trim();
@@ -93983,8 +94088,27 @@ function parseListElm(line) {
         parseFloat(ls[ls.length - 2]),
         parseFloat(ls[ls.length - 1])
     ];
-    var color = line[idx2 + 1] === ' ' ? undefined : ColorDict[ls[0]];
-    return [label, position, color];
+    var color, width, radius;
+    for (var lsindex = 4; lsindex <= ls.length; lsindex++) {
+        var literal = ls[ls.length - lsindex];
+        if (literal in ColorDict) {
+            color = ColorDict[ls[ls.length - lsindex]];
+        }
+        if (literal.startsWith('width')) {
+            width = parseInt(literal.substring(5));
+        }
+        if (literal.startsWith('r=')) {
+            radius = parseFloat(literal.split('=')[1]);
+        }
+    }
+    // const color = line[ idx2 + 1 ] === ' ' ? undefined : ColorDict[ ls[ 0 ] ]
+    return {
+        label: label,
+        position: position,
+        color: color,
+        radius: radius,
+        width: width
+    };
 }
 function parseStr(line) {
     var start = line.indexOf('{');
@@ -94017,6 +94141,36 @@ function parseGroup(line) {
     }
     return [name, flags];
 }
+function convertKinTriangleArrays(ribbonObject) {
+    // have to convert ribbons/triangle lists from stripdrawmode to normal drawmode
+    // index                    [ 0 1 2 3 4 5 6 7 8 91011 ]
+    // label [ 0 1 2 3 4 5 ] to [ 0 1 2 1 2 3 2 3 4 3 4 5 ]
+    // convertedindex                                      [ 0 1 2 3 4 5 6 7 8 91011121314151617181920212223242526 ]
+    // index          [ 0 1 2 3 4 5 6 7 8 91011121314 ]    [ 0 1 2 3 4 5 6 7 8 3 4 5 6 7 8 91011 6 7 8 91011121314 ]
+    // position/color [ 0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 ] to [ 0 0 0 1 1 1 2 2 2 1 1 1 2 2 2 3 3 3 2 2 2 3 3 3 4 4 4 ]
+    var labelArray = ribbonObject.labelArray;
+    var positionArray = ribbonObject.positionArray;
+    var colorArray = ribbonObject.colorArray;
+    var convertedLabels = [];
+    for (var i = 0; i < (labelArray.length - 2) * 3; ++i) {
+        convertedLabels[i] = labelArray[i - Math.floor(i / 3) * 2];
+    }
+    var convertedPositions = [];
+    for (var i$1 = 0; i$1 < (positionArray.length / 3 - 2) * 9; ++i$1) {
+        convertedPositions[i$1] = positionArray[i$1 - Math.floor(i$1 / 9) * 6];
+    }
+    var convertedColors = [];
+    for (var i$2 = 0; i$2 < (colorArray.length / 3 - 2) * 9; ++i$2) {
+        convertedColors[i$2] = colorArray[i$2 - Math.floor(i$2 / 9) * 6];
+    }
+    return {
+        name: ribbonObject.name,
+        masterArray: ribbonObject.masterArray,
+        labelArray: convertedLabels,
+        positionArray: convertedPositions,
+        colorArray: convertedColors
+    };
+}
 var KinParser = (function (Parser$$1) {
     function KinParser () {
         Parser$$1.apply(this, arguments);
@@ -94047,19 +94201,27 @@ var KinParser = (function (Parser$$1) {
             pointmasterDict: {},
             dotLists: [],
             vectorLists: [],
-            ballLists: []
+            ballLists: [],
+            ribbonLists: []
         };
         this.kinemage = kinemage;
         var isDotList = false;
         var prevDotLabel = '';
-        var dotName, dotDefaultColor, dotMaster;
+        var dotDefaultColor;
         var dotLabel, dotPosition, dotColor;
         var isVectorList = false;
         var prevVecLabel = '';
         var prevVecPosition, prevVecColor;
-        var vecName, vecDefaultColor, vecMaster;
+        var vecDefaultColor, vecDefaultWidth;
         var vecLabel1, vecLabel2, vecPosition1, vecPosition2, vecColor1, vecColor2;
         var isBallList = false;
+        var prevBallLabel = '';
+        var ballRadius, ballDefaultColor;
+        var ballLabel, ballPosition, ballColor;
+        var isRibbonList = false;
+        var prevRibbonPointLabel = '';
+        var ribbonListDefaultColor;
+        var ribbonPointLabelArray, ribbonPointPositionArray, ribbonPointColorArray;
         var isText = false;
         var isCaption = false;
         // @vectorlist {mc} color= white  master= {mainchain}
@@ -94073,6 +94235,7 @@ var KinParser = (function (Parser$$1) {
                     isDotList = false;
                     isVectorList = false;
                     isBallList = false;
+                    isRibbonList = false;
                     isText = false;
                     isCaption = false;
                 }
@@ -94080,30 +94243,37 @@ var KinParser = (function (Parser$$1) {
                     isDotList = false;
                     isVectorList = false;
                     isBallList = false;
+                    isRibbonList = false;
                 }
                 else if (line.startsWith('@dotlist')) {
                     // @dotlist {x} color=white master={vdw contact} master={dots}
-                    var assign;
-                    (assign = parseListDef(line), dotName = assign[0], dotDefaultColor = assign[1], dotMaster = assign[2]);
+                    var ref = parseListDef(line);
+                    var listColor = ref.listColor;
+                    var listName = ref.listName;
+                    var listMasters = ref.listMasters;
                     isDotList = true;
                     prevDotLabel = '';
                     dotLabel = [];
                     dotPosition = [];
                     dotColor = [];
+                    dotDefaultColor = listColor;
                     kinemage.dotLists.push({
-                        name: dotName,
-                        master: dotMaster,
-                        label: dotLabel,
-                        position: dotPosition,
-                        color: dotColor
+                        name: listName,
+                        masterArray: listMasters,
+                        labelArray: dotLabel,
+                        positionArray: dotPosition,
+                        colorArray: dotColor
                     });
                 }
                 else if (line.startsWith('@vectorlist')) {
                     // @vectorlist {x} color=white master={small overlap} master={dots}
-                    var assign$1;
-                    (assign$1 = parseListDef(line), vecName = assign$1[0], vecDefaultColor = assign$1[1], vecMaster = assign$1[2]);
-                    if (vecMaster) {
-                        vecMaster.forEach(function (name) {
+                    var ref$1 = parseListDef(line);
+                    var listMasters$1 = ref$1.listMasters;
+                    var listName$1 = ref$1.listName;
+                    var listWidth = ref$1.listWidth;
+                    var listColor$1 = ref$1.listColor;
+                    if (listMasters$1) {
+                        listMasters$1.forEach(function (name) {
                             if (!kinemage.masterDict[name]) {
                                 kinemage.masterDict[name] = {
                                     indent: false,
@@ -94114,26 +94284,90 @@ var KinParser = (function (Parser$$1) {
                     }
                     isVectorList = true;
                     prevVecLabel = '';
+                    prevVecPosition = null;
+                    prevVecColor = null;
                     vecLabel1 = [];
                     vecLabel2 = [];
                     vecPosition1 = [];
                     vecPosition2 = [];
                     vecColor1 = [];
                     vecColor2 = [];
+                    vecDefaultColor = listColor$1;
+                    vecDefaultWidth = [];
+                    if (listWidth) {
+                        vecDefaultWidth.push(listWidth);
+                    }
                     kinemage.vectorLists.push({
-                        name: vecName,
-                        master: vecMaster,
-                        label1: vecLabel1,
-                        label2: vecLabel2,
-                        position1: vecPosition1,
-                        position2: vecPosition2,
-                        color1: vecColor1,
-                        color2: vecColor2
+                        name: listName$1,
+                        masterArray: listMasters$1,
+                        label1Array: vecLabel1,
+                        label2Array: vecLabel2,
+                        position1Array: vecPosition1,
+                        position2Array: vecPosition2,
+                        color1Array: vecColor1,
+                        color2Array: vecColor2,
+                        width: vecDefaultWidth
                     });
                 }
                 else if (line.startsWith('@balllist')) {
+                    var ref$2 = parseListDef(line);
+                    var listName$2 = ref$2.listName;
+                    var listColor$2 = ref$2.listColor;
+                    var listMasters$2 = ref$2.listMasters;
+                    if (listMasters$2) {
+                        listMasters$2.forEach(function (name) {
+                            if (!kinemage.masterDict[name]) {
+                                kinemage.masterDict[name] = {
+                                    indent: false,
+                                    visible: false
+                                };
+                            }
+                        });
+                    }
                     isBallList = true;
-                    // TODO
+                    prevBallLabel = '';
+                    ballLabel = [];
+                    ballRadius = [];
+                    ballPosition = [];
+                    ballColor = [];
+                    ballDefaultColor = listColor$2;
+                    kinemage.ballLists.push({
+                        name: listName$2,
+                        masterArray: listMasters$2,
+                        labelArray: ballLabel,
+                        radiusArray: ballRadius,
+                        positionArray: ballPosition,
+                        colorArray: ballColor
+                    });
+                }
+                else if (line.startsWith('@ribbonlist')) {
+                    var ref$3 = parseListDef(line);
+                    var listMasters$3 = ref$3.listMasters;
+                    var listName$3 = ref$3.listName;
+                    var listColor$3 = ref$3.listColor;
+                    if (listMasters$3) {
+                        listMasters$3.forEach(function (name) {
+                            if (!kinemage.masterDict[name]) {
+                                kinemage.masterDict[name] = {
+                                    indent: false,
+                                    visible: false
+                                };
+                            }
+                        });
+                    }
+                    isRibbonList = true;
+                    prevRibbonPointLabel = '';
+                    ribbonPointLabelArray = [];
+                    ribbonPointPositionArray = [];
+                    ribbonPointColorArray = [];
+                    ribbonListDefaultColor = listColor$3;
+                    kinemage.ribbonLists.push({
+                        name: listName$3,
+                        masterArray: listMasters$3,
+                        labelArray: ribbonPointLabelArray,
+                        positionArray: ribbonPointPositionArray,
+                        colorArray: ribbonPointColorArray
+                    });
                 }
                 else if (line.startsWith('@text')) {
                     isText = true;
@@ -94145,10 +94379,10 @@ var KinParser = (function (Parser$$1) {
                 }
                 else if (isDotList) {
                     // { CB  THR   1  A}sky  'P' 18.915,14.199,5.024
-                    var ref = parseListElm(line);
-                    var label = ref[0];
-                    var position = ref[1];
-                    var color = ref[2];
+                    var ref$4 = parseListElm(line);
+                    var label = ref$4.label;
+                    var color = ref$4.color;
+                    var position = ref$4.position;
                     if (label === '"') {
                         label = prevDotLabel;
                     }
@@ -94175,53 +94409,97 @@ var KinParser = (function (Parser$$1) {
                         line1 = line.substr(0, idx2);
                         line2 = line.substr(idx2);
                     }
-                    var ref$1 = parseListElm(line1);
-                    var label1 = ref$1[0];
-                    var position1 = ref$1[1];
-                    var color1 = ref$1[2];
-                    if (label1 === '"') {
-                        label1 = prevVecLabel;
+                    var ref$5 = parseListElm(line1);
+                    var label$1 = ref$5.label;
+                    var color$1 = ref$5.color;
+                    var width = ref$5.width;
+                    var position$1 = ref$5.position;
+                    if (label$1 === '"') {
+                        label$1 = prevVecLabel;
                     }
                     else {
-                        prevVecLabel = label1;
+                        prevVecLabel = label$1;
                     }
-                    if (color1 === undefined) {
-                        color1 = vecDefaultColor;
+                    if (color$1 === undefined) {
+                        color$1 = vecDefaultColor;
                     }
-                    vecLabel1.push(label1);
-                    vecPosition1.push.apply(vecPosition1, position1);
-                    vecColor1.push.apply(vecColor1, color1);
+                    if (width) {
+                        vecDefaultWidth.push(width);
+                    }
+                    vecLabel1.push(label$1);
+                    vecPosition1.push.apply(vecPosition1, position$1);
+                    vecColor1.push.apply(vecColor1, color$1);
                     //
-                    if (idx2 === -1) {
+                    if (idx2 === -1 && prevVecPosition) {
                         vecLabel2.push(prevVecLabel);
                         vecPosition2.push.apply(vecPosition2, prevVecPosition);
                         vecColor2.push.apply(vecColor2, prevVecColor);
-                        prevVecPosition = position1;
-                        prevVecColor = color1;
+                        prevVecLabel = label$1;
+                        prevVecPosition = position$1;
+                        prevVecColor = color$1;
                     }
                     else {
-                        var ref$2 = parseListElm(line2);
-                        var label2 = ref$2[0];
-                        var position2 = ref$2[1];
-                        var color2 = ref$2[2];
-                        if (label2 === '"') {
-                            label2 = prevVecLabel;
+                        var ref$6 = parseListElm(line2);
+                        var label$2 = ref$6.label;
+                        var color$2 = ref$6.color;
+                        var position$2 = ref$6.position;
+                        if (label$2 === '"') {
+                            label$2 = prevVecLabel;
                         }
                         else {
-                            prevVecLabel = label2;
+                            prevVecLabel = label$2;
                         }
-                        if (color2 === undefined) {
-                            color2 = vecDefaultColor;
+                        if (color$2 === undefined) {
+                            color$2 = vecDefaultColor;
                         }
-                        vecLabel2.push(label2);
-                        vecPosition2.push.apply(vecPosition2, position2);
-                        vecColor2.push.apply(vecColor2, color2);
-                        prevVecPosition = position2;
-                        prevVecColor = color2;
+                        vecLabel2.push(label$2);
+                        vecPosition2.push.apply(vecPosition2, position$2);
+                        vecColor2.push.apply(vecColor2, color$2);
+                        prevVecPosition = position$2;
+                        prevVecColor = color$2;
                     }
                 }
                 else if (isBallList) {
-                    // TODO
+                    // {cb arg A   1   1.431 -106.80} r=1.431  39.085, 8.083, 22.182
+                    var ref$7 = parseListElm(line);
+                    var label$3 = ref$7.label;
+                    var radius = ref$7.radius;
+                    var color$3 = ref$7.color;
+                    var position$3 = ref$7.position;
+                    if (label$3 === '"') {
+                        label$3 = prevBallLabel;
+                    }
+                    else {
+                        prevBallLabel = label$3;
+                    }
+                    if (radius === undefined) {
+                        radius = 1; // temporary default radius
+                    }
+                    if (color$3 === undefined) {
+                        color$3 = ballDefaultColor;
+                    }
+                    ballLabel.push(label$3);
+                    ballRadius.push(radius);
+                    ballPosition.push.apply(ballPosition, position$3);
+                    ballColor.push.apply(ballColor, color$3);
+                }
+                else if (isRibbonList) {
+                    var ref$8 = parseListElm(line);
+                    var label$4 = ref$8.label;
+                    var color$4 = ref$8.color;
+                    var position$4 = ref$8.position;
+                    if (label$4 === '"') {
+                        label$4 = prevRibbonPointLabel;
+                    }
+                    else {
+                        prevRibbonPointLabel = label$4;
+                    }
+                    if (color$4 === undefined) {
+                        color$4 = ribbonListDefaultColor;
+                    }
+                    ribbonPointLabelArray.push(label$4);
+                    ribbonPointPositionArray.push.apply(ribbonPointPositionArray, position$4);
+                    ribbonPointColorArray.push.apply(ribbonPointColorArray, color$4);
                 }
                 else if (isText) {
                     kinemage.text.push(line);
@@ -94242,9 +94520,9 @@ var KinParser = (function (Parser$$1) {
                     kinemage.pdbfile = parseStr(line);
                 }
                 else if (line.startsWith('@group')) {
-                    var ref$3 = parseGroup(line);
-                    var name = ref$3[0];
-                    var flags = ref$3[1];
+                    var ref$9 = parseGroup(line);
+                    var name = ref$9[0];
+                    var flags = ref$9[1];
                     if (!kinemage.groupDict[name]) {
                         kinemage.groupDict[name] = {
                             dominant: false,
@@ -94256,9 +94534,9 @@ var KinParser = (function (Parser$$1) {
                     }
                 }
                 else if (line.startsWith('@subgroup')) {
-                    var ref$4 = parseGroup(line);
-                    var name$1 = ref$4[0];
-                    var flags$1 = ref$4[1];
+                    var ref$10 = parseGroup(line);
+                    var name$1 = ref$10[0];
+                    var flags$1 = ref$10[1];
                     if (!kinemage.subgroupDict[name$1]) {
                         kinemage.subgroupDict[name$1] = {
                             dominant: false,
@@ -94293,9 +94571,9 @@ var KinParser = (function (Parser$$1) {
                     }
                 }
                 else if (line.startsWith('@pointmaster')) {
-                    var ref$5 = parseGroup(line);
-                    var name$3 = ref$5[0];
-                    var flags$2 = ref$5[1];
+                    var ref$11 = parseGroup(line);
+                    var name$3 = ref$11[0];
+                    var flags$2 = ref$11[1];
                     kinemage.pointmasterDict[name$3] = {
                         id: Object.keys(flags$2)[0].replace(reTrimQuotes$1, '')
                     };
@@ -94310,8 +94588,15 @@ var KinParser = (function (Parser$$1) {
         });
         kinemage.text = kinemage.text.join('\n').trim();
         kinemage.caption = kinemage.caption.join('\n').trim();
+        if (kinemage.ribbonLists) {
+            var convertedLists = [];
+            kinemage.ribbonLists.forEach(function (listObject) {
+                convertedLists.push(convertKinTriangleArrays(listObject));
+            });
+            kinemage.ribbonLists = convertedLists;
+        }
         if (Debug)
-            { Log.timeEnd('KinParser._parse ' + this.name); }
+            { Log.timeEnd(("KinParser._parse " + (this.name))); }
     };
 
     Object.defineProperties( KinParser.prototype, prototypeAccessors );
@@ -98787,7 +99072,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.28";
+var version$1 = "2.0.0-dev.29";
 
 /**
  * @file Version
@@ -98819,5 +99104,5 @@ if (!window.Promise) {
     window.Promise = Promise$1;
 }
 
-export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape$1 as Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten$1 as flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
+export { Version, StaticDatasource, MdsrvDatasource, Colormaker, Selection, PdbWriter, SdfWriter, StlWriter, Stage, Collection, ComponentCollection, RepresentationCollection, Assembly, TrajectoryPlayer, Superposition, Queue, Counter, BufferRepresentation, ArrowBuffer, BoxBuffer, ConeBuffer, CylinderBuffer, EllipsoidBuffer, MeshBuffer, OctahedronBuffer, PointBuffer, SphereBuffer, TetrahedronBuffer, TextBuffer, TorusBuffer, WideLineBuffer as WidelineBuffer, Shape$1 as Shape, Structure, Kdtree$1 as Kdtree, SpatialHash, MolecularSurface, Volume, MouseActions, KeyActions, Debug, setDebug, MeasurementDefaultParams, setMeasurementDefaultParams, ScriptExtensions, ColormakerRegistry$1 as ColormakerRegistry, DatasourceRegistry, DecompressorRegistry, ParserRegistry$1 as ParserRegistry, RepresentationRegistry, setListingDatasource, setTrajectoryDatasource, ListingDatasource, TrajectoryDatasource, autoLoad, getDataInfo, getFileInfo, superpose, guessElement, concatStructures, flatten$1 as flatten, throttle, download, getQuery, uniqueArray, LeftMouseButton, MiddleMouseButton, RightMouseButton, signals_1 as Signal, Matrix3, Matrix4, Vector2, Vector3, Box3, Quaternion, Euler, Plane, Color, UIStageParameters };
 //# sourceMappingURL=ngl.esm.js.map
