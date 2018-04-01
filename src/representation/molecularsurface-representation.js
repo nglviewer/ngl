@@ -67,7 +67,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
         type: 'boolean', rebuild: true
       },
       background: {
-        type: 'boolean', rebuild: true  // FIXME
+        type: 'boolean', rebuild: true // FIXME
       },
       opaqueBack: {
         type: 'boolean', buffer: true
@@ -269,8 +269,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
     // forbid setting wireframe to true when contour is true
     if (params && params.wireframe && (
-          params.contour || (params.contour === undefined && this.contour)
-        )
+      params.contour || (params.contour === undefined && this.contour)
+    )
     ) {
       params.wireframe = false
     }

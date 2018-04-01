@@ -9,7 +9,7 @@ import { Matrix4 } from 'three'
 import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser'
 import {
-    buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
+  buildUnitcellAssembly, calculateBondsBetween, calculateBondsWithin
 } from '../structure/structure-utils'
 import { ChemCompHetero } from '../structure/structure-constants'
 import Entity from '../structure/entity'
@@ -19,15 +19,15 @@ import Assembly from '../symmetry/assembly'
 import { decodeMsgpack, decodeMmtf } from '../../lib/mmtf.es6'
 
 const SstrucMap = {
-  '0': 'i'.charCodeAt(0),  // pi helix
-  '1': 's'.charCodeAt(0),  // bend
-  '2': 'h'.charCodeAt(0),  // alpha helix
-  '3': 'e'.charCodeAt(0),  // extended
-  '4': 'g'.charCodeAt(0),  // 3-10 helix
-  '5': 'b'.charCodeAt(0),  // bridge
-  '6': 't'.charCodeAt(0),  // turn
-  '7': 'l'.charCodeAt(0),  // coil
-  '-1': ''.charCodeAt(0)   // NA
+  '0': 'i'.charCodeAt(0), // pi helix
+  '1': 's'.charCodeAt(0), // bend
+  '2': 'h'.charCodeAt(0), // alpha helix
+  '3': 'e'.charCodeAt(0), // extended
+  '4': 'g'.charCodeAt(0), // 3-10 helix
+  '5': 'b'.charCodeAt(0), // bridge
+  '6': 't'.charCodeAt(0), // turn
+  '7': 'l'.charCodeAt(0), // coil
+  '-1': ''.charCodeAt(0) // NA
 }
 
 class MmtfParser extends StructureParser {
@@ -91,7 +91,7 @@ class MmtfParser extends StructureParser {
       chainsPerModel = sd.chainsPerModel
     }
 
-    numBonds += numGroups  // add numGroups to have space for polymer bonds
+    numBonds += numGroups // add numGroups to have space for polymer bonds
 
     //
 

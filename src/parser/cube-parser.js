@@ -35,11 +35,11 @@ class CubeParser extends VolumeParser {
       return parseFloat(field)
     }
 
-    header.atomCount = Math.abs(h(2, 0))  // Number of atoms
-    header.originX = h(2, 1) * bohrToAngstromFactor  // Position of origin of volumetric data
+    header.atomCount = Math.abs(h(2, 0)) // Number of atoms
+    header.originX = h(2, 1) * bohrToAngstromFactor // Position of origin of volumetric data
     header.originY = h(2, 2) * bohrToAngstromFactor
     header.originZ = h(2, 3) * bohrToAngstromFactor
-    header.NVX = h(3, 0)  // Number of voxels
+    header.NVX = h(3, 0) // Number of voxels
     header.NVY = h(4, 0)
     header.NVZ = h(5, 0)
 

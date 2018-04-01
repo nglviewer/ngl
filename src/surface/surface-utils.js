@@ -62,7 +62,7 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
     var bo = i * 3 + 1
     var co = i * 3 + 2
 
-      // vertex a
+    // vertex a
 
     flagvert = true
     for (j = 0, jl = vertdeg[ 0 ][ faces[ao] ]; j < jl; ++j) {

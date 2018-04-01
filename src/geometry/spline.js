@@ -45,13 +45,13 @@ function Interpolator (m, tension) {
       var d1 = d - delta
       var d2 = d + delta
       var l = offset + j * 3
-            // capping as a precation
+      // capping as a precation
       if (d1 < 0) d1 = 0
       if (d2 > 1) d2 = 1
-            //
+      //
       interpolateToVec(v0, v1, v2, v3, d1, vec1)
       interpolateToVec(v0, v1, v2, v3, d2, vec2)
-            //
+      //
       vec2.sub(vec1).normalize()
       vec2.toArray(tan, l)
     }
@@ -62,7 +62,7 @@ function Interpolator (m, tension) {
     var v1 = iterator.next()
     var v2 = iterator.next()
     var v3 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -88,9 +88,7 @@ function Interpolator (m, tension) {
 
   this.getPosition = function (iterator, array, offset, isCyclic) {
     iterator.reset()
-    vectorSubdivide(
-            interpolatePosition, iterator, array, offset, isCyclic
-        )
+    vectorSubdivide(interpolatePosition, iterator, array, offset, isCyclic)
     var n1 = iterator.size - 1
     var k = n1 * m * 3
     if (isCyclic) k += m * 3
@@ -102,9 +100,7 @@ function Interpolator (m, tension) {
 
   this.getTangent = function (iterator, array, offset, isCyclic) {
     iterator.reset()
-    vectorSubdivide(
-            interpolateTangent, iterator, array, offset, isCyclic
-        )
+    vectorSubdivide(interpolateTangent, iterator, array, offset, isCyclic)
     var n1 = iterator.size - 1
     var k = n1 * m * 3
     if (isCyclic) k += m * 3
@@ -233,7 +229,7 @@ function Interpolator (m, tension) {
       d2v2.copy(iterDir2.get(n - 1))
       d2v3.copy(iterDir2.get(0))
       d2v4.copy(iterDir2.get(1))
-            //
+      //
       vSub3.copy(vSub4)
       vSub4.subVectors(d2v4, d1v4)
       if (vSub3.dot(vSub4) < 0) {
@@ -248,7 +244,7 @@ function Interpolator (m, tension) {
       k += 3 * m
     }
     if (shift) {
-            // FIXME shift requires data from one more preceeding residue
+      // FIXME shift requires data from one more preceeding residue
       vBin.fromArray(bin, m2 * 3)
       vNorm.fromArray(norm, m2 * 3)
       for (var j = 0; j < m2; ++j) {
@@ -267,17 +263,17 @@ function Interpolator (m, tension) {
     var j, l
     for (j = 0; j < m2; ++j) {
       l = offset + j * 3
-      colFn(item1, col, l)  // itemColorToArray
+      colFn(item1, col, l) // itemColorToArray
     }
     for (j = m2; j < m; ++j) {
       l = offset + j * 3
-      colFn(item2, col, l)  // itemColorToArray
+      colFn(item2, col, l) // itemColorToArray
     }
   }
 
   this.getColor = function (iterator, colFn, col, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
     //
@@ -316,10 +312,10 @@ function Interpolator (m, tension) {
 
   this.getPicking = function (iterator, pickFn, pick, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -353,7 +349,7 @@ function Interpolator (m, tension) {
 
   this.getSize = function (iterator, sizeFn, size, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
     //
@@ -571,9 +567,7 @@ Spline.prototype = {
     var pos = new Float32Array(nPos)
     var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet)
 
-    this.interpolator.getPosition(
-      iterator, pos, 0, polymer.isCyclic
-    )
+    this.interpolator.getPosition(iterator, pos, 0, polymer.isCyclic)
 
     return pos
   },
@@ -589,9 +583,7 @@ Spline.prototype = {
     var tan = new Float32Array(nTan)
     var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet)
 
-    this.interpolator.getTangent(
-      iterator, tan, 0, polymer.isCyclic
-    )
+    this.interpolator.getTangent(iterator, tan, 0, polymer.isCyclic)
 
     return tan
   },

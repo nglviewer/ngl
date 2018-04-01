@@ -17,11 +17,11 @@ const bondTypes = {
   '1': 1,
   '2': 2,
   '3': 3,
-  'am': 1,  // amide
-  'ar': 1,  // aromatic
-  'du': 1,  // dummy
-  'un': 1,  // unknown
-  'nc': 0   // not connected
+  'am': 1, // amide
+  'ar': 1, // aromatic
+  'du': 1, // dummy
+  'un': 1, // unknown
+  'nc': 0 // not connected
 }
 
 class Mol2Parser extends StructureParser {

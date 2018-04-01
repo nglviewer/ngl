@@ -355,7 +355,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
 
   var n = nx * ny * nz
 
-    // deltas
+  // deltas
   var yd = nx
   var zd = nx * ny
 
@@ -432,7 +432,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-    // polygonization
+  // polygonization
 
   function lerp (a, b, t) { return a + (b - a) * t }
 

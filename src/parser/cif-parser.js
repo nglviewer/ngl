@@ -49,7 +49,7 @@ function cifDefaults (value, defaultValue) {
 
 function getBondOrder (valueOrder) {
   switch (valueOrder.toLowerCase()) {
-    case '?':  // assume single bond
+    case '?': // assume single bond
     case 'sing':
       return 1
     case 'doub':
@@ -499,8 +499,8 @@ function processSymmetry (cif, structure, asymIdDict) {
 
   if (cif.symmetry) {
     unitcellDict.spacegroup = trimQuotes(
-            cif.symmetry[ 'space_group_name_H-M' ]
-        )
+      cif.symmetry[ 'space_group_name_H-M' ]
+    )
   }
 
   // origx

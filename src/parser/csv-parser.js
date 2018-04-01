@@ -12,7 +12,7 @@ import Parser from './parser'
  * CSV parser
  */
 class CsvParser extends Parser {
-    /**
+  /**
      * [constructor description]
      * @param  {Streamer} streamer - the streamer object
      * @param  {Object} params - parameter object

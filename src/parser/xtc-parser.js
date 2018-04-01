@@ -174,7 +174,7 @@ class XtcParser extends TrajectoryParser {
       }
       boxes.push(box)
 
-      if (natoms <= 9) {  // no compression
+      if (natoms <= 9) { // no compression
         for (let i = 0; i < natoms; ++i) {
           frameCoords[i] = dv.getFloat32(offset)
           offset += 4
@@ -211,7 +211,7 @@ class XtcParser extends TrajectoryParser {
           bitsizeint[0] = sizeOfInt(sizeint[0])
           bitsizeint[1] = sizeOfInt(sizeint[1])
           bitsizeint[2] = sizeOfInt(sizeint[2])
-          bitsize = 0  // flag the use of large sizes
+          bitsize = 0 // flag the use of large sizes
         } else {
           bitsize = sizeOfInts(3, sizeint)
         }
@@ -247,7 +247,7 @@ class XtcParser extends TrajectoryParser {
         let run = 0
         let i = 0
 
-        const buf8 = new Uint8Array(bin, offset)  // 229...
+        const buf8 = new Uint8Array(bin, offset) // 229...
 
         thiscoord[0] = thiscoord[1] = thiscoord[2] = 0
 

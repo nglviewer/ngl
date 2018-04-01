@@ -8,7 +8,7 @@ import { getSurfaceGrid } from './surface-utils.js'
 import { VolumeSurface } from './volume.js'
 import { uniformArray } from '../math/array-utils.js'
 import {
-    computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
+  computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
 } from '../math/vector-utils.js'
 import { defaults } from '../utils'
 
@@ -187,7 +187,7 @@ function AVSurface (coordList, radiusList, indexList) {
   var min = bbox[0]
   var max = bbox[1]
 
-  var r, r2  // Atom positions, expanded radii (squared)
+  var r, r2 // Atom positions, expanded radii (squared)
   var maxRadius
 
   // Parameters

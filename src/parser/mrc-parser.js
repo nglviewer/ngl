@@ -54,9 +54,9 @@ class MrcParser extends VolumeParser {
       }
     }
 
-    header.NX = intView[ 0 ]  // NC - columns (fastest changing)
-    header.NY = intView[ 1 ]  // NR - rows
-    header.NZ = intView[ 2 ]  // NS - sections (slowest changing)
+    header.NX = intView[ 0 ] // NC - columns (fastest changing)
+    header.NY = intView[ 1 ] // NR - rows
+    header.NZ = intView[ 2 ] // NS - sections (slowest changing)
 
     // mode
     //  0 image : signed 8-bit bytes range -128 to 127
@@ -72,14 +72,14 @@ class MrcParser extends VolumeParser {
     header.MODE = intView[ 3 ]
 
     // start
-    header.NXSTART = intView[ 4 ]  // NCSTART - first column
-    header.NYSTART = intView[ 5 ]  // NRSTART - first row
-    header.NZSTART = intView[ 6 ]  // NSSTART - first section
+    header.NXSTART = intView[ 4 ] // NCSTART - first column
+    header.NYSTART = intView[ 5 ] // NRSTART - first row
+    header.NZSTART = intView[ 6 ] // NSSTART - first section
 
     // intervals
-    header.MX = intView[ 7 ]  // intervals along x
-    header.MY = intView[ 8 ]  // intervals along y
-    header.MZ = intView[ 9 ]  // intervals along z
+    header.MX = intView[ 7 ] // intervals along x
+    header.MY = intView[ 8 ] // intervals along y
+    header.MZ = intView[ 9 ] // intervals along z
 
     // cell length (Angstroms in CCP4)
     header.xlen = floatView[ 10 ] * this.voxelSize
@@ -92,9 +92,9 @@ class MrcParser extends VolumeParser {
     header.gamma = floatView[ 15 ]
 
     // axis correspondence (1,2,3 for X,Y,Z)
-    header.MAPC = intView[ 16 ]  // column
-    header.MAPR = intView[ 17 ]  // row
-    header.MAPS = intView[ 18 ]  // section
+    header.MAPC = intView[ 16 ] // column
+    header.MAPR = intView[ 17 ] // row
+    header.MAPS = intView[ 18 ] // section
 
     // density statistics
     header.DMIN = floatView[ 19 ]

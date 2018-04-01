@@ -141,8 +141,8 @@ function parseStr (line) {
   const start = line.indexOf('{')
   const end = line.indexOf('}')
   return line.substring(
-      start !== -1 ? start + 1 : 0,
-      end !== -1 ? end : undefined
+    start !== -1 ? start + 1 : 0,
+    end !== -1 ? end : undefined
   ).trim()
 }
 
@@ -501,7 +501,7 @@ class KinParser extends Parser {
           }
 
           if (radius === undefined) {
-            radius = 1  // temporary default radius
+            radius = 1 // temporary default radius
           }
 
           if (color === undefined) {

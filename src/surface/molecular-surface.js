@@ -17,8 +17,8 @@ WorkerRegistry.add('molsurf', function func (e, callback) {
     const SurfClass = (p.type === 'av') ? AVSurface : EDTSurface
     const surf = new SurfClass(a.coordList, a.radiusList, a.indexList)
     const sd = surf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
-        )
+      p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
+    )
     const transferList = [ sd.position.buffer, sd.index.buffer ]
     if (sd.normal) transferList.push(sd.normal.buffer)
     if (sd.atomindex) transferList.push(sd.atomindex.buffer)

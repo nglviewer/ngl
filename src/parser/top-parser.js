@@ -92,24 +92,24 @@ class TopParser extends StructureParser {
         } else if (mode === AtomsMode) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.atoms.push([
-            parseInt(ls[2]),   // resnr
-            ls[3],             // residue
-            ls[4],             // atom
-            parseFloat(ls[6])  // charge
+            parseInt(ls[2]), // resnr
+            ls[3], // residue
+            ls[4], // atom
+            parseFloat(ls[6]) // charge
           ])
         } else if (mode === BondsMode) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.bonds.push([
-            parseInt(ls[0]),  // ai
-            parseInt(ls[1])   // aj
+            parseInt(ls[0]), // ai
+            parseInt(ls[1]) // aj
           ])
         } else if (mode === SystemMode) {
           s.title = lt
         } else if (mode === MoleculesMode) {
           const ls = lt.split(reWhitespace)
           molecules.push([
-            ls[0],           // name
-            parseInt(ls[1])  // count
+            ls[0], // name
+            parseInt(ls[1]) // count
           ])
         }
       }

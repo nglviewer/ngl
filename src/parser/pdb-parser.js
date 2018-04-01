@@ -14,47 +14,47 @@ import Unitcell from '../symmetry/unitcell'
 import Assembly from '../symmetry/assembly'
 import { WaterNames } from '../structure/structure-constants'
 import {
-    assignSecondaryStructure, buildUnitcellAssembly,
-    calculateBonds, calculateChainnames, calculateSecondaryStructure
+  assignSecondaryStructure, buildUnitcellAssembly,
+  calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from '../structure/structure-utils'
 
 // PDB helix record encoding
 const HelixTypes = {
-  1: 'h',  // Right-handed alpha (default)
-  2: 'h',  // Right-handed omega
-  3: 'i',  // Right-handed pi
-  4: 'h',  // Right-handed gamma
-  5: 'g',  // Right-handed 310
-  6: 'h',  // Left-handed alpha
-  7: 'h',  // Left-handed omega
-  8: 'h',  // Left-handed gamma
-  9: 'h',  // 27 ribbon/helix
-  10: 'h',  // Polyproline
+  1: 'h', // Right-handed alpha (default)
+  2: 'h', // Right-handed omega
+  3: 'i', // Right-handed pi
+  4: 'h', // Right-handed gamma
+  5: 'g', // Right-handed 310
+  6: 'h', // Left-handed alpha
+  7: 'h', // Left-handed omega
+  8: 'h', // Left-handed gamma
+  9: 'h', // 27 ribbon/helix
+  10: 'h', // Polyproline
   '': 'h'
 }
 
 const dAminoAcids = [
-  'DAL',  // D-ALANINE
-  'DAR',  // D-ARGININE
-  'DSG',  // D-ASPARAGINE
-  'DAS',  // D-ASPARTIC ACID
-  'DCY',  // D-CYSTEINE
-  'DGL',  // D-GLUTAMIC ACID
-  'DGN',  // D-GLUTAMINE
-  'DHI',  // D-HISTIDINE
-  'DIL',  // D-ISOLEUCINE
-  'DLE',  // D-LEUCINE
-  'DLY',  // D-LYSINE
-  'MED',  // D-METHIONINE
-  'DPN',  // D-PHENYLALANINE
-  'DPR',  // D-PROLINE
-  'DSN',  // D-SERINE
-  'DTH',  // D-THREONINE
-  'DTR',  // D-TRYPTOPHAN
-  'DTY',  // D-TYROSINE
-  'DVA',  // D-VALINE
+  'DAL', // D-ALANINE
+  'DAR', // D-ARGININE
+  'DSG', // D-ASPARAGINE
+  'DAS', // D-ASPARTIC ACID
+  'DCY', // D-CYSTEINE
+  'DGL', // D-GLUTAMIC ACID
+  'DGN', // D-GLUTAMINE
+  'DHI', // D-HISTIDINE
+  'DIL', // D-ISOLEUCINE
+  'DLE', // D-LEUCINE
+  'DLY', // D-LYSINE
+  'MED', // D-METHIONINE
+  'DPN', // D-PHENYLALANINE
+  'DPR', // D-PROLINE
+  'DSN', // D-SERINE
+  'DTH', // D-THREONINE
+  'DTR', // D-TRYPTOPHAN
+  'DTY', // D-TYROSINE
+  'DVA', // D-VALINE
 
-  'DNE'  // D-NORLEUCINE
+  'DNE' // D-NORLEUCINE
 
   // ???  // D-SELENOCYSTEINE
 ]
@@ -287,7 +287,7 @@ class PdbParser extends StructureParser {
               } else {
                 element = line.substr(76, 2).trim()
                 if (!chainname) {
-                  chainname = line.substr(72, 4).trim()  // segid
+                  chainname = line.substr(72, 4).trim() // segid
                 }
               }
             }
@@ -381,7 +381,7 @@ class PdbParser extends StructureParser {
               if (bondDict[ hash ] === undefined) {
                 bondDict[ hash ] = true
                 bondIndex[ toIdx ] = s.bondStore.count
-                s.bondStore.addBond(ap1, ap2, 1)  // start/assume with single bond
+                s.bondStore.addBond(ap1, ap2, 1) // start/assume with single bond
               }
             }
           }

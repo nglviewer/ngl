@@ -108,7 +108,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     new Int32Array([ -1, 1, -1 ]), new Int32Array([ -1, -1, -1 ])
   ]
 
-    //
+  //
 
   this.getVolume = function (type, probeRadius, scaleFactor, cutoff, setAtomID) {
     console.time('EDTSurface.getVolume')
@@ -426,7 +426,7 @@ function EDTSurface (coordList, radiusList, indexList) {
                         tk > -1 && tk < pWidth &&
                         tj > -1 && tj < pHeight &&
                         !(vpBits[ ti * pWH + tk * pHeight + tj ] & INOUT)
-                    ) {
+              ) {
                 vpBits[ index ] |= ISBOUND
                 // flagbound = true;
                 break
@@ -466,9 +466,9 @@ function EDTSurface (coordList, radiusList, indexList) {
           if (vpBits[ index ] & INOUT) {
             if (vpBits[ index ] & ISBOUND) {
               boundPoint.set(
-                                i, j, k,
-                                i, j, k
-                            )
+                i, j, k,
+                i, j, k
+              )
 
               vpDistance[ index ] = 0
               vpBits[ index ] |= ISDONE
