@@ -14,6 +14,7 @@ import ViewerControls from './viewer-controls'
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
+const tmpRotateZMatrix = new Matrix4()
 const tmpRotateMatrix = new Matrix4()
 const tmpRotateVector = new Vector3()
 const tmpRotateQuaternion = new Quaternion()
@@ -122,6 +123,13 @@ class TrackballControls {
     tmpRotateYMatrix.makeRotationY(dx)
     tmpRotateXMatrix.multiply(tmpRotateYMatrix)
     this.controls.applyMatrix(tmpRotateXMatrix)
+  }
+
+  zRotate (x: number, y: number) {
+    const dz = this.rotateSpeed * ((-x + y) / -2) * 0.01
+
+    tmpRotateZMatrix.makeRotationZ(dz)
+    this.controls.applyMatrix(tmpRotateZMatrix)
   }
 
   rotateComponent (x: number, y: number) {
