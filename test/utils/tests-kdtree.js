@@ -23,20 +23,20 @@ describe('utils/kdtree', function () {
 
       var kdtree = new Kdtree(points, metric)
       assert.strictEqual(
-            kdtree.verify(),
-            points.length / 3,
-            'kdtree verified'
-        )
+        kdtree.verify(),
+        points.length / 3,
+        'kdtree verified'
+      )
 
       var check = function (search, expected) {
         var result = kdtree.nearest(search, 3, 1)[ 0 ]
         var nodeIndex = result[ 0 ]
         var pointIndex = kdtree.indices[ kdtree.nodes[ nodeIndex ] ] * 3
         assert.deepEqual(
-                [ points[ pointIndex ], points[ pointIndex + 1 ], points[ pointIndex + 2 ] ],
-                expected,
-                'kdtree nearest search passed'
-            )
+          [ points[ pointIndex ], points[ pointIndex + 1 ], points[ pointIndex + 2 ] ],
+          expected,
+          'kdtree nearest search passed'
+        )
       }
       check([ 1, 1, 2 ], [ 1, 1, 1 ])
       check([ 3, 0, 5 ], [ 3, 0, 5 ])

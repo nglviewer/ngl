@@ -26,25 +26,25 @@ describe('parser/mmtf-parser', function () {
         assert.strictEqual(structure.rungBondStore.count, 0)
 
         assert.deepEqual(
-                structure.boundingBox.max.toArray(),
-                [ 24.284000396728516, 20.937000274658203, 19.579999923706055 ]
-            )
+          structure.boundingBox.max.toArray(),
+          [ 24.284000396728516, 20.937000274658203, 19.579999923706055 ]
+        )
         assert.deepEqual(
-                structure.boundingBox.min.toArray(),
-                [ -3.0969998836517334, -0.515999972820282, -7.421999931335449 ]
-            )
+          structure.boundingBox.min.toArray(),
+          [ -3.0969998836517334, -0.515999972820282, -7.421999931335449 ]
+        )
         assert.deepEqual(
-                structure.center.toArray(),
-                [ 10.593500256538391, 10.21050015091896, 6.078999996185303 ]
-            )
+          structure.center.toArray(),
+          [ 10.593500256538391, 10.21050015091896, 6.078999996185303 ]
+        )
 
-            // assert.deepEqual( structure.boxes, [
-            //     new Float32Array([
-            //         40.959999084472656, 0, 0,
-            //         0, 18.649999618530273, 0,
-            //         0, 0, 22.520000457763672
-            //     ])
-            // ] );
+        // assert.deepEqual( structure.boxes, [
+        //     new Float32Array([
+        //         40.959999084472656, 0, 0,
+        //         0, 18.649999618530273, 0,
+        //         0, 0, 22.520000457763672
+        //     ])
+        // ] );
         assert.deepEqual(structure.frames, [])
         assert.deepEqual(structure.header, {
           'depositionDate': '1981-04-30',

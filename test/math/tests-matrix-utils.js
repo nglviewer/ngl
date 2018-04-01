@@ -15,7 +15,7 @@ describe('math/matrix-utils', function () {
 
   describe('svd', function () {
     it('decomposition', function () {
-        // http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm
+      // http://web.mit.edu/be.400/www/SVD/Singular_Value_Decomposition.htm
 
       var mRows = 4
       var nCols = 2
@@ -28,7 +28,7 @@ describe('math/matrix-utils', function () {
         0, 0
       ])
 
-        // console.log( "A", A.data );
+      // console.log( "A", A.data );
 
       var W = new Matrix(1, nCols)
       var U = new Matrix(mRows, mRows)
@@ -36,11 +36,11 @@ describe('math/matrix-utils', function () {
 
       svd(A, W, U, V)
 
-        // FIXME see below
-        // var Ux = [ 0.82, -0.58,  0, 0,
-        //            0.58,  0.82,  0, 0,
-        //            0,     0,     1, 0,
-        //            0,     0,     0, 1 ];
+      // FIXME see below
+      // var Ux = [ 0.82, -0.58,  0, 0,
+      //            0.58,  0.82,  0, 0,
+      //            0,     0,     1, 0,
+      //            0,     0,     0, 1 ];
 
       var Vx = [ 0.40, -0.91,
         0.91, 0.40 ]
@@ -50,15 +50,15 @@ describe('math/matrix-utils', function () {
         0, 0,
         0, 0 ]
 
-        // console.log( "U", U.data, Ux );
+      // console.log( "U", U.data, Ux );
 
-        // assert.equal( U.data, Ux, "Passed!" );
+      // assert.equal( U.data, Ux, "Passed!" );
 
-        // FIXME example data for U not the same, not sure way (AR)
-        // assert.closeTo( U.data[0], Ux[0], 0.01 );
-        // assert.closeTo( U.data[1], Ux[1], 0.01 );
-        // assert.closeTo( U.data[2], Ux[2], 0.01 );
-        // assert.closeTo( U.data[3], Ux[3], 0.01 );
+      // FIXME example data for U not the same, not sure way (AR)
+      // assert.closeTo( U.data[0], Ux[0], 0.01 );
+      // assert.closeTo( U.data[1], Ux[1], 0.01 );
+      // assert.closeTo( U.data[2], Ux[2], 0.01 );
+      // assert.closeTo( U.data[3], Ux[3], 0.01 );
 
       assert.closeTo(W.data[0], Sx[0], 0.01)
       assert.closeTo(W.data[1], Sx[3], 0.01)

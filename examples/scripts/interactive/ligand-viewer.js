@@ -401,11 +401,11 @@ clipNearRange.oninput = function (e) {
   var sceneRadius = stage.viewer.boundingBox.getSize().length() / 2
 
   var f = pocketRadius / sceneRadius
-  var v = parseFloat(e.target.value) / 10000  // must be between 0 and 1
+  var v = parseFloat(e.target.value) / 10000 // must be between 0 and 1
   var c = 0.5 - f / 2 + v * f
 
   pocketRepr.setParameters({
-    clipNear: c * 100  // must be between 0 and 100
+    clipNear: c * 100 // must be between 0 and 100
   })
 }
 addElement(clipNearRange)
