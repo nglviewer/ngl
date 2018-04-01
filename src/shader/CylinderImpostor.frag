@@ -245,6 +245,8 @@ void main(){
 
     #ifdef PICKING
 
+        if( opacity < 0.3 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #else

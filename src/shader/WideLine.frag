@@ -26,7 +26,7 @@ void main() {
 
     #if defined( PICKING )
 
-        if( opacity < 0.7 )
+        if( opacity < 0.3 )
             discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
