@@ -37,9 +37,10 @@ NGL.createParameterInput = function (p, v) {
   var input
 
   if (p.type === 'number') {
-    input = new UI.Number(parseFloat(value))
+    input = new UI.Number(0)
       .setRange(p.min, p.max)
       .setPrecision(p.precision)
+      .setValue(parseFloat(value))
   } else if (p.type === 'integer') {
     input = new UI.Integer(parseInt(value))
       .setRange(p.min, p.max)

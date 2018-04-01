@@ -95,7 +95,8 @@ declare global {
  * @property {Integer} fogFar - position where the fog is in full effect
  *                              in percent of scene bounding box
  * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
- * @property {Float} cameraFov - camera field of view in degree, between 15 and 120
+ * @property {Float} cameraFov - perspective camera field of view in degree, between 15 and 120
+ * @property {Float} cameraEyeSep - stereo camera eye seperation
  * @property {Color} lightColor - point light color
  * @property {Float} lightIntensity - point light intensity
  * @property {Color} ambientColor - ambient light color
@@ -129,6 +130,7 @@ const StageDefaultParameters = {
   fogNear: 50,
   fogFar: 100,
   cameraFov: 40,
+  cameraEyeSep: 0.3,
   cameraType: 'perspective' as 'perspective'|'orthographic'|'stereo',
   lightColor: 0xdddddd as string|number,
   lightIntensity: 1.0,
@@ -257,7 +259,7 @@ class Stage {
     this.mouseObserver.setParameters({ hoverTimeout: tp.hoverTimeout })
     viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist)
     viewer.setFog(undefined, tp.fogNear, tp.fogFar)
-    viewer.setCamera(tp.cameraType, tp.cameraFov)
+    viewer.setCamera(tp.cameraType, tp.cameraFov, tp.cameraEyeSep)
     viewer.setSampling(tp.sampleLevel)
     viewer.setBackground(tp.backgroundColor)
     viewer.setLight(tp.lightColor, tp.lightIntensity, tp.ambientColor, tp.ambientIntensity)

@@ -136,6 +136,7 @@ interface ViewerParameters {
 
   cameraType: CameraType
   cameraFov: number
+  cameraEyeSep: number
   cameraZ: number
 
   clipNear: number
@@ -293,6 +294,7 @@ export default class Viewer {
 
       cameraType: 'perspective',
       cameraFov: 40,
+      cameraEyeSep: 0.3,
       cameraZ: -80, // FIXME initial value should be automatically determined
 
       clipNear: 0,
@@ -326,6 +328,7 @@ export default class Viewer {
 
     this.stereoCamera = new StereoCamera()
     this.stereoCamera.aspect = 0.5
+    this.stereoCamera.eyeSep = this.parameters.cameraEyeSep
 
     const cameraType = this.parameters.cameraType
     if (cameraType === 'orthographic') {
@@ -797,11 +800,12 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setCamera (type: CameraType, fov?: number) {
+  setCamera (type: CameraType, fov?: number, eyeSep?: number) {
     const p = this.parameters
 
     if (type) p.cameraType = type
     if (fov) p.cameraFov = fov
+    if (eyeSep) p.cameraEyeSep = eyeSep
 
     if (p.cameraType === 'orthographic') {
       if (this.camera !== this.orthographicCamera) {
@@ -821,6 +825,7 @@ export default class Viewer {
     }
 
     this.perspectiveCamera.fov = p.cameraFov
+    this.stereoCamera.eyeSep = p.cameraEyeSep
     this.camera.updateProjectionMatrix()
 
     this.requestRender()
