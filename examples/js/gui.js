@@ -337,6 +337,13 @@ NGL.ViewportWidget = function (stage) {
   container.dom = viewer.container
   container.setPosition('absolute')
 
+  var fileTypesOpen = NGL.flatten([
+    NGL.ParserRegistry.getStructureExtensions(),
+    NGL.ParserRegistry.getVolumeExtensions(),
+    NGL.ParserRegistry.getSurfaceExtensions(),
+    NGL.DecompressorRegistry.names
+  ])
+
   // event handlers
 
   container.dom.addEventListener('dragover', function (e) {
@@ -350,9 +357,15 @@ NGL.ViewportWidget = function (stage) {
     e.preventDefault()
 
     var fn = function (file, callback) {
-      stage.loadFile(file, {
-        defaultRepresentation: true
-      }).then(function () { callback() })
+      var ext = file.name.split('.').pop().toLowerCase()
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(file).then(callback)
+      } else if (fileTypesOpen.includes(ext)) {
+        stage.loadFile(file, { defaultRepresentation: true }).then(callback)
+      } else {
+        console.error('unknown filetype: ' + ext)
+        callback()
+      }
     }
     var queue = new NGL.Queue(fn, e.dataTransfer.files)
   }, false)
@@ -465,7 +478,10 @@ NGL.MenubarFileWidget = function (stage) {
     var dirWidget
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
-      if (fileTypesOpen.includes(ext)) {
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(NGL.ListingDatasource.getUrl(info.path))
+        dirWidget.dispose()
+      } else if (fileTypesOpen.includes(ext)) {
         stage.loadFile(NGL.ListingDatasource.getUrl(info.path), {
           defaultRepresentation: true
         })
