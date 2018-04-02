@@ -151,7 +151,7 @@ class StructureView extends Structure {
       this.bondCount = this.bondSet.getSize()
 
       this.boundingBox = this.getBoundingBox()
-      this.center = this.boundingBox.getCenter()
+      this.center = this.boundingBox.getCenter(new Vector3())
     }
 
     if (Debug) Log.timeEnd('StructureView.refresh')

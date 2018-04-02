@@ -410,7 +410,7 @@ class Shape {
 
   get center () {
     if (!this._center) {
-      this._center = this.boundingBox.getCenter()
+      this._center = this.boundingBox.getCenter(new Vector3())
     }
     return this._center
   }

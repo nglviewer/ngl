@@ -14,16 +14,21 @@ import { guessElement } from '../structure/structure-utils'
 import AtomProxy from '../proxy/atom-proxy'
 import Structure from '../structure/structure'
 
+function getNamedItem(a: NamedNodeMap, name: string) {
+  const item = a.getNamedItem(name)
+  return item !== null ? item.value : ''
+}
+
 function getSele (a: NamedNodeMap, atomname?: string, useAltcode = false) {
-  const icode = a.getNamedItem('icode').value
-  const chain = a.getNamedItem('chain').value
-  const altcode = a.getNamedItem('altcode').value
-  let sele = a.getNamedItem('resnum').value
+  const icode = getNamedItem(a, 'icode')
+  const chain = getNamedItem(a, 'chain')
+  const altcode = getNamedItem(a, 'altcode')
+  let sele = getNamedItem(a, 'resnum')
   if (icode.trim()) sele += '^' + icode
   if (chain.trim()) sele += ':' + chain
   if (atomname) sele += '.' + atomname
   if (useAltcode && altcode.trim()) sele += '%' + altcode
-  sele += '/' + (parseInt(a.getNamedItem('model').value) - 1)
+  sele += '/' + (parseInt(getNamedItem(a, 'model')) - 1)
   return sele
 }
 
@@ -35,7 +40,7 @@ function setBitDict (dict: { [k: string]: number }, key: string, bit: number) {
   }
 }
 
-function hasAttrValue (attr: Attr, value: string) {
+function hasAttrValue (attr: Attr|null, value: string) {
   return attr !== null && attr.value === value
 }
 
@@ -58,7 +63,7 @@ function getProblemCount (clashDict: { [k: string]: { [k: string]: string } }, g
 
   const clashes = g.getElementsByTagName('clash')
   for (let j = 0, jl = clashes.length; j < jl; ++j) {
-    if (clashDict[ clashes[ j ].attributes.getNamedItem('cid').value ]) {
+    if (clashDict[ getNamedItem(clashes[ j ].attributes, 'cid') ]) {
       geoProblemCount += 1
       break
     }
@@ -132,10 +137,10 @@ class Validation {
 
       const sele = getSele(ga)
       if (ga.getNamedItem('rsrz') !== null) {
-        rsrzDict[ sele ] = parseFloat(ga.getNamedItem('rsrz').value)
+        rsrzDict[ sele ] = parseFloat(getNamedItem(ga, 'rsrz'))
       }
       if (ga.getNamedItem('rscc') !== null) {
-        rsccDict[ sele ] = parseFloat(ga.getNamedItem('rscc').value)
+        rsccDict[ sele ] = parseFloat(getNamedItem(ga, 'rscc'))
       }
       const seleAttr = xml.createAttribute('sele')
       seleAttr.value = sele
@@ -145,10 +150,10 @@ class Validation {
 
       for (let j = 0, jl = clashes.length; j < jl; ++j) {
         const ca = clashes[ j ].attributes
-        const atom = ca.getNamedItem('atom').value
+        const atom = getNamedItem(ca, 'atom')
 
         if (guessElement(atom) !== 'H') {
-          const cid = ca.getNamedItem('cid').value
+          const cid = getNamedItem(ca, 'cid')
           const atomSele = getSele(ga, atom, true)
           atomDict[ atomSele ] = true
 
@@ -177,8 +182,8 @@ class Validation {
       const g = groups[ i ]
       const ga = g.attributes
 
-      const sele = ga.getNamedItem('sele').value
-      const isPolymer = ga.getNamedItem('seq').value !== '.'
+      const sele = getNamedItem(ga, 'sele')
+      const isPolymer = getNamedItem(ga, 'seq') !== '.'
 
       if (isPolymer) {
         const geoProblemCount = getProblemCount(clashDict, g, ga)
@@ -196,21 +201,21 @@ class Validation {
 
           for (let j = 0, jl = clashes.length; j < jl; ++j) {
             const ca = clashes[ j ].attributes
-            if (clashDict[ ca.getNamedItem('cid').value ]) {
-              setBitDict(atomDict, ca.getNamedItem('atom').value, 1)
+            if (clashDict[ getNamedItem(ca, 'cid') ]) {
+              setBitDict(atomDict, getNamedItem(ca, 'atom'), 1)
             }
           }
 
           for (let j = 0, jl = mogBondOutliers.length; j < jl; ++j) {
             const mbo = mogBondOutliers[ j ].attributes
-            mbo.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
+            getNamedItem(mbo, 'atoms').split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 2)
             })
           }
 
           for (let j = 0, jl = mogAngleOutliers.length; j < jl; ++j) {
             const mao = mogAngleOutliers[ j ].attributes
-            mao.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
+            getNamedItem(mao, 'atoms').split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 4)
             })
           }

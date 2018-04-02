@@ -750,7 +750,7 @@ class Stage {
   }
 
   getCenter (optionalTarget?: Vector3) {
-    return this.getBox().getCenter(optionalTarget)
+    return this.getBox().getCenter(optionalTarget || new Vector3())
   }
 
   /**

@@ -197,7 +197,7 @@ class Structure implements Structure{
     this.atomSet = this.getAtomSet()
     this.atomCount = this.atomStore.count
     this.boundingBox = this.getBoundingBox(undefined, this.boundingBox)
-    this.center = this.boundingBox.getCenter()
+    this.center = this.boundingBox.getCenter(new Vector3())
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
   }
 
@@ -995,7 +995,7 @@ class Structure implements Structure{
    */
   atomCenter (selection?: Selection) {
     if (selection) {
-      return this.getBoundingBox(selection).getCenter()
+      return this.getBoundingBox(selection).getCenter(new Vector3())
     } else {
       return this.center.clone()
     }

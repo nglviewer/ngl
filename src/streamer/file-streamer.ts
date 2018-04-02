@@ -10,7 +10,7 @@ interface FileReaderEventTarget extends EventTarget {
     result:string
 }
 
-interface FileReaderEvent extends Event {
+interface FileReaderEvent extends ProgressEvent {
     target: FileReaderEventTarget;
     getMessage():string;
 }
@@ -21,7 +21,9 @@ class FileStreamer extends Streamer {
       const file = this.src
       const reader = new FileReader()
 
-      reader.onload = (event: FileReaderEvent) => resolve(event.target.result)
+      reader.onload = (event: FileReaderEvent) => {
+        if(event.target) resolve(event.target.result)
+      }
 
       // if (typeof this.onprogress === 'function') {
       //   reader.onprogress = event => this.onprogress(event)

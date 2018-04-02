@@ -897,7 +897,6 @@ export default class Viewer {
       memory.textures = rMemory.textures
 
       render.calls += rRender.calls
-      render.vertices += rRender.vertices
       render.faces += rRender.faces
       render.points += rRender.points
     }

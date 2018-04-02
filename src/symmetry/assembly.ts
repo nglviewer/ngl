@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Box3 } from 'three'
+import { Matrix4, Box3, Vector3 } from 'three'
 
 import { uniqueArray } from '../utils'
 import Selection from '../selection/selection'
@@ -124,7 +124,7 @@ class Assembly {
   }
 
   getCenter (structure: Structure) {
-    return this.getBoundingBox(structure).getCenter()
+    return this.getBoundingBox(structure).getCenter(new Vector3())
   }
 
   getSelection () {

@@ -387,7 +387,7 @@ abstract class Component {
   }
 
   getCenterUntransformed (...args: any[]) {
-    return this.getBoxUntransformed().getCenter()
+    return this.getBoxUntransformed().getCenter(new Vector3())
   }
 
   /**
