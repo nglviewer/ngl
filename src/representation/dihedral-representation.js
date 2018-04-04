@@ -94,8 +94,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     const atomPosition = parseNestedAtoms(sview, this.atomQuad)
     const dihedralData = getDihedralData(
       atomPosition, {
-        extendLine: this.extendLine,
-        planeVisible: this.planeVisible
+        extendLine: this.extendLine
       }
     )
 
@@ -132,7 +131,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
       position: dihedralData.planePosition,
       color: uniformArray3(this.planeLength, c.r, c.g, c.b)
     }, this.getBufferParams({
-      visible: false // this.planeVisible
+      visible: this.planeVisible
     }))
 
     this.sectorLength = dihedralData.sectorPosition.length / 3
@@ -328,11 +327,14 @@ function getDihedralData (position, params) {
     // For non-extended, 2 straight lines plus segment edge
     const nLines = nSegments + ((params.extendLine) ? 4 : 2)
 
+    // Don't draw planes if not extending lines
+    const nPlanes = params.extendLine ? 36 : 0
+
     const line1 = new Float32Array(nLines * 3)
     const line2 = new Float32Array(nLines * 3)
     const sector = new Float32Array(nSegments * 9)
     // 2 planes, 2 triangles each per dihedral (2*2*9)
-    const plane = new Float32Array(36)
+    const plane = new Float32Array(nPlanes)
 
     lineTmp1[ i ] = line1
     lineTmp2[ i ] = line2
@@ -433,7 +435,7 @@ function getDihedralData (position, params) {
 
     totalLines += nLines * 3
     totalSegments += nSegments * 9
-    totalPlanes += 36
+    totalPlanes += nPlanes
     i += 1
   }
 
