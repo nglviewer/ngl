@@ -237,6 +237,8 @@ export function addHydrogenBonds (structure: Structure, contacts: Contacts, para
       donor.index = atomSets[ l ][ 0 ]
       acceptor.index = atomSets[ k ][ 0 ]
 
+      if (acceptor.index === donor.index) return // DA to self
+
       if (invalidAtomContact(donor, acceptor, masterIdx)) return
       if (donor.number !== Elements.S && acceptor.number !== Elements.S && dSq > maxHbondDistSq) return
       if (donor.connectedTo(acceptor)) return
