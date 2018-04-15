@@ -256,9 +256,15 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   const radius: number[] = []
   const picking: number[] = []
 
-  let filterSet: BitArray | undefined
+  let filterSet: BitArray | BitArray[] | undefined
   if (p.filterSele) {
-    filterSet = structure.getAtomSet(new Selection(p.filterSele))
+    if (Array.isArray(p.filterSele)) {
+      filterSet = p.filterSele.map(sele => {
+        return structure.getAtomSet(new Selection(sele))
+      })
+    } else {
+      filterSet = structure.getAtomSet(new Selection(p.filterSele))
+    }
   }
 
   contactSet.forEach(i => {
@@ -268,7 +274,12 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
     if (filterSet) {
       const idx1 = atomSets[index1[i]][0]
       const idx2 = atomSets[index2[i]][0]
-      if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2)) return
+
+      if (Array.isArray(filterSet)) {
+        if (!(filterSet[0].isSet(idx1) && filterSet[1].isSet(idx2) || (filterSet[1].isSet(idx1) && filterSet[0].isSet(idx2)))) return
+      } else {
+        if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2)) return
+      }
     }
 
     const k = index1[i]
