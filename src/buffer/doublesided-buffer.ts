@@ -124,8 +124,8 @@ class DoubleSidedBuffer {
       front = this.frontBuffer.getMesh()
     }
 
-    this.frontMeshes.push(front)
-    this.backMeshes.push(back)
+    this.frontMeshes.push(<LineSegments|Mesh>front)
+    this.backMeshes.push(<LineSegments|Mesh>back)
 
     this.setParameters({ side: this.side })
 
