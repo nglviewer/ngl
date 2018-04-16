@@ -55165,6 +55165,9 @@ Viewer.prototype.clear = function clear () {
     this._initScene();
     this.renderer.clear();
 };
+Viewer.prototype.dispose = function dispose () {
+    this.renderer.dispose();
+};
 
 /**
  * @file Constants
@@ -61364,7 +61367,14 @@ function getContactData(contacts, structure, params) {
     var picking = [];
     var filterSet;
     if (p.filterSele) {
-        filterSet = structure.getAtomSet(new Selection(p.filterSele));
+        if (Array.isArray(p.filterSele)) {
+            filterSet = p.filterSele.map(function (sele) {
+                return structure.getAtomSet(new Selection(sele));
+            });
+        }
+        else {
+            filterSet = structure.getAtomSet(new Selection(p.filterSele));
+        }
     }
     contactSet.forEach(function (i) {
         var ti = type[i];
@@ -61373,8 +61383,14 @@ function getContactData(contacts, structure, params) {
         if (filterSet) {
             var idx1 = atomSets[index1[i]][0];
             var idx2 = atomSets[index2[i]][0];
-            if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2))
-                { return; }
+            if (Array.isArray(filterSet)) {
+                if (!(filterSet[0].isSet(idx1) && filterSet[1].isSet(idx2) || (filterSet[1].isSet(idx1) && filterSet[0].isSet(idx2))))
+                    { return; }
+            }
+            else {
+                if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2))
+                    { return; }
+            }
         }
         var k = index1[i];
         var l = index2[i];
@@ -78469,6 +78485,7 @@ Stage.prototype.measureUpdate = function measureUpdate () {
  */
 Stage.prototype.dispose = function dispose () {
     this.tasks.dispose();
+    this.viewer.dispose();
 };
 
 /**
@@ -83475,8 +83492,7 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
             { return; }
         var atomPosition = parseNestedAtoms(sview, this.atomQuad);
         var dihedralData = getDihedralData(atomPosition, {
-            extendLine: this.extendLine,
-            planeVisible: this.planeVisible
+            extendLine: this.extendLine
         });
         var n = this.n = dihedralData.labelText.length;
         var labelColor = new Color(this.labelColor);
@@ -83504,7 +83520,7 @@ var DihedralRepresentation = (function (MeasurementRepresentation$$1) {
             position: dihedralData.planePosition,
             color: uniformArray3(this.planeLength, c.r, c.g, c.b)
         }, this.getBufferParams({
-            visible: false // this.planeVisible
+            visible: this.planeVisible
         }));
         this.sectorLength = dihedralData.sectorPosition.length / 3;
         this.sectorBuffer = new MeshBuffer({
@@ -83661,11 +83677,13 @@ function getDihedralData(position, params) {
         // For extended display mode, 4 straight lines plus arc/segment edge
         // For non-extended, 2 straight lines plus segment edge
         var nLines = nSegments + ((params.extendLine) ? 4 : 2);
+        // Don't draw planes if not extending lines
+        var nPlanes = params.extendLine ? 36 : 0;
         var line1 = new Float32Array(nLines * 3);
         var line2 = new Float32Array(nLines * 3);
         var sector = new Float32Array(nSegments * 9);
         // 2 planes, 2 triangles each per dihedral (2*2*9)
-        var plane = new Float32Array(36);
+        var plane = new Float32Array(nPlanes);
         lineTmp1[i] = line1;
         lineTmp2[i] = line2;
         sectorTmp[i] = sector;
@@ -83756,7 +83774,7 @@ function getDihedralData(position, params) {
         }
         totalLines += nLines * 3;
         totalSegments += nSegments * 9;
-        totalPlanes += 36;
+        totalPlanes += nPlanes;
         i += 1;
     };
 
@@ -99307,7 +99325,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.31";
+var version$1 = "2.0.0-dev.32";
 
 /**
  * @file Version
