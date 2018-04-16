@@ -1242,4 +1242,8 @@ export default class Viewer {
     this._initScene()
     this.renderer.clear()
   }
+
+  dispose () {
+    this.renderer.dispose()
+  }
 }
