@@ -8,7 +8,7 @@ class Queue<T> {
   queue: T[] = []
   pending = false
 
-  constructor(readonly fn: Function, argList: T[]) {
+  constructor(readonly fn: Function, argList?: T[]) {
     this.next = this.next.bind(this)
 
     if (argList) {

@@ -10,7 +10,43 @@ import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals'
 import { defaults } from '../utils'
 import Queue from '../utils/queue.js'
 import Counter from '../utils/counter.js'
+import Viewer from '../viewer/viewer'
+import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
 
+interface RepresentationParameters {
+  lazy?: boolean,
+  clipNear?: number,
+  clipRadius?: number,
+  clipCenter?: Vector3,
+  flatShaded?: boolean,
+  opacity?: number,
+  depthWrite?: boolean,
+  side?: BufferSide,
+  wireframe?: boolean,
+  colorScheme?: string,
+  colorScale?: string | number[],
+  colorReverse?: boolean,
+  colorValue?: number,
+  colorDomain?: number[],
+  colorMode?: string,
+  roughness?: number,
+  metalness?: number,
+  diffuse?: Color,
+  diffuseInterior?: Color,
+  useInteriorColor?: Color,
+  interiorColor?: Color,
+  interiorDarkening?: Color,
+  disablePicking?: boolean,
+  matrix?: Matrix4
+  quality?: string,
+  visible?: boolean,
+  color?: number | string | Color,
+  sphereDetail?: number,
+  radialSegments?: number,
+  openEnded?: boolean
+  disableImpostor?: boolean
+  [key: string]: any//boolean | number | undefined | Color | string | Vector3 | Matrix4 | number[]
+}
 /**
  * Representation parameter object.
  * @typedef {Object} RepresentationParameters - representation parameters
@@ -54,9 +90,50 @@ import Counter from '../utils/counter.js'
  * @param {RepresentationParameters} [params] - representation parameters
  */
 class Representation {
-  constructor (object, viewer, params) {
+  parameters: any
+  type: string
+  private viewer: Viewer
+  tasks: Counter
+  private queue: Queue<any>
+  private bufferList: Buffer[]
+
+  private lazy: boolean
+  private lazyProps: { build: boolean, bufferParams: BufferParameters | {}, what: {}}
+  
+  private clipNear: number
+  private clipRadius: number
+  private clipCenter: Vector3
+  private flatShaded: boolean
+  private opacity: number
+  private depthWrite: boolean
+  private side: string
+  private wireframe: boolean
+  private colorScheme: string
+  private colorScale: string | number[]
+  private colorReverse: boolean
+  private colorValue: Color
+  private colorDomain: number[]
+  private colorMode: string
+  private roughness: number
+  private metalness: number
+  private diffuse: Color
+  private diffuseInterior: Color
+  private useInteriorColor: Color
+  private interiorColor: Color
+  private interiorDarkening: Color
+  private disablePicking: boolean
+  
+  private matrix: Matrix4
+  
+  private quality: string
+  visible: boolean
+
+  private prepare: (arg?: any)=> void
+  [key: string]: any
+
+  constructor (object: any, viewer: Viewer, params: RepresentationParameters) {
     // eslint-disable-next-line no-unused-vars
-    const p = params || {}
+    // const p = params || {}
 
     this.type = ''
 
@@ -180,7 +257,7 @@ class Representation {
     }
   }
 
-  init (params) {
+  init (params: RepresentationParameters) {
     const p = params || {}
 
     this.clipNear = defaults(p.clipNear, 0)
@@ -276,7 +353,7 @@ class Representation {
     }
   }
 
-  getColorParams (p) {
+  getColorParams (p?: {}) {
     return Object.assign({
 
       scheme: this.colorScheme,
@@ -289,7 +366,7 @@ class Representation {
     }, p)
   }
 
-  getBufferParams (p) {
+  getBufferParams (p?: {}) {
     return Object.assign({
 
       clipNear: this.clipNear,
@@ -317,7 +394,7 @@ class Representation {
     }, p)
   }
 
-  setColor (value, p) {
+  setColor (value: number | string | Color | undefined , p?: RepresentationParameters) {
     const types = Object.keys(ColormakerRegistry.getSchemes())
 
     if (typeof value === 'string' && types.includes(value.toLowerCase())) {
@@ -327,13 +404,13 @@ class Representation {
         this.setParameters({ colorScheme: value })
       }
     } else if (value !== undefined) {
-      value = new Color(value).getHex()
+      let val = new Color(value as number).getHex()
       if (p) {
         p.colorScheme = 'uniform'
-        p.colorValue = value
+        p.colorValue = val
       } else {
         this.setParameters({
-          colorScheme: 'uniform', colorValue: value
+          colorScheme: 'uniform', colorValue: val
         })
       }
     }
@@ -348,11 +425,11 @@ class Representation {
     // this.bufferList.length = 0;
   }
 
-  update () {
+  update (what?: any) {
     this.build()
   }
 
-  build (updateWhat) {
+  build (updateWhat?: any) {
     if (this.lazy && (!this.visible || !this.opacity)) {
       this.lazyProps.build = true
       return
@@ -375,7 +452,7 @@ class Representation {
     this.queue.push(updateWhat || false)
   }
 
-  make (updateWhat, callback) {
+  make (updateWhat?: any, callback?: () => void) {
     if (Debug) Log.time('Representation.make ' + this.type)
 
     const _make = () => {
@@ -407,7 +484,7 @@ class Representation {
     }
   }
 
-  attach (callback) {
+  attach (callback: () => void) {
     this.setVisibility(this.visible)
 
     callback()
@@ -419,7 +496,7 @@ class Representation {
    * @param {Boolean} [noRenderRequest] - whether or not to request a re-render from the viewer
    * @return {Representation} this object
    */
-  setVisibility (value, noRenderRequest) {
+  setVisibility (value: boolean, noRenderRequest?: boolean): Representation {
     this.visible = value
 
     if (this.visible && this.opacity) {
@@ -430,7 +507,7 @@ class Representation {
       if (lazyProps.build) {
         lazyProps.build = false
         this.build()
-        return
+        return this
       } else if (Object.keys(bufferParams).length || Object.keys(what).length) {
         lazyProps.bufferParams = {}
         lazyProps.what = {}
@@ -460,10 +537,10 @@ class Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {Representation} this object
    */
-  setParameters (params, what = {}, rebuild = false) {
+  setParameters (params: RepresentationParameters, what:{[propName: string]: any} = {}, rebuild = false) {
     const p = params || {}
     const tp = this.parameters
-    const bufferParams = {}
+    const bufferParams: BufferParameters = <any>{}
 
     if (!this.opacity && p.opacity !== undefined) {
       if (this.lazyProps.build) {
@@ -483,8 +560,8 @@ class Representation {
       if (p[ name ] === undefined) continue
       if (tp[ name ] === undefined) continue
 
-      if (tp[ name ].int) p[ name ] = parseInt(p[ name ])
-      if (tp[ name ].float) p[ name ] = parseFloat(p[ name ])
+      if (tp[ name ].int) p[ name ] = parseInt(p[ name ] as string)
+      if (tp[ name ].float) p[ name ] = parseFloat(p[ name ] as string)
 
       // no value change
       if (p[ name ] === this[ name ] && (
@@ -502,9 +579,10 @@ class Representation {
       // buffer param
       if (tp[ name ].buffer) {
         if (tp[ name ].buffer === true) {
-          bufferParams[ name ] = p[ name ]
+          bufferParams[ name as keyof BufferParameters ] = p[ name ]
         } else {
-          bufferParams[ tp[ name ].buffer ] = p[ name ]
+          let key: (keyof BufferParameters) = tp[ name ].buffer
+          bufferParams[ key ] = p[ name ]
         }
       }
 
@@ -533,8 +611,8 @@ class Representation {
     return this
   }
 
-  updateParameters (bufferParams = {}, what) {
-    if (this.lazy && (!this.visible || !this.opacity) && bufferParams.opacity === undefined) {
+  updateParameters (bufferParams: BufferParameters | {} = {}, what?: any) {
+    if (this.lazy && (!this.visible || !this.opacity) && bufferParams.hasOwnProperty('opacity') === false) {
       Object.assign(this.lazyProps.bufferParams, bufferParams)
       Object.assign(this.lazyProps.what, what)
       return
@@ -552,7 +630,7 @@ class Representation {
   }
 
   getParameters () {
-    const params = {
+    const params: RepresentationParameters = {
       lazy: this.lazy,
       visible: this.visible,
       quality: this.quality
