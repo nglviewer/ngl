@@ -95,5 +95,7 @@
     "typescript": "^2.7.1",
     "uglify-js": "^3.3.9"
   },
-  "dependencies": {}
+  "dependencies": {
+    "npm": "^5.8.0"
+  }
 }
