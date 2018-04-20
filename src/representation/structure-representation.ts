@@ -6,9 +6,14 @@
 
 import { ExtensionFragDepth, Mobile } from '../globals'
 import { defaults } from '../utils'
-import Representation from './representation.js'
+import { RepresentationParameters, default as Representation } from './representation.js'
 import Selection from '../selection/selection.js'
-import RadiusFactory, { RadiusFactoryTypes } from '../utils/radius-factory.js'
+import RadiusFactory, { RadiusFactoryTypes, RadiusType } from '../utils/radius-factory.js'
+import Structure from '../structure/structure'
+import Viewer from '../viewer/viewer'
+import { Assembly } from '../ngl';
+import StructureView from '../structure/structure-view';
+import AtomProxy from '../proxy/atom-proxy';
 
 /**
  * Structure representation parameter object.
@@ -20,19 +25,42 @@ import RadiusFactory, { RadiusFactoryTypes } from '../utils/radius-factory.js'
  * @property {Float} scale - A number that scales the value defined by the *radius* or the *radiusType* parameter.
  * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
  */
-
+interface StructureRepresentationParameters extends RepresentationParameters {
+  radiusType?: string
+  radius?: number
+  scale?: number
+  assembly?: string
+}
+interface Data {
+  bufferList: any[]
+  sview: StructureView | Structure
+  [k: string]: any
+}
 /**
  * Structure representation
  * @interface
  */
-class StructureRepresentation extends Representation {
+abstract class StructureRepresentation extends Representation {
+
+  private selection: Selection
+  private dataList: Data[]
+  structure: Structure
+  structureView: StructureView
+
+  radiusType: RadiusType
+  radiusData: {[k: number]: number}
+  radiusSize: number
+  radiusScale: number
+  assembly: string
+  defaultAssembly: string
+
   /**
    * Create Structure representation object
    * @param {Structure} structure - the structure to be represented
    * @param {Viewer} viewer - a viewer object
    * @param {StructureRepresentationParameters} params - structure representation parameters
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
     const p = params || {}
 
     super(structure, viewer, p)
@@ -81,7 +109,7 @@ class StructureRepresentation extends Representation {
     this.structureView = this.structure.getView(this.selection)
 
     if (structure.biomolDict) {
-      const biomolOptions = {
+      const biomolOptions:{[key: string]: string} = {
         'default': 'default',
         '': (structure.unitcell ? 'AU' : 'FULL')
       }
@@ -107,7 +135,7 @@ class StructureRepresentation extends Representation {
     }
   }
 
-  init (params) {
+  init (params: {[key: string]: any}) {
     const p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'element')
 
@@ -126,14 +154,14 @@ class StructureRepresentation extends Representation {
 
     super.init(p)
 
-    this.selection.signals.stringChanged.add(function (/* sele */) {
+    this.selection.signals.stringChanged.add((/* sele */) => {
       this.build()
-    }, this)
+    })
 
     this.build()
   }
 
-  setRadius (value, p) {
+  setRadius (value: string | number | undefined, p: StructureRepresentationParameters) {
     const types = Object.keys(RadiusFactoryTypes)
 
     if (typeof value === 'string' && types.includes(value.toLowerCase())) {
@@ -146,7 +174,7 @@ class StructureRepresentation extends Representation {
     return this
   }
 
-  getAssembly () {
+  getAssembly (): Assembly {
     const name = this.assembly === 'default' ? this.defaultAssembly : this.assembly
     return this.structure.biomolDict[ name ]
   }
@@ -190,7 +218,7 @@ class StructureRepresentation extends Representation {
     const assembly = this.getAssembly()
 
     if (assembly) {
-      assembly.partList.forEach(function (part, i) {
+      assembly.partList.forEach((part, i) => {
         const sview = part.getView(this.structureView)
         if (sview.atomCount === 0) return
         const data = this.createData(sview, i)
@@ -199,7 +227,7 @@ class StructureRepresentation extends Representation {
           data.instanceList = part.getInstanceList()
           this.dataList.push(data)
         }
-      }, this)
+      })
     } else {
       const data = this.createData(this.structureView, 0)
       if (data) {
@@ -209,11 +237,9 @@ class StructureRepresentation extends Representation {
     }
   }
 
-  createData (/* sview */) {
-    console.error('createData not implemented')
-  }
+  abstract createData (...arg: any[]): Data
 
-  update (what) {
+  update (what: any) {
     if (this.lazy && !this.visible) {
       Object.assign(this.lazyProps.what, what)
       return
@@ -224,22 +250,22 @@ class StructureRepresentation extends Representation {
       return
     }
 
-    this.dataList.forEach(function (data) {
+    this.dataList.forEach((data) => {
       if (data.bufferList.length > 0) {
         this.updateData(what, data)
       }
     }, this)
   }
 
-  updateData (/* what, data */) {
+  updateData (what?: any, data?: any) {
     this.build()
   }
 
   getColorParams () {
-    const p = super.getColorParams()
-    p.structure = this.structure
-
-    return p
+    return {
+      ...super.getColorParams(),
+      structure: this.structure
+    }
   }
 
   getRadiusParams () {
@@ -251,7 +277,7 @@ class StructureRepresentation extends Representation {
     }
   }
 
-  getAtomParams (what, params) {
+  getAtomParams (what: any, params: {[k: string]: any}) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
@@ -259,7 +285,7 @@ class StructureRepresentation extends Representation {
     }, params)
   }
 
-  getBondParams (what, params) {
+  getBondParams (what: any, params: {[k: string]: any}) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
@@ -267,8 +293,8 @@ class StructureRepresentation extends Representation {
     }, params)
   }
 
-  getAtomRadius (atom) {
-    if (this.structureView.atomSet.isSet(atom.index)) {
+  getAtomRadius (atom: AtomProxy) {
+    if (this.structureView.atomSet!.isSet(atom.index)) {
       const radiusFactory = new RadiusFactory(this.getRadiusParams())
       return radiusFactory.atomRadius(atom)
     }
@@ -282,7 +308,7 @@ class StructureRepresentation extends Representation {
    * @param {Boolean} [silent] - don't trigger a change event in the selection
    * @return {StructureRepresentation} this object
    */
-  setSelection (string, silent) {
+  setSelection (string: string, silent?: boolean) {
     this.selection.setString(string, silent)
 
     return this
@@ -302,7 +328,7 @@ class StructureRepresentation extends Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {StructureRepresentation} this object
    */
-  setParameters (params, what = {}, rebuild = false) {
+  setParameters (params: StructureRepresentationParameters, what: {position?: boolean, color?: boolean, [k: string]: any} = {}, rebuild = false) {
     const p = params || {}
 
     this.setRadius(p.radius, p)
@@ -339,7 +365,7 @@ class StructureRepresentation extends Representation {
     return params
   }
 
-  attach (callback) {
+  attach (callback: ()=> void) {
     const viewer = this.viewer
     const bufferList = this.bufferList
 

@@ -13,7 +13,7 @@ import Counter from '../utils/counter.js'
 import Viewer from '../viewer/viewer'
 import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
 
-interface RepresentationParameters {
+export interface RepresentationParameters {
   lazy?: boolean,
   clipNear?: number,
   clipRadius?: number,
@@ -92,13 +92,13 @@ interface RepresentationParameters {
 class Representation {
   parameters: any
   type: string
-  private viewer: Viewer
+  viewer: Viewer
   tasks: Counter
   private queue: Queue<any>
-  private bufferList: Buffer[]
+  bufferList: Buffer[]
 
-  private lazy: boolean
-  private lazyProps: { build: boolean, bufferParams: BufferParameters | {}, what: {}}
+  lazy: boolean
+  lazyProps: { build: boolean, bufferParams: BufferParameters | {}, what: {}}
   
   private clipNear: number
   private clipRadius: number
