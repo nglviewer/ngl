@@ -1,6 +1,6 @@
 #define STANDARD
 
-uniform float nearClip;
+uniform float clipNear;
 uniform vec3 clipCenter;
 
 #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )

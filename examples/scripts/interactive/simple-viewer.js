@@ -70,10 +70,10 @@ var loadStructureButton = createFileButton('load structure', {
 addElement(loadStructureButton)
 
 var polymerSelect = createSelect([
-    [ 'cartoon', 'cartoon' ],
-    [ 'spacefill', 'spacefill' ],
-    [ 'licorice', 'licorice' ],
-    [ 'surface', 'surface' ]
+  [ 'cartoon', 'cartoon' ],
+  [ 'spacefill', 'spacefill' ],
+  [ 'licorice', 'licorice' ],
+  [ 'surface', 'surface' ]
 ], {
   onchange: function (e) {
     stage.getRepresentationsByName('polymer').dispose()
@@ -92,7 +92,7 @@ var ligandCheckbox = createElement('input', {
   checked: true,
   onchange: function (e) {
     stage.getRepresentationsByName('ligand')
-            .setVisibility(e.target.checked)
+      .setVisibility(e.target.checked)
   }
 }, { top: '60px', left: '12px' })
 addElement(ligandCheckbox)
@@ -105,7 +105,7 @@ var waterIonCheckbox = createElement('input', {
   checked: false,
   onchange: function (e) {
     stage.getRepresentationsByName('waterIon')
-            .setVisibility(e.target.checked)
+      .setVisibility(e.target.checked)
   }
 }, { top: '84px', left: '12px' })
 addElement(waterIonCheckbox)

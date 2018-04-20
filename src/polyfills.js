@@ -95,7 +95,7 @@ if (!Number.isInteger) {
 if (!Number.isNaN) {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN
   Number.isNaN = function isNaN (value) {
-    return value !== value  // eslint-disable-line no-self-compare
+    return value !== value // eslint-disable-line no-self-compare
   }
 }
 
@@ -149,13 +149,13 @@ if (!String.prototype.startsWith) {
   (function () {
     'use strict' // needed to support `apply`/`call` with `undefined`/`null`
     var defineProperty = (function () {
-            // IE 8 only supports `Object.defineProperty` on DOM elements
+      // IE 8 only supports `Object.defineProperty` on DOM elements
       var result
       try {
         var object = {}
         var $defineProperty = Object.defineProperty
         result = $defineProperty(object, object, object) && $defineProperty
-      } catch (error) {}  // eslint-disable-line no-empty
+      } catch (error) {} // eslint-disable-line no-empty
       return result
     }())
     var toString = {}.toString
@@ -333,7 +333,7 @@ if (!Array.from) {
 
     // The length property of the from method is 1.
     return function from (arrayLike/*, mapFn, thisArg */) {
-            // 1. Let C be the this value.
+      // 1. Let C be the this value.
       var C = this
 
       // 2. Let items be ToObject(arrayLike).
@@ -438,8 +438,8 @@ if (typeof window !== 'undefined') {
 }
 
 if (Function.prototype.name === undefined && Object.defineProperty !== undefined) {
-    // Missing in IE9-11.
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
+  // Missing in IE9-11.
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/name
 
   // eslint-disable-next-line no-extend-native
   Object.defineProperty(Function.prototype, 'name', {
@@ -465,5 +465,28 @@ if (typeof window !== 'undefined') {
         return Date.now() - start
       }
     })()
+  }
+}
+
+if (Object.defineProperty !== undefined) {
+  // Missing in IE < 13
+  // MIT license
+  // Copyright (c) 2016 Financial Times
+  // https://github.com/Financial-Times/polyfill-service
+  if (Number.MAX_SAFE_INTEGER === undefined) {
+    Object.defineProperty(Number, 'MAX_SAFE_INTEGER', {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: Math.pow(2, 53) - 1
+    })
+  }
+  if (Number.MIN_SAFE_INTEGER === undefined) {
+    Object.defineProperty(Number, 'MIN_SAFE_INTEGER', {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: -(Math.pow(2, 53) - 1)
+    })
   }
 }

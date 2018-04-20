@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import TrajectoryParser from './trajectory-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import TrajectoryParser from './trajectory-parser'
 
 class TrrParser extends TrajectoryParser {
   get type () { return 'trr' }

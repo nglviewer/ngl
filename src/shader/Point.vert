@@ -1,4 +1,4 @@
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 uniform vec3 clipCenter;
 uniform float size;

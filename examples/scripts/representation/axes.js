@@ -1,6 +1,6 @@
 
 stage.loadFile('rcsb://3pqr.mmtf', {
-  assembly: 'BU1'
+  defaultAssembly: 'BU1'
 }).then(function (o) {
   o.addRepresentation('cartoon')
   o.addRepresentation('axes', {

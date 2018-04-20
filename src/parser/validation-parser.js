@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import XmlParser from './xml-parser.js'
-import Validation from '../structure/validation.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import XmlParser from './xml-parser'
+import Validation from '../structure/validation'
 
 class ValidationParser extends XmlParser {
   constructor (streamer, params) {

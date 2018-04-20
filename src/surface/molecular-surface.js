@@ -4,7 +4,7 @@
  * @private
  */
 
-import { WorkerRegistry } from '../globals.js'
+import { WorkerRegistry } from '../globals'
 import Worker from '../worker/worker.js'
 import EDTSurface from './edt-surface.js'
 import { AVSurface } from './av-surface.js'
@@ -17,8 +17,8 @@ WorkerRegistry.add('molsurf', function func (e, callback) {
     const SurfClass = (p.type === 'av') ? AVSurface : EDTSurface
     const surf = new SurfClass(a.coordList, a.radiusList, a.indexList)
     const sd = surf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
-        )
+      p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
+    )
     const transferList = [ sd.position.buffer, sd.index.buffer ]
     if (sd.normal) transferList.push(sd.normal.buffer)
     if (sd.atomindex) transferList.push(sd.atomindex.buffer)
@@ -51,7 +51,7 @@ class MolecularSurface {
   _getAtomData () {
     return this.structure.getAtomData({
       what: { position: true, radius: true, index: true },
-      radiusParams: { radius: 'vdw', scale: 1 }
+      radiusParams: { type: 'vdw', scale: 1 }
     })
   }
 
@@ -67,11 +67,11 @@ class MolecularSurface {
     return surface
   }
 
-    /**
-     * Get molecular surface
-     * @param {MolecularSurfaceParameters} params - parameters for surface creation
-     * @return {Surface} the surface
-     */
+  /**
+   * Get molecular surface
+   * @param {MolecularSurfaceParameters} params - parameters for surface creation
+   * @return {Surface} the surface
+   */
   getSurface (params) {
     const p = params || {}
 
@@ -83,18 +83,18 @@ class MolecularSurface {
     const SurfClass = (p.type === 'av') ? AVSurface : EDTSurface
     const surf = new SurfClass(coordList, radiusList, indexList)
     const sd = surf.getSurface(
-            p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
-        )
+      p.type, p.probeRadius, p.scaleFactor, p.cutoff, true, p.smooth, p.contour
+    )
 
     return this._makeSurface(sd, p)
   }
 
-    /**
-     * Get molecular surface asynchronous
-     * @param {MolecularSurfaceParameters} params - parameters for surface creation
-     * @param {function(surface: Surface)} callback - function to be called after surface is created
-     * @return {undefined}
-     */
+  /**
+   * Get molecular surface asynchronous
+   * @param {MolecularSurfaceParameters} params - parameters for surface creation
+   * @param {function(surface: Surface)} callback - function to be called after surface is created
+   * @return {undefined}
+   */
   getSurfaceWorker (params, callback) {
     const p = Object.assign({}, params)
 
@@ -123,31 +123,31 @@ class MolecularSurface {
 
       this.worker.post(msg, transferList,
 
-                e => {
-                  callback(this._makeSurface(e.data.sd, p))
-                },
+        e => {
+          callback(this._makeSurface(e.data.sd, p))
+        },
 
-                e => {
-                  console.warn(
-                        'MolecularSurface.getSurfaceWorker error - trying without worker', e
-                    )
-                  this.worker.terminate()
-                  this.worker = undefined
-                  const surface = this.getSurface(p)
-                  callback(surface)
-                }
+        e => {
+          console.warn(
+            'MolecularSurface.getSurfaceWorker error - trying without worker', e
+          )
+          this.worker.terminate()
+          this.worker = undefined
+          const surface = this.getSurface(p)
+          callback(surface)
+        }
 
-            )
+      )
     } else {
       const surface = this.getSurface(p)
       callback(surface)
     }
   }
 
-    /**
-     * Cleanup
-     * @return {undefined}
-     */
+  /**
+   * Cleanup
+   * @return {undefined}
+   */
   dispose () {
     if (this.worker) this.worker.terminate()
   }

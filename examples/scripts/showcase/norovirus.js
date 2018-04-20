@@ -7,7 +7,7 @@
 stage.setParameters({ clipNear: 35 })
 
 stage.loadFile('data://1IHM.pdb', {
-  assembly: 'BU1'
+  defaultAssembly: 'BU1'
 }).then(function (o) {
   o.addRepresentation('rope', {
     subdiv: 1,

@@ -4,15 +4,15 @@
  * @private
  */
 
-import { defaults } from '../utils.js'
-import { ParserRegistry } from '../globals.js'
-import Parser from './parser.js'
+import { defaults } from '../utils'
+import { ParserRegistry } from '../globals'
+import Parser from './parser'
 
 /**
  * CSV parser
  */
 class CsvParser extends Parser {
-    /**
+  /**
      * [constructor description]
      * @param  {Streamer} streamer - the streamer object
      * @param  {Object} params - parameter object
@@ -50,7 +50,7 @@ class CsvParser extends Parser {
       const n = chunk.length
 
       for (let i = 0; i < n; ++i) {
-        var line = chunk[ i ].trim()
+        const line = chunk[ i ].trim()
         if (line.startsWith(this.comment)) continue
         const values = line.split(reDelimiter)
 

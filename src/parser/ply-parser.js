@@ -4,12 +4,10 @@
  * @private
  */
 
-import {
-    Geometry, Vector3, Face3, Color
-} from '../../lib/three.es6.js'
+import { Geometry, Vector3, Face3, Color } from 'three'
 
-import { ParserRegistry } from '../globals.js'
-import SurfaceParser from './surface-parser.js'
+import { ParserRegistry } from '../globals'
+import SurfaceParser from './surface-parser'
 
 /**
  * PLYLoader
@@ -70,9 +68,9 @@ PLYLoader.prototype = {
   parse: function (data) {
     if (data instanceof ArrayBuffer) {
       return (
-                this.isASCII(data)
-                    ? this.parseASCII(this.bin2str(data))
-                    : this.parseBinary(data)
+        this.isASCII(data)
+          ? this.parseASCII(this.bin2str(data))
+          : this.parseBinary(data)
       )
     } else {
       return this.parseASCII(data)
@@ -211,7 +209,7 @@ PLYLoader.prototype = {
   },
 
   parseASCII: function (data) {
-        // PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
+    // PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
 
     var geometry = new Geometry()
 
@@ -273,8 +271,8 @@ PLYLoader.prototype = {
   handleElement: function (geometry, elementName, element) {
     if (elementName === 'vertex') {
       geometry.vertices.push(
-                new Vector3(element.x, element.y, element.z)
-            )
+        new Vector3(element.x, element.y, element.z)
+      )
 
       if ('red' in element && 'green' in element && 'blue' in element) {
         geometry.useColor = true
@@ -288,20 +286,20 @@ PLYLoader.prototype = {
 
       if (vertexIndices.length === 3) {
         geometry.faces.push(
-                    new Face3(vertexIndices[ 0 ], vertexIndices[ 1 ], vertexIndices[ 2 ])
-                )
+          new Face3(vertexIndices[ 0 ], vertexIndices[ 1 ], vertexIndices[ 2 ])
+        )
       } else if (vertexIndices.length === 4) {
         geometry.faces.push(
-                    new Face3(vertexIndices[ 0 ], vertexIndices[ 1 ], vertexIndices[ 3 ]),
-                    new Face3(vertexIndices[ 1 ], vertexIndices[ 2 ], vertexIndices[ 3 ])
-                )
+          new Face3(vertexIndices[ 0 ], vertexIndices[ 1 ], vertexIndices[ 3 ]),
+          new Face3(vertexIndices[ 1 ], vertexIndices[ 2 ], vertexIndices[ 3 ])
+        )
       }
     }
   },
 
   binaryRead: function (dataview, at, type, littleEndian) {
     switch (type) {
-            // corespondences for non-specific length types here match rply:
+      // corespondences for non-specific length types here match rply:
       case 'int8': case 'char': return [ dataview.getInt8(at), 1 ]
 
       case 'uint8': case 'uchar': return [ dataview.getUint8(at), 1 ]

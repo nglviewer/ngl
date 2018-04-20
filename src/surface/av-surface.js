@@ -8,9 +8,9 @@ import { getSurfaceGrid } from './surface-utils.js'
 import { VolumeSurface } from './volume.js'
 import { uniformArray } from '../math/array-utils.js'
 import {
-    computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
+  computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
 } from '../math/vector-utils.js'
-import { defaults } from '../utils.js'
+import { defaults } from '../utils'
 
 /**
  * Modifed from SpatialHash
@@ -187,7 +187,7 @@ function AVSurface (coordList, radiusList, indexList) {
   var min = bbox[0]
   var max = bbox[1]
 
-  var r, r2  // Atom positions, expanded radii (squared)
+  var r, r2 // Atom positions, expanded radii (squared)
   var maxRadius
 
   // Parameters
@@ -559,10 +559,10 @@ function AVSurface (coordList, radiusList, indexList) {
   }
 
   function getVolume (probeRadius, scaleFactor, setAtomID) {
-        // Basic steps are:
-        // 1) Initialize
-        // 2) Project points
-        // 3) Project torii
+    // Basic steps are:
+    // 1) Initialize
+    // 2) Project points
+    // 3) Project torii
 
     console.time('AVSurface.getVolume')
 
@@ -584,14 +584,14 @@ function AVSurface (coordList, radiusList, indexList) {
   }
 
   this.getSurface = function (type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour) {
-        // type and cutoff left in for compatibility with EDTSurface.getSurface
-        // function signature
+    // type and cutoff left in for compatibility with EDTSurface.getSurface
+    // function signature
 
     getVolume(probeRadius, scaleFactor, setAtomID)
 
     var volsurf = new VolumeSurface(
-            grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
-        )
+      grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
+    )
 
     return volsurf.getSurface(probeRadius, false, undefined, matrix, contour)
   }

@@ -158,7 +158,7 @@ UI.EllipsisText.prototype.setValue = function (value) {
 // Ellipsis Multiline Text
 
 UI.EllipsisMultilineText = function (text) {
-    // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
+  // http://www.mobify.com/blog/multiline-ellipsis-in-pure-css/
 
   UI.Element.call(this)
 
@@ -423,7 +423,7 @@ UI.Range.prototype.setStep = function (value) {
 // AdaptiveTextArea
 
 UI.AdaptiveTextArea = function () {
-    // http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/
+  // http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/
 
   UI.Element.call(this)
 
@@ -564,7 +564,7 @@ UI.VirtualList = function (items, itemHeight, height, generatorFn) {
   }, 500)
 
   function onScroll (e) {
-    var scrollTop = e.target.scrollTop  // Triggers reflow
+    var scrollTop = e.target.scrollTop // Triggers reflow
     if (!lastRepaintY || Math.abs(scrollTop - lastRepaintY) > maxBuffer) {
       var first = Math.floor(scrollTop / itemHeight)
       renderChunk(Math.max(0, first - screenItemsCount))
@@ -725,7 +725,7 @@ UI.VirtualTable = function (items, itemHeight, height, columns, params) {
     fullWidth += width + 2 * margin
   })
 
-    // list
+  // list
 
   var generatorFn = function (index) {
     var panel = new UI.Panel()
@@ -742,7 +742,7 @@ UI.VirtualTable = function (items, itemHeight, height, columns, params) {
         element = value
       } else {
         element = new UI.Text()
-                    .setValue(value)
+          .setValue(value)
       }
 
       element
@@ -788,7 +788,7 @@ UI.VirtualTable = function (items, itemHeight, height, columns, params) {
 
   //
 
-  this.add( header, virtualList )
+  this.add(header, virtualList)
 
   // API
 
@@ -864,15 +864,15 @@ UI.PopupMenu = function (iconClass, heading, constraintTo) {
 
   headingPanel
     .add(
-        new UI.Icon('times')
-            .setFloat('right')
-            .setCursor('pointer')
-            .onClick(function () {
-              this.setMenuDisplay('none')
-            }.bind(this))
+      new UI.Icon('times')
+        .setFloat('right')
+        .setCursor('pointer')
+        .onClick(function () {
+          this.setMenuDisplay('none')
+        }.bind(this))
     )
     .add(
-        new UI.Text(heading)
+      new UI.Text(heading)
     )
 
   panel.add(headingPanel)
@@ -891,8 +891,8 @@ UI.PopupMenu = function (iconClass, heading, constraintTo) {
     panel.setMaxHeight((window.innerHeight / 1.2) + 'px')
     this.setMenuDisplay('block')
 
-    xOffset = 5;
-    yOffset = 0;
+    xOffset = 5
+    yOffset = 0
 
     tether = new Tether({
       element: panel.dom,
@@ -927,8 +927,8 @@ UI.PopupMenu.prototype = Object.create(UI.Panel.prototype)
 UI.PopupMenu.prototype.addEntry = function (label, entry) {
   this.panel
     .add(new UI.Text(label)
-          // .setWhiteSpace( "nowrap" )
-          .setWidth(this.entryLabelWidth))
+      // .setWhiteSpace( "nowrap" )
+      .setWidth(this.entryLabelWidth))
     .add(entry || new UI.Panel())
     .add(new UI.Break())
 
@@ -1074,7 +1074,7 @@ UI.ColorPicker = function () {
   var changeEvent = document.createEvent('Event')
   changeEvent.initEvent('change', true, true)
 
-    // finalize
+  // finalize
 
   this.add(
     this.pickerWrapper,

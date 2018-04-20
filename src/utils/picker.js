@@ -4,16 +4,17 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
-import { PickerRegistry } from '../globals.js'
-import { calculateMeanVector3 } from '../math/vector-utils.js'
-import Selection from '../selection/selection.js'
+import { PickerRegistry } from '../globals'
+import { calculateMeanVector3 } from '../math/vector-utils'
+import Selection from '../selection/selection'
 import {
   ArrowPrimitive, BoxPrimitive, ConePrimitive, CylinderPrimitive,
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
-  TetrahedronPrimitive, TorusPrimitive
-} from '../geometry/primitive.js'
+  TetrahedronPrimitive, TorusPrimitive, PointPrimitive, WidelinePrimitive
+} from '../geometry/primitive'
+import { contactTypeName } from '../chemistry/interactions/contact'
 
 /**
  * Picker class
@@ -26,6 +27,9 @@ class Picker {
   constructor (array) {
     this.array = array
   }
+
+  get type () { return '' }
+  get data () { return {} }
 
   /**
    * Get the index for the given picking id
@@ -42,7 +46,7 @@ class Picker {
    * @param  {Integer} pid - the picking id
    * @return {Object} the object data
    */
-  getObject (/* pid */) {
+  getObject (pid) {
     return {}
   }
 
@@ -99,11 +103,11 @@ class ShapePicker extends Picker {
   get type () { return this.primitive.type }
 
   getObject (pid) {
-    return this.primitive.objectFromShape(this.shape, pid)
+    return this.primitive.objectFromShape(this.shape, this.getIndex(pid))
   }
 
   _getPosition (pid) {
-    return this.primitive.positionFromShape(this.shape, pid)
+    return this.primitive.positionFromShape(this.shape, this.getIndex(pid))
   }
 }
 
@@ -166,7 +170,7 @@ class BondPicker extends Picker {
   get data () { return this.structure }
 
   getObject (pid) {
-    var bp = this.structure.getBondProxy(this.getIndex(pid))
+    const bp = this.structure.getBondProxy(this.getIndex(pid))
     bp.bondStore = this.bondStore
     return bp
   }
@@ -174,14 +178,43 @@ class BondPicker extends Picker {
   _getPosition (pid) {
     const b = this.getObject(pid)
     return new Vector3()
-            .copy(b.atom1)
-            .add(b.atom2)
-            .multiplyScalar(0.5)
+      .copy(b.atom1)
+      .add(b.atom2)
+      .multiplyScalar(0.5)
   }
 }
 
-class ContactPicker extends BondPicker {
+class ContactPicker extends Picker {
+  constructor (array, contacts, structure) {
+    super(array)
+    this.contacts = contacts
+    this.structure = structure
+  }
+
   get type () { return 'contact' }
+  get data () { return this.contacts }
+
+  getObject (pid) {
+    const idx = this.getIndex(pid)
+    const { features, contactStore } = this.contacts
+    const { centers, atomSets } = features
+    const { x, y, z } = centers
+    const { index1, index2, type } = contactStore
+    const k = index1[idx]
+    const l = index2[idx]
+    return {
+      center1: new Vector3(x[k], y[k], z[k]),
+      center2: new Vector3(x[l], y[l], z[l]),
+      atom1: this.structure.getAtomProxy(atomSets[k][0]),
+      atom2: this.structure.getAtomProxy(atomSets[l][0]),
+      type: contactTypeName(type[idx])
+    }
+  }
+
+  _getPosition (pid) {
+    const { center1, center2 } = this.getObject(pid)
+    return new Vector3().addVectors(center1, center2).multiplyScalar(0.5)
+  }
 }
 
 class ConePicker extends ShapePicker {
@@ -360,6 +393,14 @@ class SlicePicker extends VolumePicker {
   get type () { return 'slice' }
 }
 
+class PointPicker extends ShapePicker {
+  get primitive () { return PointPrimitive }
+}
+
+class WidelinePicker extends ShapePicker {
+  get primitive () { return WidelinePrimitive }
+}
+
 PickerRegistry.add('arrow', ArrowPicker)
 PickerRegistry.add('box', BoxPicker)
 PickerRegistry.add('cone', ConePicker)
@@ -369,6 +410,8 @@ PickerRegistry.add('octahedron', OctahedronPicker)
 PickerRegistry.add('sphere', SpherePicker)
 PickerRegistry.add('tetrahedron', TetrahedronPicker)
 PickerRegistry.add('torus', TorusPicker)
+PickerRegistry.add('point', PointPicker)
+PickerRegistry.add('wideline', WidelinePicker)
 
 export {
   Picker,
@@ -394,5 +437,7 @@ export {
   TorusPicker,
   UnitcellPicker,
   UnknownPicker,
-  VolumePicker
+  VolumePicker,
+  PointPicker,
+  WidelinePicker
 }

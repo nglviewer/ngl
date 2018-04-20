@@ -4,12 +4,12 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import StructureParser from './structure-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import StructureParser from './structure-parser'
 import {
   assignResidueTypeBonds, calculateBondsBetween,
   calculateBondsWithin, getChainname
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 const TitleMode = 1
 const AtomMode = 2

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import Parser from './parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import Parser from './parser'
 import NetcdfReader from '../utils/netcdf-reader'
 
 class NetcdfParser extends Parser {

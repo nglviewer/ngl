@@ -4,10 +4,10 @@
  * @private
  */
 
-import { Color, Vector3, Matrix4 } from '../../lib/three.es6.js'
+import { Color, Vector3, Matrix4 } from 'three'
 
-import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals.js'
-import { defaults } from '../utils.js'
+import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals'
+import { defaults } from '../utils'
 import Queue from '../utils/queue.js'
 import Counter from '../utils/counter.js'
 
@@ -39,6 +39,10 @@ import Counter from '../utils/counter.js'
  * @property {Float} [roughness] - how rough the material is, between 0 and 1
  * @property {Float} [metalness] - how metallic the material is, between 0 and 1
  * @property {Color} [diffuse] - diffuse color for lighting
+ * @property {Color} [diffuseInterior] - diffuse interior, i.e. ignore normal
+ * @property {Color} [useInteriorColor] - use interior color
+ * @property {Color} [interiorColor] - interior color
+ * @property {Color} [interiorDarkening] - interior darkening: 0 no darking, 1 fully darkened
  * @property {Boolean} [disablePicking] - disable picking
  */
 
@@ -124,6 +128,19 @@ class Representation {
         type: 'color', buffer: true
       },
 
+      diffuseInterior: {
+        type: 'boolean', buffer: true
+      },
+      useInteriorColor: {
+        type: 'boolean', buffer: true
+      },
+      interiorColor: {
+        type: 'color', buffer: true
+      },
+      interiorDarkening: {
+        type: 'range', step: 0.01, max: 1, min: 0, buffer: true
+      },
+
       matrix: {
         type: 'hidden', buffer: true
       },
@@ -190,6 +207,11 @@ class Representation {
     this.roughness = defaults(p.roughness, 0.4)
     this.metalness = defaults(p.metalness, 0.0)
     this.diffuse = defaults(p.diffuse, 0xffffff)
+
+    this.diffuseInterior = defaults(p.diffuseInterior, false)
+    this.useInteriorColor = defaults(p.useInteriorColor, false)
+    this.interiorColor = defaults(p.interiorColor, 0x222222)
+    this.interiorDarkening = defaults(p.interiorDarkening, 0)
 
     this.lazy = defaults(p.lazy, false)
     this.lazyProps = {
@@ -283,6 +305,11 @@ class Representation {
       metalness: this.metalness,
       diffuse: this.diffuse,
 
+      diffuseInterior: this.diffuseInterior,
+      useInteriorColor: this.useInteriorColor,
+      interiorColor: this.interiorColor,
+      interiorDarkening: this.interiorDarkening,
+
       matrix: this.matrix,
 
       disablePicking: this.disablePicking
@@ -318,9 +345,7 @@ class Representation {
   // get prepare(){ return false; }
 
   create () {
-
     // this.bufferList.length = 0;
-
   }
 
   update () {
@@ -328,7 +353,7 @@ class Representation {
   }
 
   build (updateWhat) {
-    if (this.lazy && !this.visible) {
+    if (this.lazy && (!this.visible || !this.opacity)) {
       this.lazyProps.build = true
       return
     }
@@ -353,7 +378,7 @@ class Representation {
   make (updateWhat, callback) {
     if (Debug) Log.time('Representation.make ' + this.type)
 
-    const _make = function () {
+    const _make = () => {
       if (updateWhat) {
         this.update(updateWhat)
         this.viewer.requestRender()
@@ -364,16 +389,16 @@ class Representation {
         this.create()
         if (!this.manualAttach && !this.disposed) {
           if (Debug) Log.time('Representation.attach ' + this.type)
-          this.attach(function () {
+          this.attach(() => {
             if (Debug) Log.timeEnd('Representation.attach ' + this.type)
             this.tasks.decrement()
             if (callback) callback()
-          }.bind(this))
+          })
         }
       }
 
       if (Debug) Log.timeEnd('Representation.make ' + this.type)
-    }.bind(this)
+    }
 
     if (this.prepare) {
       this.prepare(_make)
@@ -397,7 +422,7 @@ class Representation {
   setVisibility (value, noRenderRequest) {
     this.visible = value
 
-    if (this.visible) {
+    if (this.visible && this.opacity) {
       const lazyProps = this.lazyProps
       const bufferParams = lazyProps.bufferParams
       const what = lazyProps.what
@@ -435,16 +460,24 @@ class Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {Representation} this object
    */
-  setParameters (params, what, rebuild) {
+  setParameters (params, what = {}, rebuild = false) {
     const p = params || {}
     const tp = this.parameters
+    const bufferParams = {}
+
+    if (!this.opacity && p.opacity !== undefined) {
+      if (this.lazyProps.build) {
+        this.lazyProps.build = false
+        rebuild = true
+      } else {
+        Object.assign(bufferParams, this.lazyProps.bufferParams)
+        Object.assign(what, this.lazyProps.what)
+        this.lazyProps.bufferParams = {}
+        this.lazyProps.what = {}
+      }
+    }
 
     this.setColor(p.color, p)
-
-    what = what || {}
-    rebuild = rebuild || false
-
-    const bufferParams = {}
 
     for (let name in p) {
       if (p[ name ] === undefined) continue
@@ -455,11 +488,12 @@ class Representation {
 
       // no value change
       if (p[ name ] === this[ name ] && (
-          !p[ name ].equals || p[ name ].equals(this[ name ])
-        )
-      ) continue
+        !p[ name ].equals || p[ name ].equals(this[ name ])
+      )) continue
 
-      if (this[ name ] && this[ name ].set) {
+      if (this[ name ] && this[ name ].copy && p[ name ].copy) {
+        this[ name ].copy(p[ name ])
+      } else if (this[ name ] && this[ name ].set) {
         this[ name ].set(p[ name ])
       } else {
         this[ name ] = p[ name ]
@@ -481,8 +515,8 @@ class Representation {
 
       // mark for rebuild
       if (tp[ name ].rebuild &&
-        !(tp[ name ].rebuild === 'impostor' &&
-          ExtensionFragDepth && !this.disableImpostor)
+          !(tp[ name ].rebuild === 'impostor' &&
+            ExtensionFragDepth && !this.disableImpostor)
       ) {
         rebuild = true
       }
@@ -499,8 +533,8 @@ class Representation {
     return this
   }
 
-  updateParameters (bufferParams, what) {
-    if (this.lazy && !this.visible) {
+  updateParameters (bufferParams = {}, what) {
+    if (this.lazy && (!this.visible || !this.opacity) && bufferParams.opacity === undefined) {
       Object.assign(this.lazyProps.bufferParams, bufferParams)
       Object.assign(this.lazyProps.what, what)
       return
@@ -511,7 +545,7 @@ class Representation {
     })
 
     if (Object.keys(what).length) {
-      this.update(what)  // update buffer attribute
+      this.update(what) // update buffer attribute
     }
 
     this.viewer.requestRender()

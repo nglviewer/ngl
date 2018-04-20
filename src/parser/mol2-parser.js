@@ -4,24 +4,24 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
+import { Debug, Log, ParserRegistry } from '../globals'
 import {
   assignResidueTypeBonds,
   calculateChainnames, calculateSecondaryStructure,
   calculateBondsBetween, calculateBondsWithin
-} from '../structure/structure-utils.js'
-import StructureParser from './structure-parser.js'
+} from '../structure/structure-utils'
+import StructureParser from './structure-parser'
 
 const reWhitespace = /\s+/
 const bondTypes = {
   '1': 1,
   '2': 2,
   '3': 3,
-  'am': 1,  // amide
-  'ar': 1,  // aromatic
-  'du': 1,  // dummy
-  'un': 1,  // unknown
-  'nc': 0   // not connected
+  'am': 1, // amide
+  'ar': 1, // aromatic
+  'du': 1, // dummy
+  'un': 1, // unknown
+  'nc': 0 // not connected
 }
 
 class Mol2Parser extends StructureParser {

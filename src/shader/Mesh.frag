@@ -2,10 +2,12 @@
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
+uniform vec3 interiorColor;
+uniform float interiorDarkening;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 #if defined( NEAR_CLIP ) || defined( RADIUS_CLIP ) || ( !defined( PICKING ) && !defined( NOLIGHT ) )
@@ -29,7 +31,7 @@ uniform float clipRadius;
     #include color_pars_fragment
     #include fog_pars_fragment
     #include bsdfs
-    #include lights_pars
+    #include lights_pars_begin
     #include lights_physical_pars_fragment
 #endif
 
@@ -40,7 +42,7 @@ void main(){
 
     #if defined( PICKING )
 
-        if( opacity < 0.7 )
+        if( opacity < 0.3 )
             discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
@@ -57,15 +59,15 @@ void main(){
         #include color_fragment
         #include roughnessmap_fragment
         #include metalnessmap_fragment
-        #include normal_flip
-        #include normal_fragment
-
-        #include dull_interior_fragment
+        #include normal_fragment_begin
 
         #include lights_physical_fragment
-        #include lights_template
+        #include lights_fragment_begin
+        #include lights_fragment_end
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        #include interior_fragment
 
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 

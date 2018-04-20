@@ -1,6 +1,7 @@
 
-stage.loadFile('data://1blu.mmtf').then(function (o) {
+stage.loadFile('data://1d66.pdb').then(function (o) {
   o.addRepresentation('cartoon', { color: 'resname' })
-  o.addRepresentation('ball+stick', { color: 'resname' })
+  o.addRepresentation('base', { color: 'resname' })
+  o.addRepresentation('ball+stick', { color: 'resname', visible: false })
   o.autoView()
 })

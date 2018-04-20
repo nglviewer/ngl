@@ -4,13 +4,13 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import StructureParser from './structure-parser.js'
-import { WaterNames } from '../structure/structure-constants.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import StructureParser from './structure-parser'
+import { WaterNames } from '../structure/structure-constants'
 import {
   assignResidueTypeBonds, calculateBondsBetween,
   calculateBondsWithin, getChainname
-} from '../structure/structure-utils.js'
+} from '../structure/structure-utils'
 
 const SystemMode = 1
 const MoleculesMode = 2
@@ -92,24 +92,24 @@ class TopParser extends StructureParser {
         } else if (mode === AtomsMode) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.atoms.push([
-            parseInt(ls[2]),   // resnr
-            ls[3],             // residue
-            ls[4],             // atom
-            parseFloat(ls[6])  // charge
+            parseInt(ls[2]), // resnr
+            ls[3], // residue
+            ls[4], // atom
+            parseFloat(ls[6]) // charge
           ])
         } else if (mode === BondsMode) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.bonds.push([
-            parseInt(ls[0]),  // ai
-            parseInt(ls[1])   // aj
+            parseInt(ls[0]), // ai
+            parseInt(ls[1]) // aj
           ])
         } else if (mode === SystemMode) {
           s.title = lt
         } else if (mode === MoleculesMode) {
           const ls = lt.split(reWhitespace)
           molecules.push([
-            ls[0],           // name
-            parseInt(ls[1])  // count
+            ls[0], // name
+            parseInt(ls[1]) // count
           ])
         }
       }

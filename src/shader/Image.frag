@@ -1,7 +1,7 @@
 uniform sampler2D map;
 uniform float opacity;
 uniform vec2 mapSize;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 varying vec2 vUv;
@@ -110,7 +110,7 @@ void main(){
 
     #if defined( PICKING )
 
-        if( gl_FragColor.a < 0.7 )
+        if( gl_FragColor.a < 0.3 )
             discard;
         gl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );
 

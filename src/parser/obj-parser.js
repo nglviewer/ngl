@@ -4,12 +4,10 @@
  * @private
  */
 
-import {
-  BufferGeometry, BufferAttribute
-} from '../../lib/three.es6.js'
+import { BufferGeometry, BufferAttribute } from 'three'
 
-import { ParserRegistry } from '../globals.js'
-import SurfaceParser from './surface-parser.js'
+import { ParserRegistry } from '../globals'
+import SurfaceParser from './surface-parser'
 
 /**
  * OBJLoader
@@ -187,12 +185,12 @@ OBJLoader.prototype = {
     var state = this._createParserState()
 
     if (text.indexOf('\r\n') !== -1) {
-            // This is faster than String.split with regex that splits on both
+      // This is faster than String.split with regex that splits on both
       text = text.replace(/\r\n/g, '\n')
     }
 
     if (text.indexOf('\\\n') !== -1) {
-            // join lines separated by a line continuation character (\)
+      // join lines separated by a line continuation character (\)
       text = text.replace(/\\\n/g, '')
     }
 
@@ -204,7 +202,7 @@ OBJLoader.prototype = {
     var lineLength = 0
     var result = []
 
-        // Faster to just trim left side of the line. Use if available.
+    // Faster to just trim left side of the line. Use if available.
     var trimLeft = (typeof ''.trimLeft === 'function')
 
     for (i = 0, l = lines.length; i < l; i++) {

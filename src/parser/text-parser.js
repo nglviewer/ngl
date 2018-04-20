@@ -4,8 +4,8 @@
  * @private
  */
 
-import { ParserRegistry } from '../globals.js'
-import Parser from './parser.js'
+import { ParserRegistry } from '../globals'
+import Parser from './parser'
 
 class TextParser extends Parser {
   constructor (streamer, params) {

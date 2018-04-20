@@ -4,8 +4,8 @@
  * @private
  */
 
-import Parser from './parser.js'
-import Surface from '../surface/surface.js'
+import Parser from './parser'
+import Surface from '../surface/surface'
 
 class SurfaceParser extends Parser {
   constructor (streamer, params) {

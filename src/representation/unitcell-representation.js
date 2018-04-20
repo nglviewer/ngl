@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import StructureRepresentation from './structure-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
@@ -21,7 +21,7 @@ class UnitcellRepresentation extends StructureRepresentation {
 
     this.parameters = Object.assign({
 
-      radius: {
+      radiusSize: {
         type: 'number', precision: 3, max: 10.0, min: 0.001
       },
       sphereDetail: true,
@@ -43,8 +43,9 @@ class UnitcellRepresentation extends StructureRepresentation {
       defaultRadius = Math.cbrt(this.structure.unitcell.volume) / 200
     }
 
-    p.radius = defaults(p.radius, defaultRadius)
+    p.radiusSize = defaults(p.radiusSize, defaultRadius)
     p.colorValue = defaults(p.colorValue, 'orange')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     super.init(p)
   }

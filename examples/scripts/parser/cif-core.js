@@ -7,7 +7,7 @@ stage.setParameters({
 stage.loadFile('data://Fe2O3_mp-715572_conventional_standard.cif').then(function (o) {
   o.addRepresentation('licorice')
   o.addRepresentation('spacefill', {
-    scale: 0.25
+    radiusScale: 0.25
   })
   o.addRepresentation('unitcell')
   stage.autoView()

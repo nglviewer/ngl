@@ -49,13 +49,19 @@ function text () {
 }
 
 export default {
-  input: 'src/ngl.js',
+  input: 'build/js/src/ngl.js',
   plugins: [
     resolve({
       jsnext: true,
       main: true
     }),
-    commonjs(),
+    commonjs({
+      namedExports: {
+        'node_modules/chroma-js/chroma.js': [ 'scale' ],
+        'node_modules/signals/dist/signals.js': [ 'Signal' ],
+        'node_modules/sprintf-js/src/sprintf.js': [ 'sprintf' ]
+      }
+    }),
     glsl(),
     text(),
     json(),
@@ -75,6 +81,5 @@ export default {
       sourcemap: true
     }
   ],
-  external: external,
-  sourcemap: true
+  external: external
 };

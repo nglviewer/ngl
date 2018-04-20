@@ -1,6 +1,6 @@
 // heavily based on code by WestLangley from https://github.com/WestLangley/three.js/blob/af28b2fb706ac109771ecad0a7447fad90ab3210/examples/js/lines/LineMaterial.js
 
-uniform float nearClip;
+uniform float clipNear;
 uniform vec3 clipCenter;
 uniform float linewidth;
 uniform vec2 resolution;

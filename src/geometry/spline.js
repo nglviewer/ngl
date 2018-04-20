@@ -4,13 +4,13 @@
  * @private
  */
 
-import { Vector3 } from '../../lib/three.es6.js'
+import { Vector3 } from 'three'
 
-import { ColormakerRegistry } from '../globals.js'
+import { ColormakerRegistry } from '../globals'
 import { AtomPicker } from '../utils/picker.js'
 import RadiusFactory from '../utils/radius-factory.js'
 import { copyArray } from '../math/array-utils.js'
-import { spline } from '../math/math-utils.js'
+import { spline } from '../math/math-utils'
 
 function Interpolator (m, tension) {
   var dt = 1.0 / m
@@ -45,13 +45,13 @@ function Interpolator (m, tension) {
       var d1 = d - delta
       var d2 = d + delta
       var l = offset + j * 3
-            // capping as a precation
+      // capping as a precation
       if (d1 < 0) d1 = 0
       if (d2 > 1) d2 = 1
-            //
+      //
       interpolateToVec(v0, v1, v2, v3, d1, vec1)
       interpolateToVec(v0, v1, v2, v3, d2, vec2)
-            //
+      //
       vec2.sub(vec1).normalize()
       vec2.toArray(tan, l)
     }
@@ -62,7 +62,7 @@ function Interpolator (m, tension) {
     var v1 = iterator.next()
     var v2 = iterator.next()
     var v3 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -84,13 +84,11 @@ function Interpolator (m, tension) {
     }
   }
 
-    //
+  //
 
   this.getPosition = function (iterator, array, offset, isCyclic) {
     iterator.reset()
-    vectorSubdivide(
-            interpolatePosition, iterator, array, offset, isCyclic
-        )
+    vectorSubdivide(interpolatePosition, iterator, array, offset, isCyclic)
     var n1 = iterator.size - 1
     var k = n1 * m * 3
     if (isCyclic) k += m * 3
@@ -102,16 +100,14 @@ function Interpolator (m, tension) {
 
   this.getTangent = function (iterator, array, offset, isCyclic) {
     iterator.reset()
-    vectorSubdivide(
-            interpolateTangent, iterator, array, offset, isCyclic
-        )
+    vectorSubdivide(interpolateTangent, iterator, array, offset, isCyclic)
     var n1 = iterator.size - 1
     var k = n1 * m * 3
     if (isCyclic) k += m * 3
     copyArray(array, array, k - 3, k, 3)
   }
 
-    //
+  //
 
   var vDir = new Vector3()
   var vTan = new Vector3()
@@ -168,12 +164,12 @@ function Interpolator (m, tension) {
   this.getNormalDir = function (iterDir1, iterDir2, tan, norm, bin, offset, isCyclic, shift) {
     iterDir1.reset()
     iterDir2.reset()
-        //
+    //
     var vSub1 = new Vector3()
     var vSub2 = new Vector3()
     var vSub3 = new Vector3()
     var vSub4 = new Vector3()
-        //
+    //
     var d1v1 = new Vector3()
     var d1v2 = new Vector3().copy(iterDir1.next())
     var d1v3 = new Vector3().copy(iterDir1.next())
@@ -182,7 +178,7 @@ function Interpolator (m, tension) {
     var d2v2 = new Vector3().copy(iterDir2.next())
     var d2v3 = new Vector3().copy(iterDir2.next())
     var d2v4 = new Vector3().copy(iterDir2.next())
-        //
+    //
     vNorm.set(0, 0, 1)
     var n = iterDir1.size
     var n1 = n - 1
@@ -196,7 +192,7 @@ function Interpolator (m, tension) {
       d2v2.copy(d2v3)
       d2v3.copy(d2v4)
       d2v4.copy(iterDir2.next())
-            //
+      //
       if (i === 0) {
         vSub1.subVectors(d2v1, d1v1)
         vSub2.subVectors(d2v2, d1v2)
@@ -218,10 +214,10 @@ function Interpolator (m, tension) {
         d2v4.addVectors(d1v4, vSub4)
       }
       interpolateNormalDir(
-                d1v1, d1v2, d1v3, d1v4,
-                d2v1, d2v2, d2v3, d2v4,
-                tan, norm, bin, k, shift
-            )
+        d1v1, d1v2, d1v3, d1v4,
+        d2v1, d2v2, d2v3, d2v4,
+        tan, norm, bin, k, shift
+      )
       k += 3 * m
     }
     if (isCyclic) {
@@ -233,7 +229,7 @@ function Interpolator (m, tension) {
       d2v2.copy(iterDir2.get(n - 1))
       d2v3.copy(iterDir2.get(0))
       d2v4.copy(iterDir2.get(1))
-            //
+      //
       vSub3.copy(vSub4)
       vSub4.subVectors(d2v4, d1v4)
       if (vSub3.dot(vSub4) < 0) {
@@ -241,14 +237,14 @@ function Interpolator (m, tension) {
         d2v4.addVectors(d1v4, vSub4)
       }
       interpolateNormalDir(
-                d1v1, d1v2, d1v3, d1v4,
-                d2v1, d2v2, d2v3, d2v4,
-                tan, norm, bin, k, shift
-            )
+        d1v1, d1v2, d1v3, d1v4,
+        d2v1, d2v2, d2v3, d2v4,
+        tan, norm, bin, k, shift
+      )
       k += 3 * m
     }
     if (shift) {
-            // FIXME shift requires data from one more preceeding residue
+      // FIXME shift requires data from one more preceeding residue
       vBin.fromArray(bin, m2 * 3)
       vNorm.fromArray(norm, m2 * 3)
       for (var j = 0; j < m2; ++j) {
@@ -261,26 +257,26 @@ function Interpolator (m, tension) {
     }
   }
 
-    //
+  //
 
   function interpolateColor (item1, item2, colFn, col, offset) {
     var j, l
     for (j = 0; j < m2; ++j) {
       l = offset + j * 3
-      colFn(item1, col, l)  // itemColorToArray
+      colFn(item1, col, l) // itemColorToArray
     }
     for (j = m2; j < m; ++j) {
       l = offset + j * 3
-      colFn(item2, col, l)  // itemColorToArray
+      colFn(item2, col, l) // itemColorToArray
     }
   }
 
   this.getColor = function (iterator, colFn, col, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -296,13 +292,13 @@ function Interpolator (m, tension) {
       interpolateColor(i0, i1, colFn, col, k)
       k += 3 * m
     }
-        //
+    //
     col[ k ] = col[ k - 3 ]
     col[ k + 1 ] = col[ k - 2 ]
     col[ k + 2 ] = col[ k - 1 ]
   }
 
-    //
+  //
 
   function interpolatePicking (item1, item2, pickFn, pick, offset) {
     var j
@@ -316,10 +312,10 @@ function Interpolator (m, tension) {
 
   this.getPicking = function (iterator, pickFn, pick, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -335,17 +331,17 @@ function Interpolator (m, tension) {
       interpolatePicking(i0, i1, pickFn, pick, k)
       k += m
     }
-        //
+    //
     pick[ k ] = pick[ k - 1 ]
   }
 
-    //
+  //
 
   function interpolateSize (item1, item2, sizeFn, size, offset) {
     var s1 = sizeFn(item1)
     var s2 = sizeFn(item2)
     for (var j = 0; j < m; ++j) {
-            // linear interpolation
+      // linear interpolation
       var t = j / m
       size[ offset + j ] = (1 - t) * s1 + t * s2
     }
@@ -353,10 +349,10 @@ function Interpolator (m, tension) {
 
   this.getSize = function (iterator, sizeFn, size, offset, isCyclic) {
     iterator.reset()
-    iterator.next()  // first element not needed
+    iterator.next() // first element not needed
     var i0
     var i1 = iterator.next()
-        //
+    //
     var n = iterator.size
     var n1 = n - 1
     var k = offset || 0
@@ -372,7 +368,7 @@ function Interpolator (m, tension) {
       interpolateSize(i0, i1, sizeFn, size, k)
       k += m
     }
-        //
+    //
     size[ k ] = size[ k - 1 ]
   }
 }
@@ -439,8 +435,8 @@ Spline.prototype = {
         apPrev.index = polymer.getAtomIndexByType(idx + 1, type)
         apNext.index = polymer.getAtomIndexByType(idx - 1, type)
         vec.addVectors(apPrev, apNext)
-                    .add(atomProxy).add(atomProxy)
-                    .multiplyScalar(0.25)
+          .add(atomProxy).add(atomProxy)
+          .multiplyScalar(0.25)
         i += 1
         return vec
       }
@@ -482,8 +478,8 @@ Spline.prototype = {
     }
 
     this.interpolator.getColor(
-            iterator, colFn, col, 0, polymer.isCyclic
-        )
+      iterator, colFn, col, 0, polymer.isCyclic
+    )
 
     return {
       'color': col
@@ -507,8 +503,8 @@ Spline.prototype = {
     }
 
     this.interpolator.getPicking(
-            iterator, pickFn, pick, 0, polymer.isCyclic
-        )
+      iterator, pickFn, pick, 0, polymer.isCyclic
+    )
 
     return {
       'picking': new AtomPicker(pick, structure)
@@ -534,7 +530,7 @@ Spline.prototype = {
     }
   },
 
-  getSubdividedSize: function (type, scale) {
+  getSubdividedSize: function (params) {
     var m = this.subdiv
     var polymer = this.polymer
     var n = polymer.residueCount
@@ -545,15 +541,15 @@ Spline.prototype = {
     var size = new Float32Array(nSize)
     var iterator = this.getAtomIterator('trace')
 
-    var radiusFactory = new RadiusFactory(type, scale)
+    var radiusFactory = new RadiusFactory(params)
 
     function sizeFn (item) {
       return radiusFactory.atomRadius(item)
     }
 
     this.interpolator.getSize(
-            iterator, sizeFn, size, 0, polymer.isCyclic
-        )
+      iterator, sizeFn, size, 0, polymer.isCyclic
+    )
 
     return {
       'size': size
@@ -571,9 +567,7 @@ Spline.prototype = {
     var pos = new Float32Array(nPos)
     var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet)
 
-    this.interpolator.getPosition(
-            iterator, pos, 0, polymer.isCyclic
-        )
+    this.interpolator.getPosition(iterator, pos, 0, polymer.isCyclic)
 
     return pos
   },
@@ -589,9 +583,7 @@ Spline.prototype = {
     var tan = new Float32Array(nTan)
     var iterator = this.positionIterator || this.getAtomIterator('trace', this.smoothSheet)
 
-    this.interpolator.getTangent(
-            iterator, tan, 0, polymer.isCyclic
-        )
+    this.interpolator.getTangent(iterator, tan, 0, polymer.isCyclic)
 
     return tan
   },
@@ -612,12 +604,12 @@ Spline.prototype = {
       var iterDir1 = this.getAtomIterator('direction1')
       var iterDir2 = this.getAtomIterator('direction2')
       this.interpolator.getNormalDir(
-                iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
-            )
+        iterDir1, iterDir2, tan, norm, bin, 0, polymer.isCyclic, isProtein
+      )
     } else {
       this.interpolator.getNormal(
-                n, tan, norm, bin, 0, polymer.isCyclic, isProtein
-            )
+        n, tan, norm, bin, 0, polymer.isCyclic, isProtein
+      )
     }
 
     return {

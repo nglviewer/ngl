@@ -21,10 +21,12 @@
 
 uniform vec3 diffuse;
 uniform vec3 emissive;
+uniform vec3 interiorColor;
+uniform float interiorDarkening;
 uniform float roughness;
 uniform float metalness;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float shrink;
 uniform mat4 modelViewMatrix;
 uniform mat4 modelViewProjectionMatrix;
@@ -46,14 +48,14 @@ varying float vRadius2;
     #include common
     #include fog_pars_fragment
     #include bsdfs
-    #include lights_pars
+    #include lights_pars_begin
     #include lights_physical_pars_fragment
 #endif
 
 bool interior = false;
 
 float calcClip( vec4 cameraPos ){
-    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, nearClip - 0.5 ) );
+    return dot( cameraPos, vec4( 0.0, 0.0, 1.0, clipNear - 0.5 ) );
 }
 
 float calcClip( vec3 cameraPos ){
@@ -215,7 +217,7 @@ void main(){
             interior = true;
             gl_FragDepthEXT = update_z_buffer(M, modelViewProjectionMatrix) ;
             if( gl_FragDepthEXT >= 0.0 ){
-                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( nearClip - 0.5 ) ) ) + ( 0.0000001 / radius ) );
+                gl_FragDepthEXT = max( 0.0, calcDepth( vec3( - ( clipNear - 0.5 ) ) ) + ( 0.0000001 / radius ) );
             }
         }else if( gl_FragDepthEXT <= 0.0 ){
             M = isect_surf2(ray, mat);
@@ -250,6 +252,8 @@ void main(){
 
     #ifdef PICKING
 
+        if( opacity < 0.3 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #else
@@ -272,16 +276,25 @@ void main(){
         #include roughnessmap_fragment
         #include metalnessmap_fragment
 
-        // don't use #include normal_fragment
+        // don't use #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
-        if( interior ){
-            normal = vec3( 0.0, 0.0, 0.4 );
-        }
 
         #include lights_physical_fragment
-        #include lights_template
+        #include lights_fragment_begin
+        #include lights_fragment_end
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
+
+        if( interior ){
+            #ifdef USE_INTERIOR_COLOR
+                outgoingLight.xyz = interiorColor;
+            #else
+                #ifdef DIFFUSE_INTERIOR
+                    outgoingLight.xyz = vColor;
+                #endif
+            #endif
+            outgoingLight.xyz *= 1.0 - interiorDarkening;
+        }
 
         gl_FragColor = vec4( outgoingLight, diffuseColor.a );
 

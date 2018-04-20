@@ -1,8 +1,8 @@
 
 stage.loadFile('data://ala3.pdb').then(function (o) {
   var atomPair = [
-        // [ "1.CA", "3.CA" ]
-        [ 8, 28 ]
+    // [ "1.CA", "3.CA" ]
+    [ 8, 28 ]
   ]
 
   o.addRepresentation('licorice')

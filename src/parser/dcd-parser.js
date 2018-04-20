@@ -4,9 +4,9 @@
  * @private
  */
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { uint8ToString, ensureBuffer } from '../utils.js'
-import TrajectoryParser from './trajectory-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { uint8ToString, ensureBuffer } from '../utils'
+import TrajectoryParser from './trajectory-parser'
 
 const charmmTimeUnitFactor = 20.45482949774598
 
@@ -52,7 +52,7 @@ class DcdParser extends TrajectoryParser {
     // header block
 
     const intView = new Int32Array(bin, 0, 23)
-    const ef = intView[ 0 ] !== dv.getInt32(0)  // endianess flag
+    const ef = intView[ 0 ] !== dv.getInt32(0) // endianess flag
     // swap byte order when big endian (84 indicates little endian)
     if (intView[ 0 ] !== 84) {
       const n = bin.byteLength
@@ -135,7 +135,7 @@ class DcdParser extends TrajectoryParser {
 
     for (let i = 0, n = header.NSET; i < n; ++i) {
       if (extraBlock) {
-        nextPos += 4  // block start
+        nextPos += 4 // block start
         // unitcell: A, alpha, B, beta, gamma, C (doubles)
         const box = new Float32Array(9)
         box[ 0 ] = dv.getFloat64(nextPos, ef)
@@ -143,7 +143,7 @@ class DcdParser extends TrajectoryParser {
         box[ 8 ] = dv.getFloat64(nextPos + 5 * 8, ef)
         boxes.push(box)
         nextPos += 48
-        nextPos += 4  // block end
+        nextPos += 4 // block end
       }
 
       // xyz coordinates
@@ -152,7 +152,7 @@ class DcdParser extends TrajectoryParser {
         if (dv.getInt32(nextPos, ef) !== natom4) {
           Log.error('dcd bad format, coord block start', i, j)
         }
-        nextPos += 4  // block start
+        nextPos += 4 // block start
         const c = new Float32Array(bin, nextPos, natom)
         for (let k = 0; k < natom; ++k) {
           coord[ 3 * k + j ] = c[ k ]
@@ -161,13 +161,13 @@ class DcdParser extends TrajectoryParser {
         if (dv.getInt32(nextPos, ef) !== natom4) {
           Log.error('dcd bad format, coord block end', i, j)
         }
-        nextPos += 4  // block end
+        nextPos += 4 // block end
       }
       coordinates.push(coord)
 
       if (fourDims) {
         const bytes = dv.getInt32(nextPos, ef)
-        nextPos += 4 + bytes + 4  // block start + skip + block end
+        nextPos += 4 + bytes + 4 // block start + skip + block end
       }
     }
 

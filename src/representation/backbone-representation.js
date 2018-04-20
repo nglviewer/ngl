@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import BallAndStickRepresentation from './ballandstick-representation.js'
 
 /**
@@ -46,9 +46,13 @@ class BackboneRepresentation extends BallAndStickRepresentation {
   init (params) {
     var p = params || {}
     p.aspectRatio = defaults(p.aspectRatio, 1.0)
-    p.radius = defaults(p.radius, 0.25)
+    p.radiusSize = defaults(p.radiusSize, 0.25)
 
     super.init(p)
+  }
+
+  getAtomRadius (atom) {
+    return atom.isTrace() ? super.getAtomRadius(atom) : 0
   }
 
   getAtomData (sview, what, params) {

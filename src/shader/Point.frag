@@ -1,6 +1,6 @@
 uniform vec3 diffuse;
 uniform float opacity;
-uniform float nearClip;
+uniform float clipNear;
 uniform float clipRadius;
 
 #if defined( RADIUS_CLIP )
@@ -33,6 +33,8 @@ void main(){
                 discard;
         #endif
 
+        if( opacity < 0.3 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #else

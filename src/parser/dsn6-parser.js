@@ -4,12 +4,12 @@
  * @private
  */
 
-import { Matrix4 } from '../../lib/three.es6.js'
+import { Matrix4 } from 'three'
 
-import { Debug, Log, ParserRegistry } from '../globals.js'
-import { ensureBuffer } from '../utils.js'
-import { degToRad } from '../math/math-utils.js'
-import VolumeParser from './volume-parser.js'
+import { Debug, Log, ParserRegistry } from '../globals'
+import { ensureBuffer } from '../utils'
+import { degToRad } from '../math/math-utils'
+import VolumeParser from './volume-parser'
 
 class Dsn6Parser extends VolumeParser {
   get type () { return 'dsn6' }
@@ -31,15 +31,15 @@ class Dsn6Parser extends VolumeParser {
     const brixStr = String.fromCharCode.apply(null, byteView.subarray(0, 512))
 
     if (brixStr.startsWith(':-)')) {
-      header.xStart = parseInt(brixStr.substr(10, 5))  // NXSTART
+      header.xStart = parseInt(brixStr.substr(10, 5)) // NXSTART
       header.yStart = parseInt(brixStr.substr(15, 5))
       header.zStart = parseInt(brixStr.substr(20, 5))
 
-      header.xExtent = parseInt(brixStr.substr(32, 5))  // NX
+      header.xExtent = parseInt(brixStr.substr(32, 5)) // NX
       header.yExtent = parseInt(brixStr.substr(38, 5))
       header.zExtent = parseInt(brixStr.substr(42, 5))
 
-      header.xRate = parseInt(brixStr.substr(52, 5))  // MX
+      header.xRate = parseInt(brixStr.substr(52, 5)) // MX
       header.yRate = parseInt(brixStr.substr(58, 5))
       header.zRate = parseInt(brixStr.substr(62, 5))
 
@@ -64,15 +64,15 @@ class Dsn6Parser extends VolumeParser {
         }
       }
 
-      header.xStart = intView[ 0 ]  // NXSTART
+      header.xStart = intView[ 0 ] // NXSTART
       header.yStart = intView[ 1 ]
       header.zStart = intView[ 2 ]
 
-      header.xExtent = intView[ 3 ]  // NX
+      header.xExtent = intView[ 3 ] // NX
       header.yExtent = intView[ 4 ]
       header.zExtent = intView[ 5 ]
 
-      header.xRate = intView[ 6 ]  // MX
+      header.xRate = intView[ 6 ] // MX
       header.yRate = intView[ 7 ]
       header.zRate = intView[ 8 ]
 

@@ -4,8 +4,8 @@
  * @private
  */
 
-import { RepresentationRegistry } from '../globals.js'
-import { defaults } from '../utils.js'
+import { RepresentationRegistry } from '../globals'
+import { defaults } from '../utils'
 import { calculateCenterArray } from '../math/array-utils.js'
 import LicoriceRepresentation from './licorice-representation.js'
 import SphereBuffer from '../buffer/sphere-buffer.js'
@@ -36,8 +36,9 @@ class HyperballRepresentation extends LicoriceRepresentation {
 
   init (params) {
     var p = params || {}
-    p.scale = defaults(p.scale, 0.2)
-    p.radius = defaults(p.radius, 'vdw')
+    p.radiusScale = defaults(p.radiusScale, 0.2)
+    p.radiusType = defaults(p.radiusType, 'vdw')
+    p.useInteriorColor = defaults(p.useInteriorColor, true)
 
     this.shrink = defaults(p.shrink, 0.12)
 

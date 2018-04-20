@@ -4,11 +4,11 @@
  * @private
  */
 
-import { Matrix4 } from '../../lib/three.es6.js'
+import { Matrix4 } from 'three'
 
-import { defaults } from '../utils.js'
-import Parser from './parser.js'
-import Volume from '../surface/volume.js'
+import { defaults } from '../utils'
+import Parser from './parser'
+import Volume from '../surface/volume'
 
 class VolumeParser extends Parser {
   constructor (streamer, params) {
