@@ -5,7 +5,9 @@
  */
 
 import { RepresentationRegistry } from '../globals'
-import BallAndStickRepresentation from './ballandstick-representation.js'
+import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from './ballandstick-representation.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
 
 /**
  * Licorice representation object ({@link BallAndStickRepresentation} with `aspectRatio` fixed at 1.0)
@@ -17,7 +19,7 @@ class LicoriceRepresentation extends BallAndStickRepresentation {
    * @param {Viewer} viewer - a viewer object
    * @param {BallAndStickRepresentationParameters} params - ball and stick representation parameters
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<BallAndStickRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'licorice'
@@ -27,7 +29,7 @@ class LicoriceRepresentation extends BallAndStickRepresentation {
     )
   }
 
-  init (params) {
+  init (params: Partial<BallAndStickRepresentationParameters>) {
     var p = params || {}
     p.aspectRatio = 1.0
 

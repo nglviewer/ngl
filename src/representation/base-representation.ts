@@ -6,7 +6,11 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import BallAndStickRepresentation from './ballandstick-representation.js'
+import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from './ballandstick-representation.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams } from '../structure/structure-data';
 
 /**
  * Base representation. Show cylinders for RNA/DNA ladders.
@@ -26,7 +30,7 @@ class BaseRepresentation extends BallAndStickRepresentation {
    * @param  {Viewer} viewer - the viewer object
    * @param  {BallAndStickRepresentationParameters} params - parameters object
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<BallAndStickRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'base'
@@ -41,21 +45,21 @@ class BaseRepresentation extends BallAndStickRepresentation {
     })
   }
 
-  init (params) {
-    var p = params || {}
+  init (params: Partial<BallAndStickRepresentationParameters>) {
+    let p = params || {}
     p.aspectRatio = defaults(p.aspectRatio, 1.0)
     p.radiusSize = defaults(p.radiusSize, 0.3)
 
     super.init(p)
   }
 
-  getAtomData (sview, what, params) {
+  getAtomData (sview: StructureView, what?: AtomDataFields, params?: AtomDataParams) {
     return sview.getRungAtomData(this.getAtomParams(what, params))
   }
 
-  getBondData (sview, what, params) {
-    var p = this.getBondParams(what, params)
-    p.colorParams.rung = true
+  getBondData (sview: StructureView, what?: BondDataFields, params?: BondDataParams) {
+    let p = this.getBondParams(what, params)
+    Object.assign(p.colorParams, {rung: true})
 
     return sview.getRungBondData(p)
   }
