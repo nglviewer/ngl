@@ -410,10 +410,10 @@ interface Spline {
   interpolator: Interpolator
 
   getSubdividedPosition: () => {position: any}
-  getSubdividedOrientation: () => {tangent: number[], normal: number[], binormal: number[]}
+  getSubdividedOrientation: () => {tangent: Float32Array, normal: Float32Array, binormal: Float32Array}
   getSubdividedPicking: () => {'picking': AtomPicker}
-  getSubdividedColor: (params: {[k: string]: any } & ColormakerParameters) => { 'color': number}
-  getSubdividedSize: (params: RadiusParams) => {size: number}
+  getSubdividedColor: (params: {[k: string]: any } & ColormakerParameters) => { 'color': Float32Array}
+  getSubdividedSize: (params: RadiusParams) => {size: Float32Array}
 
   new(polymer: Polymer, params?: {[k: string]: any}): Spline
 }
@@ -423,7 +423,15 @@ interface SplineConstructor {
   new(polymer: Polymer, params?: {[k: string]: any}): Spline
 }
 
-const Spline =(function Spline (this: Spline, polymer: Polymer, params?: {[k: string]: any}) {
+export interface SplineParameters {
+  directional?: boolean
+  positionIterator?: boolean
+  subdiv?: number
+  smoothSheet?: boolean
+  tension?: number
+}
+
+const Spline =(function Spline (this: Spline, polymer: Polymer, params?: SplineParameters) {
   this.polymer = polymer
   this.size = polymer.residueCount
 

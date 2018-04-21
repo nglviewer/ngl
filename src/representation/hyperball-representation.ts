@@ -8,14 +8,24 @@ import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import { calculateCenterArray } from '../math/array-utils.js'
 import LicoriceRepresentation from './licorice-representation.js'
-import SphereBuffer from '../buffer/sphere-buffer.js'
-import HyperballStickBuffer from '../buffer/hyperballstick-buffer.js'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
+import HyperballStickBuffer, { HyperballStickBufferData } from '../buffer/hyperballstick-buffer.js'
+import { BallAndStickRepresentationParameters } from './ballandstick-representation';
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import { BondDataParams, BondDataFields, AtomDataFields } from '../structure/structure-data';
+import StructureView from '../structure/structure-view';
+import { StructureRepresentationData } from './structure-representation';
+
+interface HyperballRepresentationParameters extends BallAndStickRepresentationParameters {
+  shrink: number
+}
 
 /**
  * Hyperball Representation
  */
 class HyperballRepresentation extends LicoriceRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<HyperballRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'hyperball'
@@ -34,7 +44,7 @@ class HyperballRepresentation extends LicoriceRepresentation {
     })
   }
 
-  init (params) {
+  init (params: Partial<HyperballRepresentationParameters>) {
     var p = params || {}
     p.radiusScale = defaults(p.radiusScale, 0.2)
     p.radiusType = defaults(p.radiusType, 'vdw')
@@ -45,7 +55,7 @@ class HyperballRepresentation extends LicoriceRepresentation {
     super.init(p)
   }
 
-  getBondParams (what, params) {
+  getBondParams (what?: BondDataFields, params?: BondDataParams) {
     if (!what || what.radius) {
       params = Object.assign({ radius2: true }, params)
     }
@@ -53,20 +63,20 @@ class HyperballRepresentation extends LicoriceRepresentation {
     return super.getBondParams(what, params)
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     var sphereBuffer = new SphereBuffer(
-      sview.getAtomData(this.getAtomParams()),
+      (sview.getAtomData(this.getAtomParams()) as SphereBufferData),
       this.getBufferParams({
         sphereDetail: this.sphereDetail,
         disableImpostor: this.disableImpostor,
         dullInterior: true
-      })
+      }) as SphereBufferParameters
     )
 
     this.__center = new Float32Array(sview.bondCount * 3)
 
     var stickBuffer = new HyperballStickBuffer(
-      sview.getBondData(this.getBondParams()),
+      sview.getBondData(this.getBondParams()) as HyperballStickBufferData,
       this.getBufferParams({
         shrink: this.shrink,
         radialSegments: this.radialSegments,
@@ -80,31 +90,37 @@ class HyperballRepresentation extends LicoriceRepresentation {
     }
   }
 
-  updateData (what, data) {
-    var atomData = data.sview.getAtomData(this.getAtomParams())
-    var bondData = data.sview.getBondData(this.getBondParams())
+  updateData (what: AtomDataFields, data: StructureRepresentationData) {
+    var atomData = data.sview!.getAtomData(this.getAtomParams())
+    var bondData = data.sview!.getBondData(this.getBondParams())
     var sphereData = {}
     var stickData = {}
 
     if (!what || what.position) {
-      sphereData.position = atomData.position
+      Object.assign(sphereData, {position: atomData.position})
       var from = bondData.position1
       var to = bondData.position2
-      stickData.position = calculateCenterArray(from, to, this.__center)
-      stickData.position1 = from
-      stickData.position2 = to
+      Object.assign(stickData, {
+        position: calculateCenterArray(from!, to!, this.__center),
+        position1: from,
+        position2: to
+      })
     }
 
     if (!what || what.color) {
-      sphereData.color = atomData.color
-      stickData.color = bondData.color
-      stickData.color2 = bondData.color2
+      Object.assign(sphereData, {color: atomData.color})
+      Object.assign(stickData, {
+        color: bondData.color,
+        color2: bondData.color2
+      })
     }
 
     if (!what || what.radius) {
-      sphereData.radius = atomData.radius
-      stickData.radius = bondData.radius
-      stickData.radius2 = bondData.radius2
+      Object.assign(sphereData, {radius: atomData.radius})
+      Object.assign(stickData, {
+        radius: bondData.radius,
+        radius2: bondData.radius2
+      })
     }
 
     data.bufferList[ 0 ].setAttributes(sphereData)

@@ -6,15 +6,26 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import Spline from '../geometry/spline.js'
-import StructureRepresentation from './structure-representation.js'
+import Spline, { SplineParameters } from '../geometry/spline.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
 import RibbonBuffer from '../buffer/ribbon-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import AtomProxy from '../proxy/atom-proxy';
+import StructureView from '../structure/structure-view';
+import Polymer from '../proxy/polymer';
+
+interface RibbonRepresentationParameters extends StructureRepresentationParameters {
+  subdiv: number
+  tension: number
+  smoothSheet: boolean
+}
 
 /**
  * Ribbon Representation
  */
 class RibbonRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<RibbonRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'ribbon'
@@ -42,7 +53,7 @@ class RibbonRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<RibbonRepresentationParameters>) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
@@ -65,7 +76,7 @@ class RibbonRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getSplineParams (params) {
+  getSplineParams (params?: Partial<SplineParameters>) {
     return Object.assign({
       subdiv: this.subdiv,
       tension: this.tension,
@@ -74,13 +85,13 @@ class RibbonRepresentation extends StructureRepresentation {
     }, params)
   }
 
-  getAtomRadius (atom) {
+  getAtomRadius (atom: AtomProxy) {
     return atom.isTrace() ? super.getAtomRadius(atom) : 0
   }
 
-  createData (sview) {
-    var bufferList = []
-    var polymerList = []
+  createData (sview: StructureView) {
+    var bufferList: RibbonBuffer[] = []
+    var polymerList: Polymer[] = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4) return
@@ -95,14 +106,14 @@ class RibbonRepresentation extends StructureRepresentation {
 
       bufferList.push(
         new RibbonBuffer(
-          {
+          ({
             position: subPos.position,
             normal: subOri.binormal,
             dir: subOri.normal,
             color: subCol.color,
             size: subSize.size,
             picking: subPick.picking
-          },
+          }),
           this.getBufferParams()
         )
       )
@@ -114,7 +125,7 @@ class RibbonRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: {position?: boolean, radius?: boolean, scale?: boolean, color?: boolean}, data: {polymerList: Polymer[], bufferList: RibbonBuffer[]}) {
     what = what || {}
 
     var i = 0
@@ -127,31 +138,33 @@ class RibbonRepresentation extends StructureRepresentation {
       if (what.position) {
         var subPos = spline.getSubdividedPosition()
         var subOri = spline.getSubdividedOrientation()
-        bufferData.position = subPos.position
-        bufferData.normal = subOri.binormal
-        bufferData.dir = subOri.normal
+        Object.assign(bufferData, {
+          position: subPos.position,
+          normal: subOri.binormal,
+          dir: subOri.normal
+        })
       }
 
       if (what.radius || what.scale) {
         var subSize = spline.getSubdividedSize(this.getRadiusParams())
-        bufferData.size = subSize.size
+        Object.assign(bufferData, {size: subSize.size})
       }
 
       if (what.color) {
         var subCol = spline.getSubdividedColor(this.getColorParams())
-        bufferData.color = subCol.color
+        Object.assign(bufferData, {color: subCol.color})
       }
 
       data.bufferList[ i ].setAttributes(bufferData)
     }
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<RibbonRepresentationParameters>) {
     var rebuild = false
     var what = {}
 
     if (params && params.tension) {
-      what.position = true
+      Object.assign(what, {position: true})
     }
 
     super.setParameters(params, what, rebuild)

@@ -16,7 +16,7 @@ const quadIndices = new Uint16Array([
   1, 3, 2
 ])
 
-interface RibbonBufferData extends BufferData {
+export interface RibbonBufferData extends BufferData {
   normal: Float32Array
   dir: Float32Array
   size: Float32Array
