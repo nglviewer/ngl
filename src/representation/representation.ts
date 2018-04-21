@@ -367,7 +367,7 @@ class Representation {
     }, p)
   }
 
-  getBufferParams (p: {[k: string]: any}) {
+  getBufferParams (p: {[k: string]: any} = {}) {
     return Object.assign({
 
       clipNear: this.clipNear,

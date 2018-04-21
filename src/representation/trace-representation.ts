@@ -7,14 +7,24 @@
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import Spline from '../geometry/spline.js'
-import StructureRepresentation from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
 import TraceBuffer from '../buffer/trace-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import AtomProxy from '../proxy/atom-proxy';
+import StructureView from '../structure/structure-view';
+import Polymer from '../proxy/polymer';
 
+interface TraceRepresentationParameters extends StructureRepresentationParameters {
+  subdiv: number
+  tension: number
+  smoothSheet: boolean
+}
 /**
  * Trace Representation
  */
 class TraceRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<TraceRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'trace'
@@ -42,7 +52,7 @@ class TraceRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<TraceRepresentationParameters>) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
@@ -63,7 +73,7 @@ class TraceRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getSplineParams (params) {
+  getSplineParams (params?: {[k:string]: any}) {
     return Object.assign({
       subdiv: this.subdiv,
       tension: this.tension,
@@ -72,13 +82,13 @@ class TraceRepresentation extends StructureRepresentation {
     }, params)
   }
 
-  getAtomRadius (atom) {
+  getAtomRadius (atom: AtomProxy) {
     return atom.isTrace() ? 0.1 : 0
   }
 
-  createData (sview) {
-    var bufferList = []
-    var polymerList = []
+  createData (sview: StructureView) {
+    var bufferList: TraceBuffer[] = []
+    var polymerList: Polymer[] = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4) return
@@ -102,36 +112,36 @@ class TraceRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: any, data: StructureRepresentationData) {
     what = what || {}
 
     var i = 0
-    var n = data.polymerList.length
+    var n = data.polymerList!.length
 
     for (i = 0; i < n; ++i) {
       var bufferData = {}
-      var spline = new Spline(data.polymerList[ i ], this.getSplineParams())
+      var spline = new Spline(data.polymerList![ i ], this.getSplineParams())
 
       if (what.position) {
         var subPos = spline.getSubdividedPosition()
-        bufferData.position = subPos.position
+        Object.assign(bufferData, { position: subPos.position })
       }
 
       if (what.color) {
         var subCol = spline.getSubdividedColor(this.getColorParams())
-        bufferData.color = subCol.color
+        Object.assign(bufferData, { color: subCol.color })
       }
 
       data.bufferList[ i ].setAttributes(bufferData)
     }
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<TraceRepresentationParameters>) {
     var rebuild = false
     var what = {}
 
     if (params && params.tension) {
-      what.position = true
+      Object.assign(what, {position: true})
     }
 
     super.setParameters(params, what, rebuild)
