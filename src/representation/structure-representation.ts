@@ -28,10 +28,10 @@ import Buffer from '../buffer/buffer';
  * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
  */
 export interface StructureRepresentationParameters extends RepresentationParameters {
-  radiusType?: string
-  radius?: number
-  scale?: number
-  assembly?: string
+  radiusType: string
+  radius: number
+  scale: number
+  assembly: string
 }
 export interface StructureRepresentationData {
   bufferList: Buffer[]
@@ -63,7 +63,7 @@ abstract class StructureRepresentation extends Representation {
    * @param {Viewer} viewer - a viewer object
    * @param {StructureRepresentationParameters} params - structure representation parameters
    */
-  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<StructureRepresentationParameters>) {
     const p = params || {}
 
     super(structure, viewer, p)
@@ -138,7 +138,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  init (params: {[key: string]: any}) {
+  init (params: Partial<StructureRepresentationParameters>) {
     const p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'element')
 
@@ -164,7 +164,7 @@ abstract class StructureRepresentation extends Representation {
     this.build()
   }
 
-  setRadius (value: string | number | undefined, p: StructureRepresentationParameters) {
+  setRadius (value: string | number | undefined, p: Partial<StructureRepresentationParameters>) {
     const types = Object.keys(RadiusFactoryTypes)
 
     if (typeof value === 'string' && types.includes(value.toLowerCase())) {
@@ -331,7 +331,7 @@ abstract class StructureRepresentation extends Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {StructureRepresentation} this object
    */
-  setParameters (params: StructureRepresentationParameters, what: {position?: boolean, color?: boolean, [k: string]: any} = {}, rebuild = false) {
+  setParameters (params: Partial<StructureRepresentationParameters>, what: {position?: boolean, color?: boolean, [k: string]: any} = {}, rebuild = false) {
     const p = params || {}
 
     this.setRadius(p.radius, p)

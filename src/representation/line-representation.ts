@@ -6,9 +6,13 @@
 
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
-import StructureRepresentation from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'
+import { Structure } from '../ngl';
+import StructureView from '../structure/structure-view';
+import Viewer from '../viewer/viewer';
+import AtomProxy from '../proxy/atom-proxy';
 
 /**
  * Determine which atoms in  a Structure[View] form no bonds to any other atoms
@@ -19,7 +23,7 @@ import { AtomPicker } from '../utils/picker.js'
  * @param  {Structure} structure - The Structure or StructureView object
  * @return {AtomSet} AtomSet of lone atoms
  */
-function getLoneAtomSet (structure) {
+function getLoneAtomSet (structure: Structure | StructureView) {
   const atomSet = structure.getAtomSet()
   const bondSet = structure.getBondSet()
   const bp = structure.getBondProxy()
@@ -29,6 +33,23 @@ function getLoneAtomSet (structure) {
     atomSet.clear(bp.atomIndex2)
   })
   return atomSet
+}
+
+interface LineRepresentationParameters extends StructureRepresentationParameters {
+  multipleBond: 'off' | 'symmetric' | 'offset'
+  bondSpacing: number
+  lineWidth: number
+  lines: boolean
+  crosses: 'off' | 'all' | 'lone'
+  crossSize: number
+}
+
+interface CrossData {
+  position1?: Float32Array
+  position2?: Float32Array
+  color?: Float32Array
+  color2?: Float32Array
+  picking?: AtomPicker
 }
 
 /**
@@ -53,7 +74,7 @@ class LineRepresentation extends StructureRepresentation {
    * @param {null} params.metalness - not available
    * @param {null} params.diffuse - not available
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<LineRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'line'
@@ -105,7 +126,7 @@ class LineRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<LineRepresentationParameters>) {
     var p = params || {}
 
     this.multipleBond = defaults(p.multipleBond, 'off')
@@ -118,11 +139,11 @@ class LineRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getAtomRadius (atom) {
+  getAtomRadius (atom:AtomProxy) {
     return 0.1
   }
 
-  getBondParams (what, params) {
+  getBondParams (what: any, params?: Partial<LineRepresentationParameters>) {
     params = Object.assign({
       multipleBond: this.multipleBond,
       bondSpacing: this.bondSpacing,
@@ -132,32 +153,32 @@ class LineRepresentation extends StructureRepresentation {
     return super.getBondParams(what, params)
   }
 
-  _crossData (what, sview) {
+  _crossData (what: any, sview: StructureView) {
     if (what) {
       if (!what.position && !what.color) return
     }
 
     const p = {}
     if (this.crosses === 'lone') {
-      p.atomSet = getLoneAtomSet(sview)
+      Object.assign(p, {atomSet : getLoneAtomSet(sview)})
     }
 
     const atomData = sview.getAtomData(this.getAtomParams(what, p))
-    const crossData = {}
+    const crossData: CrossData = {}
     const position = atomData.position
     const color = atomData.color
     const picking = atomData.picking
 
-    const size = (position || color).length
+    const size = (position! || color).length
     const attrSize = size * 3
 
-    let cPosition1
-    let cPosition2
-    let cColor
-    let cColor2
-    let cOffset
+    let cPosition1 = new Float32Array(0)
+    let cPosition2 = new Float32Array(0)
+    let cColor = new Float32Array(0)
+    let cColor2 = new Float32Array(0)
+    let cOffset: number
 
-    let pickingArray
+    let pickingArray = new Float32Array(0)
 
     if (!what || what.position) {
       cPosition1 = crossData.position1 = new Float32Array(attrSize)
@@ -169,7 +190,7 @@ class LineRepresentation extends StructureRepresentation {
       cColor2 = crossData.color2 = new Float32Array(attrSize)
     }
     if (!what || what.picking) {
-      pickingArray = new Float32Array(atomData.picking.array.length * 3) // Needs padding??
+      pickingArray = new Float32Array(atomData.picking!.array.length * 3) // Needs padding??
     }
 
     for (let v = 0; v < size; v++) {
@@ -177,11 +198,11 @@ class LineRepresentation extends StructureRepresentation {
       const i = j * 3
 
       if (!what || what.position) {
-        const x = position[ j ]
-        const y = position[ j + 1 ]
-        const z = position[ j + 2 ]
+        const x = position![ j ]
+        const y = position![ j + 1 ]
+        const z = position![ j + 2 ]
 
-        cPosition1[ i ] = x - cOffset
+        cPosition1[ i ] = x - cOffset!
         cPosition1[ i + 1 ] = y
         cPosition1[ i + 2 ] = z
         cPosition2[ i ] = x + cOffset
@@ -206,29 +227,29 @@ class LineRepresentation extends StructureRepresentation {
       if (!what || what.color) {
         const cimax = i + 9
         for (let ci = i; ci < cimax; ci += 3) {
-          cColor[ ci ] = cColor2[ ci ] = color[ j ]
-          cColor[ ci + 1 ] = cColor2[ ci + 1 ] = color[ j + 1 ]
-          cColor[ ci + 2 ] = cColor2[ ci + 2 ] = color[ j + 2 ]
+          cColor[ ci ] = cColor2[ ci ] = color![ j ]
+          cColor[ ci + 1 ] = cColor2[ ci + 1 ] = color![ j + 1 ]
+          cColor[ ci + 2 ] = cColor2[ ci + 2 ] = color![ j + 2 ]
         }
       }
 
       if (!what || what.picking) {
         pickingArray[ j ] =
         pickingArray[ j + 1 ] =
-        pickingArray[ j + 2 ] = picking.array[ v ]
+        pickingArray[ j + 2 ] = picking!.array[ v ]
       }
     }
 
     if (!what || what.picking) {
       crossData.picking = new AtomPicker(
-        pickingArray, atomData.picking.structure
+        pickingArray, picking!.structure
       )
     }
 
     return crossData
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     const what = { position: true, color: true, picking: true }
 
     const bufferList = []
@@ -245,7 +266,7 @@ class LineRepresentation extends StructureRepresentation {
 
     if (this.crosses !== 'off') {
       const crossBuffer = new WideLineBuffer(
-        this._crossData(what, sview),
+        (this._crossData(what, sview) as CrossData),
         this.getBufferParams({linewidth: this.linewidth})
       )
       bufferList.push(crossBuffer)
@@ -256,49 +277,57 @@ class LineRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: any, data: StructureRepresentationData) {
     let bufferIdx = 0
 
     if (this.lines) {
-      const bondData = data.sview.getBondData(this.getBondParams(what))
+      const bondData = data.sview!.getBondData(this.getBondParams(what))
       const lineAttributes = {}
 
       if (!what || what.position) {
-        lineAttributes.position1 = bondData.position1
-        lineAttributes.position2 = bondData.position2
+        Object.assign(lineAttributes, {
+          position1: bondData.position1,
+          position2: bondData.position2
+        })
       }
 
       if (!what || what.color) {
-        lineAttributes.color = bondData.color
-        lineAttributes.color2 = bondData.color2
+        Object.assign(lineAttributes, {
+          color: bondData.color,
+          color2: bondData.color2
+        })
       }
 
       data.bufferList[ bufferIdx++ ].setAttributes(lineAttributes)
     }
 
     if (this.crosses !== 'off') {
-      const crossData = this._crossData(what, data.sview)
+      const crossData = this._crossData(what, (data.sview as StructureView))
       const crossAttributes = {}
 
       if (!what || what.position) {
-        crossAttributes.position1 = crossData.position1
-        crossAttributes.position2 = crossData.position2
+        Object.assign(crossAttributes, {
+          position1: crossData!.position1,
+          position2: crossData!.position2
+        })
       }
       if (!what || what.color) {
-        crossAttributes.color = crossData.color
-        crossAttributes.color2 = crossData.color2
+        Object.assign(crossAttributes, {
+          color: crossData!.color,
+          color2: crossData!.color2
+        })
       }
 
       data.bufferList[ bufferIdx++ ].setAttributes(crossAttributes)
     }
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<LineRepresentationParameters>) {
     var rebuild = false
     var what = {}
 
     if (params && (params.bondSpacing || params.crossSize)) {
-      what.position = true
+      Object.assign(what, { position: true })
     }
 
     super.setParameters(params, what, rebuild)

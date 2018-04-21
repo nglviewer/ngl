@@ -101,7 +101,7 @@ export const BufferParameterTypes = {
 }
 
 export interface BufferData {
-  position: Float32Array
+  position?: Float32Array
   position1?: Float32Array  // TODO
   color?: Float32Array
   index?: Uint32Array|Uint16Array

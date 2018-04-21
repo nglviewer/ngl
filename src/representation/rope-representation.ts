@@ -6,19 +6,18 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import CartoonRepresentation from './cartoon-representation.js'
+import CartoonRepresentation, { CartoonRepresentationParameters } from './cartoon-representation.js'
 import Helixorient from '../geometry/helixorient.js'
 import Spline from '../geometry/spline.js'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
-import { StructureRepresentationParameters } from './structure-representation';
 import Polymer from '../proxy/polymer';
 
 /**
  * Rope Representation
  */
 class RopeRepresentation extends CartoonRepresentation {
-  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<CartoonRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'rope'
@@ -35,7 +34,7 @@ class RopeRepresentation extends CartoonRepresentation {
     })
   }
 
-  init (params: StructureRepresentationParameters) {
+  init (params: Partial<CartoonRepresentationParameters>) {
     var p = params || {}
     p.aspectRatio = 1.0
     p.tension = defaults(p.tension, 0.5)

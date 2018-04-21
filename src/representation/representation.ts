@@ -15,37 +15,37 @@ import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffe
 import { ColormakerParameters, ColorMode } from '../color/colormaker';
 
 export interface RepresentationParameters {
-  lazy?: boolean,
-  clipNear?: number,
-  clipRadius?: number,
-  clipCenter?: Vector3,
-  flatShaded?: boolean,
-  opacity?: number,
-  depthWrite?: boolean,
-  side?: BufferSide,
-  wireframe?: boolean,
-  colorScheme?: string,
-  colorScale?: string | number[],
-  colorReverse?: boolean,
-  colorValue?: number,
-  colorDomain?: number[],
-  colorMode?: string,
-  roughness?: number,
-  metalness?: number,
-  diffuse?: Color,
-  diffuseInterior?: Color,
-  useInteriorColor?: Color,
-  interiorColor?: Color,
-  interiorDarkening?: Color,
-  disablePicking?: boolean,
-  matrix?: Matrix4
-  quality?: string,
-  visible?: boolean,
-  color?: number | string | Color,
-  sphereDetail?: number,
-  radialSegments?: number,
-  openEnded?: boolean
-  disableImpostor?: boolean
+  lazy: boolean,
+  clipNear: number,
+  clipRadius: number,
+  clipCenter: Vector3,
+  flatShaded: boolean,
+  opacity: number,
+  depthWrite: boolean,
+  side: BufferSide,
+  wireframe: boolean,
+  colorScheme: string,
+  colorScale: string | number[],
+  colorReverse: boolean,
+  colorValue: number,
+  colorDomain: number[],
+  colorMode: string,
+  roughness: number,
+  metalness: number,
+  diffuse: Color,
+  diffuseInterior: Color,
+  useInteriorColor: Color,
+  interiorColor: Color,
+  interiorDarkening: Color,
+  disablePicking: boolean,
+  matrix: Matrix4
+  quality: string,
+  visible: boolean,
+  color: number | string | Color,
+  sphereDetail: number,
+  radialSegments: number,
+  openEnded: boolean
+  disableImpostor: boolean
   [key: string]: any//boolean | number | undefined | Color | string | Vector3 | Matrix4 | number[]
 }
 /**
@@ -132,7 +132,7 @@ class Representation {
   private prepare: (arg?: any)=> void
   [key: string]: any
 
-  constructor (object: any, viewer: Viewer, params: RepresentationParameters) {
+  constructor (object: any, viewer: Viewer, params: Partial<RepresentationParameters>) {
     // eslint-disable-next-line no-unused-vars
     // const p = params || {}
 
@@ -258,7 +258,7 @@ class Representation {
     }
   }
 
-  init (params: RepresentationParameters) {
+  init (params: Partial<RepresentationParameters>) {
     const p = params || {}
 
     this.clipNear = defaults(p.clipNear, 0)
@@ -354,7 +354,7 @@ class Representation {
     }
   }
 
-  getColorParams (p?: {[k: string]: any}): {[k:string]: any} & ColormakerParameters {
+  getColorParams (p?: {[k: string]: any}): { scheme: string, [k: string]: any } & ColormakerParameters {
     return Object.assign({
 
       scheme: this.colorScheme,
@@ -367,7 +367,7 @@ class Representation {
     }, p)
   }
 
-  getBufferParams (p?: {}) {
+  getBufferParams (p: {[k: string]: any}) {
     return Object.assign({
 
       clipNear: this.clipNear,
@@ -395,7 +395,7 @@ class Representation {
     }, p)
   }
 
-  setColor (value: number | string | Color | undefined , p?: RepresentationParameters) {
+  setColor (value: number | string | Color | undefined , p?: Partial<RepresentationParameters>) {
     const types = Object.keys(ColormakerRegistry.getSchemes())
 
     if (typeof value === 'string' && types.includes(value.toLowerCase())) {
@@ -538,7 +538,7 @@ class Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {Representation} this object
    */
-  setParameters (params: RepresentationParameters, what:{[propName: string]: any} = {}, rebuild = false) {
+  setParameters (params: Partial<RepresentationParameters>, what:{[propName: string]: any} = {}, rebuild = false) {
     const p = params || {}
     const tp = this.parameters
     const bufferParams: BufferParameters = <any>{}
@@ -631,7 +631,7 @@ class Representation {
   }
 
   getParameters () {
-    const params: RepresentationParameters = {
+    const params: Partial<RepresentationParameters> = {
       lazy: this.lazy,
       visible: this.visible,
       quality: this.quality

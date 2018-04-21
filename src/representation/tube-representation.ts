@@ -6,16 +6,15 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import CartoonRepresentation from './cartoon-representation.js'
+import CartoonRepresentation, {CartoonRepresentationParameters} from './cartoon-representation.js'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
-import { StructureRepresentationParameters } from './structure-representation';
 
 /**
  * Tube Representation
  */
 class TubeRepresentation extends CartoonRepresentation {
-  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<CartoonRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'tube'
@@ -25,7 +24,7 @@ class TubeRepresentation extends CartoonRepresentation {
     )
   }
 
-  init (params: StructureRepresentationParameters) {
+  init (params: Partial<CartoonRepresentationParameters>) {
     var p = params || {}
     p.aspectRatio = 1.0
     p.radiusScale = defaults(p.radiusScale, 2.0)

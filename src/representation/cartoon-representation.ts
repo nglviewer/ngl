@@ -16,6 +16,15 @@ import AtomProxy from '../proxy/atom-proxy';
 import StructureView from '../structure/structure-view';
 import Buffer from '../buffer/buffer';
 
+export interface CartoonRepresentationParameters extends StructureRepresentationParameters {
+  aspectRatio: number
+  subdiv: number
+  radialSegments: number
+  tension: number
+  capped: boolean
+  smoothSheet: boolean
+}
+
 /**
  * Cartoon representation. Show a thick ribbon that
  * smoothly connecting backbone atoms in polymers.
@@ -35,7 +44,7 @@ class CartoonRepresentation extends StructureRepresentation {
    * @param {Viewer} viewer - a viewer object
    * @param {StructureRepresentationParameters} params - representation parameters
    */
-  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<CartoonRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'cartoon'
@@ -66,7 +75,7 @@ class CartoonRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params: StructureRepresentationParameters) {
+  init (params: Partial<CartoonRepresentationParameters>) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
@@ -93,7 +102,7 @@ class CartoonRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getSplineParams (params?: StructureRepresentationParameters) {
+  getSplineParams (params?: Partial<CartoonRepresentationParameters>) {
     return Object.assign({
       subdiv: this.subdiv,
       tension: this.tension,
@@ -190,7 +199,7 @@ class CartoonRepresentation extends StructureRepresentation {
     if (Debug) Log.timeEnd(this.type + ' repr update')
   }
 
-  setParameters (params: StructureRepresentationParameters) {
+  setParameters (params: Partial<CartoonRepresentationParameters>) {
     const rebuild = false
     var what: {[k: string]: any} = {}
 

@@ -7,15 +7,36 @@
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import { AtomPicker } from '../utils/picker.js'
-import StructureRepresentation from './structure-representation.js'
-import Helixbundle from '../geometry/helixbundle.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
+import Helixbundle, { Axis } from '../geometry/helixbundle.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+
+interface RocketRepresentationParameters extends StructureRepresentationParameters {
+  localAngle: number
+  centerDist: number
+  ssBorder: boolean
+  radialSegments: number
+  openEnded: boolean
+  disableImpostor: boolean
+}
+
+interface AxisData {
+  begin: Float32Array
+  end: Float32Array
+  size: Float32Array
+  color: Float32Array
+  picking: AtomPicker
+}
 
 /**
  * Rocket Representation
  */
 class RocketRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<RocketRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'rocket'
@@ -42,7 +63,7 @@ class RocketRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<RocketRepresentationParameters>) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'sstruc')
     p.radiusSize = defaults(p.radiusSize, 1.5)
@@ -57,10 +78,10 @@ class RocketRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  createData (sview) {
-    var length = 0
-    var axisList = []
-    var helixbundleList = []
+  createData (sview: StructureView) {
+    let length = 0
+    var axisList:Axis[] = []
+    var helixbundleList:Helixbundle[] = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4 || polymer.isNucleic()) return
@@ -81,23 +102,25 @@ class RocketRepresentation extends StructureRepresentation {
       end: new Float32Array(length * 3),
       size: new Float32Array(length),
       color: new Float32Array(length * 3),
-      picking: new Float32Array(length)
+      picking: <AtomPicker>{}
     }
 
-    var offset = 0
+    let picking = new Float32Array(length)
+
+    let offset = 0
 
     axisList.forEach(function (axis) {
       axisData.begin.set(axis.begin, offset * 3)
       axisData.end.set(axis.end, offset * 3)
       axisData.size.set(axis.size, offset)
       axisData.color.set(axis.color, offset * 3)
-      axisData.picking.set(axis.picking.array, offset)
+      picking.set(axis.picking.array, offset)
       offset += axis.size.length
     })
 
     if (length) {
       axisData.picking = new AtomPicker(
-        axisData.picking, sview.getStructure()
+        picking, sview.getStructure()
       )
     }
 
@@ -119,14 +142,15 @@ class RocketRepresentation extends StructureRepresentation {
     )
 
     return {
-      bufferList: [ cylinderBuffer ],
+      bufferList: [ cylinderBuffer as CylinderGeometryBuffer ],
       axisList: axisList,
       helixbundleList: helixbundleList,
       axisData: axisData
     }
   }
 
-  updateData (what, data) {
+  
+  updateData (what: any, data: {bufferList: CylinderBuffer[], helixbundleList: Helixbundle[], axisList: Axis[], axisData: AxisData}) {
     what = what || {}
 
     if (what.position) {
@@ -139,7 +163,7 @@ class RocketRepresentation extends StructureRepresentation {
     if (what.color || what.radius) {
       var offset = 0
 
-      data.helixbundleList.forEach(helixbundle => {
+      data.helixbundleList.forEach((helixbundle) => {
         var axis = helixbundle.getAxis(
           this.localAngle, this.centerDist, this.ssBorder,
           this.getColorParams(), this.getRadiusParams()
@@ -154,16 +178,20 @@ class RocketRepresentation extends StructureRepresentation {
       })
 
       if (what.color) {
-        cylinderData.color = data.axisData.color
-        cylinderData.color2 = data.axisData.color
+        Object.assign(cylinderData, {
+          color: data.axisData.color,
+          color2: data.axisData.color
+        })
       }
 
       if (what.radius || what.scale) {
-        cylinderData.radius = data.axisData.size
+        Object.assign(cylinderData, {
+          radius: data.axisData.size
+        })
       }
     }
 
-    data.bufferList[ 0 ].setAttributes(cylinderData)
+    (data.bufferList[ 0 ] as CylinderGeometryBuffer).setAttributes(cylinderData)
   }
 }
 
