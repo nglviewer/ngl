@@ -34,7 +34,7 @@ function getData (data: TubeMeshBufferData, params: Partial<TubeMeshBufferParame
   const capVertices = capped ? radialSegments : 0
   const capTriangles = capped ? radialSegments - 2 : 0
 
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   const n1 = n - 1
   const x = n * radialSegments * 3 + 2 * capVertices * 3
   const xi = n1 * 2 * radialSegments * 3 + 2 * capTriangles * 3
@@ -76,7 +76,7 @@ class TubeMeshBuffer extends MeshBuffer {
     this.capVertices = this.parameters.capped ? this.parameters.radialSegments : 0
     this.capTriangles = this.parameters.capped ? this.parameters.radialSegments - 2 : 0
 
-    this.size2 = data.position.length / 3
+    this.size2 = data.position!.length / 3
     data.primitiveId = serialArray(this.size2)
 
     this.setAttributes(data)

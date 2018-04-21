@@ -23,7 +23,7 @@ interface RibbonBufferData extends BufferData {
 }
 
 function getSize(data: RibbonBufferData){
-  const n = (data.position.length / 3) - 1
+  const n = (data.position!.length / 3) - 1
   const n4 = n * 4
   const x = n4 * 3
   return x
@@ -54,7 +54,7 @@ class RibbonBuffer extends MeshBuffer {
       picking: data.picking
     }, params)
 
-    const n = (data.position.length / 3) - 1
+    const n = (data.position!.length / 3) - 1
     const n4 = n * 4
     const x = n4 * 3
 

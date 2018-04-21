@@ -323,7 +323,7 @@ const TextBufferParameterTypes = Object.assign({
 }, BufferParameterTypes)
 
 function getCharCount (data: TextBufferData, params: Partial<TextBufferParameters>) {
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   let charCount = 0
   for (let i = 0; i < n; ++i) {
     charCount += data.text[ i ].length
@@ -376,7 +376,7 @@ class TextBuffer extends MappedQuadBuffer {
     }, params)
 
     this.text = data.text
-    this.positionCount = data.position.length / 3
+    this.positionCount = data.position!.length / 3
 
     this.addUniforms({
       'fontTexture': { value: null },
