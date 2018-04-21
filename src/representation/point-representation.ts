@@ -6,14 +6,28 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
 import PointBuffer from '../buffer/point-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import { AtomDataFields } from '../structure/structure-data';
+
+interface PointRepresentationParameters extends StructureRepresentationParameters {
+  pointSize: number
+  sizeAttenuation: boolean
+  sortParticles: boolean
+  useTexture: boolean
+  alphaTest: number
+  forceTransparent: boolean
+  edgeBleach: number
+}
 
 /**
  * Point Representation
  */
 class PointRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<PointRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'point'
@@ -57,7 +71,7 @@ class PointRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<PointRepresentationParameters>) {
     var p = params || {}
 
     this.pointSize = defaults(p.pointSize, 1)
@@ -71,7 +85,7 @@ class PointRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     var what = { position: true, color: true, picking: true }
     var atomData = sview.getAtomData(this.getAtomParams(what))
 
@@ -93,16 +107,16 @@ class PointRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
-    var atomData = data.sview.getAtomData(this.getAtomParams(what))
+  updateData (what: AtomDataFields, data: StructureRepresentationData) {
+    var atomData = data.sview!.getAtomData(this.getAtomParams(what))
     var pointData = {}
 
     if (!what || what.position) {
-      pointData.position = atomData.position
+      Object.assign(pointData, {position: atomData.position})
     }
 
     if (!what || what.color) {
-      pointData.color = atomData.color
+      Object.assign(pointData, {color: atomData.color})
     }
 
     data.bufferList[ 0 ].setAttributes(pointData)
