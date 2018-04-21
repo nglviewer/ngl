@@ -15,9 +15,11 @@ import Volume from '../surface/volume'
 import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
+export type ColorMode = 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
+
 const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
-  mode: 'hcl' as 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl',
+  mode: 'hcl' as ColorMode,
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false

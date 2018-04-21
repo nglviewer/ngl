@@ -6,9 +6,15 @@
 
 import { defaults } from '../utils'
 import { Debug, Log, RepresentationRegistry } from '../globals'
-import Spline from '../geometry/spline.js'
-import StructureRepresentation from './structure-representation.js'
-import TubeMeshBuffer from '../buffer/tubemesh-buffer.js'
+import Spline from '../geometry/spline'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import TubeMeshBuffer from '../buffer/tubemesh-buffer'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import Polymer from '../proxy/polymer';
+import AtomProxy from '../proxy/atom-proxy';
+import StructureView from '../structure/structure-view';
+import Buffer from '../buffer/buffer';
 
 /**
  * Cartoon representation. Show a thick ribbon that
@@ -29,7 +35,7 @@ class CartoonRepresentation extends StructureRepresentation {
    * @param {Viewer} viewer - a viewer object
    * @param {StructureRepresentationParameters} params - representation parameters
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
     super(structure, viewer, params)
 
     this.type = 'cartoon'
@@ -60,7 +66,7 @@ class CartoonRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: StructureRepresentationParameters) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'chainname')
     p.colorScale = defaults(p.colorScale, 'RdYlBu')
@@ -87,7 +93,7 @@ class CartoonRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getSplineParams (params) {
+  getSplineParams (params?: StructureRepresentationParameters) {
     return Object.assign({
       subdiv: this.subdiv,
       tension: this.tension,
@@ -96,34 +102,34 @@ class CartoonRepresentation extends StructureRepresentation {
     }, params)
   }
 
-  getSpline (polymer) {
+  getSpline (polymer: Polymer): Spline {
     return new Spline(polymer, this.getSplineParams())
   }
 
-  getAspectRatio (polymer) {
+  getAspectRatio (polymer: Polymer): number {
     return polymer.isCg() ? 1.0 : this.aspectRatio
   }
 
-  getAtomRadius (atom) {
+  getAtomRadius (atom: AtomProxy): number {
     return atom.isTrace() ? super.getAtomRadius(atom) : 0
   }
 
-  createData (sview) {
-    var bufferList = []
-    var polymerList = []
+  createData (sview: StructureView) {
+    let bufferList: Buffer[] = []
+    let polymerList: Polymer[] = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4) return
       polymerList.push(polymer)
 
-      var spline = this.getSpline(polymer)
-      var aspectRatio = this.getAspectRatio(polymer)
+      const spline = this.getSpline(polymer)
+      const aspectRatio = this.getAspectRatio(polymer)
 
-      var subPos = spline.getSubdividedPosition()
-      var subOri = spline.getSubdividedOrientation()
-      var subCol = spline.getSubdividedColor(this.getColorParams())
-      var subPick = spline.getSubdividedPicking()
-      var subSize = spline.getSubdividedSize(this.getRadiusParams())
+      const subPos = spline.getSubdividedPosition()
+      const subOri = spline.getSubdividedOrientation()
+      const subCol = spline.getSubdividedColor(this.getColorParams())
+      const subPick = spline.getSubdividedPicking()
+      const subSize = spline.getSubdividedSize(this.getRadiusParams())
 
       bufferList.push(
         new TubeMeshBuffer(
@@ -143,18 +149,18 @@ class CartoonRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: any, data: StructureRepresentationData) {
     if (Debug) Log.time(this.type + ' repr update')
 
     what = what || {}
 
-    for (var i = 0, il = data.polymerList.length; i < il; ++i) {
-      var bufferData = {}
-      var polymer = data.polymerList[ i ]
+    for (var i = 0, il = data.polymerList!.length; i < il; ++i) {
+      var bufferData: {[key: string]: any} = {}
+      var polymer = data.polymerList![ i ]
       var spline = this.getSpline(polymer)
       var aspectRatio = this.getAspectRatio(polymer)
 
-      data.bufferList[ i ].aspectRatio = aspectRatio
+      Object.assign(data.bufferList[ i ], {aspectRatio: aspectRatio})
 
       if (what.position || what.radius) {
         var subPos = spline.getSubdividedPosition()
@@ -184,9 +190,9 @@ class CartoonRepresentation extends StructureRepresentation {
     if (Debug) Log.timeEnd(this.type + ' repr update')
   }
 
-  setParameters (params) {
-    var rebuild = false
-    var what = {}
+  setParameters (params: StructureRepresentationParameters) {
+    const rebuild = false
+    var what: {[k: string]: any} = {}
 
     if (params && params.aspectRatio) {
       what.radius = true

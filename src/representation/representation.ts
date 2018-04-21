@@ -12,6 +12,7 @@ import Queue from '../utils/queue.js'
 import Counter from '../utils/counter.js'
 import Viewer from '../viewer/viewer'
 import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
+import { ColormakerParameters, ColorMode } from '../color/colormaker';
 
 export interface RepresentationParameters {
   lazy?: boolean,
@@ -106,21 +107,21 @@ class Representation {
   private flatShaded: boolean
   private opacity: number
   private depthWrite: boolean
-  private side: string
+  private side: BufferSide
   private wireframe: boolean
   private colorScheme: string
-  private colorScale: string | number[]
+  private colorScale: string | string[]
   private colorReverse: boolean
-  private colorValue: Color
+  private colorValue: number
   private colorDomain: number[]
-  private colorMode: string
+  private colorMode: ColorMode
   private roughness: number
   private metalness: number
-  private diffuse: Color
-  private diffuseInterior: Color
-  private useInteriorColor: Color
-  private interiorColor: Color
-  private interiorDarkening: Color
+  private diffuse: number
+  private diffuseInterior?: boolean
+  private useInteriorColor?: boolean
+  private interiorColor: number
+  private interiorDarkening: number
   private disablePicking: boolean
   
   private matrix: Matrix4
@@ -353,7 +354,7 @@ class Representation {
     }
   }
 
-  getColorParams (p?: {}) {
+  getColorParams (p?: {[k: string]: any}): {[k:string]: any} & ColormakerParameters {
     return Object.assign({
 
       scheme: this.colorScheme,
@@ -404,7 +405,7 @@ class Representation {
         this.setParameters({ colorScheme: value })
       }
     } else if (value !== undefined) {
-      let val = new Color(value as number).getHex()
+      let val = new Color(value as string).getHex() //TODO
       if (p) {
         p.colorScheme = 'uniform'
         p.colorValue = val

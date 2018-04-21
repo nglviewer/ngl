@@ -14,6 +14,8 @@ import Viewer from '../viewer/viewer'
 import { Assembly } from '../ngl';
 import StructureView from '../structure/structure-view';
 import AtomProxy from '../proxy/atom-proxy';
+import Polymer from '../proxy/polymer';
+import Buffer from '../buffer/buffer';
 
 /**
  * Structure representation parameter object.
@@ -25,15 +27,16 @@ import AtomProxy from '../proxy/atom-proxy';
  * @property {Float} scale - A number that scales the value defined by the *radius* or the *radiusType* parameter.
  * @property {String} assembly - name of an assembly object. Included are the asymmetric unit (*AU*) corresponding to the coordinates given in the structure file, biological assemblies from *PDB*, *mmCIF* or *MMTF* files (*BU1*, *BU2*, ...), a filled (crystallographic) unitcell of a given space group (*UNITCELL*), a supercell consisting of a center unitcell and its 26 direct neighbors (*SUPERCELL*). Set to *default* to use the default asemmbly of the structure object.
  */
-interface StructureRepresentationParameters extends RepresentationParameters {
+export interface StructureRepresentationParameters extends RepresentationParameters {
   radiusType?: string
   radius?: number
   scale?: number
   assembly?: string
 }
-interface Data {
-  bufferList: any[]
-  sview: StructureView | Structure
+export interface StructureRepresentationData {
+  bufferList: Buffer[]
+  polymerList?: Polymer[]
+  sview?: StructureView | Structure
   [k: string]: any
 }
 /**
@@ -43,7 +46,7 @@ interface Data {
 abstract class StructureRepresentation extends Representation {
 
   private selection: Selection
-  private dataList: Data[]
+  private dataList: StructureRepresentationData[]
   structure: Structure
   structureView: StructureView
 
@@ -219,7 +222,7 @@ abstract class StructureRepresentation extends Representation {
 
     if (assembly) {
       assembly.partList.forEach((part, i) => {
-        const sview = part.getView(this.structureView)
+        const sview = <StructureView>part.getView(this.structureView)
         if (sview.atomCount === 0) return
         const data = this.createData(sview, i)
         if (data) {
@@ -237,7 +240,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  abstract createData (...arg: any[]): Data
+  abstract createData (sview: StructureView, k?: number): StructureRepresentationData
 
   update (what: any) {
     if (this.lazy && !this.visible) {
@@ -268,7 +271,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  getRadiusParams () {
+  getRadiusParams (param?: any) {
     return {
       type: this.radiusType,
       scale: this.radiusScale,
