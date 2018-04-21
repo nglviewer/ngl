@@ -6,7 +6,12 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import BallAndStickRepresentation from './ballandstick-representation.js'
+import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from './ballandstick-representation.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import AtomProxy from '../proxy/atom-proxy';
+import StructureView from '../structure/structure-view';
+import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams } from '../structure/structure-data';
 
 /**
  * Backbone representation. Show cylinders (or lines) connecting .CA (protein)
@@ -26,7 +31,7 @@ class BackboneRepresentation extends BallAndStickRepresentation {
    * @param  {Viewer} viewer - the viewer object
    * @param  {BallAndStickRepresentationParameters} params - parameters object
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<BallAndStickRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'backbone'
@@ -43,7 +48,7 @@ class BackboneRepresentation extends BallAndStickRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<BallAndStickRepresentationParameters>) {
     var p = params || {}
     p.aspectRatio = defaults(p.aspectRatio, 1.0)
     p.radiusSize = defaults(p.radiusSize, 0.25)
@@ -51,15 +56,15 @@ class BackboneRepresentation extends BallAndStickRepresentation {
     super.init(p)
   }
 
-  getAtomRadius (atom) {
+  getAtomRadius (atom: AtomProxy) {
     return atom.isTrace() ? super.getAtomRadius(atom) : 0
   }
 
-  getAtomData (sview, what, params) {
+  getAtomData (sview: StructureView, what?: AtomDataFields, params?: Partial<AtomDataParams>) {
     return sview.getBackboneAtomData(this.getAtomParams(what, params))
   }
 
-  getBondData (sview, what, params) {
+  getBondData (sview: StructureView, what?: BondDataFields, params?: Partial<BondDataParams>) {
     return sview.getBackboneBondData(this.getBondParams(what, params))
   }
 }

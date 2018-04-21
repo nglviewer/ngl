@@ -12,6 +12,7 @@ import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
+import { AtomDataFields } from '../structure/structure-data';
 
 /**
  * Spacefill Representation
@@ -52,7 +53,7 @@ class SpacefillRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what: any, data: StructureRepresentationData) {
+  updateData (what: AtomDataFields, data: StructureRepresentationData) {
     var atomData = data.sview!.getAtomData(this.getAtomParams(what))
     var sphereData = {}
 
