@@ -280,7 +280,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  getAtomParams (what: any, params: {[k: string]: any}) {
+  getAtomParams (what?: any, params?: {[k: string]: any}) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
