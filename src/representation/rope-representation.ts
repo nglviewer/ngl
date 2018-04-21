@@ -9,12 +9,16 @@ import { defaults } from '../utils'
 import CartoonRepresentation from './cartoon-representation.js'
 import Helixorient from '../geometry/helixorient.js'
 import Spline from '../geometry/spline.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import { StructureRepresentationParameters } from './structure-representation';
+import Polymer from '../proxy/polymer';
 
 /**
  * Rope Representation
  */
 class RopeRepresentation extends CartoonRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: StructureRepresentationParameters) {
     super(structure, viewer, params)
 
     this.type = 'rope'
@@ -31,7 +35,7 @@ class RopeRepresentation extends CartoonRepresentation {
     })
   }
 
-  init (params) {
+  init (params: StructureRepresentationParameters) {
     var p = params || {}
     p.aspectRatio = 1.0
     p.tension = defaults(p.tension, 0.5)
@@ -43,7 +47,7 @@ class RopeRepresentation extends CartoonRepresentation {
     super.init(p)
   }
 
-  getSpline (polymer) {
+  getSpline (polymer: Polymer) {
     var helixorient = new Helixorient(polymer)
 
     return new Spline(polymer, this.getSplineParams({
