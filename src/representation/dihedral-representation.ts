@@ -6,11 +6,11 @@
 import { Color } from 'three'
 
 import { RepresentationRegistry } from '../globals'
-import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms } from './measurement-representation'
+import MeasurementRepresentation, { calcArcPoint, parseNestedAtoms, MeasurementRepresentationParameters, LabelDataField } from './measurement-representation'
 import { defaults } from '../utils'
 
 import MeshBuffer from '../buffer/mesh-buffer'
-import TextBuffer from '../buffer/text-buffer'
+import TextBuffer, { TextBufferData } from '../buffer/text-buffer'
 import WideLineBuffer from '../buffer/wideline-buffer'
 
 import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
@@ -18,6 +18,12 @@ import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
   v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils'
 import { RAD2DEG } from '../math/math-constants'
 import { getFixedLengthWrappedDashData } from '../geometry/dash'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import { CylinderBufferData } from '../buffer/cylinder-buffer';
+import { BufferData } from '../buffer/buffer';
+import { StructureRepresentationData } from './structure-representation';
 
 /**
  * @typedef {Object} DihedralRepresentationParameters - dihedral representation parameters
@@ -35,6 +41,16 @@ import { getFixedLengthWrappedDashData } from '../geometry/dash'
  * @property {Boolean} sectorVisible - Display the filled arc for each angle
  */
 
+interface DihedralRepresentationParameters extends MeasurementRepresentationParameters {
+  atomQuad: (number|string)[][]
+  extendLine: boolean
+  lineOpacity: number
+  lineVisible: boolean
+  linewidth: number
+  planeVisible: boolean
+  sectorVisible: boolean
+}
+
 /**
  * Dihedral representation object
  *
@@ -48,7 +64,7 @@ import { getFixedLengthWrappedDashData } from '../geometry/dash'
  * @param {AngleRepresentationParameters} params - angle representation parameters
  */
 class DihedralRepresentation extends MeasurementRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<DihedralRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'dihedral'
@@ -74,7 +90,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<DihedralRepresentationParameters>) {
     const p = params || {}
     p.side = defaults(p.side, 'double')
     p.opacity = defaults(p.opacity, 0.5)
@@ -88,7 +104,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     super.init(p)
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     if (!sview.atomCount || !this.atomQuad.length) return
 
     const atomPosition = parseNestedAtoms(sview, this.atomQuad)
@@ -106,7 +122,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
       size: uniformArray(n, this.labelSize),
       color: uniformArray3(n, labelColor.r, labelColor.g, labelColor.b),
       text: dihedralData.labelText
-    }, this.getLabelBufferParams())
+    } as TextBufferData, this.getLabelBufferParams())
 
     const c = new Color(this.colorValue)
     this.lineLength = dihedralData.linePosition1.length / 3
@@ -118,7 +134,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
         position2: dihedralData.linePosition2,
         color: lineColor,
         color2: lineColor
-      }),
+      } as CylinderBufferData) ,
       this.getBufferParams({
         linewidth: this.linewidth,
         visible: this.lineVisible,
@@ -130,7 +146,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.planeBuffer = new MeshBuffer({
       position: dihedralData.planePosition,
       color: uniformArray3(this.planeLength, c.r, c.g, c.b)
-    }, this.getBufferParams({
+    } as BufferData, this.getBufferParams({
       visible: this.planeVisible
     }))
 
@@ -138,7 +154,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.sectorBuffer = new MeshBuffer({
       position: dihedralData.sectorPosition,
       color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
-    }, this.getBufferParams({
+    } as BufferData, this.getBufferParams({
       visible: this.sectorVisible
     }))
 
@@ -152,7 +168,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: LabelDataField & {color?: boolean}, data: StructureRepresentationData) {
     super.updateData(what, data)
     const lineData = {}
     const planeData = {}
@@ -160,9 +176,16 @@ class DihedralRepresentation extends MeasurementRepresentation {
 
     if (what.color) {
       const c = new Color(this.colorValue)
-      lineData.color = lineData.color2 = uniformArray3(this.lineLength, c.r, c.g, c.b)
-      planeData.color = uniformArray3(this.planeLength, c.r, c.g, c.b)
-      sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b)
+      Object.assign(lineData, {
+        color: uniformArray3(this.lineLength, c.r, c.g, c.b),
+        color2: uniformArray3(this.lineLength, c.r, c.g, c.b)
+      })
+      Object.assign(planeData, {
+        color: uniformArray3(this.planeLength, c.r, c.g, c.b)
+      })
+      Object.assign(sectorData, {
+        color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
+      })
     }
 
     this.lineBuffer.setAttributes(lineData)
@@ -170,7 +193,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     this.sectorBuffer.setAttributes(sectorData)
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<DihedralRepresentationParameters>) {
     var rebuild = false
     var what = {}
 
@@ -198,7 +221,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
     return this
   }
 
-  setVisibility (value, noRenderRequest) {
+  setVisibility (value: boolean, noRenderRequest?: boolean) {
     super.setVisibility(value, true)
 
     if (this.lineBuffer) {
@@ -224,8 +247,7 @@ class DihedralRepresentation extends MeasurementRepresentation {
  * @param  {Float32Array} atomPosition 3*4*nDihedral array of coordinates
  * @return {Object}              Arrays for building buffers
  */
-function getDihedralData (position, params) {
-  params = params || {}
+function getDihedralData (position: Float32Array, params: Partial<DihedralRepresentationParameters> = {}) {
   const angleStep = defaults(params.angleStep, Math.PI / 90)
   const nPos = position.length
   const n = position.length / 12
@@ -394,7 +416,7 @@ function getDihedralData (position, params) {
       li += 3
     }
 
-    const appendArcSection = function (a, j) {
+    const appendArcSection = function (a: number, j: number) {
       const si = j * 9
 
       v3toArray(mid, sector, si)
