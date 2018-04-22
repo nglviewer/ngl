@@ -17,6 +17,7 @@ import Polymer from '../proxy/polymer';
 import { AtomDataFields } from '../structure/structure-data';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 import SphereImpostorBuffer from '../buffer/sphereimpostor-buffer';
+import { BufferData } from '../buffer/buffer';
 
 /**
  * Helixorient Representation
@@ -111,7 +112,7 @@ class HelixorientRepresentation extends StructureRepresentation {
     for (let i = 0, il = data.polymerList!.length; i < il; ++i) {
       const j = i * 3
 
-      const bufferData = {}
+      const bufferData: Partial<BufferData> = {}
       const polymer = data.polymerList![ i ]
       const helixorient = new Helixorient(polymer)
 

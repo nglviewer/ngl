@@ -6,15 +6,26 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation from './structure-representation.js'
-import SphereBuffer from '../buffer/sphere-buffer.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import { AtomDataFields } from '../structure/structure-data';
+import StructureView from '../structure/structure-view';
+
+interface UnitcellRepresentationParameters extends StructureRepresentationParameters {
+  radiusSize: number
+  sphereDetail: number
+  radialSegments: number
+  disableImpostor: boolean
+}
 
 /**
  * Unitcell Representation
  */
 class UnitcellRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<UnitcellRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'unitcell'
@@ -35,7 +46,7 @@ class UnitcellRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<UnitcellRepresentationParameters>) {
     const p = params || {}
 
     let defaultRadius = 0.5
@@ -50,8 +61,8 @@ class UnitcellRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getUnitcellData (structure) {
-    return structure.unitcell.getData(structure)
+  getUnitcellData (structure: Structure) {
+    return structure.unitcell!.getData(structure)
   }
 
   create () {
@@ -60,16 +71,16 @@ class UnitcellRepresentation extends StructureRepresentation {
     const unitcellData = this.getUnitcellData(structure)
 
     this.sphereBuffer = new SphereBuffer(
-      unitcellData.vertex,
+      unitcellData.vertex as SphereBufferData,
       this.getBufferParams({
         sphereDetail: this.sphereDetail,
         disableImpostor: this.disableImpostor,
         dullInterior: true
-      })
+      }) as SphereBufferParameters
     )
 
     this.cylinderBuffer = new CylinderBuffer(
-      unitcellData.edge,
+      unitcellData.edge as CylinderBufferData,
       this.getBufferParams({
         openEnded: true,
         radialSegments: this.radialSegments,
@@ -84,27 +95,35 @@ class UnitcellRepresentation extends StructureRepresentation {
     })
   }
 
-  updateData (what, data) {
-    const structure = data.sview.getStructure()
+  createData (sview: StructureView): undefined {
+    return
+  }
+
+  updateData (what: AtomDataFields, data: StructureRepresentationData) {
+    const structure = data.sview!.getStructure()
     const unitcellData = this.getUnitcellData(structure)
-    const sphereData = {}
-    const cylinderData = {}
+    const sphereData: Partial<SphereBufferData> = {}
+    const cylinderData: Partial<CylinderBufferData> = {}
 
     if (!what || what.position) {
-      sphereData.position = unitcellData.vertexPosition
-      cylinderData.position1 = unitcellData.edgePosition1
-      cylinderData.position2 = unitcellData.edgePosition2
+      Object.assign(sphereData, {position: unitcellData.vertex.position})
+      Object.assign(cylinderData, {
+        position1: unitcellData.edge.position1,
+        position2: unitcellData.edge.position2
+      })
     }
 
     if (!what || what.color) {
-      sphereData.color = unitcellData.vertexColor
-      cylinderData.color = unitcellData.edgeColor
-      cylinderData.color2 = unitcellData.edgeColor
+      Object.assign(sphereData, {color: unitcellData.vertex.color})
+      Object.assign(cylinderData, {
+        color: unitcellData.edge.color,
+        color2: unitcellData.edge.color2
+      })
     }
 
     if (!what || what.radius) {
-      sphereData.radius = unitcellData.vertexRadius
-      cylinderData.radius = unitcellData.edgeRadius
+      Object.assign(sphereData, {radius: unitcellData.vertex.radius})
+      Object.assign(cylinderData, {radius: unitcellData.edge.radius})
     }
 
     this.sphereBuffer.setAttributes(sphereData)

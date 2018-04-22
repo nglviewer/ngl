@@ -158,7 +158,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
   }
 
   createData (sview: StructureView) {
-    var bufferList = []
+    const bufferList = []
 
     if (this.lineOnly) {
       this.lineBuffer = new WideLineBuffer(
@@ -204,10 +204,10 @@ class BallAndStickRepresentation extends StructureRepresentation {
       what.position = true
     }
 
-    var bondData = this.getBondData(data.sview as StructureView, what)
+    const bondData = this.getBondData(data.sview as StructureView, what)
 
     if (this.lineOnly) {
-      var lineData = {}
+      const lineData:Partial<CylinderBufferData> = {}
 
       if (!what || what.position) {
         Object.assign(lineData, {
@@ -225,7 +225,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
 
       data.bufferList[ 0 ].setAttributes(lineData)
     } else {
-      var cylinderData = {}
+      var cylinderData: Partial<CylinderBufferData> = {}
 
       if (!what || what.position) {
         Object.assign(cylinderData, {
@@ -252,7 +252,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
       if (!this.cylinderOnly) {
         var atomData = this.getAtomData(data.sview as StructureView, what)
 
-        var sphereData = {}
+        var sphereData: Partial<SphereBufferData> = {}
 
         if (!what || what.position) {
           Object.assign(sphereData, {
@@ -278,8 +278,8 @@ class BallAndStickRepresentation extends StructureRepresentation {
   }
 
   setParameters (params: Partial<BallAndStickRepresentationParameters> = {}) {
-    var rebuild = false
-    var what = {}
+    let rebuild = false
+    const what: AtomDataFields = {}
 
     if (params.aspectRatio || params.bondSpacing || params.bondScale) {
       Object.assign(what, {radius: true})

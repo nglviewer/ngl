@@ -16,6 +16,7 @@ import StructureView from '../structure/structure-view';
 import AtomProxy from '../proxy/atom-proxy';
 import Polymer from '../proxy/polymer';
 import Buffer from '../buffer/buffer';
+import { AtomDataFields, BondDataFields, AtomDataParams, BondDataParams } from '../structure/structure-data';
 
 /**
  * Structure representation parameter object.
@@ -46,7 +47,7 @@ export interface StructureRepresentationData {
 abstract class StructureRepresentation extends Representation {
 
   private selection: Selection
-  private dataList: StructureRepresentationData[]
+  protected dataList: StructureRepresentationData[]
   structure: Structure
   structureView: StructureView
 
@@ -242,7 +243,7 @@ abstract class StructureRepresentation extends Representation {
 
   abstract createData (sview: StructureView, k?: number): StructureRepresentationData|undefined
 
-  update (what: any) {
+  update (what: AtomDataFields|BondDataFields) {
     if (this.lazy && !this.visible) {
       Object.assign(this.lazyProps.what, what)
       return
@@ -260,7 +261,7 @@ abstract class StructureRepresentation extends Representation {
     }, this)
   }
 
-  updateData (what?: any, data?: any) {
+  updateData (what?: AtomDataFields|BondDataFields, data?: any) {
     this.build()
   }
 
@@ -280,7 +281,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  getAtomParams (what?: any, params?: {[k: string]: any}) {
+  getAtomParams (what?: AtomDataFields, params?: AtomDataParams) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
@@ -288,7 +289,7 @@ abstract class StructureRepresentation extends Representation {
     }, params)
   }
 
-  getBondParams (what: any, params: {[k: string]: any}) {
+  getBondParams (what: BondDataFields = {}, params: BondDataParams) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
@@ -331,7 +332,7 @@ abstract class StructureRepresentation extends Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {StructureRepresentation} this object
    */
-  setParameters (params: Partial<StructureRepresentationParameters>, what: {position?: boolean, color?: boolean, [k: string]: any} = {}, rebuild = false) {
+  setParameters (params: Partial<StructureRepresentationParameters>, what: AtomDataFields = {}, rebuild = false) {
     const p = params || {}
 
     this.setRadius(p.radius, p)

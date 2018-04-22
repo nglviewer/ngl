@@ -56,7 +56,7 @@ class SpacefillRepresentation extends StructureRepresentation {
 
   updateData (what: AtomDataFields, data: StructureRepresentationData) {
     var atomData = data.sview!.getAtomData(this.getAtomParams(what))
-    var sphereData = {}
+    var sphereData: Partial<SphereBufferData> = {}
 
     if (!what || what.position) {
       Object.assign(sphereData, {position: atomData.position})
