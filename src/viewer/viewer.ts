@@ -560,7 +560,7 @@ export default class Viewer {
     }
   }
 
-  add (buffer: Buffer, instanceList: BufferInstance[]) {
+  add (buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
     if (instanceList) {

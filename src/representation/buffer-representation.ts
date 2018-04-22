@@ -4,7 +4,8 @@
  * @private
  */
 
-import Representation from './representation.js'
+import Representation, { RepresentationParameters } from './representation.js'
+import Viewer from '../viewer/viewer.js';
 
 /**
  * Representation for showing buffer objects. Good for efficiently showing
@@ -44,7 +45,7 @@ class BufferRepresentation extends Representation {
    * @param {Viewer} viewer - a viewer object
    * @param {RepresentationParameters} params - representation parameters
    */
-  constructor (buffer, viewer, params) {
+  constructor (buffer: Buffer|Buffer[], viewer: Viewer, params: Partial<RepresentationParameters>) {
     if (!Array.isArray(buffer)) {
       buffer = [ buffer ]
     }
@@ -70,7 +71,7 @@ class BufferRepresentation extends Representation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<RepresentationParameters>) {
     super.init(params)
 
     this.build()
@@ -80,7 +81,7 @@ class BufferRepresentation extends Representation {
     this.bufferList.push.apply(this.bufferList, this.buffer)
   }
 
-  attach (callback) {
+  attach (callback: ()=> void) {
     this.bufferList.forEach(buffer => {
       this.viewer.add(buffer)
       buffer.setParameters(this.getBufferParams())
