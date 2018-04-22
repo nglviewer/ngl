@@ -278,7 +278,7 @@ class TextAtlas {
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 
-interface TextBufferData extends BufferData {
+export interface TextBufferData extends BufferData {
   size: Float32Array
   text: string[]
 }

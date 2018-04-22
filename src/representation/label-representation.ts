@@ -8,8 +8,19 @@ import { RepresentationRegistry, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
 import LabelFactory from '../utils/label-factory'
 import RadiusFactory from '../utils/radius-factory'
-import StructureRepresentation from './structure-representation'
-import TextBuffer from '../buffer/text-buffer'
+import StructureRepresentation, { StructureRepresentationData } from './structure-representation'
+import TextBuffer, { TextBufferData } from '../buffer/text-buffer'
+import { RepresentationParameters } from './representation';
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+
+interface TextDataField {
+  position?: boolean
+  color?: boolean
+  radius?: boolean
+  text?: boolean
+}
 
 /**
  * Label representation parameter object. Extends {@link RepresentationParameters} and
@@ -50,7 +61,29 @@ import TextBuffer from '../buffer/text-buffer'
  * @property {Float} backgroundOpacity - opacity of the background
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
-
+interface LabelRepresentationParameters extends RepresentationParameters {
+  clipNear: number
+  opacity: number
+  labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+  labelText: string
+  labelFormat: string
+  labelGrouping: 'atom'|'residue'
+  fontFamily: 'sans-serif'|'monospace'|'serif'
+  fontStyle: 'normal'|'italic'
+  fontWeight: 'normal'|'bold'
+  xOffset: number
+  yOffset: number
+  zOffset: number
+  attachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
+  showBorder: boolean
+  borderColor: number
+  borderWidth: number
+  showBackground: boolean
+  backgroundColor: number
+  backgroundMargin: number
+  backgroundOpacity: number
+  fixedSize: boolean
+}
 /**
  * Label representation
  */
@@ -61,7 +94,7 @@ class LabelRepresentation extends StructureRepresentation {
    * @param {Viewer} viewer - a viewer object
    * @param {LabelRepresentationParameters} params - label representation parameters
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<LabelRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'label'
@@ -175,7 +208,7 @@ class LabelRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<LabelRepresentationParameters>) {
     const p = params || {}
 
     this.labelType = defaults(p.labelType, 'res')
@@ -201,23 +234,24 @@ class LabelRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getTextData (sview, what) {
+  getTextData (sview: StructureView, what?: TextDataField) {
     const p = this.getAtomParams(what)
     const labelFactory = new LabelFactory(this.labelType, this.labelText, this.labelFormat)
-    let position, size, color, text
+    let position: Float32Array, size: Float32Array, color: Float32Array, text: string[],
+      positionN: number[], sizeN: number[], colorN: number[] 
     if (this.labelGrouping === 'atom') {
       const atomData = sview.getAtomData(p)
-      position = atomData.position
-      size = atomData.radius
-      color = atomData.color
+      position = atomData.position as Float32Array
+      size = atomData.radius as Float32Array
+      color = atomData.color as Float32Array
       if (!what || what.text) {
         text = []
         sview.eachAtom(ap => text.push(labelFactory.atomLabel(ap)))
       }
     } else if (this.labelGrouping === 'residue') {
-      if (!what || what.position) position = []
-      if (!what || what.color) color = []
-      if (!what || what.radius) size = []
+      if (!what || what.position) positionN = []
+      if (!what || what.color) colorN = []
+      if (!what || what.radius) sizeN = []
       if (!what || what.text) text = []
       if (p.colorParams) p.colorParams.structure = sview.getStructure()
       const colormaker = ColormakerRegistry.getScheme(p.colorParams)
@@ -230,19 +264,19 @@ class LabelRepresentation extends StructureRepresentation {
         if (rp.isProtein() || rp.isNucleic()) {
           ap1.index = rp.traceAtomIndex
           if (!what || what.position) {
-            ap1.positionToArray(position, i3)
+            ap1.positionToArray(positionN, i3)
           }
         } else {
           ap1.index = rp.atomOffset
           if (!what || what.position) {
-            rp.positionToArray(position, i3)
+            rp.positionToArray(positionN, i3)
           }
         }
         if (!what || what.color) {
-          colormaker.atomColorToArray(ap1, color, i3)
+          colormaker.atomColorToArray(ap1, colorN, i3)
         }
         if (!what || what.radius) {
-          size[ i ] = radiusFactory.atomRadius(ap1)
+          sizeN[ i ] = radiusFactory.atomRadius(ap1)
         }
         if (!what || what.text) {
           text.push(labelFactory.atomLabel(ap1))
@@ -250,19 +284,19 @@ class LabelRepresentation extends StructureRepresentation {
         ++i
       })
 
-      if (!what || what.position) position = new Float32Array(position)
-      if (!what || what.color) color = new Float32Array(color)
-      if (!what || what.radius) size = new Float32Array(size)
+      if (!what || what.position) position = new Float32Array(positionN!)
+      if (!what || what.color) color = new Float32Array(colorN!)
+      if (!what || what.radius) size = new Float32Array(sizeN!)
     }
 
-    return { position, size, color, text }
+    return { position: position!, size: size!, color: color!, text: text! }
   }
 
-  createData (sview) {
-    const what = { position: true, color: true, radius: true, text: true }
+  createData (sview: StructureView) {
+    const what: TextDataField = { position: true, color: true, radius: true, text: true }
 
     const textBuffer = new TextBuffer(
-      this.getTextData(sview, what),
+      this.getTextData(sview, what) as TextBufferData,
       this.getBufferParams({
         fontFamily: this.fontFamily,
         fontStyle: this.fontStyle,
@@ -285,8 +319,8 @@ class LabelRepresentation extends StructureRepresentation {
     return { bufferList: [ textBuffer ] }
   }
 
-  updateData (what, data) {
-    data.bufferList[ 0 ].setAttributes(this.getTextData(data.sview, what))
+  updateData (what: TextDataField, data: StructureRepresentationData) {
+    data.bufferList[ 0 ].setAttributes(this.getTextData(data.sview as StructureView, what))
   }
 
   getAtomRadius () {
