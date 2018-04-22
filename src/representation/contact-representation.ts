@@ -6,16 +6,54 @@
 
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
-import StructureRepresentation from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
 import { calculateContacts, getContactData } from '../chemistry/interactions/contact'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
 import { getFixedCountDashData } from '../geometry/dash'
+import Viewer from '../viewer/viewer';
+import { Structure } from '../ngl';
+import StructureView from '../structure/structure-view';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
+
+interface ContactRepresentationParameters extends StructureRepresentationParameters {
+  hydrogenBond: boolean
+  weakHydrogenBond: boolean
+  waterHydrogenBond: boolean
+  backboneHydrogenBond: boolean
+  hydrophobic: boolean
+  halogenBond: boolean
+  ionicInteraction: boolean
+  metalCoordination: boolean
+  cationPi: boolean
+  piStacking: boolean
+  filterSele: string
+  maxHydrophobicDist: number
+  maxHbondDist: number
+  maxHbondSulfurDist: number
+  maxHbondAccAngle: number
+  maxHbondDonAngle: number
+  maxHbondAccPlaneAngle: number
+  maxHbondDonPlaneAngle: number
+  maxPiStackingDist: number
+  maxPiStackingOffset: number
+  maxPiStackingAngle: number
+  maxCationPiDist: number
+  maxCationPiOffset: number
+  maxIonicDist: number
+  maxHalogenBondDist: number
+  maxHalogenBondAngle: number
+  maxMetalDist: number
+  refineSaltBridges: boolean
+  masterModelIndex: number
+  lineOfSightDistFactor: number
+}
 
 /**
  * Contact representation.
  */
 class ContactRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<ContactRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'contact'
@@ -121,7 +159,7 @@ class ContactRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<ContactRepresentationParameters>) {
     var p = params || {}
     p.radiusSize = defaults(p.radiusSize, 0.05)
     p.useInteriorColor = defaults(p.useInteriorColor, true)
@@ -166,7 +204,7 @@ class ContactRepresentation extends StructureRepresentation {
     return 0
   }
 
-  getContactData (sview) {
+  getContactData (sview: StructureView) {
     const params = {
       maxHydrophobicDist: this.maxHydrophobicDist,
       maxHbondDist: this.maxHbondDist,
@@ -207,10 +245,10 @@ class ContactRepresentation extends StructureRepresentation {
     const contacts = calculateContacts(sview, params)
     const contactData = getContactData(contacts, sview, dataParams)
 
-    return getFixedCountDashData(contactData)
+    return getFixedCountDashData(contactData) 
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     const bufferList = [
       new CylinderBuffer(
         this.getContactData(sview),
@@ -219,7 +257,7 @@ class ContactRepresentation extends StructureRepresentation {
           dullInterior: true,
           disableImpostor: this.disableImpostor
         })
-      )
+      ) as (CylinderGeometryBuffer | CylinderImpostorBuffer)
     ]
 
     return { bufferList }
