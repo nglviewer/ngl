@@ -16,7 +16,7 @@ import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';
 import { TextBufferData } from '../buffer/text-buffer';
 
-interface LabelDataField {
+export interface LabelDataField {
   position?: boolean
   labelColor?: boolean
   labelSize?: boolean
@@ -209,7 +209,7 @@ abstract class MeasurementRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what: LabelDataField, data: any) {
+  updateData (what: LabelDataField & {[k: string]: any}, data: any) {
     const textData: TextBufferData | {} = {}
     if (!what || what.labelSize) {
       Object.assign(textData, {size: uniformArray(this.n, this.labelSize)})
@@ -347,7 +347,7 @@ function parseNestedAtoms (sview: StructureView, atoms: (number|string)[][]) {
 }
 
 /* out = v1 * cos(angle) + v2 * sin(angle) */
-function calcArcPoint (out: number[], center: number[], v1: number[], v2: number[], angle: number) {
+function calcArcPoint (out: Float32Array, center: Float32Array, v1: Float32Array, v2: Float32Array, angle: number) {
   const x = Math.cos(angle)
   const y = Math.sin(angle)
   out[ 0 ] = center[ 0 ] + v1[ 0 ] * x + v2[ 0 ] * y

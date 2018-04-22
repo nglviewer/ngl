@@ -6,18 +6,23 @@
 import { Color } from 'three'
 
 import { RepresentationRegistry } from '../globals'
-import MeasurementRepresentation, { parseNestedAtoms, calcArcPoint } from './measurement-representation'
+import MeasurementRepresentation, { parseNestedAtoms, calcArcPoint, MeasurementRepresentationParameters, LabelDataField } from './measurement-representation'
 import { defaults } from '../utils'
 
 import MeshBuffer from '../buffer/mesh-buffer'
-import TextBuffer from '../buffer/text-buffer'
-import WideLineBuffer from '../buffer/wideline-buffer'
+import TextBuffer, { TextBufferData, TextBufferParameters } from '../buffer/text-buffer'
+import WideLineBuffer, { WideLineBufferData } from '../buffer/wideline-buffer'
 
 import { v3add, v3cross, v3dot, v3fromArray, v3length, v3new,
   v3normalize, v3sub, v3toArray } from '../math/vector-utils'
 import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
 import { RAD2DEG } from '../math/math-constants'
 import { getFixedLengthWrappedDashData } from '../geometry/dash'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import { BufferData } from '../buffer/buffer';
+import { StructureRepresentationData, StructureRepresentationParameters } from './structure-representation';
 
 /**
  * @typedef {Object} AngleRepresentationParameters - angle representation parameters
@@ -34,6 +39,15 @@ import { getFixedLengthWrappedDashData } from '../geometry/dash'
  * @property {Boolean} sectorVisible - Show the filled arc for each angle
  */
 
+interface AngleRepresentationParameters extends MeasurementRepresentationParameters {
+  atomTriple: (number|string)[][]
+  vectorVisible: boolean
+  arcVisible: boolean
+  lineOpacity: number
+  lineWidth: number
+  sectorVisible: boolean
+}
+
 /**
  * Angle representation object
  *
@@ -48,7 +62,7 @@ import { getFixedLengthWrappedDashData } from '../geometry/dash'
  * @param {AngleRepresentationParameters} params - angle representation parameters
  */
 class AngleRepresentation extends MeasurementRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<AngleRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'angle'
@@ -71,7 +85,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<AngleRepresentationParameters>) {
     const p = params || {}
     p.side = defaults(p.side, 'double')
     p.opacity = defaults(p.opacity, 0.5)
@@ -84,7 +98,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     super.init(p)
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     if (!sview.atomCount || !this.atomTriple.length) return
 
     const atomPosition = atomTriplePositions(sview, this.atomTriple)
@@ -99,7 +113,7 @@ class AngleRepresentation extends MeasurementRepresentation {
       size: uniformArray(n, this.labelSize),
       color: uniformArray3(n, labelColor.r, labelColor.g, labelColor.b),
       text: angleData.labelText
-    }, this.getLabelBufferParams())
+    } as TextBufferData, this.getLabelBufferParams() as TextBufferParameters)
 
     const c = new Color(this.colorValue)
 
@@ -109,7 +123,7 @@ class AngleRepresentation extends MeasurementRepresentation {
         position2: angleData.vectorPosition2,
         color: uniformArray3(2 * n, c.r, c.g, c.b),
         color2: uniformArray3(2 * n, c.r, c.g, c.b)
-      }),
+      } as WideLineBufferData),
       this.getBufferParams({
         linewidth: this.linewidth,
         visible: this.vectorVisible,
@@ -125,7 +139,7 @@ class AngleRepresentation extends MeasurementRepresentation {
         position2: angleData.arcPosition2,
         color: uniformArray3(this.arcLength, c.r, c.g, c.b),
         color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
-      }), this.getBufferParams({
+      } as WideLineBufferData), this.getBufferParams({
         linewidth: this.linewidth,
         visible: this.arcVisible,
         opacity: this.lineOpacity
@@ -136,7 +150,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     this.sectorBuffer = new MeshBuffer({
       position: angleData.sectorPosition,
       color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
-    }, this.getBufferParams({
+    } as BufferData, this.getBufferParams({
       visible: this.sectorVisible
     }))
 
@@ -150,7 +164,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: LabelDataField & {color?: boolean}, data: StructureRepresentationData) {
     super.updateData(what, data)
     const vectorData = {}
     const arcData = {}
@@ -158,9 +172,17 @@ class AngleRepresentation extends MeasurementRepresentation {
 
     if (what.color) {
       const c = new Color(this.colorValue)
-      vectorData.color = vectorData.color2 = uniformArray3(this.n * 2, c.r, c.g, c.b)
-      arcData.color = arcData.color2 = uniformArray3(this.arcLength, c.r, c.g, c.b)
-      sectorData.color = uniformArray3(this.sectorLength, c.r, c.g, c.b)
+      Object.assign(vectorData, {
+        color: uniformArray3(this.n * 2, c.r, c.g, c.b),
+        color2: uniformArray3(this.n * 2, c.r, c.g, c.b)
+      })
+      Object.assign(arcData, {
+        color: uniformArray3(this.arcLength, c.r, c.g, c.b),
+        color2: uniformArray3(this.arcLength, c.r, c.g, c.b)
+      })
+      Object.assign(sectorData, {
+        color: uniformArray3(this.sectorLength, c.r, c.g, c.b)
+      })
     }
 
     // if (what.sectorOpacity) {
@@ -172,7 +194,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     this.sectorBuffer.setAttributes(sectorData)
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<AngleRepresentationParameters>) {
     var rebuild = false
     var what = {}
 
@@ -203,7 +225,7 @@ class AngleRepresentation extends MeasurementRepresentation {
     return this
   }
 
-  setVisibility (value, noRenderRequest) {
+  setVisibility (value: boolean, noRenderRequest?: boolean) {
     super.setVisibility(value, true)
 
     if (this.vectorBuffer) {
@@ -229,7 +251,7 @@ class AngleRepresentation extends MeasurementRepresentation {
  * @param  {Float32Array} position 9*nAngle array of coordinates
  * @return {Float32Array}          Filtered position array, may be shorter
  */
-function validatePositions (position) {
+function validatePositions (position: Float32Array) {
   const include = []
   const n = position.length / 9
   for (let i = 0; i < n; i++) {
@@ -253,15 +275,14 @@ function validatePositions (position) {
   return outPosition
 }
 
-function atomTriplePositions (sview, atomTriple) {
+function atomTriplePositions (sview: StructureView, atomTriple: (number|string)[][]) {
   return validatePositions(parseNestedAtoms(sview, atomTriple))
 }
 
 /**
  * Converts triple positions into data required to build various buffers.
  */
-function getAngleData (position, params) {
-  params = params || {}
+function getAngleData (position: Float32Array, params: Partial<StructureRepresentationParameters> = {}) {
   const angleStep = defaults(params.angleStep, Math.PI / 90)
   const n = position.length / 9
   const angles = new Float32Array(n)
@@ -338,7 +359,7 @@ function getAngleData (position, params) {
 
     v3add(arcPoint, p2, v21) // Our initial arc point
 
-    const appendArcSection = function (a, j) {
+    const appendArcSection = function (a: number, j: number) {
       const si = j * 9
       const ai = j * 3
       v3toArray(p2, sectorVertices, si)
