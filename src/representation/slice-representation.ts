@@ -5,9 +5,11 @@
  */
 
 import { defaults } from '../utils'
-import Representation from './representation.js'
-import ImageBuffer from '../buffer/image-buffer.js'
+import Representation, { RepresentationParameters } from './representation.js'
+import ImageBuffer, { ImageBufferParameters } from '../buffer/image-buffer.js'
 import VolumeSlice from '../surface/volume-slice.js'
+import Viewer from '../viewer/viewer';
+import { Volume } from '../ngl';
 
 /**
  * Slice representation parameter object. Extends {@link RepresentationParameters}
@@ -15,7 +17,7 @@ import VolumeSlice from '../surface/volume-slice.js'
  * @typedef {Object} SliceRepresentationParameters - slice representation parameters
  *
  * @property {String} filter - filter applied to map the volume data on the slice, one of "nearest", "linear", "cubic-bspline", "cubic-catmulrom", "cubic-mitchell".
- * @property {String} positionType - Meaning of the position value. Either "persent" od "coordinate".
+ * @property {String} positionType - Meaning of the position value. Either "percent" od "coordinate".
  * @property {Number} position - position of the slice.
  * @property {String} dimension - one of "x", "y" or "z"
  * @property {String} thresholdType - Meaning of the threshold values. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
@@ -23,7 +25,16 @@ import VolumeSlice from '../surface/volume-slice.js'
  * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
  * @property {Boolean} normalize - Flag indicating wheather to normalize the data in a slice when coloring.
  */
-
+interface SliceRepresentationParameters extends RepresentationParameters {
+  filter: 'nearest'|'linear'|'cubic-bspline'|'cubic-catmulrom'|'cubic-mitchell'
+  positionType: 'percent'|'coordinate'
+  position: number
+  dimension: 'x'|'y'|'z'
+  thresholdType: 'value'|'sigma'
+  thresholdMin: number
+  thresholdMax: number
+  normalize: boolean
+}
 /**
  * Slice representation
  */
@@ -34,7 +45,7 @@ class SliceRepresentation extends Representation {
    * @param {Viewer} viewer - a viewer object
    * @param {SliceRepresentationParameters} params - slice representation parameters
    */
-  constructor (volume, viewer, params) {
+  constructor (volume: Volume, viewer: Viewer, params: Partial<SliceRepresentationParameters>) {
     super(volume, viewer, params)
 
     this.type = 'slice'
@@ -109,7 +120,7 @@ class SliceRepresentation extends Representation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<SliceRepresentationParameters>) {
     const v = this.volume
     const p = params || {}
     p.colorDomain = defaults(p.colorDomain, [ v.min, v.max ])
@@ -131,7 +142,7 @@ class SliceRepresentation extends Representation {
     this.build()
   }
 
-  attach (callback) {
+  attach (callback: () => void) {
     this.bufferList.forEach(buffer => {
       this.viewer.add(buffer)
     })
@@ -155,7 +166,7 @@ class SliceRepresentation extends Representation {
       volumeSlice.getData({ colorParams: this.getColorParams() }),
       this.getBufferParams({
         filter: this.filter
-      })
+      }) as ImageBufferParameters
     )
 
     this.bufferList.push(sliceBuffer)

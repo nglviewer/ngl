@@ -101,28 +101,28 @@ class Representation {
   lazy: boolean
   lazyProps: { build: boolean, bufferParams: BufferParameters | {}, what: {}}
   
-  private clipNear: number
-  private clipRadius: number
-  private clipCenter: Vector3
-  private flatShaded: boolean
-  private opacity: number
-  private depthWrite: boolean
-  private side: BufferSide
-  private wireframe: boolean
-  private colorScheme: string
-  private colorScale: string | string[]
-  private colorReverse: boolean
-  colorValue: number
-  private colorDomain: number[]
-  private colorMode: ColorMode
-  private roughness: number
-  private metalness: number
-  private diffuse: number
-  private diffuseInterior?: boolean
-  private useInteriorColor?: boolean
-  private interiorColor: number
-  private interiorDarkening: number
-  private disablePicking: boolean
+  protected clipNear: number
+  protected clipRadius: number
+  protected clipCenter: Vector3
+  protected flatShaded: boolean
+  protected opacity: number
+  protected depthWrite: boolean
+  protected side: BufferSide
+  protected wireframe: boolean
+  protected colorScheme: string
+  protected colorScale: string | string[]
+  protected colorReverse: boolean
+  protected colorValue: number
+  protected colorDomain: number[]
+  protected colorMode: ColorMode
+  protected roughness: number
+  protected metalness: number
+  protected diffuse: number
+  protected diffuseInterior?: boolean
+  protected useInteriorColor?: boolean
+  protected interiorColor: number
+  protected interiorDarkening: number
+  protected disablePicking: boolean
   
   private matrix: Matrix4
   
