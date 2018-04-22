@@ -112,7 +112,7 @@ class Representation {
   private colorScheme: string
   private colorScale: string | string[]
   private colorReverse: boolean
-  private colorValue: number
+  colorValue: number
   private colorDomain: number[]
   private colorMode: ColorMode
   private roughness: number

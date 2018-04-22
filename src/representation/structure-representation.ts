@@ -240,7 +240,7 @@ abstract class StructureRepresentation extends Representation {
     }
   }
 
-  abstract createData (sview: StructureView, k?: number): StructureRepresentationData
+  abstract createData (sview: StructureView, k?: number): StructureRepresentationData|undefined
 
   update (what: any) {
     if (this.lazy && !this.visible) {

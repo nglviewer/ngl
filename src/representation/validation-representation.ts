@@ -6,14 +6,19 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import { Structure } from '../ngl';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
 
 /**
  * Validation representation
  */
 class ValidationRepresentation extends StructureRepresentation {
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<StructureRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'validation'
@@ -29,7 +34,7 @@ class ValidationRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<StructureRepresentationParameters>) {
     const p = params || {}
     p.colorValue = defaults(p.colorValue, '#f0027f')
     p.useInteriorColor = defaults(p.useInteriorColor, true)
@@ -37,7 +42,7 @@ class ValidationRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     if (!sview.validation) return
 
     const clashData = sview.validation.getClashData({
@@ -50,7 +55,7 @@ class ValidationRepresentation extends StructureRepresentation {
     )
 
     return {
-      bufferList: [ cylinderBuffer ]
+      bufferList: [ cylinderBuffer as CylinderGeometryBuffer|CylinderImpostorBuffer ]
     }
   }
 }
