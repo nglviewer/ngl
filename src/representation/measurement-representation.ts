@@ -35,7 +35,7 @@ interface LabelDataField {
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
  */
-interface MeasurementRepresentationParameters extends StructureRepresentationParameters {
+export interface MeasurementRepresentationParameters extends StructureRepresentationParameters {
   labelVisible: boolean
   labelSize: number
   labelColor: number
@@ -67,7 +67,7 @@ interface MeasurementRepresentationParameters extends StructureRepresentationPar
  * Measurement representation
  * @interface
  */
-class MeasurementRepresentation extends StructureRepresentation {
+abstract class MeasurementRepresentation extends StructureRepresentation {
   /**
    * Handles common label settings and position logic for
    * distance, angle and dihedral representations
@@ -209,10 +209,6 @@ class MeasurementRepresentation extends StructureRepresentation {
     }
   }
 
-  createData (sview: StructureView): undefined {
-    return
-  }
-
   updateData (what: LabelDataField, data: any) {
     const textData: TextBufferData | {} = {}
     if (!what || what.labelSize) {
@@ -227,10 +223,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     this.textBuffer.setAttributes(textData as TextBufferData)
   }
 
-  setParameters (params: Partial<MeasurementRepresentationParameters>) {
-    const rebuild = false
-    const what: LabelDataField = {}
-
+  setParameters (params: Partial<MeasurementRepresentationParameters>, what: LabelDataField = {}, rebuild = false) {
     if (params && params.labelSize) {
       what.labelSize = true
     }
@@ -265,7 +258,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     return this
   }
 
-  getLabelBufferParams (params: LabelRepresentationParameters) {
+  getLabelBufferParams (params: Partial<LabelRepresentationParameters> = {}) {
     return super.getBufferParams(Object.assign({
       fontFamily: this.labelFontFamily,
       fontStyle: this.labelFontStyle,

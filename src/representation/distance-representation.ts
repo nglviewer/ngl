@@ -12,13 +12,18 @@ import { defaults } from '../utils'
 import { DistancePicker } from '../utils/picker'
 import { uniformArray, uniformArray3 } from '../math/array-utils'
 import BitArray from '../utils/bitarray'
-import MeasurementRepresentation from './measurement-representation'
+import MeasurementRepresentation, { MeasurementRepresentationParameters } from './measurement-representation'
 import Selection from '../selection/selection'
 import BondStore from '../store/bond-store'
-import TextBuffer from '../buffer/text-buffer'
+import TextBuffer, { TextBufferData, TextBufferParameters } from '../buffer/text-buffer'
 import WideLineBuffer from '../buffer/wideline-buffer'
-import CylinderBuffer from '../buffer/cylinder-buffer'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer'
 import { getFixedLengthDashData } from '../geometry/dash'
+import Viewer from '../viewer/viewer';
+import { Structure } from '../ngl';
+import StructureView from '../structure/structure-view';
+import { BondDataFields, BondDataParams } from '../structure/structure-data';
+import { StructureRepresentationData } from './structure-representation';
 
 /**
  * Distance representation parameter object.
@@ -32,11 +37,15 @@ import { getFixedLengthDashData } from '../geometry/dash'
  *                                distance value is computed in nanometers instead of Angstroms.
  * @property {Array[]} atomPair - list of pairs of selection strings (see {@link Selection})
  *                                or pairs of atom indices. Using atom indices is much more
- *                                when the representation is updated often, e.g. by
- *                                changing the selection or the atom positions, as their
+ *                                efficient when the representation is updated often, e.g. by
+ *                                changing the selection or the atom positions, as there
  *                                are no selection strings to be evaluated.
  */
-
+interface DistanceRepresentationParameters extends MeasurementRepresentationParameters {
+  labelUnit: string
+  atomPair: AtomPair
+}
+type AtomPair = (number|string)[][]
 /**
  * Distance representation
  */
@@ -57,7 +66,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
    * @param {Viewer} viewer - a viewer object
    * @param {DistanceRepresentationParameters} params - distance representation parameters
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<DistanceRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'distance'
@@ -82,7 +91,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<DistanceRepresentationParameters>) {
     const p = params || {}
     p.linewidth = defaults(p.linewidth, 5.0)
     p.radiusType = defaults(p.radiusType, 'size')
@@ -95,26 +104,26 @@ class DistanceRepresentation extends MeasurementRepresentation {
     super.init(p)
   }
 
-  getDistanceData (sview, atomPair) {
-    var n = atomPair.length
-    var text = new Array(n)
-    var position = new Float32Array(n * 3)
-    var sele1 = new Selection()
-    var sele2 = new Selection()
+  getDistanceData (sview: StructureView, atomPair: AtomPair) {
+    let n = atomPair.length
+    const text = new Array(n)
+    let position = new Float32Array(n * 3)
+    const sele1 = new Selection()
+    const sele2 = new Selection()
 
-    var bondStore = new BondStore()
+    const bondStore = new BondStore()
 
-    var ap1 = sview.getAtomProxy()
-    var ap2 = sview.getAtomProxy()
+    const ap1 = sview.getAtomProxy()
+    const ap2 = sview.getAtomProxy()
 
-    var j = 0 // Skipped pairs
+    let j = 0 // Skipped pairs
     const selected = sview.getAtomSet()
 
-    atomPair.forEach(function (pair, i) {
-      var v1 = pair[ 0 ]
-      var v2 = pair[ 1 ]
+    atomPair.forEach((pair, i) => {
+      let v1 = pair[ 0 ]
+      let v2 = pair[ 1 ]
 
-      if (Number.isInteger(v1) && Number.isInteger(v2)) {
+      if (typeof(v1) === 'number' && Number.isInteger(v1) && typeof(v2) === 'number' && Number.isInteger(v2)) {
         if (selected.get(v1) && selected.get(v2)) {
           ap1.index = v1
           ap2.index = v2
@@ -123,15 +132,15 @@ class DistanceRepresentation extends MeasurementRepresentation {
           return
         }
       } else {
-        sele1.setString(v1)
-        sele2.setString(v2)
+        sele1.setString(v1 as string)
+        sele2.setString(v2 as string)
 
         var atomIndices1 = sview.getAtomIndices(sele1)
         var atomIndices2 = sview.getAtomIndices(sele2)
 
-        if (atomIndices1.length && atomIndices2.length) {
-          ap1.index = atomIndices1[ 0 ]
-          ap2.index = atomIndices2[ 0 ]
+        if (atomIndices1!.length && atomIndices2!.length) {
+          ap1.index = atomIndices1![ 0 ]
+          ap2.index = atomIndices2![ 0 ]
         } else {
           j += 1
           return
@@ -158,7 +167,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       position[ i3 + 0 ] = (ap1.x + ap2.x) / 2
       position[ i3 + 1 ] = (ap1.y + ap2.y) / 2
       position[ i3 + 2 ] = (ap1.z + ap2.z) / 2
-    }, this)
+    })
 
     if (j > 0) {
       n -= j
@@ -175,7 +184,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
   }
 
-  getBondData (sview, what, params) {
+  getBondData (sview: StructureView, what: BondDataFields, params: BondDataParams) {
     const bondData = sview.getBondData(this.getBondParams(what, params))
     if (bondData.picking) {
       bondData.picking = new DistancePicker(
@@ -187,7 +196,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     return bondData
   }
 
-  createData (sview) {
+  createData (sview: StructureView) {
     if (!sview.atomCount || !this.atomPair.length) return
 
     const n = this.atomPair.length
@@ -199,7 +208,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       size: uniformArray(n, this.labelSize),
       color: uniformArray3(n, c.r, c.g, c.b),
       text: distanceData.text
-    }, this.getLabelBufferParams())
+    } as TextBufferData, this.getLabelBufferParams() as TextBufferParameters)
 
     const bondParams = {
       bondSet: distanceData.bondSet,
@@ -214,7 +223,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
     if (this.useCylinder) {
       this.distanceBuffer = new CylinderBuffer(
-        bondData,
+        bondData as CylinderBufferData,
         this.getBufferParams({
           openEnded: this.openEnded,
           radialSegments: this.radialSegments,
@@ -224,7 +233,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       )
     } else {
       this.distanceBuffer = new WideLineBuffer(
-        getFixedLengthDashData(bondData),
+        getFixedLengthDashData(bondData as CylinderBufferData),
         this.getBufferParams({
           linewidth: this.linewidth,
           visible: this.lineVisible,
@@ -241,7 +250,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
   }
 
-  updateData (what, data) {
+  updateData (what: BondDataFields, data: StructureRepresentationData) {
     super.updateData(what, data)
 
     const bondParams = {
@@ -249,22 +258,24 @@ class DistanceRepresentation extends MeasurementRepresentation {
       bondStore: data.bondStore
     }
 
-    const bondData = this.getBondData(data.sview, what, bondParams)
+    const bondData = this.getBondData(data.sview as StructureView, what, bondParams)
     const distanceData = {}
 
     if (!what || what.color) {
-      distanceData.color = bondData.color
-      distanceData.color2 = bondData.color2
+      Object.assign( distanceData, {
+        color: bondData.color,
+        color2: bondData.color2
+      })
     }
 
     if (!what || what.radius) {
-      distanceData.radius = bondData.radius
+      Object.assign( distanceData, {radius: bondData.radius})
     }
 
     this.distanceBuffer.setAttributes(distanceData)
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<DistanceRepresentationParameters>) {
     let rebuild = false
     const what = {}
 

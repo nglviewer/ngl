@@ -6,11 +6,19 @@
 
 import { ExtensionFragDepth } from '../globals'
 import { defaults } from '../utils'
-import Representation from './representation.js'
+import Representation, { RepresentationParameters } from './representation.js'
 import Volume from '../surface/volume.js'
 import FilteredVolume from '../surface/filtered-volume.js'
-import SphereBuffer from '../buffer/sphere-buffer.js'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
 import PointBuffer from '../buffer/point-buffer.js'
+import Surface from '../surface/surface';
+import Viewer from '../viewer/viewer';
+
+interface DotDataFields {
+  color?: boolean,
+  radius?: boolean,
+  scale?: boolean
+}
 
 /**
  * Dot representation parameter object. Extends {@link RepresentationParameters}
@@ -22,7 +30,25 @@ import PointBuffer from '../buffer/point-buffer.js'
  * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
  * @property {Number} thresholdOut - Show only values falling outside of the treshold minumum and maximum. For volume data only.
  */
-
+interface DotRepresentationParameters extends RepresentationParameters {
+  thresholdType: 'value'|'value'|'sigma'|'sigma'
+  thresholdMin: number
+  thresholdMax: number
+  thresholdOut: boolean
+  dotType: ''|'sphere'|'point'
+  radiusType: ''|'value'|'abs-value'|'value-min'|'deviation'|'size'|'radius' //TODO had to add 'radius' because of test in line 333
+  radius: number
+  scale: number
+  sphereDetail: number
+  disableImpostor: boolean
+  pointSize: number
+  sizeAttenuation: boolean
+  sortParticles: boolean
+  useTexture: boolean
+  alphaTest: number
+  forceTransparent: boolean
+  edgeBleach: number
+}
 /**
  * Dot representation
  */
@@ -33,7 +59,7 @@ class DotRepresentation extends Representation {
    * @param {Viewer} viewer - a viewer object
    * @param {DotRepresentationParameters} params - dot representation parameters
    */
-  constructor (surface, viewer, params) {
+  constructor (surface: Surface, viewer: Viewer, params: Partial<DotRepresentationParameters>) {
     super(surface, viewer, params)
 
     this.type = 'dot'
@@ -133,7 +159,7 @@ class DotRepresentation extends Representation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<DotRepresentationParameters>) {
     var p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'uniform')
     p.colorValue = defaults(p.colorValue, 0xDDDDDD)
@@ -159,7 +185,7 @@ class DotRepresentation extends Representation {
     this.build()
   }
 
-  attach (callback) {
+  attach (callback: () => void) {
     this.bufferList.forEach(buffer => {
       this.viewer.add(buffer)
     })
@@ -169,7 +195,7 @@ class DotRepresentation extends Representation {
   }
 
   create () {
-    var dotData = {}
+    var dotData: SphereBufferData|{} = {}
 
     if (this.volume) {
       var volume = this.volume
@@ -184,30 +210,38 @@ class DotRepresentation extends Representation {
       }
       volume.setFilter(thresholdMin, thresholdMax, this.thresholdOut)
 
-      dotData.position = volume.getDataPosition()
-      dotData.color = volume.getDataColor(this.getColorParams())
+      Object.assign(dotData, {
+        position: volume.getDataPosition(),
+        color: volume.getDataColor(this.getColorParams())
+      })
       if (this.dotType === 'sphere') {
-        dotData.radius = volume.getDataSize(this.radius, this.scale)
-        dotData.picking = volume.getDataPicking()
+        Object.assign(dotData, {
+          radius: volume.getDataSize(this.radius, this.scale),
+          picking: volume.getDataPicking()
+        })
       }
     } else {
       var surface = this.surface
-      dotData.position = surface.getPosition()
-      dotData.color = surface.getColor(this.getColorParams())
+      Object.assign(dotData, {
+        position: surface.getPosition(),
+        color: surface.getColor(this.getColorParams())
+      })
       if (this.dotType === 'sphere') {
-        dotData.radius = surface.getSize(this.radius, this.scale)
-        dotData.picking = surface.getPicking()
+        Object.assign(dotData, {
+          radius: surface.getSize(this.radius, this.scale),
+          picking: surface.getPicking()
+        })
       }
     }
 
     if (this.dotType === 'sphere') {
       this.dotBuffer = new SphereBuffer(
-        dotData,
+        dotData as SphereBufferData,
         this.getBufferParams({
           sphereDetail: this.sphereDetail,
           disableImpostor: this.disableImpostor,
           dullInterior: false
-        })
+        }) as SphereBufferParameters
       )
     } else {
       this.dotBuffer = new PointBuffer(
@@ -227,43 +261,48 @@ class DotRepresentation extends Representation {
     this.bufferList.push(this.dotBuffer)
   }
 
-  update (what) {
+  update (what: DotDataFields = {}) {
     if (this.bufferList.length === 0) return
 
-    what = what || {}
-
-    var dotData = {}
+    const dotData: SphereBufferData|{} = {}
 
     if (what.color) {
       if (this.volume) {
-        dotData.color = this.volume.getDataColor(
-          this.getColorParams()
-        )
+        Object.assign(dotData, {
+          color: this.volume.getDataColor(
+            this.getColorParams()
+          )
+        })
       } else {
-        dotData.color = this.surface.getColor(
-          this.getColorParams()
-        )
+        Object.assign(dotData, {
+          color: this.surface.getColor(
+            this.getColorParams()
+          )
+        })
       }
     }
 
     if (this.dotType === 'sphere' && (what.radius || what.scale)) {
       if (this.volume) {
-        dotData.radius = this.volume.getDataSize(
-          this.radius, this.scale
-        )
+        Object.assign(dotData, {
+          radius: this.volume.getDataSize(
+            this.radius, this.scale
+          )
+        })
       } else {
-        dotData.radius = this.surface.getSize(
-          this.radius, this.scale
-        )
+        Object.assign(dotData, {
+          radius: this.surface.getSize(
+            this.radius, this.scale
+          )
+        })
       }
     }
 
     this.dotBuffer.setAttributes(dotData)
   }
 
-  setParameters (params, what, rebuild) {
-    what = what || {}
-
+  setParameters (params: Partial<DotRepresentationParameters>, what: DotDataFields = {}, rebuild: boolean) {
+    
     if (params && params.thresholdType !== undefined &&
         this.volume instanceof Volume
     ) {
