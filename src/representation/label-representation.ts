@@ -61,7 +61,7 @@ interface TextDataField {
  * @property {Float} backgroundOpacity - opacity of the background
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
-interface LabelRepresentationParameters extends RepresentationParameters {
+export interface LabelRepresentationParameters extends RepresentationParameters {
   clipNear: number
   opacity: number
   labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'

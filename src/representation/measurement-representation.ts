@@ -5,11 +5,24 @@
  */
 import { Color } from 'three'
 
-import Selection from '../selection/selection.js'
-import { Browser } from '../globals.js'
-import { defaults } from '../utils.js'
-import StructureRepresentation from './structure-representation.js'
-import { uniformArray, uniformArray3 } from '../math/array-utils.js'
+import Selection from '../selection/selection'
+import { Browser } from '../globals'
+import { defaults } from '../utils'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
+import { uniformArray, uniformArray3 } from '../math/array-utils'
+import { Structure } from '../ngl.js';
+import Viewer from '../viewer/viewer';
+import StructureView from '../structure/structure-view';
+import { LabelRepresentationParameters } from './label-representation';
+import { TextBufferData } from '../buffer/text-buffer';
+
+interface LabelDataField {
+  position?: boolean
+  labelColor?: boolean
+  labelSize?: boolean
+  radius?: boolean
+  labelText?: boolean
+}
 
 /**
  * Measurement representation parameter object.
@@ -22,6 +35,33 @@ import { uniformArray, uniformArray3 } from '../math/array-utils.js'
  * @property {Boolean} labelVisible - visibility of the distance label
  * @property {Float} labelZOffset - offset in z-direction (i.e. in camera direction)
  */
+interface MeasurementRepresentationParameters extends StructureRepresentationParameters {
+  labelVisible: boolean
+  labelSize: number
+  labelColor: number
+  labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+  labelText: string
+  labelFormat: string
+  labelGrouping: 'atom'|'residue'
+  labelFontFamily: 'sans-serif'|'monospace'|'serif'
+  labelFontStyle: 'normal'|'italic'
+  labelFontWeight: 'normal'|'bold'
+  labelsdf: boolean
+  labelXOffset: number
+  labelYOffset: number
+  labelZOffset: number
+  labelAttachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
+  labelBorder: boolean
+  labelBorderColor: number
+  labelBorderWidth: number
+  labelBackground: boolean
+  labelBackgroundColor: number
+  labelBackgroundMargin: number
+  labelBackgroundOpacity: number
+  labelFixedSize: boolean
+  lineOpacity: number
+  lineWidth: number
+}
 
 /**
  * Measurement representation
@@ -32,7 +72,7 @@ class MeasurementRepresentation extends StructureRepresentation {
    * Handles common label settings and position logic for
    * distance, angle and dihedral representations
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<MeasurementRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.n = 0 // Subclass create sets value
@@ -133,7 +173,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     })
   }
 
-  init (params) {
+  init (params: Partial<MeasurementRepresentationParameters>) {
     const p = params || {}
     this.labelVisible = defaults(p.labelVisible, true)
     this.labelSize = defaults(p.labelSize, 2.0)
@@ -161,7 +201,7 @@ class MeasurementRepresentation extends StructureRepresentation {
   }
 
   // All measurements need to rebuild on position change
-  update (what) {
+  update (what: LabelDataField) {
     if (what.position) {
       this.build()
     } else {
@@ -169,23 +209,27 @@ class MeasurementRepresentation extends StructureRepresentation {
     }
   }
 
-  updateData (what, data) {
-    const textData = {}
+  createData (sview: StructureView): undefined {
+    return
+  }
+
+  updateData (what: LabelDataField, data: any) {
+    const textData: TextBufferData | {} = {}
     if (!what || what.labelSize) {
-      textData.size = uniformArray(this.n, this.labelSize)
+      Object.assign(textData, {size: uniformArray(this.n, this.labelSize)})
     }
 
     if (!what || what.labelColor) {
       const c = new Color(this.labelColor)
-      textData.color = uniformArray3(this.n, c.r, c.g, c.b)
+      Object.assign(textData, {color: uniformArray3(this.n, c.r, c.g, c.b)})
     }
 
-    this.textBuffer.setAttributes(textData)
+    this.textBuffer.setAttributes(textData as TextBufferData)
   }
 
-  setParameters (params) {
+  setParameters (params: Partial<MeasurementRepresentationParameters>) {
     const rebuild = false
-    const what = {}
+    const what: LabelDataField = {}
 
     if (params && params.labelSize) {
       what.labelSize = true
@@ -208,7 +252,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     return this
   }
 
-  setVisibility (value, noRenderRequest) {
+  setVisibility (value: boolean, noRenderRequest?: boolean) {
     super.setVisibility(value, true)
     if (this.textBuffer) {
       this.textBuffer.setVisibility(
@@ -221,7 +265,7 @@ class MeasurementRepresentation extends StructureRepresentation {
     return this
   }
 
-  getLabelBufferParams (params) {
+  getLabelBufferParams (params: LabelRepresentationParameters) {
     return super.getBufferParams(Object.assign({
       fontFamily: this.labelFontFamily,
       fontStyle: this.labelFontStyle,
@@ -262,7 +306,7 @@ class MeasurementRepresentation extends StructureRepresentation {
  *   Integer indices or selection expressions
  * @return {Float32Array} Flattened array of position coordinates
  */
-function parseNestedAtoms (sview, atoms) {
+function parseNestedAtoms (sview: StructureView, atoms: (number|string)[][]) {
   const ap = sview.getAtomProxy()
   const sele = new Selection()
 
@@ -280,7 +324,7 @@ function parseNestedAtoms (sview, atoms) {
     let _break = false
     for (let j = 0; j < order; j++) {
       const value = group[ j ]
-      if (Number.isInteger(value)) {
+      if (typeof (value) === 'number' && Number.isInteger(value)) {
         if (selected.get(value)) {
           ap.index = value
         } else {
@@ -288,10 +332,10 @@ function parseNestedAtoms (sview, atoms) {
           break
         }
       } else {
-        sele.setString(value)
+        sele.setString(value as string)
         const atomIndices = sview.getAtomIndices(sele)
-        if (atomIndices.length) {
-          ap.index = atomIndices[ 0 ]
+        if (atomIndices!.length) {
+          ap.index = atomIndices![ 0 ]
         } else {
           _break = true
           break
@@ -310,7 +354,7 @@ function parseNestedAtoms (sview, atoms) {
 }
 
 /* out = v1 * cos(angle) + v2 * sin(angle) */
-function calcArcPoint (out, center, v1, v2, angle) {
+function calcArcPoint (out: number[], center: number[], v1: number[], v2: number[], angle: number) {
   const x = Math.cos(angle)
   const y = Math.sin(angle)
   out[ 0 ] = center[ 0 ] + v1[ 0 ] * x + v2[ 0 ] * y
