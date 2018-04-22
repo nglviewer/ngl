@@ -13,6 +13,7 @@ import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 import { AtomDataFields } from '../structure/structure-data';
+import SphereImpostorBuffer from '../buffer/sphereimpostor-buffer';
 
 /**
  * Spacefill Representation
@@ -49,7 +50,7 @@ class SpacefillRepresentation extends StructureRepresentation {
     )
 
     return {
-      bufferList: [ sphereBuffer as SphereGeometryBuffer ]
+      bufferList: [ sphereBuffer as SphereGeometryBuffer|SphereImpostorBuffer ]
     }
   }
 
