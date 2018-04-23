@@ -7,12 +7,21 @@
 import { Vector3, Box3 } from 'three'
 
 import { defaults } from '../utils'
-import Representation from './representation.js'
+import Representation, { RepresentationParameters } from './representation.js'
 import Volume from '../surface/volume.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import ContourBuffer from '../buffer/contour-buffer.js'
+import Surface from '../surface/surface';
+import Viewer from '../viewer/viewer';
 
+export type SurfaceDataFields = {position: boolean, color: boolean, index: boolean, normal: boolean}
+export interface SurfaceData {
+  position?: Float32Array
+  color?: Float32Array
+  index?: Float32Array
+  normal?: Float32Array
+}
 /**
  * Surface representation parameter object. Extends {@link RepresentationParameters}
  *
@@ -27,7 +36,16 @@ import ContourBuffer from '../buffer/contour-buffer.js'
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
  * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
-
+interface SurfaceRepresentationParameters extends RepresentationParameters {
+  isolevelType: 'value'|'sigma'
+  isolevel: number
+  smooth: number
+  background: boolean
+  opaqueBack: boolean
+  boxSize: number
+  useWorker: boolean
+  wrap: boolean
+}
 /**
  * Surface representation
  */
@@ -38,7 +56,7 @@ class SurfaceRepresentation extends Representation {
    * @param {Viewer} viewer - a viewer object
    * @param {SurfaceRepresentationParameters} params - surface representation parameters
    */
-  constructor (surface, viewer, params) {
+  constructor (surface: Surface, viewer: Viewer, params: Partial<SurfaceRepresentationParameters>) {
     super(surface, viewer, params)
 
     this.type = 'surface'
@@ -113,7 +131,7 @@ class SurfaceRepresentation extends Representation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<SurfaceRepresentationParameters>) {
     const p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'uniform')
     p.colorValue = defaults(p.colorValue, 0xDDDDDD)
@@ -136,7 +154,7 @@ class SurfaceRepresentation extends Representation {
     this.build()
   }
 
-  attach (callback) {
+  attach (callback: () => void) {
     this.bufferList.forEach(buffer => {
       this.viewer.add(buffer)
     })
@@ -146,7 +164,7 @@ class SurfaceRepresentation extends Representation {
     callback()
   }
 
-  prepare (callback) {
+  prepare (callback: () => void) {
     if (this.volume) {
       let isolevel
 
@@ -174,7 +192,7 @@ class SurfaceRepresentation extends Representation {
         this.__boxCenter.copy(this.boxCenter)
         this.__box.copy(this.box)
 
-        const onSurfaceFinish = surface => {
+        const onSurfaceFinish = (surface: Surface) => {
           this.surface = surface
           callback()
         }
@@ -215,8 +233,10 @@ class SurfaceRepresentation extends Representation {
         this.getBufferParams({ wireframe: false })
       )
     } else {
-      sd.normal = this.surface.getNormal()
-      sd.picking = this.surface.getPicking()
+      Object.assign(sd, {
+        normal: this.surface.getNormal(),
+        picking: this.surface.getPicking()
+      })
 
       const surfaceBuffer = new SurfaceBuffer(
         sd,
@@ -230,15 +250,15 @@ class SurfaceRepresentation extends Representation {
       buffer = new DoubleSidedBuffer(surfaceBuffer)
     }
 
-    this.bufferList.push(buffer)
+    this.bufferList.push(buffer as ContourBuffer)
   }
 
-  update (what) {
+  update (what: SurfaceDataFields) {
     if (this.bufferList.length === 0) return
 
     what = what || {}
 
-    const surfaceData = {}
+    const surfaceData: SurfaceData = {}
 
     if (what.position) {
       surfaceData.position = this.surface.getPosition()
@@ -277,7 +297,7 @@ class SurfaceRepresentation extends Representation {
    * @param {Boolean} [rebuild] - whether or not to rebuild the representation
    * @return {SurfaceRepresentation} this object
    */
-  setParameters (params, what, rebuild) {
+  setParameters (params: Partial<SurfaceRepresentationParameters>, what?: SurfaceDataFields, rebuild?: boolean) {
     if (params && params.isolevelType !== undefined &&
       this.volume
     ) {
@@ -313,7 +333,7 @@ class SurfaceRepresentation extends Representation {
     }
 
     if (params && params.colorVolume !== undefined) {
-      what.color = true
+      if (what) what.color = true
     }
 
     if (this.surface && (

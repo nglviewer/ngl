@@ -46,7 +46,7 @@ export interface StructureRepresentationData {
  */
 abstract class StructureRepresentation extends Representation {
 
-  private selection: Selection
+  protected selection: Selection
   protected dataList: StructureRepresentationData[]
   structure: Structure
   structureView: StructureView

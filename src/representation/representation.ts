@@ -15,6 +15,7 @@ import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffe
 import { ColormakerParameters, ColorMode } from '../color/colormaker';
 
 export interface RepresentationParameters {
+  name: string
   lazy: boolean,
   clipNear: number,
   clipRadius: number,
@@ -129,7 +130,6 @@ class Representation {
   private quality: string
   visible: boolean
 
-  private prepare: (arg?: any)=> void
   [key: string]: any
 
   constructor (object: any, viewer: Viewer, params: Partial<RepresentationParameters>) {
