@@ -10,9 +10,18 @@ import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import { AxesPicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3 } from '../math/array-utils.js'
-import StructureRepresentation from './structure-representation.js'
-import SphereBuffer from '../buffer/sphere-buffer.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
+import StructureView from '../structure/structure-view';
+import Viewer from '../viewer/viewer';
+import { Structure } from '../ngl';
+import { AtomDataFields } from '../structure/structure-data';
+
+interface AxesRepresentationParameters extends StructureRepresentationParameters {
+  showAxes: boolean
+  showBox: boolean
+}
 
 /**
  * Axes representation. Show principal axes and/or a box aligned with them
@@ -43,7 +52,7 @@ class AxesRepresentation extends StructureRepresentation {
    * @param  {Viewer} viewer - the viewer object
    * @param  {StructureRepresentationParameters} params - parameters object
    */
-  constructor (structure, viewer, params) {
+  constructor (structure: Structure, viewer: Viewer, params: Partial<AxesRepresentationParameters>) {
     super(structure, viewer, params)
 
     this.type = 'axes'
@@ -70,7 +79,7 @@ class AxesRepresentation extends StructureRepresentation {
     this.init(params)
   }
 
-  init (params) {
+  init (params: Partial<AxesRepresentationParameters>) {
     const p = params || {}
     p.radiusSize = defaults(p.radiusSize, 0.5)
     p.colorValue = defaults(p.colorValue, 'lightgreen')
@@ -82,7 +91,7 @@ class AxesRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getPrincipalAxes (/* sview */) {
+  getPrincipalAxes () {
     let selection
     const assembly = this.getAssembly()
 
@@ -93,8 +102,8 @@ class AxesRepresentation extends StructureRepresentation {
     return this.structureView.getPrincipalAxes(selection)
   }
 
-  getAxesData (sview) {
-    const pa = this.getPrincipalAxes(sview)
+  getAxesData (sview: StructureView) {
+    const pa = this.getPrincipalAxes()
     const c = new Color(this.colorValue)
 
     let vn = 0
@@ -122,11 +131,11 @@ class AxesRepresentation extends StructureRepresentation {
     let offset = 0
 
     if (this.showAxes) {
-      const addAxis = function (v1, v2) {
-        v1.toArray(vertexPosition, offset * 2)
-        v2.toArray(vertexPosition, offset * 2 + 3)
-        v1.toArray(edgePosition1, offset)
-        v2.toArray(edgePosition2, offset)
+      const addAxis = function (v1: Vector3, v2: Vector3) {
+        v1.toArray(vertexPosition as any, offset * 2)
+        v2.toArray(vertexPosition as any, offset * 2 + 3)
+        v1.toArray(edgePosition1 as any, offset)
+        v2.toArray(edgePosition2 as any, offset)
         offset += 3
       }
 
@@ -142,12 +151,12 @@ class AxesRepresentation extends StructureRepresentation {
       // console.log(d1a, d2a, d3a, d1b, d2b, d3b)
 
       let offset2 = offset * 2
-      const addCorner = function (d1, d2, d3) {
+      const addCorner = function (d1: number, d2: number, d3: number) {
         v.copy(pa.center)
           .addScaledVector(pa.normVecA, d1)
           .addScaledVector(pa.normVecB, d2)
           .addScaledVector(pa.normVecC, d3)
-        v.toArray(vertexPosition, offset2)
+        v.toArray(vertexPosition as any, offset2)
         offset2 += 3
       }
       addCorner(d1a, d2a, d3a)
@@ -160,11 +169,11 @@ class AxesRepresentation extends StructureRepresentation {
       addCorner(d1b, d2a, d3b)
 
       let edgeOffset = offset
-      const addEdge = function (a, b) {
-        v.fromArray(vertexPosition, offset * 2 + a * 3)
-          .toArray(edgePosition1, edgeOffset)
-        v.fromArray(vertexPosition, offset * 2 + b * 3)
-          .toArray(edgePosition2, edgeOffset)
+      const addEdge = function (a: number, b: number) {
+        v.fromArray(vertexPosition as any, offset * 2 + a * 3)
+          .toArray(edgePosition1 as any, edgeOffset)
+        v.fromArray(vertexPosition as any, offset * 2 + b * 3)
+          .toArray(edgePosition2 as any, edgeOffset)
         edgeOffset += 3
       }
       addEdge(0, 1)
@@ -205,16 +214,16 @@ class AxesRepresentation extends StructureRepresentation {
     const axesData = this.getAxesData(this.structureView)
 
     this.sphereBuffer = new SphereBuffer(
-      axesData.vertex,
+      axesData.vertex as SphereBufferData,
       this.getBufferParams({
         sphereDetail: this.sphereDetail,
         disableImpostor: this.disableImpostor,
         dullInterior: true
-      })
+      }) as SphereBufferParameters
     )
 
     this.cylinderBuffer = new CylinderBuffer(
-      axesData.edge,
+      axesData.edge as CylinderBufferData,
       this.getBufferParams({
         openEnded: true,
         radialSegments: this.radialSegments,
@@ -229,26 +238,42 @@ class AxesRepresentation extends StructureRepresentation {
     })
   }
 
-  updateData (what, data) {
-    const axesData = this.getAxesData(data.sview)
+  createData (sview: StructureView): undefined {
+    return
+  }
+
+  updateData (what: AtomDataFields, data: StructureRepresentationData) {
+    const axesData = this.getAxesData(data.sview as StructureView)
     const sphereData = {}
     const cylinderData = {}
 
     if (!what || what.position) {
-      sphereData.position = axesData.vertex.position
-      cylinderData.position1 = axesData.edge.position1
-      cylinderData.position2 = axesData.edge.position2
+      Object.assign(sphereData, {
+        position: axesData.vertex.position
+      })
+      Object.assign(cylinderData, {
+        position1: axesData.edge.position1,
+        position2: axesData.edge.position2
+      })
     }
 
     if (!what || what.color) {
-      sphereData.color = axesData.vertex.color
-      cylinderData.color = axesData.edge.color
-      cylinderData.color2 = axesData.edge.color
+      Object.assign(sphereData, {
+        color: axesData.vertex.color as Float32Array
+      })
+      Object.assign(cylinderData, {
+        color: axesData.edge.color as Float32Array,
+        color2: axesData.edge.color as Float32Array
+      })
     }
 
     if (!what || what.radius) {
-      sphereData.radius = axesData.vertex.radius
-      cylinderData.radius = axesData.edge.radius
+      Object.assign(sphereData, {
+        radius: axesData.vertex.radius as Float32Array
+      })
+      Object.assign(cylinderData, {
+        radius: axesData.edge.radius as Float32Array
+      })
     }
 
     this.sphereBuffer.setAttributes(sphereData)
