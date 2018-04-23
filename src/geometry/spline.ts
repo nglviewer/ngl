@@ -16,66 +16,71 @@ import AtomProxy from '../proxy/atom-proxy';
 import { ColormakerParameters } from '../color/colormaker';
 import { NumberArray } from '../types';
 
-class Interpolator {
-  
-  m: number
-  tension: number
-  dt: number
-  delta: number
-  vec1: Vector3
-  vec2: Vector3
+interface Interpolator {
+  getPosition: (terator: AtomIterator, array: number[], offset: number, isCyclic: boolean) => void
+  getTangent: (terator: AtomIterator, array: number[], offset: number, isCyclic: boolean) => void
+  getNormal: (size: number, tan: number[], norm: number[], bin: number[], offset: number, isCyclic: boolean) => void
+  getNormalDir: (iterDir1: AtomIterator, iterDir2: AtomIterator, 
+    tan: number[], norm: number[], bin: number[], 
+    offset: number, isCyclic: boolean, shift: boolean) => void
+  getColor: (iterator: AtomIterator, colFn: (...arg: any[]) => void, col: any, offset: number, isCyclic: boolean) => void
+  getPicking: (iterator: AtomIterator, pickFn: (item: AtomProxy) => void, pick: any[], offset: number, isCyclic: boolean) => void
+  getSize: (iterator: AtomIterator, sizeFn: (item: AtomProxy) => number, size: number[], offset: number, isCyclic: boolean) => void
+}
 
-  constructor (m: number, tension: number) {
-    this.m = m
-    this.tension = tension
-    this.dt = 1.0 / this.m
-    this.delta = 0.0001
+interface InterpolatorConstructor {
+  (this: Interpolator, subdiv: number, tension: number): void
+  new(subdiv: number, tension:number): Interpolator
+}
 
-    this.vec1 = new Vector3()
-    this.vec2 = new Vector3()
+const Interpolator =(function Interpolator (this: Interpolator, m: number, tension: number) {
+
+  const dt = 1.0 / m
+  const delta = 0.0001
+
+  const vec1 = new Vector3()
+  const vec2 = new Vector3()
+
+  function interpolateToArr (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, t: number, arr: number[], offset: number) {
+    arr[ offset + 0 ] = spline(v0.x, v1.x, v2.x, v3.x, t, tension)
+    arr[ offset + 1 ] = spline(v0.y, v1.y, v2.y, v3.y, t, tension)
+    arr[ offset + 2 ] = spline(v0.z, v1.z, v2.z, v3.z, t, tension)
   }
-  
 
-  private interpolateToArr (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, t: number, arr: Float32Array, offset: number) {
-    arr[ offset + 0 ] = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension)
-    arr[ offset + 1 ] = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension)
-    arr[ offset + 2 ] = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension)
+  function interpolateToVec (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, t: number, vec: Vector3) {
+    vec.x = spline(v0.x, v1.x, v2.x, v3.x, t, tension)
+    vec.y = spline(v0.y, v1.y, v2.y, v3.y, t, tension)
+    vec.z = spline(v0.z, v1.z, v2.z, v3.z, t, tension)
   }
 
-  private interpolateToVec (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, t: number, vec: Vector3) {
-    vec.x = spline(v0.x, v1.x, v2.x, v3.x, t, this.tension)
-    vec.y = spline(v0.y, v1.y, v2.y, v3.y, t, this.tension)
-    vec.z = spline(v0.z, v1.z, v2.z, v3.z, t, this.tension)
-  }
-
-  private interpolatePosition (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, pos: Float32Array, offset: number) {
-    for (var j = 0; j < this.m; ++j) {
+  function interpolatePosition (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, pos: number[], offset: number) {
+    for (var j = 0; j < m; ++j) {
       var l = offset + j * 3
-      var d = this.dt * j
-      this.interpolateToArr(v0, v1, v2, v3, d, pos, l)
+      var d = dt * j
+      interpolateToArr(v0, v1, v2, v3, d, pos, l)
     }
   }
 
-  private interpolateTangent (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, tan: Float32Array, offset: number) {
-    for (var j = 0; j < this.m; ++j) {
-      var d = this.dt * j
-      var d1 = d - this.delta
-      var d2 = d + this.delta
+  function interpolateTangent (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, tan: number[], offset: number) {
+    for (var j = 0; j < m; ++j) {
+      var d = dt * j
+      var d1 = d - delta
+      var d2 = d + delta
       var l = offset + j * 3
       // capping as a precaution
       if (d1 < 0) d1 = 0
       if (d2 > 1) d2 = 1
       //
-      this.interpolateToVec(v0, v1, v2, v3, d1, this.vec1)
-      this.interpolateToVec(v0, v1, v2, v3, d2, this.vec2)
+      interpolateToVec(v0, v1, v2, v3, d1, vec1)
+      interpolateToVec(v0, v1, v2, v3, d2, vec2)
       //
-      this.vec2.sub(this.vec1).normalize()
-      this.vec2.toArray(tan as any, l)
+      vec2.sub(vec1).normalize()
+      vec2.toArray(tan, l)
     }
   }
 
-  private vectorSubdivide (interpolationFn: (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, array: Float32Array, offset: number) => any,
-                            iterator: AtomIterator, array: Float32Array, offset: number, isCyclic: boolean) {
+  function vectorSubdivide (interpolationFn: (v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3, array: number[], offset: number) => void,
+                            iterator: AtomIterator, array: any[], offset: number, isCyclic: boolean) {
     let v0: Vector3
     let v1 = <Vector3>iterator.next()
     let v2 = <Vector3>iterator.next()
@@ -89,100 +94,100 @@ class Interpolator {
       v1 = v2
       v2 = v3
       v3 = <Vector3>iterator.next()
-      interpolationFn.apply(this, [v0, v1, v2, v3, array, k])
-      k += 3 * this.m
+      interpolationFn(v0, v1, v2, v3, array, k)
+      k += 3 * m
     }
     if (isCyclic) {
       v0 = <Vector3>iterator.get(n - 2)
       v1 = <Vector3>iterator.get(n - 1)
       v2 = <Vector3>iterator.get(0)
       v3 = <Vector3>iterator.get(1)
-      interpolationFn.apply(this, [v0, v1, v2, v3, array, k])
-      k += 3 * this.m
+      interpolationFn(v0, v1, v2, v3, array, k)
+      k += 3 * m
     }
   }
 
   //
 
-  public getPosition (iterator: AtomIterator, array: Float32Array, offset: number, isCyclic: boolean) {
+  this.getPosition = function (iterator: AtomIterator, array: number[], offset: number, isCyclic: boolean) {
     iterator.reset()
-    this.vectorSubdivide(this.interpolatePosition, iterator, array, offset, isCyclic)
+    vectorSubdivide(interpolatePosition, iterator, array, offset, isCyclic)
     var n1 = iterator.size - 1
-    var k = n1 * this.m * 3
-    if (isCyclic) k += this.m * 3
+    var k = n1 * m * 3
+    if (isCyclic) k += m * 3
     var v = iterator.get(isCyclic ? 0 : n1)
     array[ k ] = v.x
     array[ k + 1 ] = v.y
     array[ k + 2 ] = v.z
   }
 
-  public getTangent (iterator: AtomIterator, array: Float32Array, offset: number, isCyclic: boolean) {
+  this.getTangent = function (iterator: AtomIterator, array: number[], offset: number, isCyclic: boolean) {
     iterator.reset()
-    this.vectorSubdivide(this.interpolateTangent, iterator, array, offset, isCyclic)
+    vectorSubdivide(interpolateTangent, iterator, array, offset, isCyclic)
     const n1 = iterator.size - 1
-    let k = n1 * this.m * 3
-    if (isCyclic) k += this.m * 3
+    let k = n1 * m * 3
+    if (isCyclic) k += m * 3
     copyArray(array, array, k - 3, k, 3)
   }
 
   //
 
-  private vDir = new Vector3()
-  private vTan = new Vector3()
-  private vNorm = new Vector3()
-  private vBin = new Vector3()
+  var vDir = new Vector3()
+  var vTan = new Vector3()
+  var vNorm = new Vector3()
+  var vBin = new Vector3()
 
-  private m2 = Math.ceil(this.m / 2)
+  var m2 = Math.ceil(m / 2)
 
-  interpolateNormalDir (u0: Vector3, u1: Vector3, u2: Vector3, u3: Vector3,
+  function interpolateNormalDir (u0: Vector3, u1: Vector3, u2: Vector3, u3: Vector3,
                                 v0: Vector3, v1: Vector3, v2: Vector3, v3: Vector3,
-                                tan: Float32Array, norm: Float32Array, bin: Float32Array,
+                                tan: number[], norm: number[], bin: number[],
                                 offset: number, shift: boolean) {
-    for (let j = 0; j < this.m; ++j) {
+    for (let j = 0; j < m; ++j) {
       let l = offset + j * 3
-      if (shift) l += this.m2 * 3
-      const d = this.dt * j
-      this.interpolateToVec(u0, u1, u2, u3, d, this.vec1)
-      this.interpolateToVec(v0, v1, v2, v3, d, this.vec2)
-      this.vDir.subVectors(this.vec2, this.vec1).normalize()
-      this.vTan.fromArray(tan as any, l)
-      this.vBin.crossVectors(this.vDir, this.vTan).normalize()
-      this.vBin.toArray(bin as any, l)
-      this.vNorm.crossVectors(this.vTan, this.vBin).normalize()
-      this.vNorm.toArray(norm as any, l)
+      if (shift) l += m2 * 3
+      const d = dt * j
+      interpolateToVec(u0, u1, u2, u3, d, vec1)
+      interpolateToVec(v0, v1, v2, v3, d, vec2)
+      vDir.subVectors(vec2, vec1).normalize()
+      vTan.fromArray(tan, l)
+      vBin.crossVectors(vDir, vTan).normalize()
+      vBin.toArray(bin, l)
+      vNorm.crossVectors(vTan, vBin).normalize()
+      vNorm.toArray(norm, l)
     }
   }
 
-  private interpolateNormal (vDir: Vector3, tan: Float32Array, norm: Float32Array, bin: Float32Array, offset: number) {
-    for (var j = 0; j < this.m; ++j) {
+  function interpolateNormal (vDir: Vector3, tan: number[], norm: number[], bin: number[], offset: number) {
+    for (var j = 0; j < m; ++j) {
       var l = offset + j * 3
-      vDir.copy(this.vNorm)
-      this.vTan.fromArray(tan as any, l)
-      this.vBin.crossVectors(vDir, this.vTan).normalize()
-      this.vBin.toArray(bin as any, l)
-      this.vNorm.crossVectors(this.vTan, this.vBin).normalize()
-      this.vNorm.toArray(norm as any, l)
+      vDir.copy(vNorm)
+      vTan.fromArray(tan, l)
+      vBin.crossVectors(vDir, vTan).normalize()
+      vBin.toArray(bin, l)
+      vNorm.crossVectors(vTan, vBin).normalize()
+      vNorm.toArray(norm, l)
     }
   }
 
-   public getNormal (size: number, tan: Float32Array, norm: Float32Array, bin: Float32Array, offset: number, isCyclic: boolean) {
-    this.vNorm.set(0, 0, 1)
+  this.getNormal = function (size: number, tan: number[], norm: number[], bin: number[], offset: number, isCyclic: boolean) {
+    vNorm.set(0, 0, 1)
     const n = size
     const n1 = n - 1
     let k = offset || 0
     for (var i = 0; i < n1; ++i) {
-      this.interpolateNormal(this.vDir, tan, norm, bin, k)
-      k += 3 * this.m
+      interpolateNormal(vDir, tan, norm, bin, k)
+      k += 3 * m
     }
     if (isCyclic) {
-      this.interpolateNormal(this.vDir, tan, norm, bin, k)
-      k += 3 * this.m
+      interpolateNormal(vDir, tan, norm, bin, k)
+      k += 3 * m
     }
-    this.vBin.toArray(bin as any, k)
-    this.vNorm.toArray(norm as any, k)
+    vBin.toArray(bin, k)
+    vNorm.toArray(norm, k)
   }
 
-  public getNormalDir (iterDir1: AtomIterator, iterDir2: AtomIterator, tan: Float32Array, norm: Float32Array, bin: Float32Array, offset: number, isCyclic: boolean, shift: boolean) {
+  this.getNormalDir = function (iterDir1: AtomIterator, iterDir2: AtomIterator, tan: number[], norm: number[], bin: number[], offset: number, isCyclic: boolean, shift: boolean) {
     iterDir1.reset()
     iterDir2.reset()
     //
@@ -200,7 +205,7 @@ class Interpolator {
     const d2v3 = new Vector3().copy(<Vector3>iterDir2.next())
     const d2v4 = new Vector3().copy(<Vector3>iterDir2.next())
     //
-    this.vNorm.set(0, 0, 1)
+    vNorm.set(0, 0, 1)
     let n = iterDir1.size
     let n1 = n - 1
     let k = offset || 0
@@ -234,12 +239,12 @@ class Interpolator {
         vSub4.multiplyScalar(-1)
         d2v4.addVectors(d1v4, vSub4)
       }
-      this.interpolateNormalDir(
+      interpolateNormalDir(
         d1v1, d1v2, d1v3, d1v4,
         d2v1, d2v2, d2v3, d2v4,
         tan, norm, bin, k, shift
       )
-      k += 3 * this.m
+      k += 3 * m
     }
     if (isCyclic) {
       d1v1.copy(<Vector3>iterDir1.get(n - 2))
@@ -257,42 +262,42 @@ class Interpolator {
         vSub4.multiplyScalar(-1)
         d2v4.addVectors(d1v4, vSub4)
       }
-      this.interpolateNormalDir(
+      interpolateNormalDir(
         d1v1, d1v2, d1v3, d1v4,
         d2v1, d2v2, d2v3, d2v4,
         tan, norm, bin, k, shift
       )
-      k += 3 * this.m
+      k += 3 * m
     }
     if (shift) {
       // FIXME shift requires data from one more preceeding residue
-      this.vBin.fromArray(bin as any, this.m2 * 3)
-      this.vNorm.fromArray(norm as any, this.m2 * 3)
-      for (var j = 0; j < this.m2; ++j) {
-        this.vBin.toArray(bin as any, j * 3)
-        this.vNorm.toArray(norm as any, j * 3)
+      vBin.fromArray(bin, m2 * 3)
+      vNorm.fromArray(norm, m2 * 3)
+      for (var j = 0; j < m2; ++j) {
+        vBin.toArray(bin, j * 3)
+        vNorm.toArray(norm, j * 3)
       }
     } else {
-      this.vBin.toArray(bin as any, k)
-      this.vNorm.toArray(norm as any, k)
+      vBin.toArray(bin, k)
+      vNorm.toArray(norm, k)
     }
   }
 
   //
 
-  private interpolateColor (item1: AtomProxy, item2: AtomProxy, colFn: (...arg: any[]) => void, col: any, offset: number) {
+  function interpolateColor (item1: AtomProxy, item2: AtomProxy, colFn: (...arg: any[]) => void, col: any, offset: number) {
     var j, l
-    for (j = 0; j < this.m2; ++j) {
+    for (j = 0; j < m2; ++j) {
       l = offset + j * 3
       colFn(item1, col, l) // itemColorToArray
     }
-    for (j = this.m2; j < this.m; ++j) {
+    for (j = m2; j < m; ++j) {
       l = offset + j * 3
       colFn(item2, col, l) // itemColorToArray
     }
   }
 
-  public getColor (iterator: AtomIterator, colFn: (...arg: any[]) => void, col: any, offset: number, isCyclic: boolean) {
+  this.getColor = function (iterator: AtomIterator, colFn: (...arg: any[]) => void, col: any, offset: number, isCyclic: boolean) {
     iterator.reset()
     iterator.next() // first element not needed
     let i0: AtomProxy
@@ -304,14 +309,14 @@ class Interpolator {
     for (var i = 0; i < n1; ++i) {
       i0 = i1
       i1 = <AtomProxy>iterator.next()
-      this.interpolateColor(i0, i1, colFn, col, k)
-      k += 3 * this.m
+      interpolateColor(i0, i1, colFn, col, k)
+      k += 3 * m
     }
     if (isCyclic) {
       i0 = <AtomProxy>iterator.get(n - 1)
       i1 = <AtomProxy>iterator.get(0)
-      this.interpolateColor(i0, i1, colFn, col, k)
-      k += 3 * this.m
+      interpolateColor(i0, i1, colFn, col, k)
+      k += 3 * m
     }
     //
     col[ k ] = col[ k - 3 ]
@@ -321,17 +326,17 @@ class Interpolator {
 
   //
 
-  private interpolatePicking (item1: AtomProxy, item2: AtomProxy, pickFn: (item: AtomProxy) => number, pick: Float32Array, offset: number) {
+  function interpolatePicking (item1: AtomProxy, item2: AtomProxy, pickFn: (item: AtomProxy) => void, pick: any[], offset: number) {
     var j
-    for (j = 0; j < this.m2; ++j) {
+    for (j = 0; j < m2; ++j) {
       pick[ offset + j ] = pickFn(item1)
     }
-    for (j = this.m2; j < this.m; ++j) {
+    for (j = m2; j < m; ++j) {
       pick[ offset + j ] = pickFn(item2)
     }
   }
 
-  public getPicking (iterator: AtomIterator, pickFn: (item: AtomProxy) => number, pick: Float32Array, offset: number, isCyclic: boolean) {
+  this.getPicking = function (iterator: AtomIterator, pickFn: (item: AtomProxy) => void, pick: any[], offset: number, isCyclic: boolean) {
     iterator.reset()
     iterator.next() // first element not needed
     let i0: AtomProxy
@@ -343,14 +348,14 @@ class Interpolator {
     for (var i = 0; i < n1; ++i) {
       i0 = i1
       i1 = <AtomProxy>iterator.next()
-      this.interpolatePicking(i0, i1, pickFn, pick, k)
-      k += this.m
+      interpolatePicking(i0, i1, pickFn, pick, k)
+      k += m
     }
     if (isCyclic) {
       i0 = <AtomProxy>iterator.get(n - 1)
       i1 = <AtomProxy>iterator.get(0)
-      this.interpolatePicking(i0, i1, pickFn, pick, k)
-      k += this.m
+      interpolatePicking(i0, i1, pickFn, pick, k)
+      k += m
     }
     //
     pick[ k ] = pick[ k - 1 ]
@@ -358,17 +363,17 @@ class Interpolator {
 
   //
 
-  private interpolateSize (item1: AtomProxy, item2: AtomProxy, sizeFn: (item: AtomProxy) => number, size: Float32Array, offset: number) {
+  function interpolateSize (item1: AtomProxy, item2: AtomProxy, sizeFn: (item: AtomProxy) => number, size: number[], offset: number) {
     const s1: number = sizeFn(item1)
     const s2: number = sizeFn(item2)
-    for (let j = 0; j < this.m; ++j) {
+    for (let j = 0; j < m; ++j) {
       // linear interpolation
-      let t = j / this.m
+      let t = j / m
       size[ offset + j ] = (1 - t) * s1 + t * s2
     }
   }
 
-   public getSize (iterator: AtomIterator, sizeFn: (item: AtomProxy) => number, size: Float32Array, offset: number, isCyclic: boolean) {
+  this.getSize = function (iterator: AtomIterator, sizeFn: (item: AtomProxy) => number, size: number[], offset: number, isCyclic: boolean) {
     iterator.reset()
     iterator.next() // first element not needed
     let i0: AtomProxy
@@ -380,36 +385,21 @@ class Interpolator {
     for (var i = 0; i < n1; ++i) {
       i0 = i1
       i1 = <AtomProxy>iterator.next()
-      this.interpolateSize(i0, i1, sizeFn, size, k)
-      k += this.m
+      interpolateSize(i0, i1, sizeFn, size, k)
+      k += m
     }
     if (isCyclic) {
       i0 = <AtomProxy>iterator.get(n - 1)
       i1 = <AtomProxy>iterator.get(0)
-      this.interpolateSize(i0, i1, sizeFn, size, k)
-      k += this.m
+      interpolateSize(i0, i1, sizeFn, size, k)
+      k += m
     }
     //
     size[ k ] = size[ k - 1 ]
   }
-}
+}) as InterpolatorConstructor
 
-export interface SplineParameters {
-  directional?: boolean
-  positionIterator?: boolean
-  subdiv?: number
-  smoothSheet?: boolean
-  tension?: number
-}
-interface AtomIterator {
-  size: number,
-  next: () => AtomProxy | Vector3,
-  get: (idx: number) => AtomProxy | Vector3,
-  reset: () => void
-}
-
-class Spline {
-
+interface Spline {
   polymer: Polymer
   size: number
   directional: boolean
@@ -419,26 +409,59 @@ class Spline {
   tension: number
   interpolator: Interpolator
 
-  constructor (polymer: Polymer, params?: SplineParameters) {
-    this.polymer = polymer
-      this.size = polymer.residueCount
+  getSubdividedPosition: () => {position: any}
+  getSubdividedOrientation: () => {tangent: Float32Array, normal: Float32Array, binormal: Float32Array}
+  getSubdividedPicking: () => {'picking': AtomPicker}
+  getSubdividedColor: (params: {[k: string]: any } & ColormakerParameters) => { 'color': Float32Array}
+  getSubdividedSize: (params: RadiusParams) => {size: Float32Array}
 
-      var p = params || {}
-      this.directional = p.directional || false
-      this.positionIterator = p.positionIterator || false
-      this.subdiv = p.subdiv || 1
-      this.smoothSheet = p.smoothSheet || false
+  new(polymer: Polymer, params?: {[k: string]: any}): Spline
+}
 
-      if (!p.tension) {
-        this.tension = this.polymer.isNucleic() ? 0.5 : 0.9
-      } else {
-        this.tension = p.tension
-      }
+interface SplineConstructor {
+  (this: Spline, polymer: Polymer, params?: {[k: string]: any}): void
+  new(polymer: Polymer, params?: {[k: string]: any}): Spline
+}
 
-      this.interpolator = new Interpolator(this.subdiv, this.tension)
+export interface SplineParameters {
+  directional?: boolean
+  positionIterator?: boolean
+  subdiv?: number
+  smoothSheet?: boolean
+  tension?: number
+}
+
+const Spline =(function Spline (this: Spline, polymer: Polymer, params?: SplineParameters) {
+  this.polymer = polymer
+  this.size = polymer.residueCount
+
+  var p = params || {}
+  this.directional = p.directional || false
+  this.positionIterator = p.positionIterator || false
+  this.subdiv = p.subdiv || 1
+  this.smoothSheet = p.smoothSheet || false
+
+  if (!p.tension) {
+    this.tension = this.polymer.isNucleic() ? 0.5 : 0.9
+  } else {
+    this.tension = p.tension
   }
 
-  getAtomIterator (type: string, smooth?: boolean): AtomIterator {
+  this.interpolator = new Interpolator(this.subdiv, this.tension)
+}) as SplineConstructor
+
+interface AtomIterator {
+  size: number,
+  next: () => AtomProxy | Vector3,
+  get: (idx: number) => AtomProxy | Vector3,
+  reset: () => void
+}
+
+Spline.prototype = {
+
+  constructor: Spline,
+
+  getAtomIterator: function (type: string, smooth: boolean): AtomIterator {
     const polymer = this.polymer
     const structure = polymer.structure
     const n = polymer.residueCount
@@ -471,13 +494,13 @@ class Spline {
 
     function get (idx: number) {
       var atomProxy = cache[ i % 4 ]
-      atomProxy.index = polymer.getAtomIndexByType(idx, type) as number
+      atomProxy.index = polymer.getAtomIndexByType(idx, type)
       if (smooth && idx > 0 && idx < n && atomProxy.sstruc === 'e') {
         var vec = cache2[ i % 4 ]
-        apPrev.index = polymer.getAtomIndexByType(idx + 1, type) as number
-        apNext.index = polymer.getAtomIndexByType(idx - 1, type) as number
-        vec.addVectors(apPrev as any, apNext as any)
-          .add(atomProxy as any).add(atomProxy as any)
+        apPrev.index = polymer.getAtomIndexByType(idx + 1, type)
+        apNext.index = polymer.getAtomIndexByType(idx - 1, type)
+        vec.addVectors(apPrev, apNext)
+          .add(atomProxy).add(atomProxy)
           .multiplyScalar(0.25)
         i += 1
         return vec
@@ -497,9 +520,9 @@ class Spline {
       get: get,
       reset: reset
     }
-  }
+  },
 
-  getSubdividedColor (params: {scheme: string, [k: string]: any } & ColormakerParameters) {
+  getSubdividedColor: function (params: {scheme: string, [k: string]: any } & ColormakerParameters) {
     var m = this.subdiv
     var polymer = this.polymer
     var n = polymer.residueCount
@@ -526,9 +549,9 @@ class Spline {
     return {
       'color': col
     }
-  }
-  
-  getSubdividedPicking () {
+  },
+
+  getSubdividedPicking: function () {
     var m = this.subdiv
     var polymer = this.polymer
     var n = polymer.residueCount
@@ -551,28 +574,28 @@ class Spline {
     return {
       'picking': new AtomPicker(pick, structure)
     }
-  }
+  },
 
-  getSubdividedPosition () {
+  getSubdividedPosition: function () {
     var pos = this.getPosition()
 
     return {
       'position': pos
     }
-  }
-  
-  getSubdividedOrientation () {
-    const tan = this.getTangent()
-    const normals = this.getNormals(tan)
+  },
+
+  getSubdividedOrientation: function () {
+    var tan = this.getTangent()
+    var normals = this.getNormals(tan)
 
     return {
       'tangent': tan,
       'normal': normals.normal,
       'binormal': normals.binormal
     }
-  }
+  },
 
-  getSubdividedSize (params: RadiusParams) {
+  getSubdividedSize: function (params: RadiusParams) {
     var m = this.subdiv
     var polymer = this.polymer
     var n = polymer.residueCount
@@ -596,9 +619,9 @@ class Spline {
     return {
       'size': size
     }
-  }
+  },
 
-  getPosition () {
+  getPosition: function () {
     const m = this.subdiv
     const polymer = this.polymer
     const n = polymer.residueCount
@@ -612,9 +635,9 @@ class Spline {
     this.interpolator.getPosition(iterator, pos, 0, polymer.isCyclic)
 
     return pos
-  }
+  },
 
-  getTangent () {
+  getTangent: function () {
     const m = this.subdiv
     const polymer = this.polymer
     const n = this.size
@@ -628,9 +651,9 @@ class Spline {
     this.interpolator.getTangent(iterator, tan, 0, polymer.isCyclic)
 
     return tan
-  }
+  },
 
-  getNormals (tan: Float32Array) {
+  getNormals: function (tan: number[]) {
     const m = this.subdiv
     const polymer = this.polymer
     const isProtein = polymer.isProtein()
@@ -650,7 +673,7 @@ class Spline {
       )
     } else {
       this.interpolator.getNormal(
-        n, tan, norm, bin, 0, polymer.isCyclic
+        n, tan, norm, bin, 0, polymer.isCyclic, isProtein
       )
     }
 
