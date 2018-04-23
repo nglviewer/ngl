@@ -289,7 +289,7 @@ abstract class StructureRepresentation extends Representation {
     }, params)
   }
 
-  getBondParams (what: BondDataFields = {}, params: BondDataParams) {
+  getBondParams (what?: BondDataFields, params?: BondDataParams) {
     return Object.assign({
       what: what,
       colorParams: this.getColorParams(),
