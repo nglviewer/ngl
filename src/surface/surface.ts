@@ -11,11 +11,34 @@ import { getUintArray } from '../utils'
 import { AtomPicker, SurfacePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3, serialArray } from '../math/array-utils.js'
 import Selection from '../selection/selection.js'
+import { ColormakerParameters } from '../color/colormaker';
+import { Structure } from '../ngl';
 
+interface SurfaceData {
+  position: Float32Array
+  index: Uint32Array|Uint16Array|undefined
+  normal: Float32Array
+  color: Float32Array
+  atomindex: Int32Array
+  contour: boolean
+}
 /**
  * Surface
  */
 class Surface {
+  name: string
+  path: string
+  position: Float32Array
+  index: Uint32Array|Uint16Array|undefined
+  normal: Float32Array|undefined
+  color: Float32Array|undefined
+  atomindex: Int32Array|undefined
+  contour: boolean
+  center: Vector3
+  boundingBox: Box3
+  size: number
+  info: {}
+
   /**
    * @param {String} name - surface name
    * @param {String} path - source path
@@ -27,7 +50,7 @@ class Surface {
    * @param {Int32Array} data.atomindex - atom indices
    * @param {boolean} data.contour - contour mode flag
    */
-  constructor (name, path, data) {
+  constructor (name: string, path: string, data: SurfaceData) {
     this.name = name || ''
     this.path = path || ''
     this.info = {}
@@ -68,7 +91,12 @@ class Surface {
    * @param {boolean} contour - contour mode flag
    * @return {undefined}
    */
-  set (position, index, normal, color, atomindex, contour) {
+  set (position: Float32Array,
+      index: Uint32Array|Uint16Array|undefined,
+      normal: Float32Array|undefined,
+      color: Float32Array|undefined,
+      atomindex: Int32Array|undefined,
+      contour: boolean = false) {
     /**
      * @type {Float32Array}
      */
@@ -94,7 +122,7 @@ class Surface {
     this.contour = contour
   }
 
-  fromGeometry (geometry) {
+  fromGeometry (geometry: Geometry|BufferGeometry|Group) {
     if (Debug) Log.time('GeometrySurface.fromGeometry')
 
     let geo
@@ -105,7 +133,7 @@ class Surface {
     } else if (geometry instanceof BufferGeometry) {
       geo = geometry
     } else {
-      geo = geometry[ 0 ]
+      geo = (geometry as any)[ 0 ]
     }
 
     if (!geo.boundingBox) geo.computeBoundingBox()
@@ -117,16 +145,16 @@ class Surface {
 
     if (geo instanceof BufferGeometry) {
       const attr = geo.attributes
-      const an = attr.normal ? attr.normal.array : false
+      const an = (attr as any).normal ? (attr as any).normal.array : false
 
       // assume there are no normals if the first is zero
       if (!an || (an[ 0 ] === 0 && an[ 1 ] === 0 && an[ 2 ] === 0)) {
         geo.computeVertexNormals()
       }
 
-      position = attr.position.array
-      index = attr.index ? attr.index.array : null
-      normal = attr.normal.array
+      position = (<any>attr).position.array
+      index = (<any>attr).index ? (<any>attr).index.array : null
+      normal = (<any>attr).normal.array
     }
 
     this.set(position, index, normal, color, undefined)
@@ -138,7 +166,7 @@ class Surface {
     return this.position
   }
 
-  getColor (params) {
+  getColor (params: ColormakerParameters&{ scheme: string}) {
     const p = params || {}
     p.surface = this
 
@@ -160,7 +188,7 @@ class Surface {
         colormaker.positionColorToArray(v, array, i3)
       }
     } else if (colormaker.atomColor && this.atomindex) {
-      const atomProxy = p.structure.getAtomProxy()
+      const atomProxy = p.structure!.getAtomProxy()
       const atomindex = this.atomindex
 
       for (let i = 0; i < n; ++i) {
@@ -175,9 +203,9 @@ class Surface {
     return array
   }
 
-  getPicking (structure) {
+  getPicking (structure?: Structure) {
     if (this.atomindex && structure) {
-      return new AtomPicker(this.atomindex, structure)
+      return new AtomPicker(this.atomindex as any, structure)
     } else {
       return new SurfacePicker(serialArray(this.size), this)
     }
@@ -187,7 +215,7 @@ class Surface {
     return this.normal
   }
 
-  getSize (size, scale) {
+  getSize (size: number, scale: number) {
     return uniformArray(this.size, size * scale)
   }
 
@@ -195,7 +223,7 @@ class Surface {
     return this.index
   }
 
-  getFilteredIndex (sele, structure) {
+  getFilteredIndex (sele: string, structure: Structure) {
     if (sele && this.atomindex) {
       const selection = new Selection(sele)
       const atomSet = structure.getAtomSet(selection)
@@ -203,7 +231,7 @@ class Surface {
 
       const atomindex = this.atomindex
       const index = this.index
-      const n = index.length
+      const n = index!.length
       const elementSize = this.contour ? 2 : 3
 
       let j = 0
@@ -212,7 +240,7 @@ class Surface {
         let include = true
 
         for (let a = 0; a < elementSize; a++) {
-          const idx = index[ i + a ]
+          const idx = index![ i + a ]
           const ai = atomindex[ idx ]
           if (!atomSet.get(ai)) {
             include = false
@@ -223,7 +251,7 @@ class Surface {
         if (!include) { continue }
 
         for (let a = 0; a < elementSize; a++, j++) {
-          filteredIndex[ j ] = index[ i + a ]
+          filteredIndex[ j ] = index![ i + a ]
         }
       }
 
