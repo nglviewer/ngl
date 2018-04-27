@@ -14,7 +14,7 @@ import {
   v3cross, v3fromArray, normalizeVector3array
 } from '../math/vector-utils.js'
 
-function laplacianSmooth (verts, faces, numiter, inflate) {
+function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: number, inflate: boolean) {
   // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
   // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
   //
@@ -30,19 +30,19 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
   numiter = numiter || 1
   inflate = inflate || true
 
-  var nv = verts.length / 3
-  var nf = faces.length / 3
-  var norms
+  const nv = verts.length / 3
+  const nf = faces.length / 3
+  let norms
 
   if (inflate) {
     norms = new Float32Array(nv * 3)
   }
 
-  var tps = new Float32Array(nv * 3)
+  const tps = new Float32Array(nv * 3)
 
-  var i
-  var ndeg = 20
-  var vertdeg = new Array(ndeg)
+  let i
+  const ndeg = 20
+  const vertdeg = new Array(ndeg)
 
   for (i = 0; i < ndeg; ++i) {
     vertdeg[ i ] = new Uint32Array(nv)
@@ -52,8 +52,8 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
     vertdeg[ 0 ][ i ] = 0
   }
 
-  var j, jl
-  var flagvert
+  let j, jl
+  let flagvert: boolean
 
   // for each face
 
@@ -214,16 +214,16 @@ function laplacianSmooth (verts, faces, numiter, inflate) {
         // if(verts[i].inout) ssign=1;
         // else ssign=-1;
 
-        verts[ i3 ] += ssign * outwt * norms[ i3 ]
-        verts[ i3 + 1 ] += ssign * outwt * norms[ i3 + 1 ]
-        verts[ i3 + 2 ] += ssign * outwt * norms[ i3 + 2 ]
+        verts[ i3 ] += ssign * outwt * norms![ i3 ]
+        verts[ i3 + 1 ] += ssign * outwt * norms![ i3 + 1 ]
+        verts[ i3 + 2 ] += ssign * outwt * norms![ i3 + 2 ]
       }
     }
   }
 }
-laplacianSmooth.__deps = [ computeVertexNormals ]
+laplacianSmooth.prototype.__deps = [ computeVertexNormals ]
 
-function computeVertexNormals (position, index, normal) {
+function computeVertexNormals (position: Float32Array, index: Float32Array, normal: Float32Array|undefined) {
   var i, il
 
   if (normal === undefined) {
@@ -297,19 +297,19 @@ function computeVertexNormals (position, index, normal) {
 
   return normal
 }
-computeVertexNormals.__deps = [
+computeVertexNormals.prototype.__deps = [
   v3sub, v3cross, v3fromArray, normalizeVector3array
 ]
 
-function getRadiusDict (radiusList) {
-  var radiusDict = {}
+function getRadiusDict (radiusList: number[]) {
+  var radiusDict: {[k: number]: boolean} = {}
   for (var i = 0, il = radiusList.length; i < il; ++i) {
     radiusDict[ radiusList[ i ] ] = true
   }
   return radiusDict
 }
 
-function getSurfaceGrid (min, max, maxRadius, scaleFactor, extraMargin) {
+function getSurfaceGrid (min: Float32Array, max: Float32Array, maxRadius: number, scaleFactor: number, extraMargin: number) {
   // need margin to avoid boundary/round off effects
   var margin = (1 / scaleFactor) * 3
   margin += maxRadius
@@ -385,7 +385,7 @@ function getSurfaceGrid (min, max, maxRadius, scaleFactor, extraMargin) {
     scaleFactor: scaleFactor
   }
 }
-getSurfaceGrid.__deps = [
+getSurfaceGrid.prototype.__deps = [
   degToRad,
   v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
   v3floor, v3ceil, v3sub, v3negate,

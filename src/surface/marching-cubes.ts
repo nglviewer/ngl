@@ -340,8 +340,17 @@ function getAllowedContours () {
 
   ]
 }
-
-function MarchingCubes (field, nx, ny, nz, atomindex) {
+interface MarchingCubes {
+  new (field: number[], nx: number, ny: number, nz: number, atomindex: number[]): void
+  triangulate: (_isolevel: number, _noNormals: boolean, _box: number[][], _contour: boolean, _wrap: boolean) => {
+    position: Float32Array
+    normal: undefined|Float32Array
+    index: Uint32Array|Uint16Array
+    atomindex: Int32Array|undefined
+    contour: boolean
+  }
+}
+function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: number, nz: number, atomindex: number[]) {
   // Based on alteredq / http://alteredqualia.com/
   // port of greggman's ThreeD version of marching cubes to Three.js
   // http://webglsamples.googlecode.com/hg/blob/blob.html
@@ -359,25 +368,25 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
   var yd = nx
   var zd = nx * ny
 
-  var normalCache, vertexIndex
-  var count, icount
+  var normalCache: Float32Array, vertexIndex: Int32Array
+  var count: number, icount: number
 
   var ilist = new Int32Array(12)
 
-  var positionArray = []
-  var normalArray = []
-  var indexArray = []
-  var atomindexArray = []
+  var positionArray: number[] = []
+  var normalArray: number[] = []
+  var indexArray: number[] = []
+  var atomindexArray: number[] = []
 
   var edgeTable = getEdgeTable()
   var triTable = getTriTable()
   var allowedContours = getAllowedContours()
 
-  var mx, my, mz
+  var mx: number, my: number, mz: number
 
   //
 
-  this.triangulate = function (_isolevel, _noNormals, _box, _contour, _wrap) {
+  this.triangulate = function (_isolevel: number, _noNormals: boolean, _box: number[][], _contour: boolean, _wrap: boolean) {
     isolevel = _isolevel
     contour = _contour
     wrap = _wrap
@@ -434,16 +443,16 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
 
   // polygonization
 
-  function lerp (a, b, t) { return a + (b - a) * t }
+  function lerp (a: number, b: number, t: number) { return a + (b - a) * t }
 
-  function index (x, y, z) {
+  function index (x: number, y: number, z: number) {
     x = (x + mx) % nx
     y = (y + my) % ny
     z = (z + mz) % nz
     return ((zd * z) + yd * y) + x
   }
 
-  function VIntX (q, offset, x, y, z, valp1, valp2) {
+  function VIntX (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
     var _q = contour ? 3 * q : q
 
     if (vertexIndex[ _q ] < 0) {
@@ -475,7 +484,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-  function VIntY (q, offset, x, y, z, valp1, valp2) {
+  function VIntY (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
     var _q = contour ? 3 * q + 1 : q
 
     if (vertexIndex[ _q ] < 0) {
@@ -508,7 +517,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-  function VIntZ (q, offset, x, y, z, valp1, valp2) {
+  function VIntZ (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
     var _q = contour ? 3 * q + 2 : q
 
     if (vertexIndex[ _q ] < 0) {
@@ -541,7 +550,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-  function compNorm (q) {
+  function compNorm (q: number) {
     var q3 = q * 3
 
     if (normalCache[ q3 ] === 0.0) {
@@ -551,7 +560,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-  function polygonize (fx, fy, fz, q, edgeFilter) {
+  function polygonize (fx: number, fy: number, fz: number, q: number, edgeFilter: number) {
     // cache indices
     var q1
     var qy
@@ -747,14 +756,14 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 
-  function triangulate (xBeg, yBeg, zBeg, xEnd, yEnd, zEnd) {
-    var q
-    var q3
-    var x
-    var y
-    var z
-    var yOffset
-    var zOffset
+  function triangulate (xBeg?: number, yBeg?: number, zBeg?: number, xEnd?: number, yEnd?: number, zEnd?: number) {
+    let q
+    let q3
+    let x
+    let y
+    let z
+    let yOffset
+    let zOffset
 
     xBeg = xBeg !== undefined ? xBeg : 0
     yBeg = yBeg !== undefined ? yBeg : 0
@@ -784,7 +793,7 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
       }
     }
 
-    var xBeg2, yBeg2, zBeg2, xEnd2, yEnd2, zEnd2
+    let xBeg2, yBeg2, zBeg2, xEnd2, yEnd2, zEnd2
 
     if (!wrap) {
       // init part of the vertexIndex
@@ -981,6 +990,6 @@ function MarchingCubes (field, nx, ny, nz, atomindex) {
     }
   }
 }
-MarchingCubes.__deps = [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ]
+MarchingCubes.prototype.__deps = [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ]
 
 export default MarchingCubes
