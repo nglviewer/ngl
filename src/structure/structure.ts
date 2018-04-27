@@ -704,7 +704,7 @@ class Structure implements Structure{
         colormaker.atomColorToArray(ap, color, i3)
       }
       if (picking) {
-        picking.array[ i ] = idx
+        picking.array![ i ] = idx
       }
       if (radius) {
         radius[ i ] = radiusFactory.atomRadius(ap)
@@ -758,7 +758,7 @@ class Structure implements Structure{
       colormaker = ColormakerRegistry.getScheme(p.colorParams)
     }
     if (!what || what.picking) {
-      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore)
+      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore!) as any
     }
     if (!what || what.radius || (isMulti && what.position)) {
       radiusFactory = new RadiusFactory(p.radiusParams)
@@ -855,7 +855,7 @@ class Structure implements Structure{
           }
         }
       }
-      if (picking) {
+      if (picking && picking.array) {
         picking.array[ i ] = index
         if (isMulti && bondOrder > 1) {
           for (j = 1; j < bondOrder; ++j) {

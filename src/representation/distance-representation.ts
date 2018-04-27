@@ -196,8 +196,8 @@ class DistanceRepresentation extends MeasurementRepresentation {
       bondData.picking = new DistancePicker(
         bondData.picking.array,
         bondData.picking.structure,
-        params.bondStore
-      )
+        params.bondStore!
+      ) as any
     }
     return bondData
   }

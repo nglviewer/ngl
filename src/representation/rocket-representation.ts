@@ -124,7 +124,7 @@ class RocketRepresentation extends StructureRepresentation {
       axisData.end.set(axis.end, offset * 3)
       axisData.size.set(axis.size, offset)
       axisData.color.set(axis.color, offset * 3)
-      picking.set(axis.picking.array, offset)
+      picking.set(axis.picking.array!, offset)
       offset += axis.size.length
     })
 

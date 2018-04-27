@@ -14,17 +14,26 @@ import {
   EllipsoidPrimitive, OctahedronPrimitive, SpherePrimitive,
   TetrahedronPrimitive, TorusPrimitive, PointPrimitive, WidelinePrimitive
 } from '../geometry/primitive'
-import { contactTypeName } from '../chemistry/interactions/contact'
+import { contactTypeName, Contacts } from '../chemistry/interactions/contact'
+import { TypedArray } from '../types';
+import Component from '../component/component';
+import { Shape, Structure, Volume } from '../ngl';
+import BondStore from '../store/bond-store';
+import Validation from '../structure/validation';
+import PrincipalAxes from '../math/principal-axes';
+import Surface from '../surface/surface';
+import Unitcell from '../symmetry/unitcell';
 
 /**
  * Picker class
  * @interface
  */
 class Picker {
+  array: number[]|TypedArray|undefined
   /**
    * @param  {Array|TypedArray} [array] - mapping
    */
-  constructor (array) {
+  constructor (array?: number[]|TypedArray) {
     this.array = array
   }
 
@@ -36,7 +45,7 @@ class Picker {
    * @param  {Integer} pid - the picking id
    * @return {Integer} the index
    */
-  getIndex (pid) {
+  getIndex (pid: number) {
     return this.array ? this.array[ pid ] : pid
   }
 
@@ -46,11 +55,11 @@ class Picker {
    * @param  {Integer} pid - the picking id
    * @return {Object} the object data
    */
-  getObject (pid) {
+  getObject (pid: number) {
     return {}
   }
 
-  _applyTransformations (vector, instance, component) {
+  _applyTransformations (vector: Vector3, instance: any, component: Component) {
     if (instance) {
       vector.applyMatrix4(instance.matrix)
     }
@@ -66,7 +75,7 @@ class Picker {
    * @param  {Integer} pid - the picking id
    * @return {Vector3} the object position
    */
-  _getPosition (/* pid */) {
+  _getPosition (pid: number) {
     return new Vector3()
   }
 
@@ -77,7 +86,7 @@ class Picker {
    * @param  {Component} component - the component of the picked object
    * @return {Vector3} the position
    */
-  getPosition (pid, instance, component) {
+  getPosition (pid: number, instance: any, component: Component) {
     return this._applyTransformations(
       this._getPosition(pid), instance, component
     )
@@ -89,24 +98,25 @@ class Picker {
  * @interface
  */
 class ShapePicker extends Picker {
+  shape: Shape
   /**
    * @param  {Shape} shape - shape object
    */
-  constructor (shape) {
+  constructor (shape: Shape) {
     super()
     this.shape = shape
   }
 
-  get primitive () {}
+  get primitive (): any { return }
 
   get data () { return this.shape }
   get type () { return this.primitive.type }
 
-  getObject (pid) {
+  getObject (pid: number) {
     return this.primitive.objectFromShape(this.shape, this.getIndex(pid))
   }
 
-  _getPosition (pid) {
+  _getPosition (pid: number) {
     return this.primitive.positionFromShape(this.shape, this.getIndex(pid))
   }
 }
@@ -122,7 +132,8 @@ class ArrowPicker extends ShapePicker {
 }
 
 class AtomPicker extends Picker {
-  constructor (array, structure) {
+  structure: Structure
+  constructor (array: Float32Array, structure: Structure) {
     super(array)
     this.structure = structure
   }
@@ -130,17 +141,18 @@ class AtomPicker extends Picker {
   get type () { return 'atom' }
   get data () { return this.structure }
 
-  getObject (pid) {
+  getObject (pid: number) {
     return this.structure.getAtomProxy(this.getIndex(pid))
   }
 
-  _getPosition (pid) {
-    return new Vector3().copy(this.getObject(pid))
+  _getPosition (pid: number) {
+    return new Vector3().copy(this.getObject(pid) as any)
   }
 }
 
 class AxesPicker extends Picker {
-  constructor (axes) {
+  axes: PrincipalAxes
+  constructor (axes: PrincipalAxes) {
     super()
     this.axes = axes
   }
@@ -160,7 +172,9 @@ class AxesPicker extends Picker {
 }
 
 class BondPicker extends Picker {
-  constructor (array, structure, bondStore) {
+  structure: Structure
+  bondStore: BondStore
+  constructor (array: number[]|TypedArray|undefined, structure: Structure, bondStore: BondStore) {
     super(array)
     this.structure = structure
     this.bondStore = bondStore || structure.bondStore
@@ -169,23 +183,25 @@ class BondPicker extends Picker {
   get type () { return 'bond' }
   get data () { return this.structure }
 
-  getObject (pid) {
+  getObject (pid: number) {
     const bp = this.structure.getBondProxy(this.getIndex(pid))
     bp.bondStore = this.bondStore
     return bp
   }
 
-  _getPosition (pid) {
+  _getPosition (pid: number) {
     const b = this.getObject(pid)
     return new Vector3()
-      .copy(b.atom1)
-      .add(b.atom2)
+      .copy(b.atom1 as any)
+      .add(b.atom2 as any)
       .multiplyScalar(0.5)
   }
 }
 
 class ContactPicker extends Picker {
-  constructor (array, contacts, structure) {
+  contacts: Contacts
+  structure: Structure
+  constructor (array: number[]|TypedArray|undefined, contacts: Contacts, structure: Structure) {
     super(array)
     this.contacts = contacts
     this.structure = structure
@@ -194,7 +210,7 @@ class ContactPicker extends Picker {
   get type () { return 'contact' }
   get data () { return this.contacts }
 
-  getObject (pid) {
+  getObject (pid: number) {
     const idx = this.getIndex(pid)
     const { features, contactStore } = this.contacts
     const { centers, atomSets } = features
@@ -211,7 +227,7 @@ class ContactPicker extends Picker {
     }
   }
 
-  _getPosition (pid) {
+  _getPosition (pid: number) {
     const { center1, center2 } = this.getObject(pid)
     return new Vector3().addVectors(center1, center2).multiplyScalar(0.5)
   }
@@ -222,7 +238,9 @@ class ConePicker extends ShapePicker {
 }
 
 class ClashPicker extends Picker {
-  constructor (array, validation, structure) {
+  validation: Validation
+  structure: Structure
+  constructor (array: number[]|TypedArray|undefined, validation: Validation, structure: Structure) {
     super(array)
     this.validation = validation
     this.structure = structure
@@ -231,7 +249,7 @@ class ClashPicker extends Picker {
   get type () { return 'clash' }
   get data () { return this.validation }
 
-  getObject (pid) {
+  getObject (pid: number) {
     const val = this.validation
     const idx = this.getIndex(pid)
     return {
@@ -241,17 +259,17 @@ class ClashPicker extends Picker {
     }
   }
 
-  _getAtomProxyFromSele (sele) {
+  _getAtomProxyFromSele (sele: string) {
     const selection = new Selection(sele)
-    const idx = this.structure.getAtomIndices(selection)[ 0 ]
+    const idx = this.structure.getAtomIndices(selection)![ 0 ]
     return this.structure.getAtomProxy(idx)
   }
 
-  _getPosition (pid) {
+  _getPosition (pid: number) {
     const clash = this.getObject(pid).clash
     const ap1 = this._getAtomProxyFromSele(clash.sele1)
     const ap2 = this._getAtomProxyFromSele(clash.sele2)
-    return new Vector3().copy(ap1).add(ap2).multiplyScalar(0.5)
+    return new Vector3().copy(ap1 as any).add(ap2 as any).multiplyScalar(0.5)
   }
 }
 
@@ -275,8 +293,19 @@ class IgnorePicker extends Picker {
   get type () { return 'ignore' }
 }
 
+interface MeshData {
+  name: string|undefined
+  serial: number
+  index: Uint16Array|Uint32Array
+  normal: Float32Array|number[]
+  position: Float32Array|number[]
+  color: Float32Array|number[]
+}
 class MeshPicker extends ShapePicker {
-  constructor (shape, mesh) {
+  mesh: MeshData
+  __position: Vector3
+
+  constructor (shape: Shape, mesh: MeshData) {
     super(shape)
     this.mesh = mesh
   }
@@ -294,7 +323,7 @@ class MeshPicker extends ShapePicker {
 
   _getPosition (/* pid */) {
     if (!this.__position) {
-      this.__position = calculateMeanVector3(this.mesh.position)
+      this.__position = calculateMeanVector3(this.mesh.position as any)
     }
     return this.__position
   }
@@ -305,7 +334,8 @@ class SpherePicker extends ShapePicker {
 }
 
 class SurfacePicker extends Picker {
-  constructor (array, surface) {
+  surface: Surface
+  constructor (array: number[]|TypedArray|undefined, surface: Surface) {
     super(array)
     this.surface = surface
   }
@@ -313,7 +343,7 @@ class SurfacePicker extends Picker {
   get type () { return 'surface' }
   get data () { return this.surface }
 
-  getObject (pid) {
+  getObject (pid: number) {
     return {
       surface: this.surface,
       index: this.getIndex(pid)
@@ -334,7 +364,10 @@ class TorusPicker extends ShapePicker {
 }
 
 class UnitcellPicker extends Picker {
-  constructor (unitcell, structure) {
+  unitcell: Unitcell
+  structure: Structure
+
+  constructor (unitcell: Unitcell, structure: Structure) {
     super()
     this.unitcell = unitcell
     this.structure = structure
@@ -360,7 +393,8 @@ class UnknownPicker extends Picker {
 }
 
 class VolumePicker extends Picker {
-  constructor (array, volume) {
+  volume: Volume
+  constructor (array: number[], volume: Volume) {
     super(array)
     this.volume = volume
   }
@@ -368,7 +402,7 @@ class VolumePicker extends Picker {
   get type () { return 'volume' }
   get data () { return this.volume }
 
-  getObject (pid) {
+  getObject (pid: number) {
     const vol = this.volume
     const idx = this.getIndex(pid)
     return {
@@ -378,7 +412,7 @@ class VolumePicker extends Picker {
     }
   }
 
-  _getPosition (pid) {
+  _getPosition (pid: number) {
     const dp = this.volume.position
     const idx = this.getIndex(pid)
     return new Vector3(

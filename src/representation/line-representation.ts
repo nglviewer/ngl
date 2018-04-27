@@ -196,7 +196,7 @@ class LineRepresentation extends StructureRepresentation {
       cColor2 = crossData.color2 = new Float32Array(attrSize)
     }
     if (!what || what.picking) {
-      pickingArray = new Float32Array(atomData.picking!.array.length * 3) // Needs padding??
+      pickingArray = new Float32Array(atomData.picking!.array!.length * 3) // Needs padding??
     }
 
     for (let v = 0; v < size; v++) {
@@ -242,7 +242,7 @@ class LineRepresentation extends StructureRepresentation {
       if (!what || what.picking) {
         pickingArray[ j ] =
         pickingArray[ j + 1 ] =
-        pickingArray[ j + 2 ] = picking!.array[ v ]
+        pickingArray[ j + 2 ] = picking!.array![ v ]
       }
     }
 
