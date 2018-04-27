@@ -14,6 +14,7 @@ import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
 
 interface RocketRepresentationParameters extends StructureRepresentationParameters {
   localAngle: number
@@ -142,7 +143,7 @@ class RocketRepresentation extends StructureRepresentation {
     )
 
     return {
-      bufferList: [ cylinderBuffer as CylinderGeometryBuffer ],
+      bufferList: [ cylinderBuffer as CylinderGeometryBuffer|CylinderImpostorBuffer ],
       axisList: axisList,
       helixbundleList: helixbundleList,
       axisData: axisData

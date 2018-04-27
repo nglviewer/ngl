@@ -430,7 +430,7 @@ class Representation {
     this.build()
   }
 
-  build (updateWhat?: any) {
+  build (updateWhat?: {[k: string]: boolean}) {
     if (this.lazy && (!this.visible || !this.opacity)) {
       this.lazyProps.build = true
       return
@@ -453,7 +453,7 @@ class Representation {
     this.queue.push(updateWhat || false)
   }
 
-  make (updateWhat?: any, callback?: () => void) {
+  make (updateWhat?: boolean, callback?: () => void) {
     if (Debug) Log.time('Representation.make ' + this.type)
 
     const _make = () => {
