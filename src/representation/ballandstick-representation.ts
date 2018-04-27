@@ -15,6 +15,8 @@ import { Structure } from '../ngl';
 import AtomProxy from '../proxy/atom-proxy';
 import { AtomDataParams, BondDataParams, BondDataFields, AtomDataFields } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 
 export interface BallAndStickRepresentationParameters extends StructureRepresentationParameters {
   sphereDetail: number
@@ -28,6 +30,7 @@ export interface BallAndStickRepresentationParameters extends StructureRepresent
   multipleBond: 'off' | 'symmetric' | 'offset'
   bondSpacing: number
   bondScale: number
+  linewidth: number
 }
 
 /**
@@ -61,6 +64,20 @@ export interface BallAndStickRepresentationParameters extends StructureRepresent
  * } );
  */
 class BallAndStickRepresentation extends StructureRepresentation {
+  protected sphereDetail: number
+  protected radialSegments: number
+  protected openEnded: boolean
+  protected disableImpostor: boolean
+  protected aspectRatio: number
+  protected lineOnly: boolean
+  protected lineWidth: number
+  protected cylinderOnly: boolean
+  protected multipleBond: 'off' | 'symmetric' | 'offset'
+  protected bondSpacing: number
+  protected bondScale: number
+  protected linewidth: number
+
+  protected lineBuffer: WideLineBuffer
   /**
    * Create Ball And Stick representation object
    * @param {Structure} structure - the structure to be represented
@@ -158,7 +175,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
   }
 
   createData (sview: StructureView) {
-    const bufferList = []
+    const bufferList: any[] = []
 
     if (this.lineOnly) {
       this.lineBuffer = new WideLineBuffer(
@@ -168,7 +185,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
 
       bufferList.push(this.lineBuffer)
     } else {
-      var cylinderBuffer = new CylinderBuffer(
+      const cylinderBuffer = new CylinderBuffer(
         (this.getBondData(sview) as CylinderBufferData),
         this.getBufferParams({
           openEnded: this.openEnded,
@@ -178,10 +195,10 @@ class BallAndStickRepresentation extends StructureRepresentation {
         })
       )
 
-      bufferList.push(cylinderBuffer)
+      bufferList.push(cylinderBuffer as CylinderGeometryBuffer)
 
       if (!this.cylinderOnly) {
-        var sphereBuffer = new SphereBuffer(
+        const sphereBuffer = new SphereBuffer(
           (this.getAtomData(sview) as SphereBufferData),
           (this.getBufferParams({
             sphereDetail: this.sphereDetail,
@@ -190,7 +207,7 @@ class BallAndStickRepresentation extends StructureRepresentation {
           }) as SphereBufferParameters)
         )
 
-        bufferList.push(sphereBuffer)
+        bufferList.push(sphereBuffer as SphereGeometryBuffer)
       }
     }
 

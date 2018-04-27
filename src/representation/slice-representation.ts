@@ -39,6 +39,15 @@ interface SliceRepresentationParameters extends RepresentationParameters {
  * Slice representation
  */
 class SliceRepresentation extends Representation {
+  protected filter: 'nearest'|'linear'|'cubic-bspline'|'cubic-catmulrom'|'cubic-mitchell'
+  protected positionType: 'percent'|'coordinate'
+  protected position: number
+  protected dimension: 'x'|'y'|'z'
+  protected thresholdType: 'value'|'sigma'
+  protected thresholdMin: number
+  protected thresholdMax: number
+  protected normalize: boolean
+  protected volume: Volume
   /**
    * Create Slice representation object
    * @param {Volume} surface - the volume to be represented

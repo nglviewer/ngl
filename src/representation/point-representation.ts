@@ -27,6 +27,14 @@ interface PointRepresentationParameters extends StructureRepresentationParameter
  * Point Representation
  */
 class PointRepresentation extends StructureRepresentation {
+  protected pointSize: number
+  protected sizeAttenuation: boolean
+  protected sortParticles: boolean
+  protected useTexture: boolean
+  protected alphaTest: number
+  protected forceTransparent: boolean
+  protected edgeBleach: number
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<PointRepresentationParameters>) {
     super(structure, viewer, params)
 

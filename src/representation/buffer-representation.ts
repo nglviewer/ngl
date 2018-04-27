@@ -39,6 +39,7 @@ import Viewer from '../viewer/viewer.js';
  * } );
  */
 class BufferRepresentation extends Representation {
+  buffer: Buffer[]
   /**
    * Create Buffer representation
    * @param {Buffer} buffer - a buffer object

@@ -53,6 +53,37 @@ interface ContactRepresentationParameters extends StructureRepresentationParamet
  * Contact representation.
  */
 class ContactRepresentation extends StructureRepresentation {
+  protected hydrogenBond: boolean
+  protected weakHydrogenBond: boolean
+  protected waterHydrogenBond: boolean
+  protected backboneHydrogenBond: boolean
+  protected hydrophobic: boolean
+  protected halogenBond: boolean
+  protected ionicInteraction: boolean
+  protected metalCoordination: boolean
+  protected cationPi: boolean
+  protected piStacking: boolean
+  protected filterSele: string
+  protected maxHydrophobicDist: number
+  protected maxHbondDist: number
+  protected maxHbondSulfurDist: number
+  protected maxHbondAccAngle: number
+  protected maxHbondDonAngle: number
+  protected maxHbondAccPlaneAngle: number
+  protected maxHbondDonPlaneAngle: number
+  protected maxPiStackingDist: number
+  protected maxPiStackingOffset: number
+  protected maxPiStackingAngle: number
+  protected maxCationPiDist: number
+  protected maxCationPiOffset: number
+  protected maxIonicDist: number
+  protected maxHalogenBondDist: number
+  protected maxHalogenBondAngle: number
+  protected maxMetalDist: number
+  protected refineSaltBridges: boolean
+  protected masterModelIndex: number
+  protected lineOfSightDistFactor: number
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<ContactRepresentationParameters>) {
     super(structure, viewer, params)
 

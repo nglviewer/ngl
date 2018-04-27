@@ -64,6 +64,22 @@ interface DihedralRepresentationParameters extends MeasurementRepresentationPara
  * @param {AngleRepresentationParameters} params - angle representation parameters
  */
 class DihedralRepresentation extends MeasurementRepresentation {
+  protected atomQuad: (number|string)[][]
+  protected extendLine: boolean
+  protected lineOpacity: number
+  protected lineVisible: boolean
+  protected linewidth: number
+  protected planeVisible: boolean
+  protected sectorVisible: boolean
+
+  protected lineLength: number
+  protected planeLength: number
+  protected sectorLength: number
+
+  protected lineBuffer: WideLineBuffer
+  protected planeBuffer: MeshBuffer
+  protected sectorBuffer: MeshBuffer
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<DihedralRepresentationParameters>) {
     super(structure, viewer, params)
 

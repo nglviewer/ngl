@@ -17,6 +17,8 @@ import StructureView from '../structure/structure-view';
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';
 import { AtomDataFields } from '../structure/structure-data';
+import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 
 interface AxesRepresentationParameters extends StructureRepresentationParameters {
   showAxes: boolean
@@ -47,6 +49,11 @@ interface AxesRepresentationParameters extends StructureRepresentationParameters
  * } );
  */
 class AxesRepresentation extends StructureRepresentation {
+  
+  protected showAxes: boolean
+  protected showBox: boolean
+  protected sphereBuffer: SphereBuffer
+  protected cylinderBuffer: CylinderBuffer
   /**
    * @param  {Structure} structure - the structure object
    * @param  {Viewer} viewer - the viewer object
@@ -234,7 +241,7 @@ class AxesRepresentation extends StructureRepresentation {
 
     this.dataList.push({
       sview: this.structureView,
-      bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
+      bufferList: [ this.sphereBuffer as SphereGeometryBuffer, this.cylinderBuffer as CylinderGeometryBuffer]
     })
   }
 
@@ -276,8 +283,8 @@ class AxesRepresentation extends StructureRepresentation {
       })
     }
 
-    this.sphereBuffer.setAttributes(sphereData)
-    this.cylinderBuffer.setAttributes(cylinderData)
+    (this.sphereBuffer as SphereGeometryBuffer).setAttributes(sphereData);
+    (this.cylinderBuffer as CylinderGeometryBuffer).setAttributes(cylinderData)
   }
 }
 

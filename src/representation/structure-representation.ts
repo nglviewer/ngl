@@ -51,12 +51,13 @@ abstract class StructureRepresentation extends Representation {
   structure: Structure
   structureView: StructureView
 
-  radiusType: RadiusType
-  radiusData: {[k: number]: number}
-  radiusSize: number
-  radiusScale: number
-  assembly: string
-  defaultAssembly: string
+  protected radiusType: RadiusType
+  protected radiusData: {[k: number]: number}
+  protected radiusSize: number
+  protected radiusScale: number
+  protected assembly: string
+  protected defaultAssembly: string
+  protected needsBuild: boolean
 
   /**
    * Create Structure representation object

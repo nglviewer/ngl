@@ -62,6 +62,18 @@ interface AngleRepresentationParameters extends MeasurementRepresentationParamet
  * @param {AngleRepresentationParameters} params - angle representation parameters
  */
 class AngleRepresentation extends MeasurementRepresentation {
+  protected atomTriple: (number|string)[][]
+  protected vectorVisible: boolean
+  protected arcVisible: boolean
+  protected lineOpacity: number
+  protected lineWidth: number
+  protected sectorVisible: boolean
+  protected vectorBuffer: WideLineBuffer
+  arcLength: number
+  sectorLength: number
+  arcBuffer: WideLineBuffer
+  sectorBuffer: MeshBuffer
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<AngleRepresentationParameters>) {
     super(structure, viewer, params)
 

@@ -67,6 +67,10 @@ class WideLineBuffer extends MappedQuadBuffer {
     this.setAttributes(data)
     this.makeMapping()
   }
+
+  setParameters (params: Partial<WideLineBufferParameters>) {
+    super.setParameters(params)
+  }
 }
 
 BufferRegistry.add('wideline', WideLineBuffer)

@@ -42,6 +42,23 @@ interface Info {
  * Molecular Surface Representation
  */
 class MolecularSurfaceRepresentation extends StructureRepresentation {
+  protected surfaceType: 'vws'|'sas'|'ms'|'ses'|'av'
+  protected probeRadius: number
+  protected smooth: number
+  protected scaleFactor: number
+  protected cutoff: number
+  protected contour: boolean
+  protected background: boolean
+  protected opaqueBack: boolean
+  protected filterSele: string
+  protected colorVolume: any
+  protected useWorker: boolean
+
+  protected __infoList: Info[]
+  protected __forceNewMolsurf: boolean
+  protected __sele: string
+  protected __surfaceParams: string
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<MolecularSurfaceRepresentationParameters>) {
     super(structure, viewer, params)
 
@@ -121,6 +138,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     this.structure.signals.refreshed.add(() => {
       this.__forceNewMolsurf = true
     })
+
+    this.toBePrepared = true
 
     this.init(params)
   }
@@ -224,14 +243,14 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     const surface = info.surface
 
     const surfaceData = {
-      position: surface.getPosition(),
-      color: surface.getColor(this.getColorParams()),
-      index: surface.getFilteredIndex(this.filterSele, sview)
+      position: surface!.getPosition(),
+      color: surface!.getColor(this.getColorParams()),
+      index: surface!.getFilteredIndex(this.filterSele, sview)
     }
 
     const bufferList = []
 
-    if (surface.contour) {
+    if (surface!.contour) {
       const contourBuffer = new ContourBuffer(
         surfaceData,
         this.getBufferParams({
@@ -242,8 +261,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       bufferList.push(contourBuffer)
     } else {
       Object.assign(surfaceData, {
-        normal: surface.getNormal(),
-        picking: surface.getPicking(sview.getStructure())
+        normal: surface!.getNormal(),
+        picking: surface!.getPicking(sview.getStructure())
       })
 
       const surfaceBuffer = new SurfaceBuffer(

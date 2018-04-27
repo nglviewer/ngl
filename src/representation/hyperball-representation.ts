@@ -16,6 +16,7 @@ import Viewer from '../viewer/viewer';
 import { BondDataParams, BondDataFields, AtomDataFields } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
 import { StructureRepresentationData } from './structure-representation';
+import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 
 interface HyperballRepresentationParameters extends BallAndStickRepresentationParameters {
   shrink: number
@@ -25,6 +26,9 @@ interface HyperballRepresentationParameters extends BallAndStickRepresentationPa
  * Hyperball Representation
  */
 class HyperballRepresentation extends LicoriceRepresentation {
+  protected shrink: number
+  protected __center: Float32Array
+  
   constructor (structure: Structure, viewer: Viewer, params: Partial<HyperballRepresentationParameters>) {
     super(structure, viewer, params)
 
@@ -71,7 +75,7 @@ class HyperballRepresentation extends LicoriceRepresentation {
         disableImpostor: this.disableImpostor,
         dullInterior: true
       }) as SphereBufferParameters
-    )
+    ) as SphereGeometryBuffer
 
     this.__center = new Float32Array(sview.bondCount * 3)
 

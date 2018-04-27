@@ -38,7 +38,7 @@ function getLoneAtomSet (structure: Structure | StructureView) {
 interface LineRepresentationParameters extends StructureRepresentationParameters {
   multipleBond: 'off' | 'symmetric' | 'offset'
   bondSpacing: number
-  lineWidth: number
+  linewidth: number
   lines: boolean
   crosses: 'off' | 'all' | 'lone'
   crossSize: number
@@ -56,6 +56,12 @@ interface CrossData {
  * Line representation
  */
 class LineRepresentation extends StructureRepresentation {
+  protected multipleBond: 'off' | 'symmetric' | 'offset'
+  protected bondSpacing: number
+  protected linewidth: number
+  protected lines: boolean
+  protected crosses: 'off' | 'all' | 'lone'
+  protected crossSize: number
   /**
    * Create Line representation object
    * @param {Structure} structure - the structure to be represented

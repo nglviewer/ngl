@@ -24,6 +24,10 @@ interface TraceRepresentationParameters extends StructureRepresentationParameter
  * Trace Representation
  */
 class TraceRepresentation extends StructureRepresentation {
+  protected subdiv: number
+  protected tension: number
+  protected smoothSheet: boolean
+  
   constructor (structure: Structure, viewer: Viewer, params: Partial<TraceRepresentationParameters>) {
     super(structure, viewer, params)
 

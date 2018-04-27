@@ -14,7 +14,7 @@ import { Structure } from '../ngl.js';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';
-import { TextBufferData } from '../buffer/text-buffer';
+import TextBuffer, { TextBufferData } from '../buffer/text-buffer';
 
 export interface LabelDataField {
   position?: boolean
@@ -60,7 +60,7 @@ export interface MeasurementRepresentationParameters extends StructureRepresenta
   labelBackgroundOpacity: number
   labelFixedSize: boolean
   lineOpacity: number
-  lineWidth: number
+  linewidth: number
 }
 
 /**
@@ -68,6 +68,35 @@ export interface MeasurementRepresentationParameters extends StructureRepresenta
  * @interface
  */
 abstract class MeasurementRepresentation extends StructureRepresentation {
+  protected n: number
+  protected labelVisible: boolean
+  protected labelSize: number
+  protected labelColor: number
+  protected labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+  protected labelText: string
+  protected labelFormat: string
+  protected labelGrouping: 'atom'|'residue'
+  protected labelFontFamily: 'sans-serif'|'monospace'|'serif'
+  protected labelFontStyle: 'normal'|'italic'
+  protected labelFontWeight: 'normal'|'bold'
+  protected labelsdf: boolean
+  protected labelXOffset: number
+  protected labelYOffset: number
+  protected labelZOffset: number
+  protected labelAttachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
+  protected labelBorder: boolean
+  protected labelBorderColor: number
+  protected labelBorderWidth: number
+  protected labelBackground: boolean
+  protected labelBackgroundColor: number
+  protected labelBackgroundMargin: number
+  protected labelBackgroundOpacity: number
+  protected labelFixedSize: boolean
+  protected lineOpacity: number
+  protected linewidth: number
+  protected lineVisible: boolean
+
+  protected textBuffer: TextBuffer
   /**
    * Handles common label settings and position logic for
    * distance, angle and dihedral representations

@@ -38,6 +38,12 @@ export interface CartoonRepresentationParameters extends StructureRepresentation
  * } );
  */
 class CartoonRepresentation extends StructureRepresentation {
+  protected aspectRatio: number
+  protected tension: number
+  protected capped: boolean
+  protected smoothSheet: boolean
+  protected subdiv: number
+  
   /**
    * Create Cartoon representation object
    * @param {Structure} structure - the structure to be represented

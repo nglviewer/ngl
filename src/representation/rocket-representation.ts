@@ -37,6 +37,15 @@ interface AxisData {
  * Rocket Representation
  */
 class RocketRepresentation extends StructureRepresentation {
+
+  protected localAngle: number
+  protected centerDist: number
+  protected ssBorder: boolean
+  protected radialSegments: number
+  protected openEnded: boolean
+  protected disableImpostor: boolean
+  // protected helixbundleList: Helixbundle[]
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<RocketRepresentationParameters>) {
     super(structure, viewer, params)
 
@@ -59,13 +68,13 @@ class RocketRepresentation extends StructureRepresentation {
 
     }, this.parameters)
 
-    this.helixbundleList = []
+    // this.helixbundleList = []
 
     this.init(params)
   }
 
   init (params: Partial<RocketRepresentationParameters>) {
-    var p = params || {}
+    let p = params || {}
     p.colorScheme = defaults(p.colorScheme, 'sstruc')
     p.radiusSize = defaults(p.radiusSize, 1.5)
     p.radiusScale = defaults(p.radiusScale, 1.0)
@@ -81,14 +90,14 @@ class RocketRepresentation extends StructureRepresentation {
 
   createData (sview: StructureView) {
     let length = 0
-    var axisList:Axis[] = []
-    var helixbundleList:Helixbundle[] = []
+    const axisList:Axis[] = []
+    const helixbundleList:Helixbundle[] = []
 
     this.structure.eachPolymer(polymer => {
       if (polymer.residueCount < 4 || polymer.isNucleic()) return
 
-      var helixbundle = new Helixbundle(polymer)
-      var axis = helixbundle.getAxis(
+      const helixbundle = new Helixbundle(polymer)
+      const axis = helixbundle.getAxis(
         this.localAngle, this.centerDist, this.ssBorder,
         this.getColorParams(), this.getRadiusParams()
       )
@@ -98,7 +107,7 @@ class RocketRepresentation extends StructureRepresentation {
       helixbundleList.push(helixbundle)
     }, sview.getSelection())
 
-    var axisData = {
+    const axisData = {
       begin: new Float32Array(length * 3),
       end: new Float32Array(length * 3),
       size: new Float32Array(length),
@@ -125,7 +134,7 @@ class RocketRepresentation extends StructureRepresentation {
       )
     }
 
-    var cylinderBuffer = new CylinderBuffer(
+    const cylinderBuffer = new CylinderBuffer(
       {
         position1: axisData.begin,
         position2: axisData.end,

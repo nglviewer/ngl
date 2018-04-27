@@ -13,6 +13,7 @@ import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffe
 import PointBuffer from '../buffer/point-buffer.js'
 import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
+import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 
 interface DotDataFields {
   color?: boolean,
@@ -53,6 +54,27 @@ interface DotRepresentationParameters extends RepresentationParameters {
  * Dot representation
  */
 class DotRepresentation extends Representation {
+  protected thresholdType: 'value'|'value'|'sigma'|'sigma'
+  protected thresholdMin: number
+  protected thresholdMax: number
+  protected thresholdOut: boolean
+  protected dotType: ''|'sphere'|'point'
+  protected radiusType: ''|'value'|'abs-value'|'value-min'|'deviation'|'size'|'radius' //TODO had to add 'radius' because of test in line 333
+  protected radius: number
+  protected scale: number
+  protected sphereDetail: number
+  protected disableImpostor: boolean
+  protected pointSize: number
+  protected sizeAttenuation: boolean
+  protected sortParticles: boolean
+  protected useTexture: boolean
+  protected alphaTest: number
+  protected forceTransparent: boolean
+  protected edgeBleach: number
+
+  protected surface: Surface|undefined
+  protected volume: FilteredVolume|undefined
+  protected dotBuffer: SphereBuffer|PointBuffer
   /**
    * Create Dot representation object
    * @param {Surface|Volume} surface - the surface or volume to be represented
@@ -223,13 +245,13 @@ class DotRepresentation extends Representation {
     } else {
       var surface = this.surface
       Object.assign(dotData, {
-        position: surface.getPosition(),
-        color: surface.getColor(this.getColorParams())
+        position: (surface as Surface).getPosition(),
+        color: (surface as Surface).getColor(this.getColorParams())
       })
       if (this.dotType === 'sphere') {
         Object.assign(dotData, {
-          radius: surface.getSize(this.radius, this.scale),
-          picking: surface.getPicking()
+          radius: (surface as Surface).getSize(this.radius, this.scale),
+          picking: (surface as Surface).getPicking()
         })
       }
     }
@@ -242,7 +264,7 @@ class DotRepresentation extends Representation {
           disableImpostor: this.disableImpostor,
           dullInterior: false
         }) as SphereBufferParameters
-      )
+      ) as SphereGeometryBuffer
     } else {
       this.dotBuffer = new PointBuffer(
         dotData,
@@ -258,7 +280,7 @@ class DotRepresentation extends Representation {
       )
     }
 
-    this.bufferList.push(this.dotBuffer)
+    this.bufferList.push(this.dotBuffer as SphereGeometryBuffer)
   }
 
   update (what: DotDataFields = {}) {
@@ -275,7 +297,7 @@ class DotRepresentation extends Representation {
         })
       } else {
         Object.assign(dotData, {
-          color: this.surface.getColor(
+          color: (this.surface as Surface).getColor(
             this.getColorParams()
           )
         })
@@ -291,14 +313,14 @@ class DotRepresentation extends Representation {
         })
       } else {
         Object.assign(dotData, {
-          radius: this.surface.getSize(
+          radius: (this.surface as Surface).getSize(
             this.radius, this.scale
           )
         })
       }
     }
 
-    this.dotBuffer.setAttributes(dotData)
+    (this.dotBuffer as SphereGeometryBuffer).setAttributes(dotData)
   }
 
   setParameters (params: Partial<DotRepresentationParameters>, what: DotDataFields = {}, rebuild: boolean) {
@@ -333,7 +355,7 @@ class DotRepresentation extends Representation {
       if (params.radiusType === 'radius') {
         this.radius = 0.1
       } else {
-        this.radius = params.radiusType
+        this.radius = parseFloat(params.radiusType)
       }
       what.radius = true
       if (this.dotType === 'sphere' &&

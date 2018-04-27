@@ -62,8 +62,6 @@ interface TextDataField {
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 export interface LabelRepresentationParameters extends RepresentationParameters {
-  clipNear: number
-  opacity: number
   labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
   labelText: string
   labelFormat: string
@@ -88,6 +86,27 @@ export interface LabelRepresentationParameters extends RepresentationParameters 
  * Label representation
  */
 class LabelRepresentation extends StructureRepresentation {
+  
+  protected labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+  protected labelText: string
+  protected labelFormat: string
+  protected labelGrouping: 'atom'|'residue'
+  protected fontFamily: 'sans-serif'|'monospace'|'serif'
+  protected fontStyle: 'normal'|'italic'
+  protected fontWeight: 'normal'|'bold'
+  protected xOffset: number
+  protected yOffset: number
+  protected zOffset: number
+  protected attachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
+  protected showBorder: boolean
+  protected borderColor: number
+  protected borderWidth: number
+  protected showBackground: boolean
+  protected backgroundColor: number
+  protected backgroundMargin: number
+  protected backgroundOpacity: number
+  protected fixedSize: boolean
+  
   /**
    * Create Label representation object
    * @param {Structure} structure - the structure to be represented

@@ -19,7 +19,7 @@ export type SurfaceDataFields = {position: boolean, color: boolean, index: boole
 export interface SurfaceData {
   position?: Float32Array
   color?: Float32Array
-  index?: Float32Array
+  index?: Uint32Array|Uint16Array
   normal?: Float32Array
 }
 /**
@@ -29,6 +29,8 @@ export interface SurfaceData {
  *
  * @property {String} isolevelType - Meaning of the isolevel value. Either *value* for the literal value or *sigma* as a factor of the sigma of the data. For volume data only.
  * @property {Float} isolevel - The value at which to create the isosurface. For volume data only.
+ * @property {Boolean} negateIsolevel - For volume data only.
+ * @property {Boolean} isolevelScroll - For volume data only
  * @property {Integer} smooth - How many iterations of laplacian smoothing after surface triangulation. For volume data only.
  * @property {Boolean} background - Render the surface in the background, unlit.
  * @property {Boolean} opaqueBack - Render the back-faces (where normals point away from the camera) of the surface opaque, ignoring the transparency parameter.
@@ -49,13 +51,41 @@ interface SurfaceRepresentationParameters extends RepresentationParameters {
 /**
  * Surface representation
  */
-class SurfaceRepresentation extends Representation {
-  /**
+/**
    * Create Surface representation object
    * @param {Surface|Volume} surface - the surface or volume to be represented
    * @param {Viewer} viewer - a viewer object
    * @param {SurfaceRepresentationParameters} params - surface representation parameters
    */
+class SurfaceRepresentation extends Representation {
+  protected surface: Surface|Volume|undefined
+  protected volume: Volume|undefined
+  protected boxCenter: Vector3
+  protected __boxCenter: Vector3
+  protected box: Box3
+  protected __box: Box3
+  protected _position: Vector3
+  protected isolevelType: 'value'|'sigma'
+  protected isolevel: number
+  protected negateIsolevel: boolean
+  protected isolevelScroll: boolean
+  protected smooth: number
+  protected background: boolean
+  protected opaqueBack: boolean
+  protected boxSize: number
+  protected colorVolume: Volume
+  protected contour: boolean
+  protected useWorker: boolean
+  protected wrap: boolean
+
+  protected __isolevel: number
+  protected __smooth: number
+  protected __contour: boolean
+  protected __wrap: boolean
+  protected __boxSize: number
+
+  setBox: () => void
+
   constructor (surface: Surface, viewer: Viewer, params: Partial<SurfaceRepresentationParameters>) {
     super(surface, viewer, params)
 
@@ -125,6 +155,8 @@ class SurfaceRepresentation extends Representation {
         this.setParameters({ 'boxCenter': this._position })
       }
     }
+
+    this.toBePrepared = true
 
     this.viewer.signals.ticked.add(this.setBox, this)
 
@@ -220,9 +252,9 @@ class SurfaceRepresentation extends Representation {
 
   create () {
     const sd = {
-      position: this.surface.getPosition(),
-      color: this.surface.getColor(this.getColorParams()),
-      index: this.surface.getIndex()
+      position: (this.surface as Surface).getPosition(),
+      color: (this.surface as Surface).getColor(this.getColorParams()),
+      index: (this.surface as Surface).getIndex()
     }
 
     let buffer
@@ -234,8 +266,8 @@ class SurfaceRepresentation extends Representation {
       )
     } else {
       Object.assign(sd, {
-        normal: this.surface.getNormal(),
-        picking: this.surface.getPicking()
+        normal: (this.surface as Surface).getNormal(),
+        picking: (this.surface as Surface).getPicking()
       })
 
       const surfaceBuffer = new SurfaceBuffer(
@@ -261,21 +293,21 @@ class SurfaceRepresentation extends Representation {
     const surfaceData: SurfaceData = {}
 
     if (what.position) {
-      surfaceData.position = this.surface.getPosition()
+      surfaceData.position = (this.surface as Surface).getPosition()
     }
 
     if (what.color) {
-      surfaceData.color = this.surface.getColor(
+      surfaceData.color = (this.surface as Surface).getColor(
         this.getColorParams()
       )
     }
 
     if (what.index) {
-      surfaceData.index = this.surface.getIndex()
+      surfaceData.index = (this.surface as Surface).getIndex()
     }
 
     if (what.normal) {
-      surfaceData.normal = this.surface.getNormal()
+      surfaceData.normal = (this.surface as Surface).getNormal()
     }
 
     this.bufferList.forEach(function (buffer) {

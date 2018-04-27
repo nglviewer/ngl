@@ -13,6 +13,8 @@ import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import { AtomDataFields } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
+import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 
 interface UnitcellRepresentationParameters extends StructureRepresentationParameters {
   radiusSize: number
@@ -25,6 +27,9 @@ interface UnitcellRepresentationParameters extends StructureRepresentationParame
  * Unitcell Representation
  */
 class UnitcellRepresentation extends StructureRepresentation {
+  sphereBuffer: SphereBuffer
+  cylinderBuffer: CylinderBuffer
+
   constructor (structure: Structure, viewer: Viewer, params: Partial<UnitcellRepresentationParameters>) {
     super(structure, viewer, params)
 
@@ -91,7 +96,7 @@ class UnitcellRepresentation extends StructureRepresentation {
 
     this.dataList.push({
       sview: this.structureView,
-      bufferList: [ this.sphereBuffer, this.cylinderBuffer ]
+      bufferList: [ this.sphereBuffer as SphereGeometryBuffer, this.cylinderBuffer as CylinderGeometryBuffer ]
     })
   }
 
@@ -126,8 +131,8 @@ class UnitcellRepresentation extends StructureRepresentation {
       Object.assign(cylinderData, {radius: unitcellData.edge.radius})
     }
 
-    this.sphereBuffer.setAttributes(sphereData)
-    this.cylinderBuffer.setAttributes(cylinderData)
+    (this.sphereBuffer as SphereGeometryBuffer).setAttributes(sphereData);
+    (this.cylinderBuffer as CylinderGeometryBuffer).setAttributes(cylinderData)
   }
 }
 

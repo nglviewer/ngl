@@ -24,6 +24,7 @@ import { Structure } from '../ngl';
 import StructureView from '../structure/structure-view';
 import { BondDataFields, BondDataParams } from '../structure/structure-data';
 import { StructureRepresentationData } from './structure-representation';
+import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 
 /**
  * Distance representation parameter object.
@@ -44,12 +45,17 @@ import { StructureRepresentationData } from './structure-representation';
 interface DistanceRepresentationParameters extends MeasurementRepresentationParameters {
   labelUnit: string
   atomPair: AtomPair
+  useCylinder: boolean
 }
 type AtomPair = (number|string)[][]
 /**
  * Distance representation
  */
 class DistanceRepresentation extends MeasurementRepresentation {
+  protected labelUnit: string
+  protected atomPair: AtomPair
+  protected useCylinder: boolean
+  protected distanceBuffer: WideLineBuffer|CylinderGeometryBuffer
   /**
    * Create Distance representation object
    * @example
@@ -229,8 +235,8 @@ class DistanceRepresentation extends MeasurementRepresentation {
           radialSegments: this.radialSegments,
           disableImpostor: this.disableImpostor,
           dullInterior: true
-        })
-      )
+        }) 
+      ) as CylinderGeometryBuffer
     } else {
       this.distanceBuffer = new WideLineBuffer(
         getFixedLengthDashData(bondData as CylinderBufferData),
@@ -272,7 +278,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
       Object.assign( distanceData, {radius: bondData.radius})
     }
 
-    this.distanceBuffer.setAttributes(distanceData)
+    (this.distanceBuffer as CylinderGeometryBuffer).setAttributes(distanceData)
   }
 
   setParameters (params: Partial<DistanceRepresentationParameters>) {
@@ -283,13 +289,13 @@ class DistanceRepresentation extends MeasurementRepresentation {
 
     if (!this.useCylinder) {
       if (params && params.lineOpacity) {
-        this.distanceBuffer.setParameters({ opacity: params.lineOpacity })
+        (this.distanceBuffer as WideLineBuffer).setParameters({ opacity: params.lineOpacity })
       }
       if (params && params.opacity !== undefined) {
-        this.distanceBuffer.setParameters({ opacity: this.lineOpacity })
+        (this.distanceBuffer as WideLineBuffer).setParameters({ opacity: this.lineOpacity })
       }
       if (params && params.linewidth) {
-        this.distanceBuffer.setParameters({ linewidth: params.linewidth })
+        (this.distanceBuffer as WideLineBuffer).setParameters({ linewidth: params.linewidth })
       }
     }
 

@@ -101,7 +101,7 @@ class Representation {
 
   lazy: boolean
   lazyProps: { build: boolean, bufferParams: BufferParameters | {}, what: {}}
-  
+  protected name: string
   protected clipNear: number
   protected clipRadius: number
   protected clipCenter: Vector3
@@ -124,11 +124,20 @@ class Representation {
   protected interiorColor: number
   protected interiorDarkening: number
   protected disablePicking: boolean
+  protected sphereDetail: number
+  protected radialSegments: number
+  protected openEnded: boolean
+  protected disableImpostor: boolean
+  protected disposed: boolean
   
   private matrix: Matrix4
   
   private quality: string
   visible: boolean
+
+  protected manualAttach: ()=> any
+
+  protected toBePrepared: boolean
 
   [key: string]: any
 
@@ -256,6 +265,8 @@ class Representation {
     if (this.parameters.colorScheme) {
       this.parameters.colorScheme.options = ColormakerRegistry.getSchemes()
     }
+
+    this.toBePrepared = false
   }
 
   init (params: Partial<RepresentationParameters>) {
@@ -352,6 +363,7 @@ class Representation {
     if (tp.disableImpostor) {
       this.disableImpostor = defaults(p.disableImpostor, false)
     }
+
   }
 
   getColorParams (p?: {[k: string]: any}): { scheme: string, [k: string]: any } & ColormakerParameters {
@@ -420,7 +432,9 @@ class Representation {
   }
 
   // TODO
-  // get prepare(){ return false; }
+  prepare (cb: ()=> void) {
+
+  }
 
   create () {
     // this.bufferList.length = 0;
@@ -436,7 +450,7 @@ class Representation {
       return
     }
 
-    if (!this.prepare) {
+    if (!this.toBePrepared) {
       this.tasks.increment()
       this.make()
       return
@@ -478,7 +492,7 @@ class Representation {
       if (Debug) Log.timeEnd('Representation.make ' + this.type)
     }
 
-    if (this.prepare) {
+    if (this.toBePrepared) {
       this.prepare(_make)
     } else {
       _make()

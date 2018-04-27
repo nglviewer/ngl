@@ -25,6 +25,10 @@ interface RibbonRepresentationParameters extends StructureRepresentationParamete
  * Ribbon Representation
  */
 class RibbonRepresentation extends StructureRepresentation {
+  protected subdiv: number
+  protected tension: number
+  protected smoothSheet: boolean
+  
   constructor (structure: Structure, viewer: Viewer, params: Partial<RibbonRepresentationParameters>) {
     super(structure, viewer, params)
 
