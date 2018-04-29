@@ -221,7 +221,7 @@ function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: num
     }
   }
 }
-laplacianSmooth.prototype.__deps = [ computeVertexNormals ]
+Object.assign(laplacianSmooth, {__deps: [ computeVertexNormals ]})
 
 function computeVertexNormals (position: Float32Array, index: Float32Array, normal: Float32Array|undefined) {
   var i, il
@@ -297,9 +297,9 @@ function computeVertexNormals (position: Float32Array, index: Float32Array, norm
 
   return normal
 }
-computeVertexNormals.prototype.__deps = [
+Object.assign(computeVertexNormals, {__deps: [
   v3sub, v3cross, v3fromArray, normalizeVector3array
-]
+]})
 
 function getRadiusDict (radiusList: number[]) {
   var radiusDict: {[k: number]: boolean} = {}
@@ -385,12 +385,12 @@ function getSurfaceGrid (min: Float32Array, max: Float32Array, maxRadius: number
     scaleFactor: scaleFactor
   }
 }
-getSurfaceGrid.prototype.__deps = [
+Object.assign(getSurfaceGrid, {'__deps': [
   degToRad,
   v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
   v3floor, v3ceil, v3sub, v3negate,
   m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
-]
+]})
 
 export {
   laplacianSmooth,

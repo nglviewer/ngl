@@ -990,6 +990,6 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
     }
   }
 }
-MarchingCubes.prototype.__deps = [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ]
+Object.assign(MarchingCubes, {__deps: [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ]})
 
 export default MarchingCubes

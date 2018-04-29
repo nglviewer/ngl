@@ -5,7 +5,7 @@
  */
 
 import { VolumeSurface } from './volume.js'
-import Grid from '../geometry/grid.js'
+import Grid from '../geometry/grid'
 import { computeBoundingBox } from '../math/vector-utils.js'
 import { getRadiusDict, getSurfaceGrid } from './surface-utils.js'
 
@@ -448,6 +448,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     var boundPoint = new Grid(
       pLength, pWidth, pHeight, Uint16Array, 3
     )
+    console.log(boundPoint.set, boundPoint.index)
     var pWH = pWidth * pHeight
     var cutRSq = cutRadius * cutRadius
 

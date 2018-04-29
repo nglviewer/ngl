@@ -11,6 +11,7 @@ import {
   computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
 } from '../math/vector-utils.js'
 import { defaults } from '../utils'
+import { NumberArray } from '../types.js';
 
 /**
  * Modifed from SpatialHash
@@ -30,7 +31,15 @@ import { defaults } from '../utils'
  * @param {Float32Array} max - xyz max coordinates
  * @param {Float} maxDistance - max distance
  */
-function AVHash (atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
+interface AVHash {
+  neighbourListLength: number
+  withinRadii: (x: number, y: number, z: number, rExtra: number, out: Int32Array) => void
+}
+interface AVHashConstructor {
+  (this: AVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): void
+  new (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): AVHash
+}
+const AVHash = (function AVHash (this: AVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number) {
   var nAtoms = atomsX.length
 
   var minX = min[ 0 ]
@@ -41,7 +50,7 @@ function AVHash (atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
   var maxY = max[ 1 ]
   var maxZ = max[ 2 ]
 
-  function hashFunc (w, minW) {
+  function hashFunc (w: number, minW: number) {
     return Math.floor((w - minW) / maxDistance)
   }
 
@@ -54,7 +63,7 @@ function AVHash (atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
   var jkDim = jDim * kDim
 
   /* Get cellID for cartesian x,y,z */
-  var cellID = function (x, y, z) {
+  var cellID = function (x: number, y: number, z: number) {
     return (((hashFunc(x, minX) * jDim) + hashFunc(y, minY)) * kDim) + hashFunc(z, minZ)
   }
 
@@ -112,7 +121,7 @@ function AVHash (atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
    * @param  {Float32Array} out - pre-allocated output array
    * @return {undefined}
    */
-  this.withinRadii = function (x, y, z, rExtra, out) {
+  this.withinRadii = function (x: number, y: number, z: number, rExtra: number, out: Int32Array) {
     var outIdx = 0
 
     var nearI = hashFunc(x, minX)
@@ -156,9 +165,13 @@ function AVHash (atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
     // Add terminator
     out[ outIdx ] = -1
   }
-}
+}) as AVHashConstructor
 
-function AVSurface (coordList, radiusList, indexList) {
+
+interface AVSurface {
+  getSurface: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: boolean, contour: boolean) => any
+}
+function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float32Array, indexList: Uint16Array|Uint32Array) {
   // Field generation method adapted from AstexViewer (Mike Hartshorn)
   // by Fred Ludlow.
   // Other parts based heavily on NGL (Alexander Rose) EDT Surface class
@@ -166,59 +179,59 @@ function AVSurface (coordList, radiusList, indexList) {
   // Should work as a drop-in alternative to EDTSurface (though some of
   // the EDT paramters are not relevant in this method).
 
-  var nAtoms = radiusList.length
+  const nAtoms = radiusList.length
 
-  var x = new Float32Array(nAtoms)
-  var y = new Float32Array(nAtoms)
-  var z = new Float32Array(nAtoms)
+  const x = new Float32Array(nAtoms)
+  const y = new Float32Array(nAtoms)
+  const z = new Float32Array(nAtoms)
 
-  for (var i = 0; i < nAtoms; i++) {
-    var ci = 3 * i
+  for (let i = 0; i < nAtoms; i++) {
+    const ci = 3 * i
     x[ i ] = coordList[ ci ]
     y[ i ] = coordList[ ci + 1 ]
     z[ i ] = coordList[ ci + 2 ]
   }
 
-  var bbox = computeBoundingBox(coordList)
+  let bbox = computeBoundingBox(coordList)
   if (coordList.length === 0) {
     bbox[ 0 ].set([ 0, 0, 0 ])
     bbox[ 1 ].set([ 0, 0, 0 ])
   }
-  var min = bbox[0]
-  var max = bbox[1]
+  const min = bbox[0]
+  const max = bbox[1]
 
-  var r, r2 // Atom positions, expanded radii (squared)
-  var maxRadius
+  let r: Float32Array, r2: Float32Array // Atom positions, expanded radii (squared)
+  let maxRadius: number
 
   // Parameters
-  var probeRadius, scaleFactor, setAtomID, probePositions
+  let probeRadius: number, scaleFactor: number, setAtomID: boolean, probePositions: number
 
   // Cache last value for obscured test
-  var lastClip = -1
+  let lastClip = -1
 
   // Grid params
-  var dim, matrix, grid, atomIndex
+  let dim: Float32Array, matrix: Float32Array, grid: NumberArray, atomIndex: Int32Array
 
   // grid indices -> xyz coords
-  var gridx, gridy, gridz
+  let gridx: Float32Array, gridy: Float32Array, gridz: Float32Array
 
   // Lookup tables:
-  var sinTable, cosTable
+  let sinTable: Float32Array, cosTable: Float32Array
 
   // Spatial Hash
-  var hash
+  let hash: AVHash
 
   // Neighbour array to be filled by hash
-  var neighbours
+  let neighbours: Int32Array
 
   // Vectors for Torus Projection
-  var mid = new Float32Array([ 0.0, 0.0, 0.0 ])
-  var n1 = new Float32Array([ 0.0, 0.0, 0.0 ])
-  var n2 = new Float32Array([ 0.0, 0.0, 0.0 ])
+  const mid = new Float32Array([ 0.0, 0.0, 0.0 ])
+  const n1 = new Float32Array([ 0.0, 0.0, 0.0 ])
+  const n2 = new Float32Array([ 0.0, 0.0, 0.0 ])
 
-  var ngTorus
+  let ngTorus: number
 
-  function init (_probeRadius, _scaleFactor, _setAtomID, _probePositions) {
+  function init (_probeRadius?: number, _scaleFactor?: number, _setAtomID?: boolean, _probePositions?: number) {
     probeRadius = defaults(_probeRadius, 1.4)
     scaleFactor = defaults(_scaleFactor, 2.0)
     setAtomID = defaults(_setAtomID, true)
@@ -227,14 +240,14 @@ function AVSurface (coordList, radiusList, indexList) {
     r = new Float32Array(nAtoms)
     r2 = new Float32Array(nAtoms)
 
-    for (var i = 0; i < r.length; ++i) {
+    for (let i = 0; i < r.length; ++i) {
       var rExt = radiusList[ i ] + probeRadius
       r[ i ] = rExt
       r2[ i ] = rExt * rExt
     }
 
     maxRadius = 0
-    for (var j = 0; j < r.length; ++j) {
+    for (let j = 0; j < r.length; ++j) {
       if (r[ j ] > maxRadius) maxRadius = r[ j ]
     }
 
@@ -245,14 +258,14 @@ function AVSurface (coordList, radiusList, indexList) {
     lastClip = -1
   }
 
-  function fillGridDim (a, start, step) {
-    for (var i = 0; i < a.length; i++) {
+  function fillGridDim (a: Float32Array, start: number, step: number) {
+    for (let i = 0; i < a.length; i++) {
       a[i] = start + (step * i)
     }
   }
 
   function initializeGrid () {
-    var surfGrid = getSurfaceGrid(
+    const surfGrid = getSurfaceGrid(
       min, max, maxRadius, scaleFactor, 0.0
     )
 
@@ -293,14 +306,14 @@ function AVSurface (coordList, radiusList, indexList) {
     neighbours = new Int32Array(hash.neighbourListLength)
   }
 
-  function obscured (x, y, z, a, b) {
+  function obscured (x: number, y: number, z: number, a: number, b: number) {
     // Is the point at x,y,z obscured by any of the atoms
     // specifeid by indices in neighbours. Ignore indices
     // a and b (these are the relevant atoms in projectPoints/Torii)
 
     // Cache the last clipped atom (as very often the same one in
     // subsequent calls)
-    var ai
+    let ai: number
 
     if (lastClip !== -1) {
       ai = lastClip
@@ -326,7 +339,7 @@ function AVSurface (coordList, radiusList, indexList) {
     return -1
   }
 
-  function singleAtomObscures (ai, x, y, z) {
+  function singleAtomObscures (ai: number, x: number, y: number, z: number) {
     var ci = 3 * ai
     var ra2 = r2[ ai ]
     var dx = coordList[ ci ] - x
@@ -440,7 +453,7 @@ function AVSurface (coordList, radiusList, indexList) {
     }
   }
 
-  function projectTorus (a, b) {
+  function projectTorus (a: number, b: number) {
     var r1 = r[ a ]
     var r2 = r[ b ]
     var dx = mid[0] = x[ b ] - x[ a ]
@@ -463,7 +476,7 @@ function AVSurface (coordList, radiusList, indexList) {
     v3normalize(mid, mid)
 
     // Create normal to line
-    normalToLine(n1, mid)
+    normalToLine(n1 as any, mid)
     v3normalize(n1, n1)
 
     // Cross together for second normal vector
@@ -534,7 +547,7 @@ function AVSurface (coordList, radiusList, indexList) {
     }
   }
 
-  function normalToLine (out, p) {
+  function normalToLine (out: Int32Array, p: Float32Array) {
     out[ 0 ] = out[ 1 ] = out[ 2 ] = 1.0
     if (p[ 0 ] !== 0) {
       out[ 0 ] = (p[ 1 ] + p[ 2 ]) / -p[ 0 ]
@@ -558,7 +571,7 @@ function AVSurface (coordList, radiusList, indexList) {
     }
   }
 
-  function getVolume (probeRadius, scaleFactor, setAtomID) {
+  function getVolume (probeRadius: number, scaleFactor: number, setAtomID: boolean) {
     // Basic steps are:
     // 1) Initialize
     // 2) Project points
@@ -583,7 +596,7 @@ function AVSurface (coordList, radiusList, indexList) {
     console.timeEnd('AVSurface.getVolume')
   }
 
-  this.getSurface = function (type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour) {
+  this.getSurface = function (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: boolean, contour: boolean) {
     // type and cutoff left in for compatibility with EDTSurface.getSurface
     // function signature
 
@@ -593,14 +606,14 @@ function AVSurface (coordList, radiusList, indexList) {
       grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
     )
 
-    return volsurf.getSurface(probeRadius, false, undefined, matrix, contour)
+    return volsurf.getSurface!(probeRadius, false, undefined, matrix, contour)
   }
 }
-AVSurface.__deps = [
+Object.assign(AVSurface, {__deps: [
   getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
   v3multiplyScalar, v3cross, v3normalize,
   AVHash,
   defaults
-]
+]})
 
 export { AVSurface, AVHash }
