@@ -6,9 +6,20 @@
 
 import { Debug, Log } from '../globals'
 import { defaults } from '../utils'
+import Streamer from '../streamer/streamer';
+
+export interface ParserParameters {
+  name: string
+  path: string
+}
 
 class Parser {
-  constructor (streamer, params) {
+  streamer: Streamer
+  name: string
+  path: string
+  [k: string]: any
+  
+  constructor (streamer: Streamer, params: Partial<ParserParameters>) {
     var p = params || {}
 
     this.streamer = streamer

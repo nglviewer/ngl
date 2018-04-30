@@ -32,7 +32,7 @@ const EntityTypeString = {
   'macrolide': MacrolideEntity,
   'water': WaterEntity,
 }
-type EntityTypeString = keyof typeof EntityTypeString
+export type EntityTypeString = keyof typeof EntityTypeString
 
 /**
  * Entity of a {@link Structure}
@@ -51,7 +51,7 @@ export default class Entity {
    * @param {String} type - entity type
    * @param {Array} chainIndexList - entity chainIndexList
    */
-  constructor (structure: Structure, index: number, description = '', type?: EntityTypeString, chainIndexList = []) {
+  constructor (structure: Structure, index: number, description = '', type?: EntityTypeString, chainIndexList: number[] = []) {
     this.structure = structure
     this.index = index
     this.description = description

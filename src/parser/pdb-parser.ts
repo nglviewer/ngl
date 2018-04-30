@@ -9,17 +9,20 @@ import { Matrix4 } from 'three'
 import { Debug, Log, ParserRegistry } from '../globals'
 import { defaults } from '../utils'
 import StructureParser from './structure-parser'
-import Entity from '../structure/entity'
+import Entity, { EntityTypeString } from '../structure/entity'
 import Unitcell from '../symmetry/unitcell'
-import Assembly from '../symmetry/assembly'
+import Assembly, { AssemblyPart } from '../symmetry/assembly'
 import { WaterNames } from '../structure/structure-constants'
 import {
   assignSecondaryStructure, buildUnitcellAssembly,
   calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from '../structure/structure-utils'
+import Streamer from '../streamer/streamer';
+import { ParserParameters } from './parser';
+import { NumberArray } from '../types';
 
 // PDB helix record encoding
-const HelixTypes = {
+const HelixTypes: {[k: number]: string} = {
   1: 'h', // Right-handed alpha (default)
   2: 'h', // Right-handed omega
   3: 'i', // Right-handed pi
@@ -30,7 +33,7 @@ const HelixTypes = {
   8: 'h', // Left-handed gamma
   9: 'h', // 27 ribbon/helix
   10: 'h', // Polyproline
-  '': 'h'
+  NaN: 'h'
 }
 
 const dAminoAcids = [
@@ -66,11 +69,14 @@ const entityKeyList = [
 
 const reWhitespace = /\s+/
 
-function getModresId (resno, chainname, inscode) {
+function getModresId (resno: number, chainname?: string, inscode?: string) {
   let id = `${resno}`
   if (chainname) id += `:${chainname}`
   if (inscode) id += `^${inscode}`
   return id
+}
+interface PdbParserParameters extends ParserParameters {
+  hex: boolean
 }
 
 class PdbParser extends StructureParser {
@@ -83,7 +89,7 @@ class PdbParser extends StructureParser {
    *                                residue numbers >9.999
    * @return {undefined}
    */
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: PdbParserParameters) {
     const p = params || {}
 
     super(streamer, p)
@@ -123,27 +129,37 @@ class PdbParser extends StructureParser {
     const frames = s.frames
     const boxes = s.boxes
     let doFrames = false
-    let currentFrame, currentCoord
+    let currentFrame: NumberArray, currentCoord: number
 
     const biomolDict = s.biomolDict
-    let currentBiomol
-    let currentPart
-    let currentMatrix
+    let currentBiomol: Assembly
+    let currentPart: AssemblyPart
+    let currentMatrix: Matrix4
 
     let line, recordName
-    let serial, chainname, resno, resname, occupancy
-    let inscode, atomname, hetero, bfactor, altloc
+    let serial, chainname: string, resno: number, resname: string, occupancy: number
+    let inscode: string, atomname, hetero: boolean, bfactor: number, altloc
 
     let startChain, startResi, startIcode
     let endChain, endResi, endIcode
 
-    let serialDict = {}
-    const unitcellDict = {}
-    const bondDict = {}
+    let serialDict: {[k: number]: number} = {}
+    const unitcellDict: {
+      origx?: Matrix4
+      scale?: Matrix4
+      a?: number
+      b?: number
+      c?: number
+      alpha?: number
+      beta?: number
+      gamma?: number
+      spacegroup?: string
+    } = {}
+    const bondDict: {[k: string]: boolean} = {}
 
-    const entityDataList = []
-    let currentEntityData
-    let currentEntityKey
+    const entityDataList: {chainList: string[], name: string}[] = []
+    let currentEntityData: {chainList: string[], name: string}
+    let currentEntityKey: 'MOL_ID'|'MOLECULE'|'CHAIN'|'FRAGMENT'|'SYNONYM'|'EC'|'ENGINEERED'|'MUTATION'|'OTHER_DETAILS'
     // MOL_ID                 Numbers each component; also used in  SOURCE to associate
     //                        the information.
     // MOLECULE               Name of the macromolecule.
@@ -158,19 +174,19 @@ class PdbParser extends StructureParser {
     // MUTATION               Indicates if there is a mutation.
     // OTHER_DETAILS          Additional comments.
 
-    const hetnameDict = {}
-    const modresDict = {}
+    const hetnameDict: {[k: string]: string} = {}
+    const modresDict: {[k: string]: any} = {}
 
-    const chainDict = {}
-    let chainIdx, chainid, newChain
-    let currentChainname, currentResno, currentResname, currentInscode
+    const chainDict: {[k: string]: number} = {}
+    let chainIdx: number, chainid: string, newChain: boolean
+    let currentChainname: string, currentResno: number, currentResname: string, currentInscode: string
 
-    const seqresDict = {}
-    let currentSeqresChainname
+    const seqresDict: {[k: string]: string[]} = {}
+    let currentSeqresChainname: string
 
     const secStruct = {
-      helices: [],
-      sheets: []
+      helices: [] as any[],
+      sheets: [] as any[]
     }
     const helices = secStruct.helices
     const sheets = secStruct.sheets
@@ -188,7 +204,7 @@ class PdbParser extends StructureParser {
     let modelIdx = 0
     let pendingStart = true
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         line = lines[ i ]
         recordName = line.substr(0, 6)
@@ -219,7 +235,7 @@ class PdbParser extends StructureParser {
 
           if (firstModelOnly && modelIdx > 0) continue
 
-          let x, y, z, ls, dd
+          let x, y, z, ls: string[], dd
 
           if (isPqr) {
             ls = line.split(reWhitespace)
@@ -255,13 +271,13 @@ class PdbParser extends StructureParser {
           let element
 
           if (isPqr) {
-            serial = parseInt(ls[ 1 ])
+            serial = parseInt(ls![ 1 ])
             element = ''
-            hetero = (line[ 0 ] === 'H') ? 1 : 0
-            chainname = dd ? '' : ls[ 4 ]
-            resno = parseInt(ls[ 5 - dd ])
+            hetero = (line[ 0 ] === 'H')
+            chainname = dd ? '' : ls![ 4 ]
+            resno = parseInt(ls![ 5 - dd! ])
             inscode = ''
-            resname = ls[ 3 ]
+            resname = ls![ 3 ]
             altloc = ''
             occupancy = 0.0
           } else {
@@ -269,7 +285,7 @@ class PdbParser extends StructureParser {
             if (hex && serial === 99999) {
               serialRadix = 16
             }
-            hetero = (line[ 0 ] === 'H') ? 1 : 0
+            hetero = (line[ 0 ] === 'H')
             chainname = line[ 21 ].trim()
             resno = parseInt(line.substr(22, 4), resnoRadix)
             if (hex && resno === 9999) {
@@ -304,12 +320,12 @@ class PdbParser extends StructureParser {
           atomStore.occupancy[ idx ] = isNaN(occupancy) ? 0 : occupancy
 
           if (isPqr) {
-            atomStore.partialCharge[ idx ] = parseFloat(ls[ 9 - dd ])
-            atomStore.radius[ idx ] = parseFloat(ls[ 10 - dd ])
+            atomStore.partialCharge![ idx ] = parseFloat(ls![ 9 - dd! ])
+            atomStore.radius[ idx ] = parseFloat(ls![ 10 - dd! ])
           } else {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
             if (isPdbqt) {
-              atomStore.partialCharge[ idx ] = parseFloat(line.substr(70, 6))
+              atomStore.partialCharge![ idx ] = parseFloat(line.substr(70, 6))
             }
           }
 
@@ -343,7 +359,7 @@ class PdbParser extends StructureParser {
         } else if (recordName === 'CONECT') {
           const fromIdx = serialDict[ parseInt(line.substr(6, 5)) ]
           const pos = [ 11, 16, 21, 26 ]
-          const bondIndex = {}
+          const bondIndex: {[k: number]: number} = {}
 
           if (fromIdx === undefined) {
             // Log.log( "missing CONNECT serial" );
@@ -393,7 +409,7 @@ class PdbParser extends StructureParser {
           endResi = parseInt(line.substr(33, 4))
           endIcode = line[ 37 ].trim()
           let helixType = parseInt(line.substr(39, 1))
-          helixType = (HelixTypes[ helixType ] || HelixTypes['']).charCodeAt(0)
+          helixType = (HelixTypes[ helixType ] || HelixTypes[NaN]).charCodeAt(0)
           helices.push([
             startChain, startResi, startIcode,
             endChain, endResi, endIcode,
@@ -436,7 +452,7 @@ class PdbParser extends StructureParser {
           let value
 
           if (entityKeyList.includes(key)) {
-            currentEntityKey = key
+            currentEntityKey = key as 'MOL_ID'|'MOLECULE'|'CHAIN'|'FRAGMENT'|'SYNONYM'|'EC'|'ENGINEERED'|'MUTATION'|'OTHER_DETAILS'
             value = comp.substring(keyEnd + 2)
           } else {
             value = comp
@@ -632,7 +648,7 @@ class PdbParser extends StructureParser {
 
       let ei = entityDataList.length
       const rp = s.getResidueProxy()
-      const residueDict = {}
+      const residueDict: {[k: string]: number[]} = {}
 
       s.eachChain(function (cp) {
         if (cp.entityIndex === en) {
@@ -646,7 +662,7 @@ class PdbParser extends StructureParser {
 
       Object.keys(residueDict).forEach(function (resname) {
         const chainList = residueDict[ resname ]
-        let type = 'non-polymer'
+        let type: EntityTypeString = 'non-polymer'
         let name = hetnameDict[ resname ] || resname
         if (WaterNames.includes(resname)) {
           name = 'water'
@@ -662,7 +678,7 @@ class PdbParser extends StructureParser {
     //
 
     if (unitcellDict.a !== undefined) {
-      s.unitcell = new Unitcell(unitcellDict)
+      s.unitcell = new Unitcell(unitcellDict as any)
     } else {
       s.unitcell = undefined
     }

@@ -137,7 +137,7 @@ class Assembly {
   }
 }
 
-class AssemblyPart {
+export class AssemblyPart {
   constructor (readonly matrixList: Matrix4[] = [], readonly chainList: string[] = []) {}
 
   get type () { return 'AssemblyPart' }
