@@ -8,8 +8,20 @@ import { VolumeSurface } from './volume.js'
 import Grid from '../geometry/grid'
 import { computeBoundingBox } from '../math/vector-utils.js'
 import { getRadiusDict, getSurfaceGrid } from './surface-utils.js'
+import { TypedArray } from '../types.js';
 
-function EDTSurface (coordList, radiusList, indexList) {
+interface EDTSurface {
+  getVolume: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean) => {
+    data: TypedArray
+    nx: number
+    ny: number
+    nz: number
+    atomindex: TypedArray
+  }
+  getSurface: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: number, contour: boolean) => any
+}
+
+function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Float32Array, indexList: Uint16Array|Uint32Array) {
   // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
   // Surfaces by Euclidean Distance Transform. PLoS ONE 4(12): e8140.
   //
@@ -25,7 +37,7 @@ function EDTSurface (coordList, radiusList, indexList) {
   //
   // adapted to NGL by Alexander Rose
 
-  var radiusDict = getRadiusDict(radiusList)
+  var radiusDict = getRadiusDict(radiusList as any)
   var bbox = computeBoundingBox(coordList)
   if (coordList.length === 0) {
     bbox[ 0 ].set([ 0, 0, 0 ])
@@ -34,22 +46,22 @@ function EDTSurface (coordList, radiusList, indexList) {
   var min = bbox[ 0 ]
   var max = bbox[ 1 ]
 
-  var probeRadius, scaleFactor, cutoff
-  var pLength, pWidth, pHeight
-  var matrix, ptran
-  var depty, widxz
-  var cutRadius
-  var setAtomID
-  var vpBits, vpDistance, vpAtomID
+  var probeRadius: number, scaleFactor: number, cutoff: number
+  var pLength: number, pWidth: number, pHeight: number
+  var matrix: Float32Array, ptran: Float32Array
+  var depty: {[k: string]: TypedArray}, widxz: {[k: string]: number}
+  var cutRadius: number
+  var setAtomID: boolean
+  var vpBits: TypedArray, vpDistance: TypedArray, vpAtomID: TypedArray
 
-  function init (btype, _probeRadius, _scaleFactor, _cutoff, _setAtomID) {
+  function init (btype: boolean, _probeRadius: number, _scaleFactor: number, _cutoff: number, _setAtomID: boolean) {
     probeRadius = _probeRadius || 1.4
     scaleFactor = _scaleFactor || 2.0
     setAtomID = _setAtomID || true
 
     var maxRadius = 0
     for (var radius in radiusDict) {
-      maxRadius = Math.max(maxRadius, radius)
+      maxRadius = Math.max(maxRadius, radius as any)
     }
 
     var grid = getSurfaceGrid(
@@ -110,7 +122,7 @@ function EDTSurface (coordList, radiusList, indexList) {
 
   //
 
-  this.getVolume = function (type, probeRadius, scaleFactor, cutoff, setAtomID) {
+  this.getVolume = function (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean) {
     console.time('EDTSurface.getVolume')
 
     var btype = type !== 'vws'
@@ -147,7 +159,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     }
   }
 
-  this.getSurface = function (type, probeRadius, scaleFactor, cutoff, setAtomID, smooth, contour) {
+  this.getSurface = function (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: number, contour: boolean) {
     var vd = this.getVolume(
       type, probeRadius, scaleFactor, cutoff, setAtomID
     )
@@ -156,10 +168,10 @@ function EDTSurface (coordList, radiusList, indexList) {
       vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
     )
 
-    return volsurf.getSurface(1, smooth, undefined, matrix, contour)
+    return (volsurf!.getSurface as any)(1, smooth, undefined, matrix, contour)
   }
 
-  function boundingatom (btype) {
+  function boundingatom (btype: boolean) {
     var r
     var j
     var k
@@ -172,7 +184,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     var indx
 
     for (var name in radiusDict) {
-      r = radiusDict[ name ]
+      r = radiusDict[ name ] ? 1 : 0
 
       if (depty[ name ]) continue
 
@@ -207,7 +219,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     }
   }
 
-  function fillatom (idx) {
+  function fillatom (idx: number) {
     var ci = idx * 3
     var ri = idx
 
@@ -284,7 +296,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     } // i
   }
 
-  function fillvoxels (btype) {
+  function fillvoxels (btype: boolean) {
     console.time('EDTSurface fillvoxels')
 
     var i, il
@@ -308,7 +320,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     console.timeEnd('EDTSurface fillvoxels')
   }
 
-  function fillAtomWaals (idx) {
+  function fillAtomWaals (idx: number) {
     var ci = idx * 3
     var ri = idx
 
@@ -560,7 +572,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     console.timeEnd('EDTSurface fastdistancemap')
   }
 
-  function fastoneshell (inarray, boundPoint, positin, outarray) {
+  function fastoneshell (inarray: Int32Array, boundPoint: Grid, positin: number, outarray: Int32Array) {
     // *allocout,voxel2
     // ***boundPoint, int*
     // outnum, int *elimi)
@@ -763,7 +775,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     return positout
   }
 
-  function marchingcubeinit (stype) {
+  function marchingcubeinit (stype: string) {
     var i
     var n = vpBits.length
 
@@ -798,8 +810,8 @@ function EDTSurface (coordList, radiusList, indexList) {
     }
   }
 }
-EDTSurface.__deps = [
+Object.assign(EDTSurface, {__deps: [
   getSurfaceGrid, getRadiusDict, VolumeSurface, computeBoundingBox, Grid
-]
+]})
 
 export default EDTSurface

@@ -12,7 +12,7 @@ import { defaults } from '../utils'
 import { AtomPicker, BondPicker } from '../utils/picker'
 import { copyWithin, arrayMin, arrayMax } from '../math/array-utils'
 import BitArray from '../utils/bitarray'
-import RadiusFactory from '../utils/radius-factory'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory'
 import { Matrix } from '../math/matrix-utils'
 import PrincipalAxes from '../math/principal-axes'
 import SpatialHash from '../geometry/spatial-hash'
@@ -686,7 +686,7 @@ class Structure implements Structure{
     }
     if (!what || what.radius) {
       atomData.radius = new Float32Array(atomCount)
-      radiusFactory = new RadiusFactory(p.radiusParams)
+      radiusFactory = new RadiusFactory(p.radiusParams as RadiusParams)
     }
     if (!what || what.index) {
       atomData.index = new Uint32Array(atomCount)
@@ -761,7 +761,7 @@ class Structure implements Structure{
       bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore!) as any
     }
     if (!what || what.radius || (isMulti && what.position)) {
-      radiusFactory = new RadiusFactory(p.radiusParams)
+      radiusFactory = new RadiusFactory(p.radiusParams as RadiusParams)
     }
     if (!what || what.radius) {
       bondData.radius = new Float32Array(bondCount)

@@ -169,7 +169,7 @@ const AVHash = (function AVHash (this: AVHash, atomsX: Float32Array, atomsY: Flo
 
 
 interface AVSurface {
-  getSurface: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: boolean, contour: boolean) => any
+  getSurface: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: number, contour: boolean) => any
 }
 function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float32Array, indexList: Uint16Array|Uint32Array) {
   // Field generation method adapted from AstexViewer (Mike Hartshorn)
@@ -596,7 +596,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
     console.timeEnd('AVSurface.getVolume')
   }
 
-  this.getSurface = function (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: boolean, contour: boolean) {
+  this.getSurface = function (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: number, contour: boolean) {
     // type and cutoff left in for compatibility with EDTSurface.getSurface
     // function signature
 

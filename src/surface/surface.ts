@@ -14,7 +14,7 @@ import Selection from '../selection/selection.js'
 import { ColormakerParameters } from '../color/colormaker';
 import { Structure } from '../ngl';
 
-interface SurfaceData {
+export interface SurfaceData {
   position: Float32Array
   index: Uint32Array|Uint16Array|undefined
   normal: Float32Array
@@ -37,7 +37,13 @@ class Surface {
   center: Vector3
   boundingBox: Box3
   size: number
-  info: {}
+  info: {
+    type?: string
+    probeRadius?: number
+    scaleFactor?: number
+    smooth?: number
+    cutoff?: number
+  }
 
   /**
    * @param {String} name - surface name

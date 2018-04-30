@@ -7,7 +7,7 @@
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
 import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import MolecularSurface from '../surface/molecular-surface.js'
+import MolecularSurface, { MolecularSurfaceParameters } from '../surface/molecular-surface.js'
 import SurfaceBuffer from '../buffer/surface-buffer.js'
 import ContourBuffer from '../buffer/contour-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
@@ -15,8 +15,8 @@ import Selection from '../selection/selection.js'
 import Viewer from '../viewer/viewer';
 import { Structure, Vector3 } from '../ngl';
 import StructureView from '../structure/structure-view';
-import { SurfaceDataFields, SurfaceData } from './surface-representation';
-import Surface from '../surface/surface';
+import { SurfaceDataFields } from './surface-representation';
+import Surface, {SurfaceData} from '../surface/surface';
 
 interface MolecularSurfaceRepresentationParameters extends StructureRepresentationParameters {
   surfaceType: 'vws'|'sas'|'ms'|'ses'|'av'
@@ -193,7 +193,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       }
 
       if (this.useWorker) {
-        info.molsurf.getSurfaceWorker(p as {name: string, type: string} & MolecularSurfaceRepresentationParameters, onSurfaceFinish)
+        info.molsurf.getSurfaceWorker(p as MolecularSurfaceParameters, onSurfaceFinish)
       } else {
         onSurfaceFinish(info.molsurf.getSurface(p as {name: string, type: string} & MolecularSurfaceRepresentationParameters))
       }
@@ -283,7 +283,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   }
 
   updateData (what: SurfaceDataFields, data: StructureRepresentationData) {
-    const surfaceData: SurfaceData = {}
+    const surfaceData: Partial<SurfaceData> = {}
 
     if (what.position) {
       this.__forceNewMolsurf = true

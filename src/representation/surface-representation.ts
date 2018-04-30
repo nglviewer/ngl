@@ -14,14 +14,10 @@ import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import ContourBuffer from '../buffer/contour-buffer.js'
 import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
+import {SurfaceData} from '../surface/surface'
 
 export type SurfaceDataFields = {position: boolean, color: boolean, index: boolean, normal: boolean}
-export interface SurfaceData {
-  position?: Float32Array
-  color?: Float32Array
-  index?: Uint32Array|Uint16Array
-  normal?: Float32Array
-}
+
 /**
  * Surface representation parameter object. Extends {@link RepresentationParameters}
  *
@@ -38,7 +34,7 @@ export interface SurfaceData {
  * @property {Boolean} useWorker - Weather or not to triangulate the volume asynchronously in a Web Worker. For volume data only.
  * @property {Boolean} wrap - Wrap volume data around the edges; use in conjuction with boxSize but not larger than the volume dimension. For volume data only.
  */
-interface SurfaceRepresentationParameters extends RepresentationParameters {
+export interface SurfaceRepresentationParameters extends RepresentationParameters {
   isolevelType: 'value'|'sigma'
   isolevel: number
   smooth: number
@@ -290,7 +286,7 @@ class SurfaceRepresentation extends Representation {
 
     what = what || {}
 
-    const surfaceData: SurfaceData = {}
+    const surfaceData: Partial<SurfaceData> = {}
 
     if (what.position) {
       surfaceData.position = (this.surface as Surface).getPosition()
