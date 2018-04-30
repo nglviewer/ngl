@@ -172,7 +172,7 @@ function EDTSurface (coordList, radiusList, indexList) {
     var indx
 
     for (var name in radiusDict) {
-      r = radiusDict[ name ]
+      r = parseFloat(name)
 
       if (depty[ name ]) continue
 
