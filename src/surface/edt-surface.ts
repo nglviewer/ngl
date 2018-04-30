@@ -184,7 +184,7 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
     var indx
 
     for (var name in radiusDict) {
-      r = radiusDict[ name ] ? 1 : 0
+      r = parseFloat(name)
 
       if (depty[ name ]) continue
 
