@@ -6,7 +6,7 @@
 
 import { defaults } from '../utils'
 import Representation, { RepresentationParameters } from './representation.js'
-import ImageBuffer, { ImageBufferParameters } from '../buffer/image-buffer.js'
+import ImageBuffer, { ImageBufferParameters, ImageBufferData } from '../buffer/image-buffer.js'
 import VolumeSlice from '../surface/volume-slice.js'
 import Viewer from '../viewer/viewer';
 import { Volume } from '../ngl';
@@ -25,7 +25,7 @@ import { Volume } from '../ngl';
  * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
  * @property {Boolean} normalize - Flag indicating wheather to normalize the data in a slice when coloring.
  */
-interface SliceRepresentationParameters extends RepresentationParameters {
+export interface SliceRepresentationParameters extends RepresentationParameters {
   filter: 'nearest'|'linear'|'cubic-bspline'|'cubic-catmulrom'|'cubic-mitchell'
   positionType: 'percent'|'coordinate'
   position: number
@@ -172,7 +172,7 @@ class SliceRepresentation extends Representation {
     })
 
     const sliceBuffer = new ImageBuffer(
-      volumeSlice.getData({ colorParams: this.getColorParams() }),
+      volumeSlice.getData({ colorParams: this.getColorParams() }) as ImageBufferData,
       this.getBufferParams({
         filter: this.filter
       }) as ImageBufferParameters

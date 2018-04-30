@@ -9,9 +9,20 @@ import { Vector3 } from 'three'
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
 import { SlicePicker } from '../utils/picker.js'
+import { Volume } from '../ngl';
+import { SliceRepresentationParameters } from '../representation/slice-representation';
 
 class VolumeSlice {
-  constructor (volume, params) {
+  dimension: 'x'|'y'|'z'
+  positionType: 'percent'|'coordinate'
+  position: number
+  thresholdType: 'sigma'|'value'
+  thresholdMin: number
+  thresholdMax: number
+  normalize: boolean
+  volume: Volume
+
+  constructor (volume: Volume, params: Partial<SliceRepresentationParameters>) {
     const p = params || {}
 
     this.dimension = defaults(p.dimension, 'x')
@@ -25,7 +36,7 @@ class VolumeSlice {
     this.volume = volume
   }
 
-  getPositionFromCoordinate (coord) {
+  getPositionFromCoordinate (coord: number) {
     const dim = this.dimension
     const v = this.volume
     const m = v.matrix
@@ -45,25 +56,25 @@ class VolumeSlice {
     return Math.round((((coord - mp) / (vn / 100)) + 1) / ms)
   }
 
-  getData (params) {
+  getData (params: any) {
     params = params || {}
 
     const v = this.volume
     const d = v.data
     const m = v.matrix
 
-    let p
+    let p: number
     if (this.positionType === 'coordinate') {
       p = this.getPositionFromCoordinate(this.position)
     } else {
       p = this.position
     }
 
-    function pos (dimLen) {
+    function pos (dimLen: number) {
       return Math.round((dimLen / 100) * (p - 1))
     }
 
-    function index (x, y, z, i) {
+    function index (x: number, y: number, z: number, i: number) {
       return (z * v.ny * v.nx + y * v.nx + x) * 3 + i
     }
 
@@ -81,8 +92,8 @@ class VolumeSlice {
     let ny = v.ny
     let nz = v.nz
 
-    function setVec (x, y, z, offset) {
-      vec.set(x, y, z).applyMatrix4(m).toArray(position, offset)
+    function setVec (x: number, y: number, z: number, offset: number) {
+      vec.set(x, y, z).applyMatrix4(m).toArray(position as any, offset)
     }
 
     if (this.dimension === 'x') {
@@ -134,8 +145,8 @@ class VolumeSlice {
 
     let i = 0
     let j = 0
-    const imageData = new Uint8Array(width * height * 4)
-    const pickingArray = new Float32Array(width * height)
+    const imageData = new Uint8Array(<number>width * <number>height * 4)
+    const pickingArray = new Float32Array(<number>width * <number>height)
 
     let tMin, tMax
     if (this.thresholdType === 'sigma') {
@@ -154,7 +165,7 @@ class VolumeSlice {
     const tmp = new Float32Array(3)
     const scale = colormaker.getScale()
 
-    let min, max, diff
+    let min = 0, max, diff = 0
     if (this.normalize) {
       min = +Infinity
       max = -Infinity

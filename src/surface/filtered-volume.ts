@@ -8,7 +8,24 @@ import { defaults } from '../utils'
 import Volume from './volume.js'
 
 class FilteredVolume {
-  constructor (volume, minValue, maxValue, outside) {
+  volume: Volume
+  data: Float32Array
+  position: Float32Array
+  atomindex: Int32Array
+  _filterHash: string
+  _dataBuffer: ArrayBuffer
+  _positionBuffer: ArrayBuffer
+  _atomindexBuffer: ArrayBuffer
+  getValueForSigma: typeof Volume.prototype.getValueForSigma
+  getSigmaForValue: typeof Volume.prototype.getSigmaForValue
+  getDataAtomindex: typeof Volume.prototype.getDataAtomindex
+  getDataPosition: typeof Volume.prototype.getDataPosition
+  getDataColor: typeof Volume.prototype.getDataColor
+  getDataPicking: typeof Volume.prototype.getDataPicking
+  getDataSize: typeof Volume.prototype.getDataSize
+
+
+  constructor (volume: Volume, minValue?: number, maxValue?: number, outside?: boolean) {
     this.volume = volume
     this.setFilter(minValue, maxValue, outside)
   }
@@ -24,18 +41,18 @@ class FilteredVolume {
   get mean () { return this.volume.mean }
   get rms () { return this.volume.rms }
 
-  _getFilterHash (minValue, maxValue, outside) {
+  _getFilterHash (minValue: number, maxValue: number, outside: boolean) {
     return JSON.stringify([ minValue, maxValue, outside ])
   }
 
-  setFilter (minValue, maxValue, outside) {
-    if (isNaN(minValue) && this.header) {
+  setFilter (minValue: number|undefined, maxValue: number|undefined, outside: boolean|undefined) {
+    if (isNaN(<number>minValue) && this.header) {
       minValue = this.header.DMEAN + 2.0 * this.header.ARMS
     }
 
     minValue = (minValue !== undefined && !isNaN(minValue)) ? minValue : -Infinity
-    maxValue = defaults(maxValue, Infinity)
-    outside = defaults(outside, false)
+    maxValue = defaults(maxValue, Infinity) as number
+    outside = defaults(outside, false) as boolean
 
     const data = this.volume.data
     const position = this.volume.position
@@ -83,7 +100,7 @@ class FilteredVolume {
           filteredPosition[ j3 + 1 ] = position[ i3 + 1 ]
           filteredPosition[ j3 + 2 ] = position[ i3 + 2 ]
 
-          if (atomindex) filteredAtomindex[ j ] = atomindex[ i ]
+          if (atomindex && filteredAtomindex) filteredAtomindex[ j ] = atomindex[ i ]
 
           j += 1
         }
@@ -93,7 +110,7 @@ class FilteredVolume {
 
       this.data = new Float32Array(this._dataBuffer, 0, j)
       this.position = new Float32Array(this._positionBuffer, 0, j * 3)
-      if (atomindex) this.atomindex = new Float32Array(this._atomindexBuffer, 0, j)
+      if (atomindex) this.atomindex = new Int32Array(this._atomindexBuffer, 0, j)
     }
 
     this._filterHash = filterHash
