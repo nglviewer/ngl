@@ -223,7 +223,7 @@ function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: num
 }
 Object.assign(laplacianSmooth, {__deps: [ computeVertexNormals ]})
 
-function computeVertexNormals (position: Float32Array, index: Float32Array, normal: Float32Array|undefined) {
+function computeVertexNormals (position: Float32Array, index: Float32Array, normal?: Float32Array) {
   var i, il
 
   if (normal === undefined) {

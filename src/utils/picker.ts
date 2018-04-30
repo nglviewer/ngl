@@ -394,7 +394,7 @@ class UnknownPicker extends Picker {
 
 class VolumePicker extends Picker {
   volume: Volume
-  constructor (array: number[], volume: Volume) {
+  constructor (array: TypedArray, volume: Volume) {
     super(array)
     this.volume = volume
   }

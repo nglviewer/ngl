@@ -164,9 +164,9 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
       type, probeRadius, scaleFactor, cutoff, setAtomID
     )
 
-    var volsurf = new VolumeSurface(
+    var volsurf = new (VolumeSurface as any)(
       vd.data, vd.nx, vd.ny, vd.nz, vd.atomindex
-    )
+    ) as VolumeSurface
 
     return (volsurf!.getSurface as any)(1, smooth, undefined, matrix, contour)
   }

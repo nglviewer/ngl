@@ -602,9 +602,9 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
 
     getVolume(probeRadius, scaleFactor, setAtomID)
 
-    var volsurf = new VolumeSurface(
+    var volsurf = new (VolumeSurface as any)(
       grid, dim[ 2 ], dim[ 1 ], dim[ 0 ], atomIndex
-    )
+    ) as VolumeSurface
 
     return volsurf.getSurface!(probeRadius, false, undefined, matrix, contour)
   }

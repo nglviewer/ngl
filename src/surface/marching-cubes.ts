@@ -342,7 +342,7 @@ function getAllowedContours () {
 }
 interface MarchingCubes {
   new (field: number[], nx: number, ny: number, nz: number, atomindex: number[]): void
-  triangulate: (_isolevel: number, _noNormals: boolean, _box: number[][], _contour: boolean, _wrap: boolean) => {
+  triangulate: (_isolevel: number, _noNormals: boolean, _box: number[][]|undefined, _contour: boolean, _wrap: boolean) => {
     position: Float32Array
     normal: undefined|Float32Array
     index: Uint32Array|Uint16Array
@@ -386,7 +386,7 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
 
   //
 
-  this.triangulate = function (_isolevel: number, _noNormals: boolean, _box: number[][], _contour: boolean, _wrap: boolean) {
+  this.triangulate = function (_isolevel: number, _noNormals: boolean, _box: number[][]|undefined, _contour: boolean, _wrap: boolean) {
     isolevel = _isolevel
     contour = _contour
     wrap = _wrap

@@ -12,7 +12,7 @@ import { AtomPicker, SurfacePicker } from '../utils/picker.js'
 import { uniformArray, uniformArray3, serialArray } from '../math/array-utils.js'
 import Selection from '../selection/selection.js'
 import { ColormakerParameters } from '../color/colormaker';
-import { Structure } from '../ngl';
+import { Structure, Volume } from '../ngl';
 
 export interface SurfaceData {
   position: Float32Array
@@ -43,6 +43,8 @@ class Surface {
     scaleFactor?: number
     smooth?: number
     cutoff?: number
+    isolevel?: number
+    volume?: Volume
   }
 
   /**

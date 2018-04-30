@@ -21,15 +21,27 @@ import {
 } from '../math/vector-utils.js'
 import { m3new, m3makeNormal } from '../math/matrix-utils.js'
 import Surface from './surface.js'
+import { NumberArray } from '../types';
+import { ColormakerParameters } from '../color/colormaker';
 
-function VolumeSurface (data, nx, ny, nz, atomindex) {
-  var mc = new MarchingCubes(data, nx, ny, nz, atomindex)
+export interface VolumeSurface {
+  new (data: NumberArray, nx: number, ny: number, nz: number, atomindex: NumberArray): void
+  getSurface: (isolevel: number, smooth: boolean|number, box: number[][]|undefined, matrix: Float32Array, contour: boolean, wrap?: boolean) => {
+    position: Float32Array
+    normal: undefined|Float32Array
+    index: Uint32Array|Uint16Array
+    atomindex: Int32Array|undefined
+    contour: boolean
+  }
+}
+export function VolumeSurface (this: VolumeSurface,data: NumberArray, nx: number, ny: number, nz: number, atomindex: NumberArray) {
+  var mc = new (MarchingCubes as any)(data, nx, ny, nz, atomindex) as MarchingCubes
 
-  function getSurface (isolevel, smooth, box, matrix, contour, wrap) {
-    const sd = mc.triangulate(isolevel, smooth, box, contour, wrap)
+  function getSurface (isolevel: number, smooth: boolean|number, box: number[][]|undefined, matrix: Float32Array, contour: boolean, wrap: boolean = false) {
+    const sd = mc.triangulate(isolevel, smooth as boolean, box, contour, wrap)
     if (smooth && !contour) {
-      laplacianSmooth(sd.position, sd.index, smooth, true)
-      sd.normal = computeVertexNormals(sd.position, sd.index)
+      laplacianSmooth(sd.position, sd.index as any, smooth as number, true)
+      sd.normal = computeVertexNormals(sd.position, sd.index as any)
     }
     if (matrix) {
       applyMatrix4toVector3array(matrix, sd.position)
@@ -44,21 +56,23 @@ function VolumeSurface (data, nx, ny, nz, atomindex) {
 
   this.getSurface = getSurface
 }
-VolumeSurface.__deps = [
+Object.assign(VolumeSurface, {__deps: [
   laplacianSmooth, computeVertexNormals, MarchingCubes,
   applyMatrix4toVector3array, applyMatrix3toVector3array,
   m3new, m3makeNormal
-]
+]})
 
-WorkerRegistry.add('surf', function func (e, callback) {
+WorkerRegistry.add('surf', function func (e: any, callback: (data: any, transferList: any) => void) {
   const a = e.data.args
   const p = e.data.params
   if (a) {
     /* global self */
-    self.volsurf = new VolumeSurface(a[0], a[1], a[2], a[3], a[4])
+    Object.assign(self, {
+      volsurf: new (VolumeSurface as any)(a[0], a[1], a[2], a[3], a[4]) as VolumeSurface
+    })
   }
   if (p) {
-    const sd = self.volsurf.getSurface(
+    const sd = ((self as any).volsurf as VolumeSurface).getSurface(
       p.isolevel, p.smooth, p.box, p.matrix, p.contour, p.wrap
     )
     const transferList = [ sd.position.buffer, sd.index.buffer ]
@@ -72,10 +86,38 @@ WorkerRegistry.add('surf', function func (e, callback) {
   }
 }, [ VolumeSurface ])
 
+type Size = 'value'|'abs-value'|'value-min'|'deviation'
 /**
  * Volume
  */
 class Volume {
+  name: string
+  path: string
+
+  matrix: Matrix4
+  normalMatrix: Matrix3
+  inverseMatrix: Matrix4
+  center: Vector3
+  boundingBox: Box3
+
+  nx: number
+  ny: number
+  nz: number
+  data: Float32Array
+
+  worker: Worker
+  workerPool: WorkerPool
+  _position: Float32Array
+  _min: number|undefined
+  _max: number|undefined
+  _mean: number|undefined
+  _rms: number|undefined
+  _sum: number|undefined
+  __box: Box3|undefined
+
+  atomindex: Int32Array
+  volsurf: VolumeSurface|undefined
+  header: any
   /**
    * Make Volume instance
    * @param {String} name - volume name
@@ -86,7 +128,7 @@ class Volume {
    * @param {Integer} nz - z dimension of the 3d volume
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    */
-  constructor (name, path, data, nx, ny, nz, atomindex) {
+  constructor (name: string, path: string, data: Float32Array, nx: number, ny: number, nz: number, atomindex: Int32Array) {
     this.name = name
     this.path = path
 
@@ -110,7 +152,7 @@ class Volume {
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    * @return {undefined}
    */
-  setData (data, nx, ny, nz, atomindex) {
+  setData (data: Float32Array, nx: number, ny: number, nz: number, atomindex: Int32Array) {
     this.nx = nx || 1
     this.ny = ny || 1
     this.nz = nz || 1
@@ -136,7 +178,7 @@ class Volume {
    * @param {Number|undefined} mean - average value of the whole data set
    * @param {Number|undefined} rms - sigma value of the whole data set
    */
-  setStats (min, max, mean, rms) {
+  setStats (min: number|undefined, max: number|undefined, mean: number|undefined, rms: number|undefined) {
     this._min = min
     this._max = max
     this._mean = mean
@@ -148,7 +190,7 @@ class Volume {
    * @param {Matrix4} matrix - 4x4 transformation matrix
    * @return {undefined}
    */
-  setMatrix (matrix) {
+  setMatrix (matrix: Matrix4) {
     this.matrix.copy(matrix)
 
     const bb = this.boundingBox
@@ -204,11 +246,11 @@ class Volume {
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    * @return {undefined}
      */
-  setAtomindex (atomindex) {
+  setAtomindex (atomindex: Int32Array) {
     this.atomindex = atomindex
   }
 
-  getBox (center, size, target) {
+  getBox (center: Vector3, size: number, target: Box3) {
     if (!target) target = new Box3()
 
     target.set(center, center)
@@ -221,7 +263,7 @@ class Volume {
     return target
   }
 
-  _getBox (center, size) {
+  _getBox (center: Vector3|undefined, size: number) {
     if (!center || !size) return
 
     if (!this.__box) this.__box = new Box3()
@@ -229,7 +271,7 @@ class Volume {
     return [ box.min.toArray(), box.max.toArray() ]
   }
 
-  _makeSurface (sd, isolevel, smooth) {
+  _makeSurface (sd: any, isolevel: number, smooth: number) {
     const name = this.name + '@' + isolevel.toPrecision(2)
     const surface = new Surface(name, '', sd)
     surface.info.isolevel = isolevel
@@ -239,33 +281,33 @@ class Volume {
     return surface
   }
 
-  getSurface (isolevel, smooth, center, size, contour, wrap) {
+  getSurface (isolevel: number, smooth: number, center: Vector3, size: number, contour: boolean, wrap: boolean = false) {
     isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel
     smooth = defaults(smooth, 0)
 
     //
 
     if (this.volsurf === undefined) {
-      this.volsurf = new VolumeSurface(
+      this.volsurf = new (VolumeSurface as any)(
         this.data, this.nx, this.ny, this.nz, this.atomindex
-      )
+      ) as VolumeSurface
     }
 
     const box = this._getBox(center, size)
     const sd = this.volsurf.getSurface(
-      isolevel, smooth, box, this.matrix.elements, contour, wrap
+      isolevel, smooth, box!, this.matrix.elements, contour, wrap
     )
 
     return this._makeSurface(sd, isolevel, smooth)
   }
 
-  getSurfaceWorker (isolevel, smooth, center, size, contour, wrap, callback) {
+  getSurfaceWorker (isolevel: number, smooth: number, center: Vector3, size: number, contour: boolean, wrap: boolean, callback: (s: Surface) => void) {
     isolevel = isNaN(isolevel) ? this.getValueForSigma(2) : isolevel
     smooth = smooth || 0
 
     //
 
-    if (window.Worker) {
+    if (window.hasOwnProperty('Worker')) {
       if (this.workerPool === undefined) {
         this.workerPool = new WorkerPool('surf', 2)
       }
@@ -273,28 +315,32 @@ class Volume {
       const msg = {}
       const worker = this.workerPool.getNextWorker()
 
-      if (worker.postCount === 0) {
-        msg.args = [
-          this.data, this.nx, this.ny, this.nz, this.atomindex
-        ]
+      if (worker!.postCount === 0) {
+        Object.assign(msg, {
+          args: [
+            this.data, this.nx, this.ny, this.nz, this.atomindex
+          ]
+        })
       }
 
-      msg.params = {
-        isolevel: isolevel,
-        smooth: smooth,
-        box: this._getBox(center, size),
-        matrix: this.matrix.elements,
-        contour: contour,
-        wrap: wrap
-      }
+      Object.assign(msg, {
+        params: {
+          isolevel: isolevel,
+          smooth: smooth,
+          box: this._getBox(center, size),
+          matrix: this.matrix.elements,
+          contour: contour,
+          wrap: wrap
+        }
+      })
 
-      worker.post(msg, undefined,
-        e => {
+      worker!.post(msg, undefined,
+        (e: any) => {
           const sd = e.data.sd
           const p = e.data.p
           callback(this._makeSurface(sd, p.isolevel, p.smooth))
         },
-        e => {
+        (e : string) => {
           console.warn(
             'Volume.getSurfaceWorker error - trying without worker', e
           )
@@ -308,11 +354,11 @@ class Volume {
     }
   }
 
-  getValueForSigma (sigma) {
+  getValueForSigma (sigma: number) {
     return this.mean + defaults(sigma, 2) * this.rms
   }
 
-  getSigmaForValue (value) {
+  getSigmaForValue (value: number) {
     return (defaults(value, 0) - this.mean) / this.rms
   }
 
@@ -350,7 +396,7 @@ class Volume {
     return this.position
   }
 
-  getDataColor (params) {
+  getDataColor (params: ColormakerParameters & {scheme: string}) {
     const p = params || {}
     p.volume = this
     p.scale = p.scale || 'Spectral'
@@ -378,7 +424,7 @@ class Volume {
     return new VolumePicker(picking, this)
   }
 
-  getDataSize (size, scale) {
+  getDataSize (size: Size|number, scale: number) {
     const data = this.data
     const n = this.position.length / 3
     let array
@@ -483,7 +529,3 @@ class Volume {
 }
 
 export default Volume
-
-export {
-  VolumeSurface
-}
