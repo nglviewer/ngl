@@ -20,6 +20,7 @@ import {
 import Streamer from '../streamer/streamer';
 import { ParserParameters } from './parser';
 import { NumberArray } from '../types';
+import { Structure } from '../ngl';
 
 // PDB helix record encoding
 const HelixTypes: {[k: number]: string} = {
@@ -115,7 +116,7 @@ class PdbParser extends StructureParser {
     const isPqr = this.type === 'pqr'
     const isPdbqt = this.type === 'pdbqt'
 
-    const s = this.structure
+    const s: Structure = this.structure
     const sb = this.structureBuilder
 
     const hex = this.hex

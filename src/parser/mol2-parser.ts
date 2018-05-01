@@ -13,7 +13,7 @@ import {
 import StructureParser from './structure-parser'
 
 const reWhitespace = /\s+/
-const bondTypes = {
+const bondTypes: {[k: string]: number} = {
   '1': 1,
   '2': 2,
   '3': 3,
@@ -40,7 +40,7 @@ class Mol2Parser extends StructureParser {
 
     const frames = s.frames
     let doFrames = false
-    let currentFrame, currentCoord
+    let currentFrame: Float32Array, currentCoord: number
 
     const atomMap = s.atomMap
     const atomStore = s.atomStore
@@ -61,7 +61,7 @@ class Mol2Parser extends StructureParser {
     const ap1 = s.getAtomProxy()
     const ap2 = s.getAtomProxy()
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ].trim()
 
