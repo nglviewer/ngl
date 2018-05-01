@@ -27,7 +27,7 @@ class GroParser extends StructureParser {
 
     var frames = s.frames
     var boxes = s.boxes
-    var currentFrame, currentCoord
+    var currentFrame: Float32Array, currentCoord: number
 
     var firstLines = this.streamer.peekLines(3)
 
@@ -55,7 +55,7 @@ class GroParser extends StructureParser {
     var modelIdx = 0
     var lineNo = 0
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (var i = _i; i < _n; ++i) {
         ++lineNo
         var l = lineNo - 1
