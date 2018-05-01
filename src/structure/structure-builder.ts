@@ -40,7 +40,7 @@ class StructureBuilder {
     )
   }
 
-  addAtom (modelindex: number, chainname: string, chainid: string, resname: string, resno: number, hetero: boolean, sstruc: string|undefined, inscode: string|undefined) {
+  addAtom (modelindex: number, chainname: string, chainid: string, resname: string, resno: number, hetero: boolean, sstruc?: string|undefined, inscode?: string|undefined) {
     const atomStore = this.structure.atomStore
     const residueStore = this.structure.residueStore
     const chainStore = this.structure.chainStore
