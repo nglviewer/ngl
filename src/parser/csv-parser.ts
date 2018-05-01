@@ -6,8 +6,14 @@
 
 import { defaults } from '../utils'
 import { ParserRegistry } from '../globals'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
+import Streamer from '../streamer/streamer';
 
+interface CsvParserParameters extends ParserParameters {
+  delimiter: string
+  comment: string
+  columnNames: boolean
+}
 /**
  * CSV parser
  */
@@ -20,7 +26,7 @@ class CsvParser extends Parser {
      * @param  {Char} params.comment - comment character
      * @param  {Boolean} params.columnNames - use first data line as column names
      */
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: Partial<CsvParserParameters>) {
     const p = params || {}
 
     super(streamer, p)
