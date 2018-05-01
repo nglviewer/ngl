@@ -6,10 +6,15 @@
 
 import { ParserRegistry } from '../globals'
 import { defaults } from '../utils'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
+import Streamer from '../streamer/streamer';
+
+interface JsonParserParameters extends ParserParameters {
+  string: boolean
+}
 
 class JsonParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: JsonParserParameters) {
     const p = params || {}
 
     super(streamer, p)
