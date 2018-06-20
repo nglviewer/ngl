@@ -26,6 +26,21 @@ function entityTypeFromString (string: string) {
   }
 }
 
+function entityFromType (type: number) {
+  switch (type) {
+    case PolymerEntity:
+      return 'polymer'
+    case NonPolymerEntity:
+      return 'non-polymer'
+    case MacrolideEntity:
+      return 'macrolide'
+    case WaterEntity:
+      return 'water'
+    default:
+      return undefined
+  }
+}
+
 const EntityTypeString = {
   'polymer': PolymerEntity,
   'non-polymer': NonPolymerEntity,
@@ -63,7 +78,7 @@ export default class Entity {
     })
   }
 
-  get type () { return 'Entity' }
+  get type () { return entityFromType(this.entityType) }
 
   getEntityType () {
     return this.entityType

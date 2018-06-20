@@ -14,11 +14,11 @@ import {
 import { ChemCompHetero } from '../structure/structure-constants'
 import Entity from '../structure/entity'
 import Unitcell from '../symmetry/unitcell'
-import Assembly from '../symmetry/assembly'
+import Assembly, { AssemblyPart } from '../symmetry/assembly'
 
 import { decodeMsgpack, decodeMmtf } from '../../lib/mmtf.es6'
 
-const SstrucMap = {
+const SstrucMap: {[k: string]: number} = {
   '0': 'i'.charCodeAt(0), // pi helix
   '1': 's'.charCodeAt(0), // bend
   '2': 'h'.charCodeAt(0), // alpha helix
@@ -39,13 +39,13 @@ class MmtfParser extends StructureParser {
 
     if (Debug) Log.time('MmtfParser._parse ' + this.name)
 
-    var i, il, j, jl, groupData
+    let i, il, j, jl, groupData
 
-    var s = this.structure
-    var sd = decodeMmtf(decodeMsgpack(this.streamer.data))
+    const s = this.structure
+    const sd: {[k: string]: any} = decodeMmtf(decodeMsgpack(this.streamer.data))
 
     // structure header
-    var headerFields = [
+    const headerFields = [
       'depositionDate', 'releaseDate', 'resolution',
       'rFree', 'rWork', 'experimentalMethods'
     ]
@@ -55,8 +55,8 @@ class MmtfParser extends StructureParser {
       }
     })
 
-    var numBonds, numAtoms, numGroups, numChains, numModels
-    var chainsPerModel
+    let numBonds, numAtoms, numGroups, numChains, numModels
+    let chainsPerModel
 
     s.id = sd.structureId
     s.title = sd.title
@@ -97,12 +97,12 @@ class MmtfParser extends StructureParser {
 
     if (this.asTrajectory) {
       for (i = 0, il = sd.numModels; i < il; ++i) {
-        var frame = new Float32Array(numAtoms * 3)
-        var frameAtomOffset = numAtoms * i
+        const frame = new Float32Array(numAtoms * 3)
+        const frameAtomOffset = numAtoms * i
 
         for (j = 0; j < numAtoms; ++j) {
-          var j3 = j * 3
-          var offset = j + frameAtomOffset
+          const j3 = j * 3
+          const offset = j + frameAtomOffset
           frame[ j3 ] = sd.xCoordList[ offset ]
           frame[ j3 + 1 ] = sd.yCoordList[ offset ]
           frame[ j3 + 2 ] = sd.zCoordList[ offset ]
@@ -113,28 +113,28 @@ class MmtfParser extends StructureParser {
     }
 
     // bondStore
-    var bAtomIndex1 = new Uint32Array(numBonds)
-    var bAtomIndex2 = new Uint32Array(numBonds)
-    var bBondOrder = new Uint8Array(numBonds)
+    const bAtomIndex1 = new Uint32Array(numBonds)
+    const bAtomIndex2 = new Uint32Array(numBonds)
+    const bBondOrder = new Uint8Array(numBonds)
 
-    var aGroupIndex = new Uint32Array(numAtoms)
-    var aFormalCharge = new Int8Array(numAtoms)
+    const aGroupIndex = new Uint32Array(numAtoms)
+    const aFormalCharge = new Int8Array(numAtoms)
 
-    var gChainIndex = new Uint32Array(numGroups)
-    var gAtomOffset = new Uint32Array(numGroups)
-    var gAtomCount = new Uint16Array(numGroups)
+    const gChainIndex = new Uint32Array(numGroups)
+    const gAtomOffset = new Uint32Array(numGroups)
+    const gAtomCount = new Uint16Array(numGroups)
 
-    var cModelIndex = new Uint16Array(numChains)
-    var cGroupOffset = new Uint32Array(numChains)
-    var cGroupCount = new Uint32Array(numChains)
+    const cModelIndex = new Uint16Array(numChains)
+    const cGroupOffset = new Uint32Array(numChains)
+    const cGroupCount = new Uint32Array(numChains)
 
-    var mChainOffset = new Uint32Array(numModels)
-    var mChainCount = new Uint32Array(numModels)
+    const mChainOffset = new Uint32Array(numModels)
+    const mChainCount = new Uint32Array(numModels)
 
     // set-up model-chain relations
-    var chainOffset = 0
+    let chainOffset = 0
     for (i = 0, il = numModels; i < il; ++i) {
-      var modelChainCount = chainsPerModel[ i ]
+      const modelChainCount = chainsPerModel[ i ]
       mChainOffset[ i ] = chainOffset
       mChainCount[ i ] = modelChainCount
       for (j = 0; j < modelChainCount; ++j) {
@@ -144,10 +144,10 @@ class MmtfParser extends StructureParser {
     }
 
     // set-up chain-residue relations
-    var groupsPerChain = sd.groupsPerChain
-    var groupOffset = 0
+    const groupsPerChain = sd.groupsPerChain
+    let groupOffset = 0
     for (i = 0, il = numChains; i < il; ++i) {
-      var chainGroupCount = groupsPerChain[ i ]
+      const chainGroupCount = groupsPerChain[ i ]
       cGroupOffset[ i ] = groupOffset
       cGroupCount[ i ] = chainGroupCount
       for (j = 0; j < chainGroupCount; ++j) {
@@ -159,16 +159,16 @@ class MmtfParser extends StructureParser {
     /// ///
     // get data from group map
 
-    var atomOffset = 0
-    var bondOffset = 0
+    let atomOffset = 0
+    let bondOffset = 0
 
     for (i = 0, il = numGroups; i < il; ++i) {
       groupData = sd.groupList[ sd.groupTypeList[ i ] ]
-      var groupAtomCount = groupData.atomNameList.length
-      var groupFormalChargeList = groupData.formalChargeList
+      const groupAtomCount = groupData.atomNameList.length
+      const groupFormalChargeList = groupData.formalChargeList
 
-      var groupBondAtomList = groupData.bondAtomList
-      var groupBondOrderList = groupData.bondOrderList
+      const groupBondAtomList = groupData.bondAtomList
+      const groupBondOrderList = groupData.bondOrderList
 
       for (j = 0, jl = groupBondOrderList.length; j < jl; ++j) {
         bAtomIndex1[ bondOffset ] = atomOffset + groupBondAtomList[ j * 2 ]
@@ -191,15 +191,15 @@ class MmtfParser extends StructureParser {
 
     // extra bonds
 
-    var bondAtomList = sd.bondAtomList
+    const bondAtomList = sd.bondAtomList
     if (bondAtomList) {
       if (sd.bondOrderList) {
         bBondOrder.set(sd.bondOrderList, bondOffset)
       }
 
       for (i = 0, il = bondAtomList.length; i < il; i += 2) {
-        var atomIndex1 = bondAtomList[ i ]
-        var atomIndex2 = bondAtomList[ i + 1 ]
+        const atomIndex1 = bondAtomList[ i ]
+        const atomIndex2 = bondAtomList[ i + 1 ]
         if (atomIndex1 < numAtoms && atomIndex2 < numAtoms) {
           bAtomIndex1[ bondOffset ] = atomIndex1
           bAtomIndex2[ bondOffset ] = atomIndex2
@@ -255,26 +255,26 @@ class MmtfParser extends StructureParser {
 
     //
 
-    var groupTypeDict = {}
+    let groupTypeDict: {[k: number]: any} = {}
     for (i = 0, il = sd.groupList.length; i < il; ++i) {
-      var groupType = sd.groupList[ i ]
-      var atomTypeIdList = []
+      const groupType = sd.groupList[ i ]
+      const atomTypeIdList: number[] = []
       for (j = 0, jl = groupType.atomNameList.length; j < jl; ++j) {
-        var element = groupType.elementList[ j ].toUpperCase()
-        var atomname = groupType.atomNameList[ j ]
+        const element = groupType.elementList[ j ].toUpperCase()
+        const atomname = groupType.atomNameList[ j ]
         atomTypeIdList.push(s.atomMap.add(atomname, element))
       }
-      var chemCompType = groupType.chemCompType.toUpperCase()
-      var hetFlag = ChemCompHetero.includes(chemCompType)
+      const chemCompType = groupType.chemCompType.toUpperCase()
+      const hetFlag = ChemCompHetero.includes(chemCompType)
 
-      var numGroupBonds = groupType.bondOrderList.length
-      var atomIndices1 = new Array(numGroupBonds)
-      var atomIndices2 = new Array(numGroupBonds)
+      const numGroupBonds = groupType.bondOrderList.length
+      const atomIndices1 = new Array(numGroupBonds)
+      const atomIndices2 = new Array(numGroupBonds)
       for (j = 0; j < numGroupBonds; ++j) {
         atomIndices1[ j ] = groupType.bondAtomList[ j * 2 ]
         atomIndices2[ j ] = groupType.bondAtomList[ j * 2 + 1 ]
       }
-      var bonds = {
+      const bonds = {
         atomIndices1: atomIndices1,
         atomIndices2: atomIndices2,
         bondOrders: groupType.bondOrderList
@@ -290,17 +290,17 @@ class MmtfParser extends StructureParser {
     }
 
     for (i = 0, il = s.atomStore.count; i < il; ++i) {
-      var residueIndex = s.atomStore.residueIndex[ i ]
-      var residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ]
-      var resAtomOffset = s.residueStore.atomOffset[ residueIndex ]
+      const residueIndex = s.atomStore.residueIndex[ i ]
+      const residueType = s.residueMap.list[ s.residueStore.residueTypeId[ residueIndex ] ]
+      const resAtomOffset = s.residueStore.atomOffset[ residueIndex ]
       s.atomStore.atomTypeId[ i ] = residueType.atomTypeIdList[ i - resAtomOffset ]
     }
 
     if (sd.secStructList) {
-      var secStructLength = sd.secStructList.length
+      const secStructLength: number = sd.secStructList.length
       for (i = 0, il = s.residueStore.count; i < il; ++i) {
         // with ( i % secStructLength ) secStruct entries are reused
-        var sstruc = SstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ]
+        const sstruc = SstrucMap[ s.residueStore.sstruc[ i % secStructLength ] ]
         if (sstruc !== undefined) s.residueStore.sstruc[ i ] = sstruc
       }
     }
@@ -308,7 +308,7 @@ class MmtfParser extends StructureParser {
     //
 
     if (sd.entityList) {
-      sd.entityList.forEach(function (e, i) {
+      sd.entityList.forEach(function (e: Entity, i: number) {
         s.entityList[ i ] = new Entity(
           s, i, e.description, e.type, e.chainIndexList
         )
@@ -316,17 +316,17 @@ class MmtfParser extends StructureParser {
     }
 
     if (sd.bioAssemblyList) {
-      sd.bioAssemblyList.forEach(function (_assembly, k) {
-        var id = k + 1
-        var assembly = new Assembly(id)
+      sd.bioAssemblyList.forEach(function (_assembly: any, k: number) {
+        const id = k + 1
+        const assembly = new Assembly('' + id)
         s.biomolDict[ 'BU' + id ] = assembly
-        var chainToPart = {}
-        _assembly.transformList.forEach(function (_transform) {
-          var matrix = new Matrix4().fromArray(_transform.matrix).transpose()
-          var chainList = _transform.chainIndexList.map(function (chainIndex) {
-            var chainname = ''
-            for (var k = 0; k < 4; ++k) {
-              var code = sd.chainNameList[ chainIndex * 4 + k ]
+        let chainToPart: {[k: string]: AssemblyPart} = {}
+        _assembly.transformList.forEach(function (_transform: any) {
+          const matrix = new Matrix4().fromArray(_transform.matrix).transpose()
+          const chainList: string[] = _transform.chainIndexList.map(function (chainIndex: number) {
+            let chainname = ''
+            for (let k = 0; k < 4; ++k) {
+              const code = sd.chainNameList[ chainIndex * 4 + k ]
               if (code) {
                 chainname += String.fromCharCode(code)
               } else {
@@ -335,22 +335,22 @@ class MmtfParser extends StructureParser {
             }
             return chainname
           })
-          var part = chainToPart[ chainList ]
+          const part = chainToPart[ chainList.toString() ]
           if (part) {
             part.matrixList.push(matrix)
           } else {
-            chainToPart[ chainList ] = assembly.addPart([ matrix ], chainList)
+            chainToPart[ chainList.toString() ] = assembly.addPart([ matrix ], chainList)
           }
         })
       })
     }
 
     if (sd.ncsOperatorList) {
-      var ncsName = 'NCS'
-      var ncsAssembly = new Assembly(ncsName)
-      var ncsPart = ncsAssembly.addPart()
-      sd.ncsOperatorList.forEach(function (_operator) {
-        var matrix = new Matrix4().fromArray(_operator).transpose()
+      const ncsName = 'NCS'
+      const ncsAssembly = new Assembly(ncsName)
+      const ncsPart = ncsAssembly.addPart()
+      sd.ncsOperatorList.forEach(function (_operator: number[]) {
+        const matrix = new Matrix4().fromArray(_operator).transpose()
         ncsPart.matrixList.push(matrix)
       })
       if (ncsPart.matrixList.length > 0) {
@@ -358,7 +358,7 @@ class MmtfParser extends StructureParser {
       }
     }
 
-    var uc = sd.unitCell
+    const uc = sd.unitCell
     if (uc && Array.isArray(uc) && uc[ 0 ]) {
       s.unitcell = new Unitcell({
         a: uc[ 0 ],
