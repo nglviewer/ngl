@@ -41,6 +41,7 @@ export { guessElement, concatStructures } from './structure/structure-utils'
 export { flatten, throttle, download, getQuery, uniqueArray } from './utils'
 import Queue from './utils/queue'
 import Counter from './utils/counter'
+import Frames from './trajectory/frames'
 
 //
 
@@ -224,6 +225,7 @@ export {
   Assembly,
   TrajectoryPlayer,
   Superposition,
+  Frames,
 
   Queue,
   Counter,

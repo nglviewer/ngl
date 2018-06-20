@@ -85,12 +85,14 @@ class TiledRenderer {
     viewer.render()
 
     if (this._antialias) {
+      const rx = (offsetX % 2) * (width % 2)
+      const ry = (offsetY % 2) * (height % 2)
       this._ctx.drawImage(
         viewer.renderer.domElement,
-        Math.floor(offsetX / 2),
-        Math.floor(offsetY / 2),
-        Math.ceil(width / 2),
-        Math.ceil(height / 2)
+        Math.floor(offsetX / 2) + rx,
+        Math.floor(offsetY / 2) + ry,
+        Math.ceil(width / 2) - rx,
+        Math.ceil(height / 2) - ry
       )
     } else {
       this._ctx.drawImage(
