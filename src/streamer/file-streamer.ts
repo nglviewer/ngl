@@ -11,8 +11,7 @@ interface FileReaderEventTarget extends EventTarget {
 }
 
 interface FileReaderEvent extends ProgressEvent {
-    target: FileReaderEventTarget;
-    getMessage():string;
+    target: FileReaderEventTarget | null;
 }
 
 class FileStreamer extends Streamer {
