@@ -12,6 +12,18 @@ import VolumeParser from './volume-parser'
 
 const reWhitespace = /\s+/
 
+interface DxHeader {
+  nx: number,
+  ny: number,
+  nz: number,
+  xmin: number,
+  ymin: number,
+  zmin: number,
+  hx: number,
+  hy: number,
+  hz: number
+}
+
 class DxParser extends VolumeParser {
   get type () { return 'dx' }
 
@@ -31,7 +43,7 @@ class DxParser extends VolumeParser {
     let count = 0
     let lineNo = 0
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string []) {
       for (let i = _i; i < _n; ++i) {
         if (count < size && lineNo > dataLineStart) {
           const line = lines[ i ].trim()
@@ -59,8 +71,8 @@ class DxParser extends VolumeParser {
     if (Debug) Log.timeEnd('DxParser._parse ' + this.name)
   }
 
-  parseHeaderLines (headerLines) {
-    const header = {}
+  parseHeaderLines (headerLines: string []) {
+    const header: Partial<DxHeader> = {}
     const n = headerLines.length
 
     let dataLineStart = 0

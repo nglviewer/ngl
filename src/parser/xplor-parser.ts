@@ -11,8 +11,28 @@ import VolumeParser from './volume-parser'
 
 const reWhitespace = /\s+/
 
-function parseNumberLine (line) {
+function parseNumberLine (line: string) {
   return line.trim().split(reWhitespace).map(parseFloat)
+}
+
+interface XplorHeader {
+  NA: number,
+  AMIN: number,
+  AMAX: number,
+  NB: number,
+  BMIN: number,
+  BMAX: number,
+  NC: number,
+  CMIN: number,
+  CMAX: number,
+  a: number,
+  b: number,
+  c: number,
+  alpha: number,
+  beta: number,
+  gamma: number,
+  RAVE: number,
+  RSIGMA: number
 }
 
 class XplorParser extends VolumeParser {
@@ -26,7 +46,7 @@ class XplorParser extends VolumeParser {
 
     const v = this.volume
     const headerLines = this.streamer.peekLines(8)
-    const header = {}
+    const header: Partial<XplorHeader> = {}
 
     let infoStart
     if (headerLines[ 2 ].startsWith('REMARKS')) {
@@ -65,7 +85,7 @@ class XplorParser extends VolumeParser {
     let count = 0
     let lineNo = 0
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ]
 
@@ -129,7 +149,7 @@ class XplorParser extends VolumeParser {
       Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
     )
 
-    const basis = [ 0, basisX, basisY, basisZ ]
+    const basis = [ [], basisX, basisY, basisZ ]
     const nxyz = [ 0, h.NA, h.NB, h.NC ]
     const mapcrs = [ 0, 1, 2, 3 ]
 

@@ -10,6 +10,40 @@ import { Debug, Log, ParserRegistry } from '../globals'
 import { ensureBuffer } from '../utils'
 import VolumeParser from './volume-parser'
 
+interface MrcHeader {
+  MAP: string,
+  MACHST: number [],
+  NX: number,
+  NY: number,
+  NZ: number,
+  MODE: number,
+  NXSTART: number,
+  NYSTART: number,
+  NZSTART: number,
+  MX: number,
+  MY: number,
+  MZ: number,
+  xlen: number,
+  ylen: number,
+  zlen: number,
+  alpha: number,
+  beta: number,
+  gamma: number,
+  MAPC: number,
+  MAPR: number,
+  MAPS: number,
+  DMIN: number,
+  DMAX: number,
+  DMEAN: number,
+  ISPG: number,
+  NSYMBT: number,
+  LSKFLG: number,
+  originX: number,
+  originY: number,
+  originZ: number,
+  ARMS: number
+}
+
 class MrcParser extends VolumeParser {
   get type () { return 'mrc' }
   get isBinary () { return true }
@@ -29,7 +63,7 @@ class MrcParser extends VolumeParser {
     if (Debug) Log.time('MrcParser._parse ' + this.name)
 
     const v = this.volume
-    const header = {}
+    const header: Partial<MrcHeader> = {}
 
     const bin = ensureBuffer(this.streamer.data)
     const intView = new Int32Array(bin, 0, 56)
@@ -207,7 +241,7 @@ class MrcParser extends VolumeParser {
       Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
     )
 
-    const basis = [ 0, basisX, basisY, basisZ ]
+    const basis = [ [], basisX, basisY, basisZ ]
     const nxyz = [ 0, h.MX, h.MY, h.MZ ]
     const mapcrs = [ 0, h.MAPC, h.MAPR, h.MAPS ]
 
