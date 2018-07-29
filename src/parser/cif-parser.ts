@@ -88,6 +88,8 @@ function parseChemComp (cif: Cif, structure: Structure, structureBuilder: Struct
   var atomnameDict: {[k: string]: number} = {}
 
   if (cca) {
+    ensureArray(cca, 'comp_id')
+
     var atomname, element, resname, resno
     n = cca.comp_id.length
 
@@ -134,6 +136,8 @@ function parseChemComp (cif: Cif, structure: Structure, structureBuilder: Struct
   }
 
   if (cca && ccb) {
+    ensureArray(ccb, 'comp_id')
+
     var atomname1, atomname2, bondOrder
     n = ccb.comp_id.length
     var na = cca.comp_id.length

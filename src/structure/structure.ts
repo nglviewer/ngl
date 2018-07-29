@@ -1008,6 +1008,9 @@ class Structure implements Structure{
         arrayMin(atomStore.x) !== 0 || arrayMax(atomStore.x) !== 0 ||
         arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
         arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
+      ) || (
+        // allow models with a single atom at the origin
+        atomStore.count / this.modelStore.count === 1
       )
     }
     return this._hasCoords;

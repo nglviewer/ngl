@@ -886,7 +886,6 @@ export default class Viewer {
 
       render.calls = 0
       render.vertices = 0
-      render.faces = 0
       render.points = 0
     } else {
       const rInfo = this.renderer.info
@@ -897,7 +896,7 @@ export default class Viewer {
       memory.textures = rMemory.textures
 
       render.calls += rRender.calls
-      render.faces += rRender.faces
+      render.faces += rRender.triangles
       render.points += rRender.points
     }
   }
