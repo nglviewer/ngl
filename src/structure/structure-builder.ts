@@ -11,7 +11,7 @@ class StructureBuilder {
   currentChainid: string|null = null
   currentResname: string|null = null
   currentResno: number|null = null
-  currentInscode: string|null = null
+  currentInscode: string|undefined = undefined
   currentHetero: boolean|null = null
 
   previousResname: string|null = ''
@@ -115,7 +115,7 @@ class StructureBuilder {
     this.currentChainid = chainid
     this.currentResname = resname
     this.currentResno = resno
-    this.currentInscode = inscode ? inscode : null
+    this.currentInscode = inscode
     this.currentHetero = hetero
   }
 

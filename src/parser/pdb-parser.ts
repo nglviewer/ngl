@@ -10,7 +10,7 @@ import { Debug, Log, ParserRegistry } from '../globals'
 import { defaults } from '../utils'
 import StructureParser from './structure-parser'
 import Entity, { EntityTypeString } from '../structure/entity'
-import Unitcell from '../symmetry/unitcell'
+import Unitcell, { UnitcellParams } from '../symmetry/unitcell'
 import Assembly, { AssemblyPart } from '../symmetry/assembly'
 import { WaterNames } from '../structure/structure-constants'
 import {
@@ -34,7 +34,7 @@ const HelixTypes: {[k: number]: string} = {
   8: 'h', // Left-handed gamma
   9: 'h', // 27 ribbon/helix
   10: 'h', // Polyproline
-  NaN: 'h'
+  0: 'h' //Used to be ''
 }
 
 const dAminoAcids = [
@@ -139,23 +139,23 @@ class PdbParser extends StructureParser {
 
     let line, recordName
     let serial, chainname: string, resno: number, resname: string, occupancy: number
-    let inscode: string, atomname, hetero: boolean, bfactor: number, altloc
+    let inscode: string, atomname, hetero: number, bfactor: number, altloc
 
     let startChain, startResi, startIcode
     let endChain, endResi, endIcode
 
     let serialDict: {[k: number]: number} = {}
-    const unitcellDict: {
-      origx?: Matrix4
-      scale?: Matrix4
-      a?: number
-      b?: number
-      c?: number
-      alpha?: number
-      beta?: number
-      gamma?: number
-      spacegroup?: string
-    } = {}
+    const unitcellDict: Partial<{
+      origx: Matrix4
+      scale: Matrix4
+      a: number
+      b: number
+      c: number
+      alpha: number
+      beta: number
+      gamma: number
+      spacegroup: string
+    }> = {}
     const bondDict: {[k: string]: boolean} = {}
 
     const entityDataList: {chainList: string[], name: string}[] = []
@@ -274,7 +274,7 @@ class PdbParser extends StructureParser {
           if (isPqr) {
             serial = parseInt(ls![ 1 ])
             element = ''
-            hetero = (line[ 0 ] === 'H')
+            hetero = (line[ 0 ] === 'H') ? 1 : 0
             chainname = dd ? '' : ls![ 4 ]
             resno = parseInt(ls![ 5 - dd! ])
             inscode = ''
@@ -286,7 +286,7 @@ class PdbParser extends StructureParser {
             if (hex && serial === 99999) {
               serialRadix = 16
             }
-            hetero = (line[ 0 ] === 'H')
+            hetero = (line[ 0 ] === 'H') ? 1 : 0
             chainname = line[ 21 ].trim()
             resno = parseInt(line.substr(22, 4), resnoRadix)
             if (hex && resno === 9999) {
@@ -410,7 +410,7 @@ class PdbParser extends StructureParser {
           endResi = parseInt(line.substr(33, 4))
           endIcode = line[ 37 ].trim()
           let helixType = parseInt(line.substr(39, 1))
-          helixType = (HelixTypes[ helixType ] || HelixTypes[NaN]).charCodeAt(0)
+          helixType = (HelixTypes[ helixType ] || HelixTypes[0]).charCodeAt(0)
           helices.push([
             startChain, startResi, startIcode,
             endChain, endResi, endIcode,
@@ -679,7 +679,7 @@ class PdbParser extends StructureParser {
     //
 
     if (unitcellDict.a !== undefined) {
-      s.unitcell = new Unitcell(unitcellDict as any)
+      s.unitcell = new Unitcell(unitcellDict as UnitcellParams)
     } else {
       s.unitcell = undefined
     }

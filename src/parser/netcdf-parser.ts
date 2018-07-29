@@ -5,11 +5,12 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
 import NetcdfReader from '../utils/netcdf-reader'
+import Streamer from '../streamer/streamer';
 
 class NetcdfParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: Partial<ParserParameters>) {
     const p = params || {}
 
     super(streamer, p)
