@@ -4,11 +4,12 @@
  * @private
  */
 
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
 import Surface from '../surface/surface'
+import Streamer from '../streamer/streamer';
 
 class SurfaceParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params:Partial<ParserParameters>) {
     super(streamer, params)
 
     this.loader = this.getLoader()
