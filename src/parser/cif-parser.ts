@@ -296,7 +296,7 @@ function processSecondaryStructure (cif: Cif, structure: Structure, asymIdDict: 
           asymIdDict[ sc.end_label_asym_id[ i ] ],
           parseInt(sc.end_auth_seq_id[ i ]),
           cifDefaults(endIcode, ''),
-          (HelixTypes[ helixType ] || HelixTypes[NaN]).charCodeAt(0)
+          (HelixTypes[ helixType ] || HelixTypes[0]).charCodeAt(0)
         ])
       }
     }

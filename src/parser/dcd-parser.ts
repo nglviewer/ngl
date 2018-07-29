@@ -10,6 +10,16 @@ import TrajectoryParser from './trajectory-parser'
 
 const charmmTimeUnitFactor = 20.45482949774598
 
+interface DcdHeader {
+  NSET: number,
+  ISTART: number,
+  NSAVC: number,
+  NAMNF: number,
+  DELTA: number,
+  TITLE: string,
+  NATOM: number
+}
+
 class DcdParser extends TrajectoryParser {
   get type () { return 'dcd' }
   get isBinary () { return true }
@@ -45,7 +55,7 @@ class DcdParser extends TrajectoryParser {
     const f = this.frames
     const coordinates = f.coordinates
     const boxes = f.boxes
-    const header = {}
+    const header: Partial<DcdHeader> = {}
 
     let nextPos = 0
 
