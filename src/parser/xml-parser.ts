@@ -10,7 +10,7 @@ import { parseXml } from '../utils/parse-xml'
 import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
 
-interface XmlParserParameters extends ParserParameters {
+export interface XmlParserParameters extends ParserParameters {
   useDomParser: boolean
 }
 

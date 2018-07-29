@@ -5,11 +5,12 @@
  */
 
 import { Debug, Log, ParserRegistry } from '../globals'
-import XmlParser from './xml-parser'
+import XmlParser, { XmlParserParameters } from './xml-parser'
 import Validation from '../structure/validation'
+import Streamer from '../streamer/streamer';
 
 class ValidationParser extends XmlParser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: XmlParserParameters) {
     const p = params || {}
 
     super(streamer, p)
