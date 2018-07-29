@@ -10,20 +10,25 @@ import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser'
 import { HelixTypes } from './pdb-parser'
 import Entity from '../structure/entity'
-import Unitcell from '../symmetry/unitcell'
+import Unitcell, { UnitcellParams } from '../symmetry/unitcell'
 import Assembly from '../symmetry/assembly'
 import Selection from '../selection/selection'
 import {
   assignResidueTypeBonds, assignSecondaryStructure, buildUnitcellAssembly,
   calculateBonds, calculateSecondaryStructure
 } from '../structure/structure-utils'
+import { Structure } from '../ngl';
+import StructureBuilder from '../structure/structure-builder';
+import { NumberArray } from '../types';
 
 const reWhitespace = /\s+/
 const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g
 const reDoubleQuote = /"/g
 const reTrimQuotes = /^['"]+|['"]+$/g
 
-function trimQuotes (str) {
+interface Cif {[k: string]: any}
+
+function trimQuotes (str: string) {
   if (str && str[0] === str[ str.length - 1 ] && (str[0] === "'" || str[0] === '"')) {
     return str.substring(1, str.length - 1)
   } else {
@@ -31,7 +36,7 @@ function trimQuotes (str) {
   }
 }
 
-function ensureArray (dict, field) {
+function ensureArray (dict: {[k: string]: any[]}, field: string) {
   if (!Array.isArray(dict[ field ])) {
     Object.keys(dict).forEach(function (key) {
       dict[ key ] = [ dict[ key ] ]
@@ -39,15 +44,15 @@ function ensureArray (dict, field) {
   }
 }
 
-function hasValue (d) {
+function hasValue (d: string) {
   return d !== '?'
 }
 
-function cifDefaults (value, defaultValue) {
+function cifDefaults (value: string, defaultValue: string) {
   return hasValue(value) ? value : defaultValue
 }
 
-function getBondOrder (valueOrder) {
+function getBondOrder (valueOrder: string) {
   switch (valueOrder.toLowerCase()) {
     case '?': // assume single bond
     case 'sing':
@@ -62,14 +67,14 @@ function getBondOrder (valueOrder) {
   return 0
 }
 
-function parseChemComp (cif, structure, structureBuilder) {
-  var atomStore = structure.atomStore
-  var atomMap = structure.atomMap
+function parseChemComp (cif: Cif, structure: Structure, structureBuilder: StructureBuilder) {
+  const atomStore = structure.atomStore
+  const atomMap = structure.atomMap
 
-  var i, n
-  var cc = cif.chem_comp
-  var cca = cif.chem_comp_atom
-  var ccb = cif.chem_comp_bond
+  let i, n
+  const cc = cif.chem_comp
+  const cca = cif.chem_comp_atom
+  const ccb = cif.chem_comp_bond
 
   if (cc) {
     if (cc.name) {
@@ -80,7 +85,7 @@ function parseChemComp (cif, structure, structureBuilder) {
     }
   }
 
-  var atomnameDict = {}
+  var atomnameDict: {[k: string]: number} = {}
 
   if (cca) {
     var atomname, element, resname, resno
@@ -103,7 +108,7 @@ function parseChemComp (cif, structure, structureBuilder) {
       resname = cca.pdbx_component_comp_id[ i ]
       resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1
 
-      structureBuilder.addAtom(0, '', '', resname, resno, 1)
+      structureBuilder.addAtom(0, '', '', resname, resno, true)
     }
 
     for (i = 0; i < n; ++i) {
@@ -124,7 +129,7 @@ function parseChemComp (cif, structure, structureBuilder) {
       resname = cca.pdbx_component_comp_id[ i ]
       resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1
 
-      structureBuilder.addAtom(1, '', '', resname, resno, 1)
+      structureBuilder.addAtom(1, '', '', resname, resno, true)
     }
   }
 
@@ -154,7 +159,7 @@ function parseChemComp (cif, structure, structureBuilder) {
   }
 }
 
-function parseCore (cif, structure, structureBuilder) {
+function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureBuilder) {
   var atomStore = structure.atomStore
   var atomMap = structure.atomMap
 
@@ -201,7 +206,7 @@ function parseCore (cif, structure, structureBuilder) {
     }
     atomStore.serial[ i ] = i
 
-    structureBuilder.addAtom(0, '', '', 'HET', 1, 1)
+    structureBuilder.addAtom(0, '', '', 'HET', 1, true)
   }
 
   c.divideScalar(n)
@@ -214,7 +219,7 @@ function parseCore (cif, structure, structureBuilder) {
 
   let k = n
 
-  function covalent (idx) {
+  function covalent (idx: number) {
     return atomMap.get(atomStore.atomTypeId[ idx ]).covalent
   }
   const identityMatrix = new Matrix4()
@@ -257,7 +262,7 @@ function parseCore (cif, structure, structureBuilder) {
           atomStore.serial[ k ] = k
           atomStore.altloc[ k ] = 'A'.charCodeAt(0)
 
-          structureBuilder.addAtom(0, '', '', 'HET', 1, 1)
+          structureBuilder.addAtom(0, '', '', 'HET', 1, true)
 
           k += 1
           return
@@ -267,9 +272,9 @@ function parseCore (cif, structure, structureBuilder) {
   }
 }
 
-function processSecondaryStructure (cif, structure, asymIdDict) {
-  var helices = []
-  var sheets = []
+function processSecondaryStructure (cif: Cif, structure: Structure, asymIdDict: {[k: string]: string}) {
+  var helices: [string, number, string, string, number, string, number][] = []
+  var sheets: [string, number, string, string, number, string][] = []
 
   var i, il, begIcode, endIcode
 
@@ -291,7 +296,7 @@ function processSecondaryStructure (cif, structure, asymIdDict) {
           asymIdDict[ sc.end_label_asym_id[ i ] ],
           parseInt(sc.end_auth_seq_id[ i ]),
           cifDefaults(endIcode, ''),
-          (HelixTypes[ helixType ] || HelixTypes['']).charCodeAt(0)
+          (HelixTypes[ helixType ] || HelixTypes[0]).charCodeAt(0)
         ])
       }
     }
@@ -327,16 +332,16 @@ function processSecondaryStructure (cif, structure, asymIdDict) {
   }
 }
 
-function processSymmetry (cif, structure, asymIdDict) {
+function processSymmetry (cif: Cif, structure: Structure, asymIdDict: {[k: string]: string}) {
   // biomol & ncs processing
-  var operDict = {}
+  var operDict: {[k: string]: Matrix4} = {}
   var biomolDict = structure.biomolDict
 
   if (cif.pdbx_struct_oper_list) {
     var biomolOp = cif.pdbx_struct_oper_list
     ensureArray(biomolOp, 'id')
 
-    biomolOp.id.forEach(function (id, i) {
+    biomolOp.id.forEach(function (id: number, i: number) {
       var m = new Matrix4()
       var elms = m.elements
 
@@ -366,8 +371,8 @@ function processSymmetry (cif, structure, asymIdDict) {
     var gen = cif.pdbx_struct_assembly_gen
     ensureArray(gen, 'assembly_id')
 
-    var getMatrixDict = function (expr) {
-      var matDict = {}
+    var getMatrixDict = function (expr: string) {
+      var matDict: {[k: string]: Matrix4} = {}
 
       var l = expr.replace(/[()']/g, '').split(',')
 
@@ -389,8 +394,8 @@ function processSymmetry (cif, structure, asymIdDict) {
       return matDict
     }
 
-    gen.assembly_id.forEach(function (id, i) {
-      var md = {}
+    gen.assembly_id.forEach(function (id: string, i: number) {
+      var md:{[k: string]: Matrix4} = {}
       var oe = gen.oper_expression[ i ].replace(/['"]\(|['"]/g, '')
 
       if (oe.includes(')(') || oe.indexOf('(') > 0) {
@@ -440,7 +445,7 @@ function processSymmetry (cif, structure, asymIdDict) {
     biomolDict[ ncsName ] = new Assembly(ncsName)
     var ncsPart = biomolDict[ ncsName ].addPart()
 
-    ncsOp.id.forEach(function (id, i) {
+    ncsOp.id.forEach(function (id: string, i: number) {
       // ignore 'given' operators
       if (ncsOp.code[ i ] === 'given') return
 
@@ -474,16 +479,26 @@ function processSymmetry (cif, structure, asymIdDict) {
   }
 
   // cell & symmetry
-  var unitcellDict = {}
+  const unitcellDict: {
+    a?: number
+    b?: number
+    c?: number
+    alpha?: number
+    beta?: number
+    gamma?: number
+    spacegroup?: string
+    origx?: Matrix4
+    scale?: Matrix4
+  } = {}
 
   if (cif.cell) {
-    var cell = cif.cell
+    const cell = cif.cell
 
-    var a = parseFloat(cell.length_a)
-    var b = parseFloat(cell.length_b)
-    var c = parseFloat(cell.length_c)
+    const a = parseFloat(cell.length_a)
+    const b = parseFloat(cell.length_b)
+    const c = parseFloat(cell.length_c)
 
-    var box = new Float32Array(9)
+    const box = new Float32Array(9)
     box[ 0 ] = a
     box[ 4 ] = b
     box[ 8 ] = c
@@ -560,13 +575,13 @@ function processSymmetry (cif, structure, asymIdDict) {
   }
 
   if (unitcellDict.a !== undefined) {
-    structure.unitcell = new Unitcell(unitcellDict)
+    structure.unitcell = new Unitcell(unitcellDict as UnitcellParams)
   } else {
     structure.unitcell = undefined
   }
 }
 
-function processConnections (cif, structure, asymIdDict) {
+function processConnections (cif: Cif, structure: Structure, asymIdDict: {[k: string]: string}) {
   // add connections
   var sc = cif.struct_conn
 
@@ -576,7 +591,7 @@ function processConnections (cif, structure, asymIdDict) {
     var reDoubleQuote = /"/g
     var ap1 = structure.getAtomProxy()
     var ap2 = structure.getAtomProxy()
-    var atomIndicesCache = {}
+    var atomIndicesCache: {[k: string]: Uint32Array|undefined} = {}
 
     for (var i = 0, il = sc.id.length; i < il; ++i) {
       // ignore:
@@ -650,8 +665,8 @@ function processConnections (cif, structure, asymIdDict) {
       // - #model to #model
       // - #altloc1 * #model to #altloc2 * #model
 
-      var k = atomIndices1.length
-      var l = atomIndices2.length
+      var k = atomIndices1!.length
+      var l = atomIndices2!.length
 
       if (k > l) {
         var tmpA = k
@@ -670,8 +685,8 @@ function processConnections (cif, structure, asymIdDict) {
       }
 
       for (var j = 0; j < l; ++j) {
-        ap1.index = atomIndices1[ j % k ]
-        ap2.index = atomIndices2[ j ]
+        ap1.index = atomIndices1![ j % k ]
+        ap2.index = atomIndices2![ j ]
 
         if (ap1 && ap2) {
           structure.bondStore.addBond(
@@ -685,7 +700,7 @@ function processConnections (cif, structure, asymIdDict) {
   }
 }
 
-function processEntities (cif, structure, chainIndexDict) {
+function processEntities (cif: Cif, structure: Structure, chainIndexDict: {[k: string]: Set<number>}) {
   if (cif.entity) {
     ensureArray(cif.entity, 'id')
     var e = cif.entity
@@ -693,7 +708,7 @@ function processEntities (cif, structure, chainIndexDict) {
     for (var i = 0; i < n; ++i) {
       var description = e.pdbx_description[ i ]
       var type = e.type[ i ]
-      var chainIndexList = Array.from(chainIndexDict[ e.id[ i ] ])
+      var chainIndexList: number[] = Array.from(chainIndexDict[ e.id[ i ] ])
       structure.entityList[ i ] = new Entity(
         structure, i, description, type, chainIndexList
       )
@@ -719,32 +734,32 @@ class CifParser extends StructureParser {
     var cAlphaOnly = this.cAlphaOnly
 
     var frames = s.frames
-    var currentFrame, currentCoord
+    var currentFrame: NumberArray, currentCoord: number
 
     var rawline, line
 
     //
 
-    var cif = {}
-    var asymIdDict = {}
-    var chainIndexDict = {}
+    var cif: Cif = {}
+    var asymIdDict: {[k: string]: string} = {}
+    var chainIndexDict:{[k: string]: Set<number>} = {}
 
     var pendingString = false
-    var currentString = null
+    var currentString: string|null = null
     var pendingValue = false
     var pendingLoop = false
     var pendingName = false
-    var loopPointers = []
-    var currentLoopIndex = null
-    var currentCategory = null
-    var currentName = null
-    var first = null
-    var pointerNames = []
+    var loopPointers: string[][] = []
+    var currentLoopIndex: number|null = null
+    var currentCategory: string|null = null
+    var currentName: string|boolean|null = null
+    var first: boolean|null = null
+    var pointerNames: string[] = []
 
-    var authAsymId, authSeqId,
-      labelAtomId, labelCompId, labelAsymId, labelEntityId, labelAltId,
-      groupPDB, id, typeSymbol, pdbxPDBmodelNum, pdbxPDBinsCode,
-      CartnX, CartnY, CartnZ, bIsoOrEquiv, occupancy
+    var authAsymId: number, authSeqId: number,
+      labelAtomId: number, labelCompId: number, labelAsymId: number, labelEntityId: number, labelAltId: number,
+      groupPDB: number, id: number, typeSymbol: number, pdbxPDBmodelNum: number, pdbxPDBinsCode: number,
+      CartnX: number, CartnY: number, CartnZ: number, bIsoOrEquiv: number, occupancy: number
 
     //
 
@@ -754,9 +769,9 @@ class CifParser extends StructureParser {
 
     var idx = 0
     var modelIdx = 0
-    var modelNum
+    var modelNum: number
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (var i = _i; i < _n; ++i) {
         rawline = lines[i]
         line = rawline.trim()
@@ -785,13 +800,13 @@ class CifParser extends StructureParser {
               if (currentLoopIndex === loopPointers.length) {
                 currentLoopIndex = 0
               }
-              loopPointers[ currentLoopIndex ].push(currentString)
-              currentLoopIndex += 1
+              loopPointers[ currentLoopIndex as number ].push(currentString as string);
+              (currentLoopIndex as number) += 1
             } else {
               if (currentName === false) {
-                cif[ currentCategory ] = currentString
+                cif[ currentCategory as string ] = currentString
               } else {
-                cif[ currentCategory ][ currentName ] = currentString
+                cif[ currentCategory as string ][ currentName as string ] = currentString //TODO currentname can equals null
               }
             }
 
@@ -845,8 +860,8 @@ class CifParser extends StructureParser {
             first = true
           } else {
             var keyValuePair = line.match(reQuotedWhitespace)
-            var key = keyValuePair[ 0 ]
-            var value = keyValuePair[ 1 ]
+            var key = keyValuePair![ 0 ]
+            var value = keyValuePair![ 1 ]
             keyParts = key.split('.')
             category = keyParts[ 0 ].substring(1)
             name = keyParts[ 1 ]
@@ -1007,7 +1022,7 @@ class CifParser extends StructureParser {
               idx += 1
             } else {
               const ls = line.match(reQuotedWhitespace)
-              const nn = ls.length
+              const nn = ls!.length
 
               if (currentLoopIndex === loopPointers.length) {
                 currentLoopIndex = 0
@@ -1016,10 +1031,10 @@ class CifParser extends StructureParser {
               } */
 
               for (let j = 0; j < nn; ++j) {
-                loopPointers[ currentLoopIndex + j ].push(ls[ j ])
+                loopPointers[ <number>currentLoopIndex + j ].push(ls![ j ])
               }
 
-              currentLoopIndex += nn
+              (<number>currentLoopIndex) += nn
             }
 
             pendingName = false
@@ -1029,17 +1044,17 @@ class CifParser extends StructureParser {
             const str = line.substring(1, line.length - 1)
 
             if (currentName === false) {
-              cif[ currentCategory ] = str
+              cif[ currentCategory as string ] = str
             } else {
-              cif[ currentCategory ][ currentName ] = str
+              cif[ currentCategory as string ][ currentName as string ] = str
             }
           } else if (pendingValue) {
             // Log.log( "NEWLINE VALUE", line );
 
             if (currentName === false) {
-              cif[ currentCategory ] = line
+              cif[ currentCategory as string ] = line
             } else {
-              cif[ currentCategory ][ currentName ] = line
+              cif[ currentCategory as string ][ currentName as string ] = line
             }
           } else {
             if (Debug) Log.log('CifParser._parse: unknown state', line)
@@ -1131,7 +1146,7 @@ class CifParser extends StructureParser {
       }
       if (cif.exptl && cif.exptl.method) {
         ensureArray(cif.exptl, 'method')
-        s.header.experimentalMethods = cif.exptl.method.map(function (m) {
+        s.header.experimentalMethods = cif.exptl.method.map(function (m: string) {
           return m.replace(reTrimQuotes, '')
         })
       }

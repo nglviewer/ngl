@@ -37,19 +37,61 @@ import SurfaceParser from './surface-parser'
  * } );
  *
  */
-function PLYLoader () {
-  this.propertyNameMapping = {}
+
+interface _PLYLoader {
+  propertyNameMapping: {[k: string]: string}
 }
+
+interface _PLYLoaderConstructor {
+  (this: _PLYLoader): void
+  new(): _PLYLoader
+}
+
+interface PLYProperty {
+  type: string,
+  name: string,
+  countType: string,
+  itemType: string
+}
+
+interface PLYElement {
+  name: string,
+  count: number,
+  properties: PLYProperty[],
+  x: number,
+  y: number,
+  z: number,
+  red: number,
+  green: number,
+  blue: number,
+  [k:string]: any
+}
+
+interface PLYHeader {
+  format: string,
+  version: string,
+  comments: string[],
+  elements: PLYElement[],
+  headerLength: number
+}
+
+interface GeometryPLY extends Geometry {
+  useColor: boolean
+}
+
+const PLYLoader = (function PLYLoader (this: _PLYLoader) {
+  this.propertyNameMapping = {}
+}) as _PLYLoaderConstructor
 
 PLYLoader.prototype = {
 
   constructor: PLYLoader,
 
-  setPropertyNameMapping: function (mapping) {
+  setPropertyNameMapping: function (mapping: {[k: string]: string}) {
     this.propertyNameMapping = mapping
   },
 
-  bin2str: function (buf) {
+  bin2str: function (buf: ArrayBuffer) {
     var arrayBuffer = new Uint8Array(buf)
     var str = ''
     for (var i = 0; i < buf.byteLength; i++) {
@@ -59,13 +101,13 @@ PLYLoader.prototype = {
     return str
   },
 
-  isASCII: function (data) {
+  isASCII: function (data: ArrayBuffer) {
     var header = this.parseHeader(this.bin2str(data))
 
     return header.format === 'ascii'
   },
 
-  parse: function (data) {
+  parse: function (data: string|ArrayBuffer) {
     if (data instanceof ArrayBuffer) {
       return (
         this.isASCII(data)
@@ -77,7 +119,7 @@ PLYLoader.prototype = {
     }
   },
 
-  parseHeader: function (data) {
+  parseHeader: function (data: string) {
     var patternHeader = /ply([\s\S]*)end_header\s/
     var headerText = ''
     var headerLength = 0
@@ -87,7 +129,7 @@ PLYLoader.prototype = {
       headerLength = result[ 0 ].length
     }
 
-    var header = {
+    var header: Partial<PLYHeader> = {
       comments: [],
       elements: [],
       headerLength: headerLength
@@ -96,10 +138,10 @@ PLYLoader.prototype = {
     var lines = headerText.split('\n')
     var currentElement, lineType, lineValues
 
-    function makePlyElementProperty (propertValues, propertyNameMapping) {
+    function makePlyElementProperty (propertValues: string[], propertyNameMapping: {[k: string]: string}) {
       var property = {
         type: propertValues[ 0 ]
-      }
+      } as PLYProperty
 
       if (property.type === 'list') {
         property.name = propertValues[ 3 ]
@@ -136,17 +178,17 @@ PLYLoader.prototype = {
 
         case 'comment':
 
-          header.comments.push(line)
+          header.comments!.push(line)
 
           break
 
         case 'element':
 
           if (currentElement !== undefined) {
-            header.elements.push(currentElement)
+            header.elements!.push(currentElement as PLYElement)
           }
 
-          currentElement = {}
+          currentElement = {} as PLYElement
           currentElement.name = lineValues[ 0 ]
           currentElement.count = parseInt(lineValues[ 1 ])
           currentElement.properties = []
@@ -155,7 +197,7 @@ PLYLoader.prototype = {
 
         case 'property':
 
-          currentElement.properties.push(makePlyElementProperty(lineValues, this.propertyNameMapping))
+          currentElement!.properties.push(makePlyElementProperty(lineValues, this.propertyNameMapping))
 
           break
 
@@ -166,13 +208,13 @@ PLYLoader.prototype = {
     }
 
     if (currentElement !== undefined) {
-      header.elements.push(currentElement)
+      header.elements!.push(currentElement)
     }
 
     return header
   },
 
-  parseASCIINumber: function (n, type) {
+  parseASCIINumber: function (n: string, type: string) {
     switch (type) {
       case 'char': case 'uchar': case 'short': case 'ushort': case 'int': case 'uint':
       case 'int8': case 'uint8': case 'int16': case 'uint16': case 'int32': case 'uint32':
@@ -185,10 +227,10 @@ PLYLoader.prototype = {
     }
   },
 
-  parseASCIIElement: function (properties, line) {
+  parseASCIIElement: function (properties: PLYProperty[], line: string) {
     var values = line.split(/\s+/)
 
-    var element = {}
+    var element = {} as PLYElement
 
     for (var i = 0; i < properties.length; i++) {
       if (properties[ i ].type === 'list') {
@@ -208,10 +250,10 @@ PLYLoader.prototype = {
     return element
   },
 
-  parseASCII: function (data) {
+  parseASCII: function (data: string) {
     // PLY ascii format specification, as per http://en.wikipedia.org/wiki/PLY_(file_format)
 
-    var geometry = new Geometry()
+    var geometry = new Geometry() as GeometryPLY
 
     var result
 
@@ -250,7 +292,7 @@ PLYLoader.prototype = {
     return this.postProcess(geometry)
   },
 
-  postProcess: function (geometry) {
+  postProcess: function (geometry: GeometryPLY) {
     if (geometry.useColor) {
       for (var i = 0; i < geometry.faces.length; i++) {
         geometry.faces[ i ].vertexColors = [
@@ -268,7 +310,7 @@ PLYLoader.prototype = {
     return geometry
   },
 
-  handleElement: function (geometry, elementName, element) {
+  handleElement: function (geometry: GeometryPLY, elementName: string, element: PLYElement) {
     if (elementName === 'vertex') {
       geometry.vertices.push(
         new Vector3(element.x, element.y, element.z)
@@ -297,7 +339,7 @@ PLYLoader.prototype = {
     }
   },
 
-  binaryRead: function (dataview, at, type, littleEndian) {
+  binaryRead: function (dataview: DataView, at: number, type: string, littleEndian: boolean) {
     switch (type) {
       // corespondences for non-specific length types here match rply:
       case 'int8': case 'char': return [ dataview.getInt8(at), 1 ]
@@ -318,8 +360,8 @@ PLYLoader.prototype = {
     }
   },
 
-  binaryReadElement: function (dataview, at, properties, littleEndian) {
-    var element = {}
+  binaryReadElement: function (dataview: DataView, at: number, properties: PLYProperty[], littleEndian: boolean) {
+    var element = {} as PLYElement
     var result
     var read = 0
 
@@ -348,7 +390,7 @@ PLYLoader.prototype = {
     return [ element, read ]
   },
 
-  parseBinary: function (data) {
+  parseBinary: function (data: ArrayBuffer) {
     var geometry = new Geometry()
 
     var header = this.parseHeader(this.bin2str(data))

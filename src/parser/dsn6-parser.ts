@@ -11,6 +11,25 @@ import { ensureBuffer } from '../utils'
 import { degToRad } from '../math/math-utils'
 import VolumeParser from './volume-parser'
 
+interface Dsn6Header {
+  xStart: number,
+  yStart: number,
+  zStart: number,
+  xExtent: number,
+  yExtent: number,
+  zExtent: number,
+  xRate: number,
+  yRate: number,
+  zRate: number,
+  xlen: number,
+  ylen: number,
+  zlen: number,
+  alpha: number,
+  beta: number,
+  gamma: number,
+  sigma: number
+}
+
 class Dsn6Parser extends VolumeParser {
   get type () { return 'dsn6' }
   get isBinary () { return true }
@@ -22,7 +41,7 @@ class Dsn6Parser extends VolumeParser {
     if (Debug) Log.time('Dsn6Parser._parse ' + this.name)
 
     const v = this.volume
-    const header = {}
+    const header: Partial<Dsn6Header> = {}
     let divisor, summand
 
     const bin = ensureBuffer(this.streamer.data)
@@ -142,10 +161,10 @@ class Dsn6Parser extends VolumeParser {
   }
 
   getMatrix () {
-    const h = this.volume.header
+    const h: Dsn6Header = this.volume.header
 
     const basisX = [
-      h.xlen,
+      h.xlen as number,
       0,
       0
     ]
@@ -170,7 +189,7 @@ class Dsn6Parser extends VolumeParser {
       Math.sin(Math.PI / 180.0 * h.beta) - basisZ[ 1 ] * basisZ[ 1 ]
     )
 
-    const basis = [ 0, basisX, basisY, basisZ ]
+    const basis = [ [], basisX, basisY, basisZ ]
     const nxyz = [ 0, h.xRate, h.yRate, h.zRate ]
     const mapcrs = [ 0, 1, 2, 3 ]
 

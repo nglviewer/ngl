@@ -115,7 +115,7 @@ class Volume {
   _sum: number|undefined
   __box: Box3|undefined
 
-  atomindex: Int32Array
+  atomindex: Int32Array|undefined
   volsurf: VolumeSurface|undefined
   header: any
   /**
@@ -128,7 +128,7 @@ class Volume {
    * @param {Integer} nz - z dimension of the 3d volume
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    */
-  constructor (name: string, path: string, data: Float32Array, nx: number, ny: number, nz: number, atomindex: Int32Array) {
+  constructor (name: string, path: string, data?: Float32Array, nx?: number, ny?: number, nz?: number, atomindex?: Int32Array) {
     this.name = name
     this.path = path
 
@@ -152,7 +152,7 @@ class Volume {
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    * @return {undefined}
    */
-  setData (data: Float32Array, nx: number, ny: number, nz: number, atomindex: Int32Array) {
+  setData (data?: Float32Array, nx?: number, ny?: number, nz?: number, atomindex?: Int32Array) {
     this.nx = nx || 1
     this.ny = ny || 1
     this.nz = nz || 1
@@ -246,7 +246,7 @@ class Volume {
    * @param {Int32Array} atomindex - atom indices corresponding to the cells in the 3d grid
    * @return {undefined}
      */
-  setAtomindex (atomindex: Int32Array) {
+  setAtomindex (atomindex?: Int32Array) {
     this.atomindex = atomindex
   }
 

@@ -7,7 +7,7 @@
 import { Debug, Log, ParserRegistry } from '../globals'
 import Parser from './parser'
 
-function hsvToRgb (h, s, v) {
+function hsvToRgb (h: number, s: number, v: number) {
   h /= 360
   s /= 100
   v /= 100
@@ -25,10 +25,10 @@ function hsvToRgb (h, s, v) {
     case 4: r = t; g = p; b = v; break
     case 5: r = v; g = p; b = q; break
   }
-  return [ r, g, b ]
+  return [ r, g, b ] as number []
 }
 
-const ColorDict = {
+const ColorDict: {[k: string]: number[]} = {
   red: hsvToRgb(0, 100, 100),
   orange: hsvToRgb(20, 100, 100),
   gold: hsvToRgb(40, 100, 100),
@@ -65,7 +65,7 @@ const reTrimCurly = /^{+|}+$/g
 const reTrimQuotes = /^['"]+|['"]+$/g
 const reCollapseEqual = /\s*=\s*/g
 
-function parseListDef (line) {
+function parseListDef (line: string) {
   let name
   let defaultColor
   let master = []
@@ -73,7 +73,7 @@ function parseListDef (line) {
 
   line = line.replace(reCollapseEqual, '=')
 
-  const lm = line.match(reCurlyWhitespace)
+  const lm = line.match(reCurlyWhitespace) as RegExpMatchArray
   for (let j = 1; j < lm.length; ++j) {
     const e = lm[ j ]
     if (e[ 0 ] === '{') {
@@ -100,7 +100,7 @@ function parseListDef (line) {
   }
 }
 
-function parseListElm (line) {
+function parseListElm (line: string) {
   line = line.trim()
 
   const idx1 = line.indexOf('{')
@@ -114,8 +114,8 @@ function parseListElm (line) {
     parseFloat(ls[ ls.length - 1 ])
   ]
   let color, width, radius
-  for (var lsindex = 4; lsindex <= ls.length; lsindex++) {
-    var literal = ls[ ls.length - lsindex ]
+  for (let lsindex = 4; lsindex <= ls.length; lsindex++) {
+    const literal = ls[ ls.length - lsindex ]
     if (literal in ColorDict) {
       color = ColorDict[ ls[ ls.length - lsindex ] ]
     }
@@ -137,7 +137,7 @@ function parseListElm (line) {
   }
 }
 
-function parseStr (line) {
+function parseStr (line: string) {
   const start = line.indexOf('{')
   const end = line.indexOf('}')
   return line.substring(
@@ -146,18 +146,18 @@ function parseStr (line) {
   ).trim()
 }
 
-function parseFlag (line) {
+function parseFlag (line: string) {
   const end = line.indexOf('}')
   return end === -1 ? undefined : line.substr(end + 1).trim()
 }
 
-function parseGroup (line) {
+function parseGroup (line: string) {
   let name
-  let flags = {}
+  let flags: {[k: string]: string|boolean} = {}
 
   line = line.replace(reCollapseEqual, '=')
 
-  const lm = line.match(reCurlyWhitespace)
+  const lm = line.match(reCurlyWhitespace)  as RegExpMatchArray
   for (let j = 1; j < lm.length; ++j) {
     const e = lm[ j ]
     if (e[ 0 ] === '{') {
@@ -174,8 +174,14 @@ function parseGroup (line) {
 
   return [ name, flags ]
 }
-
-function convertKinTriangleArrays (ribbonObject) {
+interface RibbonObject {
+  labelArray: string[],
+  positionArray: number[],
+  colorArray: number[],
+  name?: string,
+  masterArray: any[]
+}
+function convertKinTriangleArrays (ribbonObject: RibbonObject) {
   // have to convert ribbons/triangle lists from stripdrawmode to normal drawmode
   // index                    [ 0 1 2 3 4 5 6 7 8 91011 ]
   // label [ 0 1 2 3 4 5 ] to [ 0 1 2 1 2 3 2 3 4 3 4 5 ]
@@ -204,6 +210,45 @@ function convertKinTriangleArrays (ribbonObject) {
   }
 }
 
+interface Kinemage {
+  kinemage?: number,
+  onewidth?: any,
+  '1viewid'?: string,
+  pdbfile?: string,
+  text: string,
+  texts: string[],
+  captions: string[],
+  caption: string,
+  groupDict: {[k:string]: {[k:string]: boolean}},
+  subgroupDict: {[k: string]: any},
+  masterDict: {[k:string]: {indent: boolean, visible: boolean}},
+  pointmasterDict: {[k: string]: any},
+  dotLists: DotList[],
+  vectorLists: VectorList[],
+  ballLists: any[],
+  ribbonLists: RibbonObject[]
+}
+
+interface DotList {
+  name?: string,
+  masterArray: any[],
+  labelArray: any[],
+  positionArray: any[],
+  colorArray: any[]
+}
+
+interface VectorList {
+  name?: string,
+  masterArray: any[],
+  label1Array: string[],
+  label2Array: string[],
+  position1Array: number[],
+  position2Array: number[],
+  color1Array: number[],
+  color2Array: number[],
+  width: number[]
+}
+
 class KinParser extends Parser {
   get type () { return 'kin' }
   get __objName () { return 'kinemage' }
@@ -213,13 +258,15 @@ class KinParser extends Parser {
 
     if (Debug) Log.time(`KinParser._parse ${this.name}`)
 
-    const kinemage = {
+    const kinemage: Kinemage = {
       kinemage: undefined,
       onewidth: undefined,
       '1viewid': undefined,
       pdbfile: undefined,
-      text: [],
-      caption: [],
+      texts: [],
+      text: '',
+      captions: [],
+      caption: '',
       groupDict: {},
       subgroupDict: {},
       masterDict: {},
@@ -233,25 +280,25 @@ class KinParser extends Parser {
 
     let isDotList = false
     let prevDotLabel = ''
-    let dotDefaultColor
-    let dotLabel, dotPosition, dotColor
+    let dotDefaultColor: number[]
+    let dotLabel: string[], dotPosition: number[], dotColor: number[]
 
     let isVectorList = false
     let prevVecLabel = ''
-    let prevVecPosition, prevVecColor
-    let vecDefaultColor, vecDefaultWidth
-    let vecLabel1, vecLabel2, vecPosition1, vecPosition2, vecColor1, vecColor2
+    let prevVecPosition: number[]|null, prevVecColor: number[]|null
+    let vecDefaultColor: number[], vecDefaultWidth: number[]
+    let vecLabel1: string[], vecLabel2: string[], vecPosition1: number[], vecPosition2: number[], vecColor1: number[], vecColor2: number[]
 
     let isBallList = false
     let prevBallLabel = ''
-    let ballRadius, ballDefaultColor
-    let ballLabel, ballPosition, ballColor
+    let ballRadius: number[], ballDefaultColor: number[]
+    let ballLabel: string[], ballPosition: number[], ballColor: number[]
 
     let isRibbonList = false
     let prevRibbonPointLabel = ''
 
-    let ribbonListDefaultColor
-    let ribbonPointLabelArray, ribbonPointPositionArray, ribbonPointColorArray
+    let ribbonListDefaultColor: number[]
+    let ribbonPointLabelArray: string[], ribbonPointPositionArray: number[], ribbonPointColorArray: number[]
 
     let isText = false
     let isCaption = false
@@ -262,7 +309,7 @@ class KinParser extends Parser {
     // @dotlist {x} color=white master={vdw contact} master={dots}
     // { CB  THR   1  A}sky  'P' 18.915,14.199,5.024
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ]
 
@@ -290,7 +337,7 @@ class KinParser extends Parser {
           dotLabel = []
           dotPosition = []
           dotColor = []
-          dotDefaultColor = listColor
+          dotDefaultColor = listColor as number[]
 
           kinemage.dotLists.push({
             name: listName,
@@ -305,7 +352,7 @@ class KinParser extends Parser {
           let { listMasters, listName, listWidth, listColor } = parseListDef(line)
 
           if (listMasters) {
-            listMasters.forEach(function (name) {
+            listMasters.forEach(function (name: string) {
               if (!kinemage.masterDict[ name ]) {
                 kinemage.masterDict[ name ] = {
                   indent: false,
@@ -325,7 +372,7 @@ class KinParser extends Parser {
           vecPosition2 = []
           vecColor1 = []
           vecColor2 = []
-          vecDefaultColor = listColor
+          vecDefaultColor = listColor as number[]
           vecDefaultWidth = []
           if (listWidth) {
             vecDefaultWidth.push(listWidth)
@@ -346,7 +393,7 @@ class KinParser extends Parser {
           let { listName, listColor, listMasters } = parseListDef(line)
 
           if (listMasters) {
-            listMasters.forEach(function (name) {
+            listMasters.forEach(function (name: string) {
               if (!kinemage.masterDict[ name ]) {
                 kinemage.masterDict[ name ] = {
                   indent: false,
@@ -363,7 +410,7 @@ class KinParser extends Parser {
           ballRadius = []
           ballPosition = []
           ballColor = []
-          ballDefaultColor = listColor
+          ballDefaultColor = listColor as number[]
 
           kinemage.ballLists.push({
             name: listName,
@@ -377,7 +424,7 @@ class KinParser extends Parser {
           let { listMasters, listName, listColor } = parseListDef(line)
 
           if (listMasters) {
-            listMasters.forEach(function (name) {
+            listMasters.forEach(function (name: string) {
               if (!kinemage.masterDict[ name ]) {
                 kinemage.masterDict[ name ] = {
                   indent: false,
@@ -391,7 +438,7 @@ class KinParser extends Parser {
           ribbonPointLabelArray = []
           ribbonPointPositionArray = []
           ribbonPointColorArray = []
-          ribbonListDefaultColor = listColor
+          ribbonListDefaultColor = listColor as number[]
 
           kinemage.ribbonLists.push({
             name: listName,
@@ -402,10 +449,10 @@ class KinParser extends Parser {
           })
         } else if (line.startsWith('@text')) {
           isText = true
-          kinemage.text.push(line.substr(5))
+          kinemage.texts.push(line.substr(5))
         } else if (line.startsWith('@caption')) {
           isCaption = true
-          kinemage.caption.push(line.substr(8))
+          kinemage.captions.push(line.substr(8))
         } else if (isDotList) {
           // { CB  THR   1  A}sky  'P' 18.915,14.199,5.024
 
@@ -464,7 +511,7 @@ class KinParser extends Parser {
           if (idx2 === -1 && prevVecPosition) {
             vecLabel2.push(prevVecLabel)
             vecPosition2.push(...prevVecPosition)
-            vecColor2.push(...prevVecColor)
+            vecColor2.push(...prevVecColor as number[])
 
             prevVecLabel = label
             prevVecPosition = position
@@ -529,9 +576,9 @@ class KinParser extends Parser {
           ribbonPointPositionArray.push(...position)
           ribbonPointColorArray.push(...color)
         } else if (isText) {
-          kinemage.text.push(line)
+          kinemage.texts.push(line)
         } else if (isCaption) {
-          kinemage.caption.push(line)
+          kinemage.captions.push(line)
         } else if (line.startsWith('@kinemage')) {
           kinemage.kinemage = parseInt(line.substr(9).trim())
         } else if (line.startsWith('@onewidth')) {
@@ -541,31 +588,31 @@ class KinParser extends Parser {
         } else if (line.startsWith('@pdbfile')) {
           kinemage.pdbfile = parseStr(line)
         } else if (line.startsWith('@group')) {
-          const [ name, flags ] = parseGroup(line)
+          const [ name, flags] = parseGroup(line)
 
-          if (!kinemage.groupDict[ name ]) {
-            kinemage.groupDict[ name ] = {
+          if (!kinemage.groupDict[ name as string ]) {
+            kinemage.groupDict[ name as string ] = {
               dominant: false,
               animate: false
             }
           }
 
-          for (let key in flags) {
-            kinemage.groupDict[ name ][ key ] = flags[ key ]
+          for (let key in flags as {[k: string]: boolean}) {
+            kinemage.groupDict[ name as string ][ key ] = (flags as {[k: string]: boolean})[ key ]
           }
         } else if (line.startsWith('@subgroup')) {
           const [ name, flags ] = parseGroup(line)
 
-          if (!kinemage.subgroupDict[ name ]) {
-            kinemage.subgroupDict[ name ] = {
+          if (!kinemage.subgroupDict[ name as string ]) {
+            kinemage.subgroupDict[ name as string ] = {
               dominant: false,
               animate: false,
               master: undefined
             }
           }
 
-          for (let key in flags) {
-            kinemage.subgroupDict[ name ][ key ] = flags[ key ]
+          for (let key in flags as {[k: string]: boolean}) {
+            kinemage.subgroupDict[ name as string ][ key ] = (flags as {[k: string]: boolean})[ key ]
           }
         } else if (line.startsWith('@master')) {
           const name = parseStr(line)
@@ -590,8 +637,8 @@ class KinParser extends Parser {
         } else if (line.startsWith('@pointmaster')) {
           const [ name, flags ] = parseGroup(line)
 
-          kinemage.pointmasterDict[ name ] = {
-            id: Object.keys(flags)[ 0 ].replace(reTrimQuotes, '')
+          kinemage.pointmasterDict[ name as string] = {
+            id: Object.keys(flags as {[k: string]: boolean})[ 0 ].replace(reTrimQuotes, '')
           }
         } else {
           console.log(line)
@@ -603,10 +650,10 @@ class KinParser extends Parser {
       _parseChunkOfLines(0, lines.length, lines)
     })
 
-    kinemage.text = kinemage.text.join('\n').trim()
-    kinemage.caption = kinemage.caption.join('\n').trim()
+    kinemage.text = kinemage.texts.join('\n').trim()
+    kinemage.caption = kinemage.captions.join('\n').trim()
     if (kinemage.ribbonLists) {
-      let convertedLists = []
+      let convertedLists: RibbonObject[] = []
       kinemage.ribbonLists.forEach(function (listObject) {
         convertedLists.push(convertKinTriangleArrays(listObject))
       })

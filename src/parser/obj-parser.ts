@@ -9,13 +9,31 @@ import { BufferGeometry, BufferAttribute } from 'three'
 import { ParserRegistry } from '../globals'
 import SurfaceParser from './surface-parser'
 
+interface _OBJLoader {
+  regexp: {[k: string]: RegExp}
+}
+
+interface _OBJLoaderConstructor {
+  (this: _OBJLoader): void
+  new(): _OBJLoader
+}
+
+interface ObjectType {
+  name: string,
+  fromDeclaration: boolean,
+  geometry: {
+    vertices: number[],
+    normals: number[],
+    type?: string
+  }
+}
 /**
  * OBJLoader
  * @class
  * @private
  * @author mrdoob / http://mrdoob.com/
  */
-function OBJLoader () {
+const OBJLoader = (function OBJLoader (this: _OBJLoader) {
   this.regexp = {
     // v float float float
     vertex_pattern: /^v\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)\s+([\d.+\-eE]+)/,
@@ -40,25 +58,25 @@ function OBJLoader () {
     // usemtl material_name
     material_use_pattern: /^usemtl /
   }
-}
+}) as _OBJLoaderConstructor
 
 OBJLoader.prototype = {
 
   constructor: OBJLoader,
 
-  setPath: function (value) {
+  setPath: function (value: string) {
     this.path = value
   },
 
   _createParserState: function () {
     var state = {
-      objects: [],
-      object: {},
+      objects: [] as ObjectType[],
+      object: {} as ObjectType,
 
       vertices: [],
       normals: [],
 
-      startObject: function (name, fromDeclaration) {
+      startObject: function (name: string, fromDeclaration: boolean) {
         // If the current object (initial from reset) is not from a g/o declaration in the parsed
         // file. We need to use it for the first parsed g/o to keep things in sync.
         if (this.object && this.object.fromDeclaration === false) {
@@ -79,17 +97,17 @@ OBJLoader.prototype = {
         this.objects.push(this.object)
       },
 
-      parseVertexIndex: function (value, len) {
+      parseVertexIndex: function (value: string, len: number) {
         var index = parseInt(value, 10)
         return (index >= 0 ? index - 1 : index + len / 3) * 3
       },
 
-      parseNormalIndex: function (value, len) {
+      parseNormalIndex: function (value: string, len: number) {
         var index = parseInt(value, 10)
         return (index >= 0 ? index - 1 : index + len / 3) * 3
       },
 
-      addVertex: function (a, b, c) {
+      addVertex: function (a: number, b: number, c: number) {
         var src = this.vertices
         var dst = this.object.geometry.vertices
 
@@ -104,7 +122,7 @@ OBJLoader.prototype = {
         dst.push(src[ c + 2 ])
       },
 
-      addVertexLine: function (a) {
+      addVertexLine: function (a: number) {
         var src = this.vertices
         var dst = this.object.geometry.vertices
 
@@ -113,7 +131,7 @@ OBJLoader.prototype = {
         dst.push(src[ a + 2 ])
       },
 
-      addNormal: function (a, b, c) {
+      addNormal: function (a: number, b: number, c: number) {
         var src = this.normals
         var dst = this.object.geometry.normals
 
@@ -128,7 +146,7 @@ OBJLoader.prototype = {
         dst.push(src[ c + 2 ])
       },
 
-      addFace: function (a, b, c, d, na, nb, nc, nd) {
+      addFace: function (a: string, b: string, c: string, d?: string, na?: string, nb?: string, nc?: string, nd?: string) {
         var vLen = this.vertices.length
 
         var ia = this.parseVertexIndex(a, vLen)
@@ -150,13 +168,13 @@ OBJLoader.prototype = {
           var nLen = this.normals.length
           ia = this.parseNormalIndex(na, nLen)
 
-          ib = na === nb ? ia : this.parseNormalIndex(nb, nLen)
-          ic = na === nc ? ia : this.parseNormalIndex(nc, nLen)
+          ib = na === nb ? ia : this.parseNormalIndex(nb!, nLen)
+          ic = na === nc ? ia : this.parseNormalIndex(nc!, nLen)
 
           if (d === undefined) {
             this.addNormal(ia, ib, ic)
           } else {
-            id = this.parseNormalIndex(nd, nLen)
+            id = this.parseNormalIndex(nd!, nLen)
 
             this.addNormal(ia, ib, id)
             this.addNormal(ib, ic, id)
@@ -164,7 +182,7 @@ OBJLoader.prototype = {
         }
       },
 
-      addLineGeometry: function (vertices) {
+      addLineGeometry: function (vertices: string[]) {
         this.object.geometry.type = 'Line'
 
         var vLen = this.vertices.length
@@ -181,7 +199,7 @@ OBJLoader.prototype = {
     return state
   },
 
-  parse: function (text) {
+  parse: function (text: string) {
     var state = this._createParserState()
 
     if (text.indexOf('\r\n') !== -1) {

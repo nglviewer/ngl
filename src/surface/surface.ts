@@ -58,7 +58,7 @@ class Surface {
    * @param {Int32Array} data.atomindex - atom indices
    * @param {boolean} data.contour - contour mode flag
    */
-  constructor (name: string, path: string, data: SurfaceData) {
+  constructor (name: string, path: string, data?: SurfaceData) {
     this.name = name || ''
     this.path = path || ''
     this.info = {}

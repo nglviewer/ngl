@@ -5,12 +5,18 @@
  */
 
 import { defaults } from '../utils'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
 import Structure from '../structure/structure'
 import StructureBuilder from '../structure/structure-builder'
+import Streamer from '../streamer/streamer';
 
+interface StructureParserParameters extends ParserParameters {
+  firstModelOnly: boolean
+  asTrajectory: boolean
+  cAlphaOnly: boolean
+}
 class StructureParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: Partial<StructureParserParameters>) {
     var p = params || {}
 
     super(streamer, p)

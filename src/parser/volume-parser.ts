@@ -7,11 +7,16 @@
 import { Matrix4 } from 'three'
 
 import { defaults } from '../utils'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
 import Volume from '../surface/volume'
+import Streamer from '../streamer/streamer';
+
+interface VolumeParserParameters extends ParserParameters {
+  voxelSize: number
+}
 
 class VolumeParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: Partial<VolumeParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

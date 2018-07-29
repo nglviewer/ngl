@@ -32,7 +32,7 @@ class SdfParser extends StructureParser {
 
     const frames = s.frames
     let doFrames = false
-    let currentFrame, currentCoord
+    let currentFrame: Float32Array, currentCoord: number
 
     const atomMap = s.atomMap
     const atomStore = s.atomStore
@@ -47,15 +47,15 @@ class SdfParser extends StructureParser {
     let modelIdx = 0
     let modelAtomIdxStart = 0
 
-    const sdfData = []
-    let currentItem = false
-    let currentData = {}
+    const sdfData: {[k: string]: string[]}[] = []
+    let currentItem: string|boolean = false
+    let currentData: {[k: string]: string[]} = {}
     let mItem
     s.extraData.sdf = sdfData
 
-    let atomCount, bondCount, atomStart, atomEnd, bondStart, bondEnd
+    let atomCount, bondCount, atomStart: number, atomEnd: number, bondStart: number, bondEnd: number
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ]
 
@@ -138,7 +138,7 @@ class SdfParser extends StructureParser {
           currentItem = mItem[ 1 ]
           currentData[ currentItem ] = []
         } else if (currentItem !== false && line) {
-          currentData[ currentItem ].push(line)
+          currentData[ <string>currentItem ].push(line)
         }
 
         ++lineNo

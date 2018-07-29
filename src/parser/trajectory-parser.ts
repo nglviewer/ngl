@@ -4,11 +4,12 @@
  * @private
  */
 
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
 import Frames from '../trajectory/frames'
+import Streamer from '../streamer/streamer';
 
 class TrajectoryParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: Partial<ParserParameters>) {
     super(streamer, params)
 
     this.frames = new Frames(this.name, this.path)

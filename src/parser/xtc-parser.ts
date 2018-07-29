@@ -7,6 +7,7 @@
 import { Debug, Log, ParserRegistry } from '../globals'
 import { ensureBuffer } from '../utils'
 import TrajectoryParser from './trajectory-parser'
+import { NumberArray } from '../types';
 
 const MagicInts = new Uint32Array([
   0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 10, 12, 16, 20, 25, 32, 40, 50, 64,
@@ -20,7 +21,7 @@ const MagicInts = new Uint32Array([
 const FirstIdx = 9
 // const LastIdx = MagicInts.length
 
-function sizeOfInt (size) {
+function sizeOfInt (size: number) {
   let num = 1
   let numOfBits = 0
   while (size >= num && numOfBits < 32) {
@@ -32,7 +33,7 @@ function sizeOfInt (size) {
 
 const _tmpBytes = new Uint8Array(32)
 
-function sizeOfInts (numOfInts, sizes) {
+function sizeOfInts (numOfInts: number, sizes: Int32Array) {
   let numOfBytes = 1
   let numOfBits = 0
   _tmpBytes[0] = 1
@@ -59,7 +60,7 @@ function sizeOfInts (numOfInts, sizes) {
   return numOfBits + numOfBytes * 8
 }
 
-function decodeBits (buf, cbuf, numOfBits, buf2) {
+function decodeBits (buf: Int32Array, cbuf: Uint8Array, numOfBits: number, buf2: Uint32Array) {
   const mask = (1 << numOfBits) - 1
   let lastBB0 = buf2[1]
   let lastBB1 = buf2[2]
@@ -91,7 +92,7 @@ function decodeBits (buf, cbuf, numOfBits, buf2) {
 
 const _tmpIntBytes = new Int32Array(32)
 
-function decodeInts (buf, cbuf, numOfInts, numOfBits, sizes, nums, buf2) {
+function decodeInts (buf: Int32Array, cbuf: Uint8Array, numOfInts: number, numOfBits: number, sizes: NumberArray, nums: Float32Array, buf2: Uint32Array) {
   let numOfBytes = 0
   _tmpIntBytes[1] = 0
   _tmpIntBytes[2] = 0
@@ -155,7 +156,7 @@ class XtcParser extends TrajectoryParser {
     const buf2 = new Uint32Array(buf.buffer)
 
     while (true) {
-      let frameCoords
+      let frameCoords: NumberArray
 
       // const magicnum = dv.getInt32(offset)
       const natoms = dv.getInt32(offset + 4)
@@ -175,6 +176,7 @@ class XtcParser extends TrajectoryParser {
       boxes.push(box)
 
       if (natoms <= 9) { // no compression
+        frameCoords = new Float32Array(natoms)
         for (let i = 0; i < natoms; ++i) {
           frameCoords[i] = dv.getFloat32(offset)
           offset += 4

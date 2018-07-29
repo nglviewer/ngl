@@ -11,7 +11,7 @@ class StructureBuilder {
   currentChainid: string|null = null
   currentResname: string|null = null
   currentResno: number|null = null
-  currentInscode: string|null = null
+  currentInscode: string|undefined = undefined
   currentHetero: boolean|null = null
 
   previousResname: string|null = ''
@@ -40,7 +40,7 @@ class StructureBuilder {
     )
   }
 
-  addAtom (modelindex: number, chainname: string, chainid: string, resname: string, resno: number, hetero: boolean, sstruc: string, inscode: string) {
+  addAtom (modelindex: number, chainname: string, chainid: string, resname: string, resno: number, hetero: boolean, sstruc?: string|undefined, inscode?: string|undefined) {
     const atomStore = this.structure.atomStore
     const residueStore = this.structure.residueStore
     const chainStore = this.structure.chainStore

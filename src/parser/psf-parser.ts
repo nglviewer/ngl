@@ -38,17 +38,17 @@ class PsfParser extends StructureParser {
     const atomStore = s.atomStore
     atomStore.addField('partialCharge', 1, 'float32')
 
-    const title = []
+    const title: string[] = []
 
-    let mode
-    let chainid
-    let lastSegid
+    let mode: number|undefined
+    let chainid: string
+    let lastSegid: string
     let idx = 0
     let chainIdx = 0
     let bondIdx = 0
-    let bAtomIndex1, bAtomIndex2, bBondOrder
+    let bAtomIndex1: Uint32Array, bAtomIndex2: Uint32Array, bBondOrder: Uint8Array
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ].trim()
 
@@ -135,11 +135,11 @@ class PsfParser extends StructureParser {
 
     s.title = title.join(' ')
 
-    s.bondStore.length = bBondOrder.length
+    s.bondStore.length = bBondOrder!.length
     s.bondStore.count = bondIdx
-    s.bondStore.atomIndex1 = bAtomIndex1
-    s.bondStore.atomIndex2 = bAtomIndex2
-    s.bondStore.bondOrder = bBondOrder
+    s.bondStore.atomIndex1 = bAtomIndex1!
+    s.bondStore.atomIndex2 = bAtomIndex2!
+    s.bondStore.bondOrder = bBondOrder!
 
     sb.finalize()
     s.finalizeAtoms()

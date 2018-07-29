@@ -15,6 +15,18 @@ import VolumeParser from './volume-parser'
 const reWhitespace = /\s+/
 const reScientificNotation = /-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?/g
 const bohrToAngstromFactor = 0.529177210859
+interface Header {
+  atomCount: number,
+  originX: number,
+  originY: number,
+  originZ: number,
+  NVX: number,
+  NVY: number,
+  NVZ: number,
+  basisX: Vector3,
+  basisY: Vector3,
+  basisZ: Vector3
+}
 
 class CubeParser extends VolumeParser {
   get type () { return 'cube' }
@@ -26,11 +38,11 @@ class CubeParser extends VolumeParser {
 
     const v = this.volume
     const headerLines = this.streamer.peekLines(6)
-    const header = {}
+    const header: Partial<Header> = {}
 
     const scaleFactor = bohrToAngstromFactor * this.voxelSize
 
-    function h (k, l) {
+    function h (k: number, l: number) {
       var field = headerLines[ k ].trim().split(reWhitespace)[ l ]
       return parseFloat(field)
     }
@@ -55,12 +67,12 @@ class CubeParser extends VolumeParser {
     let lineNo = 0
     const oribitalFlag = h(2, 0) > 0 ? 0 : 1
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ].trim()
 
-        if (line !== '' && lineNo >= header.atomCount + 6 + oribitalFlag) {
-          const m = line.match(reScientificNotation)
+        if (line !== '' && lineNo >= header.atomCount! + 6 + oribitalFlag) {
+          const m = line.match(reScientificNotation) as RegExpMatchArray
           for (let j = 0, lj = m.length; j < lj; ++j) {
             data[ count ] = parseFloat(m[ j ])
             ++count

@@ -66,7 +66,7 @@ class FilteredVolume {
     } else if (minValue === -Infinity && maxValue === Infinity) {
       this.data = data
       this.position = position
-      this.atomindex = atomindex
+      this.atomindex = atomindex!
     } else {
       const n = data.length
 

@@ -12,11 +12,13 @@ import {
   calculateBondsWithin, getChainname
 } from '../structure/structure-utils'
 
-const SystemMode = 1
-const MoleculesMode = 2
-const MoleculetypeMode = 3
-const AtomsMode = 4
-const BondsMode = 5
+const enum Mode {
+  System,
+  Molecules,
+  Moleculetype,
+  Atoms,
+  Bonds
+}
 
 const reField = /\[ (.+) \]/
 const reWhitespace = /\s+/
@@ -40,13 +42,16 @@ class TopParser extends StructureParser {
     const atomStore = s.atomStore
     atomStore.addField('partialCharge', 1, 'float32')
 
-    const molecules = []
-    const moleculetypeDict = {}
+    const molecules: [string, number][] = []
+    const moleculetypeDict: {[k: string]: {atoms: any[], bonds: any[] }} = {}
 
-    let currentMoleculetype
-    let mode
+    let currentMoleculetype: {
+      atoms: [number, string, string, number][],
+      bonds: [number, number][]
+    }
+    let mode: number|undefined
 
-    function _parseChunkOfLines (_i, _n, lines) {
+    function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ]
         let lt = line.trim()
@@ -63,19 +68,19 @@ class TopParser extends StructureParser {
         if (fieldMatch !== null) {
           const name = fieldMatch[1]
           if (name === 'moleculetype') {
-            mode = MoleculetypeMode
+            mode = Mode.Moleculetype
             currentMoleculetype = {
               atoms: [],
               bonds: []
             }
           } else if (name === 'atoms') {
-            mode = AtomsMode
+            mode = Mode.Atoms
           } else if (name === 'bonds') {
-            mode = BondsMode
+            mode = Mode.Bonds
           } else if (name === 'system') {
-            mode = SystemMode
+            mode = Mode.System
           } else if (name === 'molecules') {
-            mode = MoleculesMode
+            mode = Mode.Molecules
           } else {
             mode = undefined
           }
@@ -86,10 +91,10 @@ class TopParser extends StructureParser {
         if (cIdx !== -1) {
           lt = lt.substring(0, cIdx).trim()
         }
-        if (mode === MoleculetypeMode) {
+        if (mode === Mode.Moleculetype) {
           const molName = lt.split(reWhitespace)[0]
           moleculetypeDict[molName] = currentMoleculetype
-        } else if (mode === AtomsMode) {
+        } else if (mode === Mode.Atoms) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.atoms.push([
             parseInt(ls[2]), // resnr
@@ -97,15 +102,15 @@ class TopParser extends StructureParser {
             ls[4], // atom
             parseFloat(ls[6]) // charge
           ])
-        } else if (mode === BondsMode) {
+        } else if (mode === Mode.Bonds) {
           const ls = lt.split(reWhitespace)
           currentMoleculetype.bonds.push([
             parseInt(ls[0]), // ai
             parseInt(ls[1]) // aj
           ])
-        } else if (mode === SystemMode) {
+        } else if (mode === Mode.System) {
           s.title = lt
-        } else if (mode === MoleculesMode) {
+        } else if (mode === Mode.Molecules) {
           const ls = lt.split(reWhitespace)
           molecules.push([
             ls[0], // name
@@ -137,7 +142,7 @@ class TopParser extends StructureParser {
     let chainnameIdx = 0
     let bondIdx = 0
     let atomOffset = 0
-    let lastResno
+    let lastResno: number
 
     molecules.forEach(function (val) {
       const [name, molCount] = val

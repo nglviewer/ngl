@@ -5,10 +5,11 @@
  */
 
 import { ParserRegistry } from '../globals'
-import Parser from './parser'
+import Parser, { ParserParameters } from './parser'
+import Streamer from '../streamer/streamer';
 
 class TextParser extends Parser {
-  constructor (streamer, params) {
+  constructor (streamer: Streamer, params: ParserParameters) {
     super(streamer, params)
 
     this.text = {

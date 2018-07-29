@@ -14,7 +14,7 @@ import {
 import { UnitcellPicker } from '../utils/picker'
 import Structure from '../structure/structure'
 
-interface UnitcellParams {
+export interface UnitcellParams {
   a: number
   b: number
   c: number
