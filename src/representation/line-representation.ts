@@ -16,6 +16,8 @@ import AtomProxy from '../proxy/atom-proxy';
 import Surface from '../surface/surface';
 import { BondDataFields, BondDataParams } from '../structure/structure-data';
 
+export type dumb = {v: Volume, s: Surface, bdf: BondDataFields, bdp: BondDataParams}
+
 /**
  * Determine which atoms in  a Structure[View] form no bonds to any other atoms
  * in that Structure.

@@ -16,6 +16,8 @@ import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';
 import TextBuffer, { TextBufferData } from '../buffer/text-buffer';
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface LabelDataField {
   position?: boolean
   labelColor?: boolean

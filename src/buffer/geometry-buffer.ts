@@ -12,6 +12,8 @@ import { applyMatrix3toVector3array, applyMatrix4toVector3array } from '../math/
 import MeshBuffer from './mesh-buffer.js'
 import { BufferParameters, BufferData } from './buffer'
 
+export type dumb = {v: Vector3}
+
 const matrix = new Matrix4()
 const normalMatrix = new Matrix3()
 

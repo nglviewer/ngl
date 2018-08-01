@@ -19,6 +19,8 @@ import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 import Surface from '../surface/surface';
 
+export type dumb = {v: Volume, s: Surface}
+
 export interface BallAndStickRepresentationParameters extends StructureRepresentationParameters {
   sphereDetail: number
   radialSegments: number

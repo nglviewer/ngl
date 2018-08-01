@@ -23,6 +23,8 @@ export interface HyperballRepresentationParameters extends BallAndStickRepresent
   shrink: number
 }
 
+export type dumb = {v: Volume, s: Surface}
+
 /**
  * Hyperball Representation
  */

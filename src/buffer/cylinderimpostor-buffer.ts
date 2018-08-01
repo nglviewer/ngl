@@ -13,6 +13,8 @@ import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
 import { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
 import { CylinderBufferData } from './cylinder-buffer'
 
+export type dumb = {v: Vector3}
+
 export const CylinderImpostorBufferDefaultParameters = Object.assign({
   openEnded: false
 }, BufferDefaultParameters)

@@ -19,6 +19,8 @@ import Buffer from '../buffer/buffer';
 import { AtomDataFields, BondDataFields, AtomDataParams, BondDataParams } from '../structure/structure-data';
 import Surface from '../surface/surface'
 
+export type dumb = {v: Volume, s: Surface}
+
 /**
  * Structure representation parameter object.
  * @typedef {Object} StructureRepresentationParameters - structure representation parameters

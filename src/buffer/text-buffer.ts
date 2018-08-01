@@ -16,6 +16,8 @@ import { IgnorePicker } from '../utils/picker'
 import { edt } from '../utils/edt'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 const TextAtlasCache: { [k: string]: TextAtlas } = {}
 
 function getTextAtlas (params: Partial<TextAtlasParams>) {

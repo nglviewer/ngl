@@ -15,6 +15,8 @@ import '../shader/Image.frag'
 import { Picker } from '../utils/picker'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 const quadIndices = new Uint16Array([
   0, 1, 2,
   1, 3, 2

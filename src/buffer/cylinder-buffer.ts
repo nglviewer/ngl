@@ -10,6 +10,8 @@ import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from 
 import CylinderImpostorBuffer, { CylinderImpostorBufferDefaultParameters } from './cylinderimpostor-buffer'
 import { BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface CylinderBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array

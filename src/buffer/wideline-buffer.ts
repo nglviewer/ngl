@@ -13,6 +13,8 @@ import { BufferRegistry } from '../globals'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
+export type dumb = {v: Vector3}
+
 export interface WideLineBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array

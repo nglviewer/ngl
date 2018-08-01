@@ -11,6 +11,8 @@ import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from 
 import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters } from './hyperballstickimpostor-buffer'
 import { BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface HyperballStickBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array

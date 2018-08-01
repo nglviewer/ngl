@@ -17,6 +17,8 @@ import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
 import { ContactPicker } from '../utils/picker';
 
+export type dumb = {cp: ContactPicker}
+
 export interface ContactRepresentationParameters extends StructureRepresentationParameters {
   hydrogenBond: boolean
   weakHydrogenBond: boolean

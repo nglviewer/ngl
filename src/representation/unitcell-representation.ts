@@ -24,6 +24,10 @@ export interface UnitcellRepresentationParameters extends StructureRepresentatio
   disableImpostor: boolean
 }
 
+export interface dumb {
+  up: UnitcellPicker
+}
+
 /**
  * Unitcell Representation
  */

@@ -143,7 +143,7 @@ class AtomPicker extends Picker {
   get type () { return 'atom' }
   get data () { return this.structure }
 
-  getObject (pid: number) {
+  getObject (pid: number): AtomProxy {
     return this.structure.getAtomProxy(this.getIndex(pid))
   }
 

@@ -18,6 +18,8 @@ import StructureView from '../structure/structure-view';
 import { SurfaceDataFields } from './surface-representation';
 import Surface, {SurfaceData} from '../surface/surface';
 
+export type dumb = {v: Volume }
+
 export interface MolecularSurfaceRepresentationParameters extends StructureRepresentationParameters {
   surfaceType: 'vws'|'sas'|'ms'|'ses'|'av'
   probeRadius: number

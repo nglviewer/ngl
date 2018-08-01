@@ -12,6 +12,8 @@ import '../shader/HyperballStickImpostor.frag'
 import MappedBoxBuffer from './mappedbox-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface HyperballStickImpostorBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array

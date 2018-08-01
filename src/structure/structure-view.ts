@@ -85,7 +85,7 @@ class StructureView extends Structure {
   get id () { return this.structure.id }
   get data (): Data { return this.structure.data }
   get atomSetDict () { return this.structure.atomSetDict }
-  get biomolDict () { return this.structure.biomolDict }
+  get biomolDict (): {[k: string]: Assembly} { return this.structure.biomolDict }
   get entityList (): Entity[] { return this.structure.entityList }
   get unitcell (): Unitcell|undefined { return this.structure.unitcell }
   get frames () { return this.structure.frames }
@@ -98,10 +98,10 @@ class StructureView extends Structure {
   get residueStore (): ResidueStore { return this.structure.residueStore }
   get chainStore (): ChainStore { return this.structure.chainStore }
   get modelStore (): ModelStore { return this.structure.modelStore }
-  get atomMap () { return this.structure.atomMap }
-  get residueMap () { return this.structure.residueMap }
-  get bondHash () { return this.structure.bondHash }
-  get spatialHash () { return this.structure.spatialHash }
+  get atomMap (): AtomMap { return this.structure.atomMap }
+  get residueMap (): ResidueMap { return this.structure.residueMap }
+  get bondHash (): BondHash|undefined { return this.structure.bondHash }
+  get spatialHash (): SpatialHash|undefined { return this.structure.spatialHash }
 
   get _hasCoords () { return this.structure._hasCoords }
   set _hasCoords (value) { this.structure._hasCoords = value }

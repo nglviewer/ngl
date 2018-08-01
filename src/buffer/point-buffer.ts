@@ -14,6 +14,8 @@ import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 function distance (x0: number, y0: number, x1: number, y1: number) {
   const dx = x1 - x0
   const dy = y1 - y0

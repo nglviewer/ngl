@@ -10,6 +10,8 @@ import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './s
 import SphereImpostorBuffer from './sphereimpostor-buffer'
 import { BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface SphereBufferData extends BufferData {
   radius: Float32Array
 }

@@ -17,6 +17,8 @@ import Buffer from '../buffer/buffer'
 import MeshBuffer from '../buffer/mesh-buffer'
 import { TextBufferParameters } from '../buffer/text-buffer'
 
+export type dumb = {m: Matrix4}
+
 const tmpBox = new Box3()
 
 const Primitives = [
