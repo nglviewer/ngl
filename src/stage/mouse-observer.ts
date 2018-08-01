@@ -58,7 +58,7 @@ function getMouseButtons (event: MouseEvent) {
   return 0
 }
 
-interface MouseSignals {
+export interface MouseSignals {
   moved: Signal  // on move: deltaX, deltaY
   scrolled: Signal  // on scroll: delta
   dragged: Signal  // on drag: deltaX, deltaY
@@ -68,7 +68,7 @@ interface MouseSignals {
   doubleClicked: Signal
 }
 
-interface MouseParams {
+export interface MouseParams {
   hoverTimeout?: number
   handleScroll?:boolean
   doubleClickSpeed?: number

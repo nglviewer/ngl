@@ -9,22 +9,22 @@
 
 import IOBuffer from './io-buffer.js'
 
-interface RecordDimension {
+export interface NetCDFRecordDimension {
   length: number,
   id?: number,
   name?: string,
   recordStep?: number
 }
 
-interface NetCDFHeader {
-  recordDimension: RecordDimension,
+export interface NetCDFHeader {
+  recordDimension: NetCDFRecordDimension,
   version: number,
   dimensions: any[],
   globalAttributes: any[],
   variables: any[]
 }
 
-interface Dimension {
+export interface NetCDFDimension {
   name: string,
   size: number
 }
@@ -248,7 +248,7 @@ function nonRecord (buffer: IOBuffer, variable: {type: string, size: number}) {
  * @param {object} recordDimension - Record dimension metadata
  * @return {Array} - Data of the element
  */
-function record (buffer:IOBuffer, variable: {type: string, size: number}, recordDimension: RecordDimension) {
+function record (buffer:IOBuffer, variable: {type: string, size: number}, recordDimension: NetCDFRecordDimension) {
   // variable type
   const type = str2num(variable.type)
   const width = variable.size ? variable.size / num2bytes(type) : 1
@@ -296,7 +296,7 @@ function header (buffer: IOBuffer, version: number) {
   header.version = version
 
   // List of dimensions
-  const dimList = dimensionsList(buffer) as {dimensions: Dimension[], recordId: number, recordName: string}
+  const dimList = dimensionsList(buffer) as {dimensions: NetCDFDimension[], recordId: number, recordName: string}
   header.recordDimension!.id = dimList.recordId
   header.recordDimension!.name = dimList.recordName
   header.dimensions = dimList.dimensions
@@ -321,7 +321,7 @@ function header (buffer: IOBuffer, version: number) {
  *  * `size`: Number with the size of the dimension
  */
 function dimensionsList (buffer: IOBuffer) {
-  let dimensions: Dimension[], recordId, recordName
+  let dimensions: NetCDFDimension[], recordId, recordName
   const dimList = buffer.readUint32()
   if (dimList === ZERO) {
     notNetcdf((buffer.readUint32() !== ZERO), 'wrong empty tag for list of dimensions')

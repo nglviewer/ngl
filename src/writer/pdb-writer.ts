@@ -22,7 +22,7 @@ const AtomFormat =
 const HetatmFormat =
   'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
 
-interface PdbWriterParams {
+export interface PdbWriterParams {
   renumberSerial: boolean
   remarks: string[]
 }

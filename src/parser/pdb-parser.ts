@@ -76,7 +76,7 @@ function getModresId (resno: number, chainname?: string, inscode?: string) {
   if (inscode) id += `^${inscode}`
   return id
 }
-interface PdbParserParameters extends ParserParameters {
+export interface PdbParserParameters extends ParserParameters {
   hex: boolean
 }
 

@@ -15,7 +15,7 @@ import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 
-interface TextDataField {
+export interface TextDataField {
   position?: boolean
   color?: boolean
   radius?: boolean

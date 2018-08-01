@@ -6,7 +6,7 @@
 
 import { Debug, Log, ParserRegistry } from '../globals'
 import { defaults } from '../utils'
-import { parseXml } from '../utils/parse-xml'
+import { parseXml, XMLNode } from '../utils/parse-xml'
 import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
 

@@ -6,6 +6,7 @@
 
 import { defaults } from '../utils'
 import Volume from './volume.js'
+import { Box3, Matrix4, Matrix3, Vector3 } from '../../node_modules/@types/three';
 
 class FilteredVolume {
   volume: Volume
@@ -31,11 +32,11 @@ class FilteredVolume {
   }
 
   get header () { return this.volume.header }
-  get matrix () { return this.volume.matrix }
-  get normalMatrix () { return this.volume.normalMatrix }
-  get inverseMatrix () { return this.volume.inverseMatrix }
-  get center () { return this.volume.center }
-  get boundingBox () { return this.volume.boundingBox }
+  get matrix (): Matrix4 { return this.volume.matrix }
+  get normalMatrix (): Matrix3 { return this.volume.normalMatrix }
+  get inverseMatrix (): Matrix4 { return this.volume.inverseMatrix }
+  get center (): Vector3 { return this.volume.center }
+  get boundingBox (): Box3 { return this.volume.boundingBox }
   get min () { return this.volume.min }
   get max () { return this.volume.max }
   get mean () { return this.volume.mean }

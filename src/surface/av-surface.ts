@@ -31,15 +31,15 @@ import { NumberArray } from '../types.js';
  * @param {Float32Array} max - xyz max coordinates
  * @param {Float} maxDistance - max distance
  */
-interface AVHash {
+export interface iAVHash {
   neighbourListLength: number
   withinRadii: (x: number, y: number, z: number, rExtra: number, out: Int32Array) => void
 }
-interface AVHashConstructor {
-  (this: AVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): void
-  new (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): AVHash
+export interface AVHashConstructor {
+  (this: iAVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): void
+  new (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): iAVHash
 }
-const AVHash = (function AVHash (this: AVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number) {
+const AVHash = (function AVHash (this: iAVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number) {
   var nAtoms = atomsX.length
 
   var minX = min[ 0 ]
@@ -219,7 +219,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
   let sinTable: Float32Array, cosTable: Float32Array
 
   // Spatial Hash
-  let hash: AVHash
+  let hash: iAVHash
 
   // Neighbour array to be filled by hash
   let neighbours: Int32Array

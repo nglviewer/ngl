@@ -9,10 +9,12 @@ import { RepresentationRegistry } from '../globals'
 import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'
-import { Structure } from '../ngl';
+import { Structure, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';
 import Viewer from '../viewer/viewer';
 import AtomProxy from '../proxy/atom-proxy';
+import Surface from '../surface/surface';
+import { BondDataFields, BondDataParams } from '../structure/structure-data';
 
 /**
  * Determine which atoms in  a Structure[View] form no bonds to any other atoms
@@ -35,7 +37,7 @@ function getLoneAtomSet (structure: Structure | StructureView) {
   return atomSet
 }
 
-interface LineRepresentationParameters extends StructureRepresentationParameters {
+export interface LineRepresentationParameters extends StructureRepresentationParameters {
   multipleBond: 'off' | 'symmetric' | 'offset'
   bondSpacing: number
   linewidth: number
@@ -44,7 +46,7 @@ interface LineRepresentationParameters extends StructureRepresentationParameters
   crossSize: number
 }
 
-interface CrossData {
+export interface CrossData {
   position1?: Float32Array
   position2?: Float32Array
   color?: Float32Array

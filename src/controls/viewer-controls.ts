@@ -5,7 +5,7 @@
  */
 
 import { Vector2, Vector3, Matrix4, Quaternion, OrthographicCamera } from 'three'
-import { Signal } from 'signals'
+import * as signalsWrapper from 'signals'
 
 import {
   ensureVector2, ensureVector3, ensureMatrix4, ensureQuaternion
@@ -36,7 +36,7 @@ const tmpAlignMatrix = new Matrix4()
  */
 class ViewerControls {
   signals = {
-    changed: new Signal()
+    changed: new signalsWrapper.Signal()
   }
 
   viewer: Viewer

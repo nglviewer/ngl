@@ -19,8 +19,9 @@ import { Structure } from '../ngl';
 import { AtomDataFields } from '../structure/structure-data';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+import PrincipalAxes from '../math/principal-axes';
 
-interface AxesRepresentationParameters extends StructureRepresentationParameters {
+export interface AxesRepresentationParameters extends StructureRepresentationParameters {
   showAxes: boolean
   showBox: boolean
 }
@@ -98,7 +99,7 @@ class AxesRepresentation extends StructureRepresentation {
     super.init(p)
   }
 
-  getPrincipalAxes () {
+  getPrincipalAxes (): PrincipalAxes {
     let selection
     const assembly = this.getAssembly()
 

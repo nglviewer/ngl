@@ -13,12 +13,12 @@ import ContourBuffer from '../buffer/contour-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import Selection from '../selection/selection.js'
 import Viewer from '../viewer/viewer';
-import { Structure, Vector3 } from '../ngl';
+import { Structure, Vector3, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';
 import { SurfaceDataFields } from './surface-representation';
 import Surface, {SurfaceData} from '../surface/surface';
 
-interface MolecularSurfaceRepresentationParameters extends StructureRepresentationParameters {
+export interface MolecularSurfaceRepresentationParameters extends StructureRepresentationParameters {
   surfaceType: 'vws'|'sas'|'ms'|'ses'|'av'
   probeRadius: number
   smooth: number
@@ -32,7 +32,7 @@ interface MolecularSurfaceRepresentationParameters extends StructureRepresentati
   useWorker: boolean
 }
 
-interface Info {
+export interface MolecularSurfaceInfo {
   molsurf?: MolecularSurface
   sele?: string
   surface?: Surface
@@ -54,7 +54,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   protected colorVolume: any
   protected useWorker: boolean
 
-  protected __infoList: Info[]
+  protected __infoList: MolecularSurfaceInfo[]
   protected __forceNewMolsurf: boolean
   protected __sele: string
   protected __surfaceParams: string
@@ -166,7 +166,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   }
 
   prepareData (sview: StructureView, i: number, callback: (i: number) => void) {
-    let info: Info = this.__infoList[ i ]
+    let info: MolecularSurfaceInfo = this.__infoList[ i ]
     if (!info) {
       info = {}
       this.__infoList[ i ] = info
@@ -205,7 +205,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   prepare (callback: () => void) {
     if (this.__forceNewMolsurf || this.__sele !== this.selection.string ||
           this.__surfaceParams !== JSON.stringify(this.getSurfaceParams())) {
-      this.__infoList.forEach((info: Info) => {
+      this.__infoList.forEach((info: MolecularSurfaceInfo) => {
         info.molsurf!.dispose()
       })
       this.__infoList.length = 0
@@ -355,7 +355,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   }
 
   dispose () {
-    this.__infoList.forEach((info: Info) => {
+    this.__infoList.forEach((info: MolecularSurfaceInfo) => {
       info.molsurf!.dispose()
     })
     this.__infoList.length = 0

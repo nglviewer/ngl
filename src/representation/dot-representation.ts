@@ -15,7 +15,7 @@ import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 
-interface DotDataFields {
+export interface DotDataFields {
   color?: boolean,
   radius?: boolean,
   scale?: boolean
@@ -31,7 +31,7 @@ interface DotDataFields {
  * @property {Number} thresholdMax - Maximum value to be displayed. For volume data only.
  * @property {Number} thresholdOut - Show only values falling outside of the treshold minumum and maximum. For volume data only.
  */
-interface DotRepresentationParameters extends RepresentationParameters {
+export interface DotRepresentationParameters extends RepresentationParameters {
   thresholdType: 'value'|'value'|'sigma'|'sigma'
   thresholdMin: number
   thresholdMax: number

@@ -41,7 +41,7 @@ import { StructureRepresentationData } from './structure-representation';
  * @property {Boolean} sectorVisible - Display the filled arc for each angle
  */
 
-interface DihedralRepresentationParameters extends MeasurementRepresentationParameters {
+export interface DihedralRepresentationParameters extends MeasurementRepresentationParameters {
   atomQuad: (number|string)[][]
   extendLine: boolean
   lineOpacity: number

@@ -108,7 +108,7 @@ interface Structure {
   _cp: ChainProxy
 }
 
-type StructureHeader = {
+export type StructureHeader = {
   releaseDate?: string
   depositionDate?: string
   resolution?: number
@@ -117,12 +117,12 @@ type StructureHeader = {
   experimentalMethods?: string[]
 }
 
-type StructureExtraData = {
+export type StructureExtraData = {
   cif?: object
   sdf?: object[]
 }
 
-type StructureSignals = {
+export type StructureSignals = {
   refreshed: Signal
 }
 

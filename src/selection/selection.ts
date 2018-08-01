@@ -13,7 +13,7 @@ import {
 } from './selection-test'
 import { SelectAllKeyword, SelectNoneKeyword } from './selection-constants'
 
-type SelectionSignals = {
+export type SelectionSignals = {
   stringChanged: Signal
 }
 

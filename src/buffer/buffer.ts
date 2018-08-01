@@ -52,7 +52,7 @@ interface _BufferAttribute {
   value?: NumberArray
 }
 
-type Uniforms = { [k: string]: Uniform|{ value: any } }
+export type Uniforms = { [k: string]: Uniform|{ value: any } }
 
 export const BufferDefaultParameters = {
   opaqueBack: false,

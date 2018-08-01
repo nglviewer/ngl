@@ -9,7 +9,7 @@ import { ParserRegistry } from '../globals'
 import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
 
-interface CsvParserParameters extends ParserParameters {
+export interface CsvParserParameters extends ParserParameters {
   delimiter: string
   comment: string
   columnNames: boolean

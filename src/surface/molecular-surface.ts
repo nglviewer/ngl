@@ -10,6 +10,7 @@ import EDTSurface from './edt-surface.js'
 import { AVSurface } from './av-surface.js'
 import Surface, { SurfaceData } from './surface.js'
 import { Structure } from '../ngl';
+import { AtomData } from '../structure/structure-data';
 
 WorkerRegistry.add('molsurf', function func (e: any, callback: (data: any, buffers: any[])=> void) {
   const a = e.data.args
@@ -60,7 +61,7 @@ class MolecularSurface {
     this.structure = structure
   }
 
-  _getAtomData () {
+  _getAtomData (): AtomData {
     return this.structure.getAtomData({
       what: { position: true, radius: true, index: true },
       radiusParams: { type: 'vdw', scale: 1 }

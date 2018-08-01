@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Matrix4 } from 'three'
+import { Vector3, Matrix4, Vector2 } from 'three'
 
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
@@ -18,10 +18,11 @@ import AtomProxy from '../proxy/atom-proxy'
 import Surface from '../surface/surface'
 import Volume from '../surface/volume'
 import Unitcell from '../symmetry/unitcell'
+import Component from '../component/component';
 
 const tmpVec = new Vector3()
 
-interface ShapePrimitive {
+export interface ShapePrimitive {
   name: string
   shape: Shape
 }
@@ -41,13 +42,13 @@ function closer (x: Vector3, a: Vector3, b: Vector3) {
  * @property {Picker} [picker] - picker object
  */
 
-interface InstanceData {
+export interface InstanceData {
   id: number
   name: number|string
   matrix: Matrix4
 }
 
-interface PickingData {
+export interface PickingData {
   pid: number
   instance: InstanceData
   picker: Picker
@@ -122,13 +123,13 @@ class PickingProxy {
    * Position of the mouse on the canvas
    * @type {Vector2}
    */
-  get canvasPosition () { return this.mouse.canvasPosition }
+  get canvasPosition (): Vector2 { return this.mouse.canvasPosition }
 
   /**
    * The component the picked data is part of
    * @type {Component}
    */
-  get component () {
+  get component (): Component {
     return this.stage.getComponentsByObject(this.picker.data as any).list[ 0 ]  // TODO
   }
 

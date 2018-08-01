@@ -16,7 +16,7 @@ import StructureView from '../structure/structure-view';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
 
-interface RocketRepresentationParameters extends StructureRepresentationParameters {
+export interface RocketRepresentationParameters extends StructureRepresentationParameters {
   localAngle: number
   centerDist: number
   ssBorder: boolean
@@ -25,7 +25,7 @@ interface RocketRepresentationParameters extends StructureRepresentationParamete
   disableImpostor: boolean
 }
 
-interface AxisData {
+export interface AxisData {
   begin: Float32Array
   end: Float32Array
   size: Float32Array

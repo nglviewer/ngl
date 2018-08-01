@@ -41,7 +41,7 @@ function entityFromType (type: number) {
   }
 }
 
-const EntityTypeString = {
+export const EntityTypeString = {
   'polymer': PolymerEntity,
   'non-polymer': NonPolymerEntity,
   'macrolide': MacrolideEntity,

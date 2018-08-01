@@ -10,7 +10,7 @@ import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
-import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams } from '../structure/structure-data';
+import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams, BondData, AtomData } from '../structure/structure-data';
 
 /**
  * Base representation. Show cylinders for RNA/DNA ladders.
@@ -53,11 +53,11 @@ class BaseRepresentation extends BallAndStickRepresentation {
     super.init(p)
   }
 
-  getAtomData (sview: StructureView, what?: AtomDataFields, params?: AtomDataParams) {
+  getAtomData (sview: StructureView, what?: AtomDataFields, params?: AtomDataParams): AtomData {
     return sview.getRungAtomData(this.getAtomParams(what, params))
   }
 
-  getBondData (sview: StructureView, what?: BondDataFields, params?: BondDataParams) {
+  getBondData (sview: StructureView, what?: BondDataFields, params?: BondDataParams): BondData {
     let p = this.getBondParams(what, params)
     Object.assign(p.colorParams, {rung: true})
 

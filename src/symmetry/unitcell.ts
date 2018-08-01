@@ -35,7 +35,7 @@ const DefaultBoxParams = {
   spacegroup: 'P 1'
 }
 
-interface UnitcellDataParams {
+export interface UnitcellDataParams {
   colorValue?: string|number,
   radius?: number
 }

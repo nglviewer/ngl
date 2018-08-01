@@ -9,7 +9,7 @@ import { defaults } from '../utils'
 import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
 
-interface JsonParserParameters extends ParserParameters {
+export interface JsonParserParameters extends ParserParameters {
   string: boolean
 }
 

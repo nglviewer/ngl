@@ -86,7 +86,7 @@ WorkerRegistry.add('surf', function func (e: any, callback: (data: any, transfer
   }
 }, [ VolumeSurface ])
 
-type Size = 'value'|'abs-value'|'value-min'|'deviation'
+export type VolumeSize = 'value'|'abs-value'|'value-min'|'deviation'
 /**
  * Volume
  */
@@ -424,7 +424,7 @@ class Volume {
     return new VolumePicker(picking, this)
   }
 
-  getDataSize (size: Size|number, scale: number) {
+  getDataSize (size: VolumeSize|number, scale: number) {
     const data = this.data
     const n = this.position.length / 3
     let array

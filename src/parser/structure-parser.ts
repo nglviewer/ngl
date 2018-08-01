@@ -10,7 +10,7 @@ import Structure from '../structure/structure'
 import StructureBuilder from '../structure/structure-builder'
 import Streamer from '../streamer/streamer';
 
-interface StructureParserParameters extends ParserParameters {
+export interface StructureParserParameters extends ParserParameters {
   firstModelOnly: boolean
   asTrajectory: boolean
   cAlphaOnly: boolean

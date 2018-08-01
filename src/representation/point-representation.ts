@@ -13,7 +13,7 @@ import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import { AtomDataFields } from '../structure/structure-data';
 
-interface PointRepresentationParameters extends StructureRepresentationParameters {
+export interface PointRepresentationParameters extends StructureRepresentationParameters {
   pointSize: number
   sizeAttenuation: boolean
   sortParticles: boolean

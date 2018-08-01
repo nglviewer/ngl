@@ -15,6 +15,7 @@ import ContourBuffer from '../buffer/contour-buffer.js'
 import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
 import {SurfaceData} from '../surface/surface'
+import { ColormakerParameters } from '../color/colormaker';
 
 export type SurfaceDataFields = {position: boolean, color: boolean, index: boolean, normal: boolean}
 

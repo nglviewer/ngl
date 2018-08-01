@@ -15,8 +15,9 @@ import { Structure } from '../ngl';
 import StructureView from '../structure/structure-view';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
+import { ContactPicker } from '../utils/picker';
 
-interface ContactRepresentationParameters extends StructureRepresentationParameters {
+export interface ContactRepresentationParameters extends StructureRepresentationParameters {
   hydrogenBond: boolean
   weakHydrogenBond: boolean
   waterHydrogenBond: boolean

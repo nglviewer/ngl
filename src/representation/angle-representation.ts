@@ -39,7 +39,7 @@ import { StructureRepresentationData, StructureRepresentationParameters } from '
  * @property {Boolean} sectorVisible - Show the filled arc for each angle
  */
 
-interface AngleRepresentationParameters extends MeasurementRepresentationParameters {
+export interface AngleRepresentationParameters extends MeasurementRepresentationParameters {
   atomTriple: (number|string)[][]
   vectorVisible: boolean
   arcVisible: boolean

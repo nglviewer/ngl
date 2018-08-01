@@ -16,7 +16,7 @@ import AtomProxy from '../proxy/atom-proxy';
 import { ColormakerParameters } from '../color/colormaker';
 import { NumberArray } from '../types';
 
-class Interpolator {
+export class Interpolator {
   
   m: number
   tension: number
@@ -403,7 +403,7 @@ export interface SplineParameters {
   smoothSheet?: boolean
   tension?: number
 }
-interface AtomIterator {
+export interface AtomIterator {
   size: number,
   next: () => AtomProxy | Vector3,
   get: (idx: number) => AtomProxy | Vector3,

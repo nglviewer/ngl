@@ -28,7 +28,7 @@ const ArrowBufferDefaultParameters = Object.assign({
   openEnded: false,
   disableImpostor: false
 }, BufferDefaultParameters)
-type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
+export type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
 
 /**
  * Arrow buffer. Draws arrows made from a cylinder and a cone.

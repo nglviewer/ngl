@@ -11,7 +11,7 @@ import Parser, { ParserParameters } from './parser'
 import Volume from '../surface/volume'
 import Streamer from '../streamer/streamer';
 
-interface VolumeParserParameters extends ParserParameters {
+export interface VolumeParserParameters extends ParserParameters {
   voxelSize: number
 }
 

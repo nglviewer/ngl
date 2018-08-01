@@ -9,7 +9,7 @@ import { BufferGeometry, BufferAttribute } from 'three'
 import { ParserRegistry } from '../globals'
 import SurfaceParser from './surface-parser'
 
-interface _OBJLoader {
+export interface _OBJLoader {
   regexp: {[k: string]: RegExp}
 }
 

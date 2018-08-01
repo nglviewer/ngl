@@ -15,7 +15,7 @@ import AtomProxy from '../proxy/atom-proxy';
 import StructureView from '../structure/structure-view';
 import Polymer from '../proxy/polymer';
 
-interface RibbonRepresentationParameters extends StructureRepresentationParameters {
+export interface RibbonRepresentationParameters extends StructureRepresentationParameters {
   subdiv: number
   tension: number
   smoothSheet: boolean

@@ -3,7 +3,7 @@
  * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
  */
-import { Color } from 'three'
+import { Color, Vector3, Matrix4 } from 'three'
 
 import Selection from '../selection/selection'
 import { Browser } from '../globals'

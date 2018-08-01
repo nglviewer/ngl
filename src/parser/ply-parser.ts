@@ -38,7 +38,7 @@ import SurfaceParser from './surface-parser'
  *
  */
 
-interface _PLYLoader {
+export interface _PLYLoader {
   propertyNameMapping: {[k: string]: string}
 }
 

@@ -14,7 +14,7 @@ interface Grid {
   copy: (grid: Grid) => void
   clone: () => void
 }
-interface GridConstructor {
+export interface GridConstructor {
  (this: Grid, length: number, width: number, height: number, DataCtor: any, elemSize: number): void
  new (length: number, width: number, height: number, DataCtor: any, elemSize: number): Grid
 }

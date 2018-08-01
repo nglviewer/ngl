@@ -7,12 +7,12 @@
 // https://github.com/segmentio/xml-parser
 // MIT license
 
-type Attributes = { [k: string]: any }
-interface Node {
+export type XMLNodeAttributes = { [k: string]: any }
+export interface XMLNode {
   name?: string
   content?: string
-  attributes: Attributes
-  children?: Node[]
+  attributes: XMLNodeAttributes
+  children?: XMLNode[]
 }
 
 const reStrip = /^['"]|['"]$/g
@@ -42,7 +42,7 @@ export function parseXml (xml: string) {
     if (!m) return
 
     // tag
-    const node: Node = {
+    const node: XMLNode = {
       attributes: {}
     }
 
@@ -61,7 +61,7 @@ export function parseXml (xml: string) {
     if (!m) return
 
     // name
-    const node: Node = {
+    const node: XMLNode = {
       name: m[1],
       attributes: {},
       children: []

@@ -11,7 +11,7 @@ import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import AtomProxy from '../proxy/atom-proxy';
 import StructureView from '../structure/structure-view';
-import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams } from '../structure/structure-data';
+import { AtomDataFields, AtomDataParams, BondDataFields, BondDataParams, BondData, AtomData } from '../structure/structure-data';
 
 /**
  * Backbone representation. Show cylinders (or lines) connecting .CA (protein)
@@ -60,11 +60,11 @@ class BackboneRepresentation extends BallAndStickRepresentation {
     return atom.isTrace() ? super.getAtomRadius(atom) : 0
   }
 
-  getAtomData (sview: StructureView, what?: AtomDataFields, params?: Partial<AtomDataParams>) {
+  getAtomData (sview: StructureView, what?: AtomDataFields, params?: Partial<AtomDataParams>): AtomData {
     return sview.getBackboneAtomData(this.getAtomParams(what, params))
   }
 
-  getBondData (sview: StructureView, what?: BondDataFields, params?: Partial<BondDataParams>) {
+  getBondData (sview: StructureView, what?: BondDataFields, params?: Partial<BondDataParams>): BondData {
     return sview.getBackboneBondData(this.getBondParams(what, params))
   }
 }

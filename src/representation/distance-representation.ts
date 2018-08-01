@@ -22,7 +22,7 @@ import { getFixedLengthDashData } from '../geometry/dash'
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';
 import StructureView from '../structure/structure-view';
-import { BondDataFields, BondDataParams } from '../structure/structure-data';
+import { BondDataFields, BondDataParams, BondData } from '../structure/structure-data';
 import { StructureRepresentationData } from './structure-representation';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 
@@ -42,12 +42,12 @@ import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
  *                                changing the selection or the atom positions, as there
  *                                are no selection strings to be evaluated.
  */
-interface DistanceRepresentationParameters extends MeasurementRepresentationParameters {
+export interface DistanceRepresentationParameters extends MeasurementRepresentationParameters {
   labelUnit: string
   atomPair: AtomPair
   useCylinder: boolean
 }
-type AtomPair = (number|string)[][]
+export type AtomPair = (number|string)[][]
 /**
  * Distance representation
  */
@@ -190,7 +190,7 @@ class DistanceRepresentation extends MeasurementRepresentation {
     }
   }
 
-  getBondData (sview: StructureView, what: BondDataFields, params: BondDataParams) {
+  getBondData (sview: StructureView, what: BondDataFields, params: BondDataParams): BondData {
     const bondData = sview.getBondData(this.getBondParams(what, params))
     if (bondData.picking) {
       bondData.picking = new DistancePicker(

@@ -23,6 +23,8 @@ import Validation from '../structure/validation';
 import PrincipalAxes from '../math/principal-axes';
 import Surface from '../surface/surface';
 import Unitcell from '../symmetry/unitcell';
+import BondProxy from '../proxy/bond-proxy';
+import AtomProxy from '../proxy/atom-proxy';
 
 /**
  * Picker class
@@ -183,7 +185,7 @@ class BondPicker extends Picker {
   get type () { return 'bond' }
   get data () { return this.structure }
 
-  getObject (pid: number) {
+  getObject (pid: number): BondProxy {
     const bp = this.structure.getBondProxy(this.getIndex(pid))
     bp.bondStore = this.bondStore
     return bp
@@ -293,7 +295,7 @@ class IgnorePicker extends Picker {
   get type () { return 'ignore' }
 }
 
-interface MeshData {
+export interface MeshData {
   name: string|undefined
   serial: number
   index: Uint16Array|Uint32Array

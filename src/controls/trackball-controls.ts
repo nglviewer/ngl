@@ -11,6 +11,8 @@ import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 import Viewer from '../viewer/viewer'
 import ViewerControls from './viewer-controls'
+import AtomProxy from '../proxy/atom-proxy';
+import Component from '../component/component';
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
@@ -22,7 +24,7 @@ const tmpPanMatrix = new Matrix4()
 const tmpPanVector = new Vector3()
 const tmpAtomVector = new Vector3()
 
-interface TrackballControlsParams {
+export interface TrackballControlsParams {
   rotateSpeed?: number
   zoomSpeed?: number
   panSpeed?: number
@@ -50,11 +52,11 @@ class TrackballControls {
     this.controls = stage.viewerControls
   }
 
-  get component () {
+  get component (): Component|undefined {
     return this.stage.transformComponent
   }
 
-  get atom () {
+  get atom (): AtomProxy|undefined {
     return this.stage.transformAtom
   }
 
