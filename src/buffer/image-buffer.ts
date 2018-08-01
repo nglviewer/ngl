@@ -5,7 +5,7 @@
  */
 
 import {
-    Vector2, BufferAttribute, DataTexture,
+    Vector2, Vector3, Matrix4, BufferAttribute, DataTexture,
     NormalBlending, NearestFilter, LinearFilter
 } from 'three'
 
@@ -38,13 +38,13 @@ export interface ImageBufferData {
   picking?: Picker
 }
 
-const ImageBufferDefaultParameters = Object.assign({
+export const ImageBufferDefaultParameters = Object.assign({
   filter: 'nearest' as ImageFilterTypes,
   forceTransparent: true
 }, BufferDefaultParameters)
 export type ImageBufferParameters = typeof ImageBufferDefaultParameters
 
-const ImageBufferParameterTypes = Object.assign({
+export const ImageBufferParameterTypes = Object.assign({
   filter: { updateShader: true, uniform: true }
 }, BufferParameterTypes)
 

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector2, Matrix4 } from 'three'
+import { Vector2, Vector3, Matrix4 } from 'three'
 
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
@@ -19,10 +19,10 @@ export interface WideLineBufferData extends BufferData {
   color2: Float32Array
 }
 
-const WideLineBufferDefaultParameters = Object.assign({
+export const WideLineBufferDefaultParameters = Object.assign({
   linewidth: 2
 }, BufferDefaultParameters)
-type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
+export type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
 
 const WideLineBufferParameterTypes = Object.assign({
   linewidth: { uniform: true }

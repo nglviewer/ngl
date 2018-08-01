@@ -17,14 +17,14 @@ import BondProxy from '../proxy/bond-proxy'
 
 export type ColorMode = 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
 
-const ScaleDefaultParameters = {
+export const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
   mode: 'hcl' as ColorMode,
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false
 }
-type ScaleParameters = typeof ScaleDefaultParameters
+export type ScaleParameters = typeof ScaleDefaultParameters
 
 export interface ColormakerParameters extends ScaleParameters {
   structure?: Structure

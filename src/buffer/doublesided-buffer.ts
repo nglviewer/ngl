@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Group, BufferGeometry, Object3D, Mesh, LineSegments } from 'three'
+import { Group, BufferGeometry, Object3D, Mesh, LineSegments, Vector3, Matrix4 } from 'three'
 
 import Buffer, { BufferSide } from './buffer'
 import { Picker } from '../utils/picker'

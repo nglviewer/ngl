@@ -47,7 +47,7 @@ function setObjectMatrix (object: Object3D, matrix: Matrix4) {
 export type BufferTypes = 'picking'|'background'
 export type BufferMaterials = 'material'|'wireframeMaterial'|'pickingMaterial'
 
-interface _BufferAttribute {
+export interface _BufferAttribute {
   type: 'f'|'v2'|'v3'|'c'
   value?: NumberArray
 }

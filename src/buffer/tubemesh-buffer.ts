@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3 } from 'three'
+import { Vector3, Matrix4 } from 'three'
 
 import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
@@ -14,7 +14,7 @@ import { BufferDefaultParameters, BufferData } from './buffer'
 const vTangent = new Vector3()
 const vMeshNormal = new Vector3()
 
-interface TubeMeshBufferData extends BufferData {
+export interface TubeMeshBufferData extends BufferData {
   binormal: Float32Array
   tangent: Float32Array
   size: Float32Array
@@ -25,7 +25,7 @@ export const TubeMeshBufferDefaultParameters = Object.assign({
   capped: false,
   aspectRatio: 1.0
 }, BufferDefaultParameters)
-type TubeMeshBufferParameters = typeof TubeMeshBufferDefaultParameters
+export type TubeMeshBufferParameters = typeof TubeMeshBufferDefaultParameters
 
 function getData (data: TubeMeshBufferData, params: Partial<TubeMeshBufferParameters> = {}) {
   const radialSegments = defaults(params.radialSegments, 4)

@@ -22,7 +22,7 @@ export interface ArrowBufferData extends BufferData {
   radius: Float32Array
 }
 
-const ArrowBufferDefaultParameters = Object.assign({
+export const ArrowBufferDefaultParameters = Object.assign({
   aspectRatio: 1.5,
   radialSegments: 50,
   openEnded: false,

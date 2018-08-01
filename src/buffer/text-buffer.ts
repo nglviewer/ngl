@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color, CanvasTexture } from 'three'
+import { Color, CanvasTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
@@ -31,7 +31,7 @@ type TextStyles = 'normal'|'italic'
 type TextVariants = 'normal'
 type TextWeights = 'normal'|'bold'
 
-const TextAtlasDefaultParams = {
+export const TextAtlasDefaultParams = {
   font: 'sans-serif' as TextFonts,
   size: 36,
   style: 'normal' as TextStyles,
@@ -41,11 +41,11 @@ const TextAtlasDefaultParams = {
   width: 1024,
   height: 1024
 }
-type TextAtlasParams = typeof TextAtlasDefaultParams
+export type TextAtlasParams = typeof TextAtlasDefaultParams
 
-type TextAtlasMap = { x: number, y: number, w: number, h: number }
+export type TextAtlasMap = { x: number, y: number, w: number, h: number }
 
-class TextAtlas {
+export class TextAtlas {
   parameters: TextAtlasParams
 
   gamma = 1
@@ -285,7 +285,7 @@ export interface TextBufferData extends BufferData {
 
 type TextAttachments = 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
 
-const TextBufferDefaultParameters = Object.assign({
+export const TextBufferDefaultParameters = Object.assign({
   fontFamily: 'sans-serif' as TextFonts,
   fontStyle: 'normal' as TextStyles,
   fontWeight: 'bold' as TextWeights,

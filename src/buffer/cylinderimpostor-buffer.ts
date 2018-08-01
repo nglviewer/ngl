@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4 } from 'three'
+import { Matrix4, Vector3 } from 'three'
 
 import '../shader/CylinderImpostor.vert'
 import '../shader/CylinderImpostor.frag'
