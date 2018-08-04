@@ -24,7 +24,7 @@ import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
 import StructureRepresentation from '../representation/structure-representation'
 import AtomProxy from '../proxy/atom-proxy'
-import { Vector3, Box3 } from '../../node_modules/@types/three';
+import { Vector3, Box3 } from 'three';
 
 export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|

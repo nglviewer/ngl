@@ -6,7 +6,7 @@
 
 import { defaults } from '../utils'
 import Volume from './volume.js'
-import { Box3, Matrix4, Matrix3, Vector3 } from '../../node_modules/@types/three';
+import { Box3, Matrix4, Matrix3, Vector3 } from 'three';
 
 class FilteredVolume {
   volume: Volume
