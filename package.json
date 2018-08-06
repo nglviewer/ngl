@@ -32,9 +32,10 @@
       "js"
     ],
     "transform": {
-      "\\.ts$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+      "\\.ts$": "ts-jest"
     },
-    "testRegex": "\\.spec\\.ts$"
+    "testRegex": "\\.spec\\.ts$",
+    "testURL": "http://localhost"
   },
   "homepage": "https://github.com/arose/ngl#readme",
   "repository": {
