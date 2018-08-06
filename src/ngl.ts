@@ -2,8 +2,6 @@
  * @file ngl
  * @private
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
- *
- * [[include:coloring.md]]
  */
 
 import './polyfills'
