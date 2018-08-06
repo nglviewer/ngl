@@ -4,10 +4,13 @@
  * @private
  */
 
+import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
 import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
 import CylinderImpostorBuffer, { CylinderImpostorBufferDefaultParameters } from './cylinderimpostor-buffer'
 import { BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 export interface CylinderBufferData extends BufferData {
   position1: Float32Array
@@ -16,10 +19,10 @@ export interface CylinderBufferData extends BufferData {
   radius: Float32Array
 }
 
-const CylinderBufferDefaultParameters = Object.assign({
+export const CylinderBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters)
-type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
+export type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
 
 /**
  * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and

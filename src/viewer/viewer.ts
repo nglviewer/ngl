@@ -122,12 +122,12 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 
 export type CameraType = 'perspective'|'orthographic'|'stereo'
 
-interface ViewerSignals {
+export interface ViewerSignals {
   ticked: Signal,
   rendered: Signal
 }
 
-interface ViewerParameters {
+export interface ViewerParameters {
   fogColor: Color
   fogNear: number
   fogFar: number
@@ -151,7 +151,7 @@ interface ViewerParameters {
   sampleLevel: number
 }
 
-interface BufferInstance {
+export interface BufferInstance {
   matrix: Matrix4
 }
 
@@ -560,7 +560,7 @@ export default class Viewer {
     }
   }
 
-  add (buffer: Buffer, instanceList: BufferInstance[]) {
+  add (buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
     if (instanceList) {

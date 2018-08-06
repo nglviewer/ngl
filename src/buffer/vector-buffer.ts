@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color } from 'three'
+import { Color, Matrix4, Vector3 } from 'three'
 
 import '../shader/Line.vert'
 import '../shader/Line.frag'
@@ -12,20 +12,22 @@ import '../shader/Line.frag'
 import { uniformArray3 } from '../math/array-utils'
 import Buffer, { BufferDefaultParameters, BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 function getSize(data: BufferData){
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   return n * 2 * 3
 }
 
-interface VectorBufferData extends BufferData {
+export interface VectorBufferData extends BufferData {
   vector: Float32Array
 }
 
-const VectorBufferDefaultParameters = Object.assign({
+export const VectorBufferDefaultParameters = Object.assign({
   scale: 1,
   color: 'grey'
 }, BufferDefaultParameters)
-type VectorBufferParameters = typeof VectorBufferDefaultParameters
+export type VectorBufferParameters = typeof VectorBufferDefaultParameters
 
 /**
  * Vector buffer. Draws vectors as lines.

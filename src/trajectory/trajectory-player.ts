@@ -13,7 +13,7 @@ export type TrajectoryPlayerInterpolateType = ''|'linear'|'spline'
 export type TrajectoryPlayerMode = 'loop'|'once'
 export type TrajectoryPlayerDirection = 'forward'|'backward'|'bounce'
 
-const TrajectoryPlayerDefaultParameters = {
+export const TrajectoryPlayerDefaultParameters = {
   step: 1,  // how many frames to advance when playing
   timeout: 50,  // how many milliseconds to wait between playing frames
   start: 0,  // first frame to play
@@ -25,7 +25,7 @@ const TrajectoryPlayerDefaultParameters = {
 }
 export type TrajectoryPlayerParameters = typeof TrajectoryPlayerDefaultParameters
 
-interface TrajectoryPlayerSignals {
+export interface TrajectoryPlayerSignals {
   startedRunning: Signal
   haltedRunning: Signal
 }

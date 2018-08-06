@@ -8,7 +8,7 @@ import { defaults } from '../utils'
 import { Camera, WebGLRenderer } from 'three'
 import Viewer from './viewer'
 
-interface TiledRendererParams {
+export interface TiledRendererParams {
   factor?: number
   antialias?: boolean
   onProgress?: Function

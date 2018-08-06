@@ -6,7 +6,7 @@
 
 import { Log } from '../globals'
 
-import { Signal } from 'signals'
+import * as signalsWrapper from 'signals'
 
 /**
  * {@link Signal}, dispatched when the `count` changes
@@ -16,8 +16,8 @@ import { Signal } from 'signals'
  * @type {Integer}
  */
 
-interface CounterSignals {
-  countChanged: Signal
+export interface CounterSignals {
+  countChanged: signalsWrapper.Signal
 }
 
 /**
@@ -27,7 +27,7 @@ class Counter {
   count = 0
 
   signals: CounterSignals = {
-    countChanged: new Signal()
+    countChanged: new signalsWrapper.Signal()
   }
 
   /**

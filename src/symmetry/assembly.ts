@@ -9,6 +9,7 @@ import { Matrix4, Box3, Vector3 } from 'three'
 import { uniqueArray } from '../utils'
 import Selection from '../selection/selection'
 import Structure from '../structure/structure'
+import StructureView from '../structure/structure-view';
 
 function selectionFromChains (chainList: string[]) {
   let sele = ''
@@ -136,7 +137,7 @@ class Assembly {
   }
 }
 
-class AssemblyPart {
+export class AssemblyPart {
   constructor (readonly matrixList: Matrix4[] = [], readonly chainList: string[] = []) {}
 
   get type () { return 'AssemblyPart' }
@@ -181,7 +182,7 @@ class AssemblyPart {
     return selectionFromChains(this.chainList)
   }
 
-  getView (structure: Structure) {
+  getView (structure: Structure): Structure | StructureView {
     const selection = this.getSelection()
     if (selection) {
       return structure.getView(selection)

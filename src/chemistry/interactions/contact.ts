@@ -295,6 +295,7 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
     position1: new Float32Array(position1),
     position2: new Float32Array(position2),
     color: new Float32Array(color),
+    color2: new Float32Array(color),
     radius: new Float32Array(radius),
     picking: new ContactPicker(picking, contacts, structure)
   }

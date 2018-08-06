@@ -6,7 +6,7 @@
 
 import { Box3 } from 'three'
 
-type Positions = { x: ArrayLike<number>, y: ArrayLike<number>, z: ArrayLike<number> }
+export type Positions = { x: ArrayLike<number>, y: ArrayLike<number>, z: ArrayLike<number> }
 
 function createBoundingBox(positions: Positions) {
     const { x, y, z } = positions

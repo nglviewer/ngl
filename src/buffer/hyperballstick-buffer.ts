@@ -4,11 +4,14 @@
  * @private
  */
 
+import { Vector3, Matrix4 } from 'three'
 import { ExtensionFragDepth } from '../globals'
 import { calculateMinArray } from '../math/array-utils'
 import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
 import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters } from './hyperballstickimpostor-buffer'
 import { BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 export interface HyperballStickBufferData extends BufferData {
   position1: Float32Array
@@ -18,10 +21,10 @@ export interface HyperballStickBufferData extends BufferData {
   radius2: Float32Array
 }
 
-const HyperballStickBufferDefaultParameters = Object.assign({
+export const HyperballStickBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, CylinderGeometryBufferDefaultParameters, HyperballStickImpostorBufferDefaultParameters)
-type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultParameters
+export type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultParameters
 
 /**
  * Hyperball stick buffer. Depending on the value {@link ExtensionFragDepth} and

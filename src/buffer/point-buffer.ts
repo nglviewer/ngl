@@ -4,7 +4,7 @@
  * @private
  */
 
-import { DataTexture } from 'three'
+import { DataTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/Point.vert'
 import '../shader/Point.frag'
@@ -13,6 +13,8 @@ import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 function distance (x0: number, y0: number, x1: number, y1: number) {
   const dx = x1 - x0
@@ -60,7 +62,7 @@ function makePointTexture (params: PointTextureParams) {
   return tex
 }
 
-const PointBufferDefaultParameters = Object.assign({
+export const PointBufferDefaultParameters = Object.assign({
   pointSize: 1,
   sizeAttenuation: true,
   sortParticles: false,
@@ -69,7 +71,7 @@ const PointBufferDefaultParameters = Object.assign({
   forceTransparent: false,
   edgeBleach: 0.0
 }, BufferDefaultParameters)
-type PointBufferParameters = typeof PointBufferDefaultParameters
+export type PointBufferParameters = typeof PointBufferDefaultParameters
 
 const PointBufferParameterTypes = Object.assign({
   pointSize: { uniform: 'size' },

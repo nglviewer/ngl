@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color, CanvasTexture } from 'three'
+import { Color, CanvasTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
@@ -15,6 +15,8 @@ import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
 import { edt } from '../utils/edt'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 const TextAtlasCache: { [k: string]: TextAtlas } = {}
 
@@ -31,7 +33,7 @@ type TextStyles = 'normal'|'italic'
 type TextVariants = 'normal'
 type TextWeights = 'normal'|'bold'
 
-const TextAtlasDefaultParams = {
+export const TextAtlasDefaultParams = {
   font: 'sans-serif' as TextFonts,
   size: 36,
   style: 'normal' as TextStyles,
@@ -41,11 +43,11 @@ const TextAtlasDefaultParams = {
   width: 1024,
   height: 1024
 }
-type TextAtlasParams = typeof TextAtlasDefaultParams
+export type TextAtlasParams = typeof TextAtlasDefaultParams
 
-type TextAtlasMap = { x: number, y: number, w: number, h: number }
+export type TextAtlasMap = { x: number, y: number, w: number, h: number }
 
-class TextAtlas {
+export class TextAtlas {
   parameters: TextAtlasParams
 
   gamma = 1
@@ -278,14 +280,14 @@ class TextAtlas {
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 
-interface TextBufferData extends BufferData {
+export interface TextBufferData extends BufferData {
   size: Float32Array
   text: string[]
 }
 
 type TextAttachments = 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
 
-const TextBufferDefaultParameters = Object.assign({
+export const TextBufferDefaultParameters = Object.assign({
   fontFamily: 'sans-serif' as TextFonts,
   fontStyle: 'normal' as TextStyles,
   fontWeight: 'bold' as TextWeights,
@@ -323,7 +325,7 @@ const TextBufferParameterTypes = Object.assign({
 }, BufferParameterTypes)
 
 function getCharCount (data: TextBufferData, params: Partial<TextBufferParameters>) {
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   let charCount = 0
   for (let i = 0; i < n; ++i) {
     charCount += data.text[ i ].length
@@ -376,7 +378,7 @@ class TextBuffer extends MappedQuadBuffer {
     }, params)
 
     this.text = data.text
-    this.positionCount = data.position.length / 3
+    this.positionCount = data.position!.length / 3
 
     this.addUniforms({
       'fontTexture': { value: null },

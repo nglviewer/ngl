@@ -24,6 +24,11 @@ import AtomMap from '../store/atom-map'
 import ResidueMap from '../store/residue-map'
 
 import BondProxy from '../proxy/bond-proxy'
+import AtomType from '../store/atom-type';
+import ResidueType from '../store/residue-type';
+import ResidueProxy from './residue-proxy';
+import Entity from '../structure/entity';
+import BondHash from '../store/bond-hash';
 
 /**
  * Atom proxy
@@ -54,13 +59,13 @@ class AtomProxy {
   /**
    * @type {BondHash}
    */
-  get bondHash () { return this.structure.bondHash }
+  get bondHash (): BondHash|undefined { return this.structure.bondHash }
 
   /**
    * Molecular enity
    * @type {Entity}
    */
-  get entity () {
+  get entity (): Entity {
     return this.structure.entityList[ this.entityIndex ]
   }
   get entityIndex () {
@@ -75,7 +80,7 @@ class AtomProxy {
   /**
    * @type {ResidueProxy}
    */
-  get residue () {
+  get residue (): ResidueProxy {
     console.warn('residue - might be expensive')
     return this.structure.getResidueProxy(this.residueIndex)
   }
@@ -130,13 +135,13 @@ class AtomProxy {
   /**
    * @type {ResidueType}
    */
-  get residueType () {
+  get residueType (): ResidueType {
     return this.residueMap.get(this.residueStore.residueTypeId[ this.residueIndex ])
   }
   /**
    * @type {AtomType}
    */
-  get atomType () {
+  get atomType (): AtomType {
     return this.atomMap.get(this.atomStore.atomTypeId[ this.index ])
   }
   get residueAtomOffset () {

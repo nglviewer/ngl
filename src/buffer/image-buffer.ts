@@ -5,7 +5,7 @@
  */
 
 import {
-    Vector2, BufferAttribute, DataTexture,
+    Vector2, Vector3, Matrix4, BufferAttribute, DataTexture,
     NormalBlending, NearestFilter, LinearFilter
 } from 'three'
 
@@ -14,6 +14,8 @@ import '../shader/Image.frag'
 
 import { Picker } from '../utils/picker'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 const quadIndices = new Uint16Array([
   0, 1, 2,
@@ -29,22 +31,22 @@ const quadUvs = new Float32Array([
 
 type ImageFilterTypes = 'nearest'|'linear'|'cubic-bspline'|'cubic-catmulrom'|'cubic-mitchell'
 
-interface ImageBufferData {
+export interface ImageBufferData {
   position: Float32Array
-  imageData: Float32Array
+  imageData: Uint8Array
   width: number
   height: number
 
   picking?: Picker
 }
 
-const ImageBufferDefaultParameters = Object.assign({
+export const ImageBufferDefaultParameters = Object.assign({
   filter: 'nearest' as ImageFilterTypes,
   forceTransparent: true
 }, BufferDefaultParameters)
-type ImageBufferParameters = typeof ImageBufferDefaultParameters
+export type ImageBufferParameters = typeof ImageBufferDefaultParameters
 
-const ImageBufferParameterTypes = Object.assign({
+export const ImageBufferParameterTypes = Object.assign({
   filter: { updateShader: true, uniform: true }
 }, BufferParameterTypes)
 

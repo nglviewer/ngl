@@ -9,7 +9,7 @@
         "strictNullChecks": true,
         "lib": [ "es6", "DOM", "es2016" ],
         "outDir": "build/js",
-        "allowJs": true,
+        "allowJs": false,
         "moduleResolution": "node"
     },
     "include": [ "src/**/*", "lib/**/*" ]

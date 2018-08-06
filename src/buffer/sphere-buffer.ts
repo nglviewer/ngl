@@ -4,19 +4,22 @@
  * @private
  */
 
+import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
 import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './spheregeometry-buffer'
 import SphereImpostorBuffer from './sphereimpostor-buffer'
 import { BufferData } from './buffer'
 
+export type dumb = {v: Vector3, m: Matrix4}
+
 export interface SphereBufferData extends BufferData {
   radius: Float32Array
 }
 
-const SphereBufferDefaultParameters = Object.assign({
+export const SphereBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, SphereGeometryBufferDefaultParameters)
-type SphereBufferParameters = typeof SphereBufferDefaultParameters
+export type SphereBufferParameters = typeof SphereBufferDefaultParameters
 
 /**
  * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and

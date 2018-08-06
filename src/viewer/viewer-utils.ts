@@ -116,7 +116,7 @@ function _trimCanvas (canvas: HTMLCanvasElement, r: number, g: number, b: number
  * @property {Boolean} transparent - transparent image background
  */
 
-const ImageDefaultParameters = {
+export const ImageDefaultParameters = {
   trim: false,
   factor: 1,
   antialias: false,

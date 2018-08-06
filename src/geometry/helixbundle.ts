@@ -14,6 +14,18 @@ import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils
 import Polymer from '../proxy/polymer'
 import { ColormakerParameters } from '../color/colormaker';
 
+export interface Axis {
+  axis: Float32Array
+  center: Float32Array
+  begin: Float32Array
+  end: Float32Array
+  color: Float32Array
+  picking: AtomPicker
+  size: Float32Array
+  residueOffset: number[]
+  residueCount: number[]
+}
+
 class Helixbundle {
   helixorient: Helixorient;
   position: HelixPosition;
@@ -24,7 +36,7 @@ class Helixbundle {
     this.position = this.helixorient.getPosition()
   }
 
-  getAxis (localAngle: number, centerDist: number, ssBorder: boolean, colorParams: { scheme: string } & ColormakerParameters, radiusParams: RadiusParams) {
+  getAxis (localAngle: number, centerDist: number, ssBorder: boolean, colorParams: { scheme: string} & ColormakerParameters, radiusParams: RadiusParams): Axis {
     localAngle = localAngle || 30
     centerDist = centerDist || 2.5
     ssBorder = ssBorder === undefined ? false : ssBorder

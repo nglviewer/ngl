@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector2, Matrix4 } from 'three'
+import { Vector2, Vector3, Matrix4 } from 'three'
 
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
@@ -13,16 +13,18 @@ import { BufferRegistry } from '../globals'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
 
+export type dumb = {v: Vector3}
+
 export interface WideLineBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array
   color2: Float32Array
 }
 
-const WideLineBufferDefaultParameters = Object.assign({
+export const WideLineBufferDefaultParameters = Object.assign({
   linewidth: 2
 }, BufferDefaultParameters)
-type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
+export type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
 
 const WideLineBufferParameterTypes = Object.assign({
   linewidth: { uniform: true }
@@ -47,7 +49,7 @@ class WideLineBuffer extends MappedQuadBuffer {
   vertexShader = 'WideLine.vert'
   fragmentShader ='WideLine.frag'
 
-  constructor (data: WideLineBufferData, params: Partial<WideLineBufferParameters> = {}) {
+  constructor (data: Partial<WideLineBufferData>, params: Partial<WideLineBufferParameters> = {}) {
     super(data, params)
 
     if (!data.color2 && data.color) data.color2 = data.color
@@ -66,6 +68,10 @@ class WideLineBuffer extends MappedQuadBuffer {
 
     this.setAttributes(data)
     this.makeMapping()
+  }
+
+  setParameters (params: Partial<WideLineBufferParameters>) {
+    super.setParameters(params)
   }
 }
 

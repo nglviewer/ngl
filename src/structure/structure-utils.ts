@@ -54,7 +54,7 @@ export function reorderAtoms (structure: Structure) {
   if (Debug) Log.timeEnd('reorderAtoms')
 }
 
-interface SecStruct {
+export interface SecStruct {
   helices: [string, number, string, string, number, string, number][]
   sheets: [string, number, string, string, number, string][]
 }
