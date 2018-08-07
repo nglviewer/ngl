@@ -175,7 +175,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     if (!info.molsurf || info.sele !== sview.selection.string) {
       if (this.filterSele) {
         const sviewFilter = sview.structure.getView(new Selection(this.filterSele))
-        const bbSize = sviewFilter.boundingBox.getSize(new Vector3)
+        const bbSize = sviewFilter.boundingBox.getSize(new Vector3())
         const maxDim = Math.max(bbSize.x, bbSize.y, bbSize.z)
         const asWithin = sview.getAtomSetWithinPoint(sviewFilter.center, (maxDim / 2) + 6.0)
         sview = sview.getView(

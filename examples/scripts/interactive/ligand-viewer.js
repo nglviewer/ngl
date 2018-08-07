@@ -327,7 +327,7 @@ function showLigand (sele) {
   neighborSele = expandedSele
 
   var sview = s.getView(new NGL.Selection(sele))
-  pocketRadius = Math.max(sview.boundingBox.getSize().length() / 2, 2) + 5
+  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
@@ -398,7 +398,7 @@ var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: getTopPosition(16), left: '12px' })
 clipNearRange.oninput = function (e) {
-  var sceneRadius = stage.viewer.boundingBox.getSize().length() / 2
+  var sceneRadius = stage.viewer.boundingBox.getSize(new NGL.Vector3()).length() / 2
 
   var f = pocketRadius / sceneRadius
   var v = parseFloat(e.target.value) / 10000 // must be between 0 and 1

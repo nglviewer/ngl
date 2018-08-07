@@ -35,7 +35,7 @@ stage.loadFile('rcsb://4hhb').then(function (o) {
     color: 'lime',
     opacity: 0.7,
     wireframe: true,
-    clipRadius: sview.boundingBox.getSize().length() / 2 + 5,
+    clipRadius: sview.boundingBox.getSize(new NGL.Vector3()).length() / 2 + 5,
     clipCenter: sview.center
   })
 
