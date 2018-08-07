@@ -460,7 +460,6 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
     var boundPoint = new Grid(
       pLength, pWidth, pHeight, Uint16Array, 3
     )
-    console.log(boundPoint.set, boundPoint.index)
     var pWH = pWidth * pHeight
     var cutRSq = cutRadius * cutRadius
 
