@@ -4,11 +4,14 @@
  * @private
  */
 
+import { Vector3, Matrix4 } from 'three'
 import { ExtensionFragDepth } from '../globals'
 import { calculateMinArray } from '../math/array-utils'
 import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
 import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters } from './hyperballstickimpostor-buffer'
 import { BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 export interface HyperballStickBufferData extends BufferData {
   position1: Float32Array

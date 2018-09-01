@@ -11,12 +11,15 @@ import Selection from '../selection/selection.js'
 import RadiusFactory, { RadiusFactoryTypes, RadiusType } from '../utils/radius-factory.js'
 import Structure from '../structure/structure'
 import Viewer from '../viewer/viewer'
-import { Assembly } from '../ngl';
+import { Assembly, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';
 import AtomProxy from '../proxy/atom-proxy';
 import Polymer from '../proxy/polymer';
 import Buffer from '../buffer/buffer';
 import { AtomDataFields, BondDataFields, AtomDataParams, BondDataParams } from '../structure/structure-data';
+import Surface from '../surface/surface'
+
+export type dumb = {v: Volume, s: Surface}
 
 /**
  * Structure representation parameter object.

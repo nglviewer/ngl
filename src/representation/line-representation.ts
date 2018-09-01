@@ -9,10 +9,14 @@ import { RepresentationRegistry } from '../globals'
 import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import { AtomPicker } from '../utils/picker.js'
-import { Structure } from '../ngl';
+import { Structure, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';
 import Viewer from '../viewer/viewer';
 import AtomProxy from '../proxy/atom-proxy';
+import Surface from '../surface/surface';
+import { BondDataFields, BondDataParams } from '../structure/structure-data';
+
+export type dumb = {v: Volume, s: Surface, bdf: BondDataFields, bdp: BondDataParams}
 
 /**
  * Determine which atoms in  a Structure[View] form no bonds to any other atoms

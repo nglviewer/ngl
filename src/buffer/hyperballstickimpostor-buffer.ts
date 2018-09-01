@@ -4,13 +4,15 @@
  * @private
  */
 
-import { Matrix4 } from 'three'
+import { Matrix4, Vector3 } from 'three'
 
 import '../shader/HyperballStickImpostor.vert'
 import '../shader/HyperballStickImpostor.frag'
 
 import MappedBoxBuffer from './mappedbox-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 export interface HyperballStickImpostorBufferData extends BufferData {
   position1: Float32Array

@@ -4,12 +4,14 @@
  * @private
  */
 
-import { Vector3 } from 'three'
+import { Vector3, Matrix4 } from 'three'
 
 import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
 import { BufferDefaultParameters, BufferData } from './buffer'
+
+export type dumb = {m: Matrix4}
 
 const vTangent = new Vector3()
 const vMeshNormal = new Vector3()

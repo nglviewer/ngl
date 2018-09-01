@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Color, CanvasTexture } from 'three'
+import { Color, CanvasTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'
@@ -15,6 +15,8 @@ import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
 import { edt } from '../utils/edt'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 const TextAtlasCache: { [k: string]: TextAtlas } = {}
 

@@ -11,16 +11,19 @@ import LicoriceRepresentation from './licorice-representation.js'
 import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
 import HyperballStickBuffer, { HyperballStickBufferData } from '../buffer/hyperballstick-buffer.js'
 import { BallAndStickRepresentationParameters } from './ballandstick-representation';
-import { Structure } from '../ngl';
+import { Structure, Volume } from '../ngl';
 import Viewer from '../viewer/viewer';
 import { BondDataParams, BondDataFields, AtomDataFields } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
 import { StructureRepresentationData } from './structure-representation';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
+import Surface from '../surface/surface';
 
 export interface HyperballRepresentationParameters extends BallAndStickRepresentationParameters {
   shrink: number
 }
+
+export type dumb = {v: Volume, s: Surface}
 
 /**
  * Hyperball Representation

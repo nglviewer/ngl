@@ -4,13 +4,15 @@
  * @private
  */
 
-import { Color } from 'three'
+import { Color, Matrix4, Vector3 } from 'three'
 
 import '../shader/Line.vert'
 import '../shader/Line.frag'
 
 import { uniformArray3 } from '../math/array-utils'
 import Buffer, { BufferDefaultParameters, BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 function getSize(data: BufferData){
   const n = data.position!.length / 3

@@ -4,10 +4,13 @@
  * @private
  */
 
+import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
 import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './spheregeometry-buffer'
 import SphereImpostorBuffer from './sphereimpostor-buffer'
 import { BufferData } from './buffer'
+
+export type dumb = {v: Vector3, m: Matrix4}
 
 export interface SphereBufferData extends BufferData {
   radius: Float32Array

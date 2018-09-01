@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Box3, Vector3, Color } from 'three'
+import { Box3, Vector3, Color, Matrix4 } from 'three'
 
 import { createParams, ensureFloat32Array, getUintArray } from '../utils'
 import {
@@ -16,6 +16,8 @@ import { MeshPicker } from '../utils/picker'
 import Buffer from '../buffer/buffer'
 import MeshBuffer from '../buffer/mesh-buffer'
 import { TextBufferParameters } from '../buffer/text-buffer'
+
+export type dumb = {m: Matrix4}
 
 const tmpBox = new Box3()
 
