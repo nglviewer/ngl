@@ -4,12 +4,14 @@
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
   "module": "dist/ngl.esm.js",
+  "types": "declarations/ngl.d.ts",
   "scripts": {
     "lint": "npm run lint-src && npm run lint-test && npm run lint-script",
     "lint-src": "standard \"src/**/*.js\"",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
     "ts": "tsc && cpx \"src/**/*.{vert,frag,glsl}\" build/js/src/ && cpx \"lib/*.js\" build/js/lib/ && cpx \"package.json\" build/js/ && cpx \"src/polyfills.js\" build/js/src/",
+    "dts": "tsc -d --declarationDir \"declarations\" --emitDeclarationOnly --skipLibCheck",
     "prebuild": "npm run lint",
     "build": "npm run ts && rollup -c",
     "postbuild": "node ./scripts/makeScriptsList.js",
@@ -58,13 +60,10 @@
     "science"
   ],
   "devDependencies": {
-    "@types/chroma-js": "^1.3.5",
     "@types/jest": "^23.3.1",
     "@types/node": "^10.5.7",
     "@types/promise-polyfill": "^6.0.0",
-    "@types/signals": "1.0.1",
     "@types/sprintf-js": "^1.1.0",
-    "@types/three": "^0.92.15",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-es2015": "^6.24.1",
@@ -97,5 +96,9 @@
     "typescript": "^3.0.1",
     "uglify-js": "^3.4.6"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@types/chroma-js": "^1.3.5",
+    "@types/signals": "1.0.1",
+    "@types/three": "^0.92.15"
+  }
 }

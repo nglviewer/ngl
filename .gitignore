@@ -3,6 +3,7 @@
 
 build/
 node_modules/
+declarations/
 
 npm-debug.log
 
