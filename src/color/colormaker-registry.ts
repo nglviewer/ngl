@@ -83,7 +83,7 @@ class ColormakerRegistry {
     this.userSchemes = {}
   }
 
-  getScheme (params: { scheme: string } & ColormakerParameters) {
+  getScheme (params: Partial<{ scheme: string } & ColormakerParameters>) {
     const p = params || {}
     const id = (p.scheme || '').toLowerCase()
 
