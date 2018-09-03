@@ -169,7 +169,7 @@ class ColormakerRegistry {
    * @param {String} label - scheme label
    * @return {String} id to refer to the registered scheme
    */
-  addScheme (scheme: any, label: string) {
+  addScheme (scheme: any, label?: string) {
     if (!(scheme instanceof Colormaker)) {
       scheme = this._createScheme(scheme)
     }
@@ -183,7 +183,7 @@ class ColormakerRegistry {
    * @param {String} [label] - scheme label
    * @return {String} id to refer to the registered scheme
    */
-  _addUserScheme (scheme: any, label: string) {
+  _addUserScheme (scheme: any, label?: string) {
     label = label || ''
     const id = `${generateUUID()}|${label}`.toLowerCase()
     this.userSchemes[ id ] = scheme
@@ -236,7 +236,7 @@ class ColormakerRegistry {
    * @param {String} label - scheme name
    * @return {String} id to refer to the registered scheme
    */
-  addSelectionScheme (dataList: SelectionSchemeData, label: string) {
+  addSelectionScheme (dataList: SelectionSchemeData, label?: string) {
     class MySelectionColormaker extends SelectionColormaker {
       constructor (params: { structure: Structure } & ColormakerParameters) {
         super(Object.assign({ dataList }, params))
