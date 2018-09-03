@@ -143,7 +143,8 @@ export const StageDefaultParameters = {
 export type StageParameters = typeof StageDefaultParameters
 
 export interface StageLoadFileParams extends LoaderParameters {
-  defaultRepresentation: boolean
+  defaultRepresentation: boolean,
+  assembly: string
 }
 
 /**
