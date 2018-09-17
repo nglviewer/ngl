@@ -939,6 +939,8 @@ export function assignResidueTypeBonds (structure: Structure) {
     var bondOrders: number[] = []
     var bondDict: { [k: string]: boolean } = {}
 
+    const nextAtomOffset = atomOffset + rp.atomCount
+
     rp.eachAtom(function (ap) {
       const index = ap.index
       const offset = offsetArray[ index ]
@@ -946,7 +948,15 @@ export function assignResidueTypeBonds (structure: Structure) {
       for (let i = 0, il = count; i < il; ++i) {
         bp.index = indexArray[ offset + i ]
         let idx1 = bp.atomIndex1
+        if (idx1 < atomOffset || idx1 >= nextAtomOffset) {
+          // Don't add bonds outside of this resiude
+          continue
+        }
         let idx2 = bp.atomIndex2
+        if (idx2 < atomOffset || idx2 >= nextAtomOffset) {
+          continue
+        }
+
         if (idx1 > idx2) {
           const tmp = idx2
           idx2 = idx1
