@@ -852,6 +852,20 @@ class Buffer {
     this.geometry.dispose()
     if (this.wireframeGeometry) this.wireframeGeometry.dispose()
   }
+
+  /**
+   * Customize JSON serialization to avoid circular references
+   */
+  toJSON () {
+    var result: any = {};
+    for (var x in this) {
+      if (x !== "group" && x !== "wireframeGroup" && x != "pickingGroup"
+         && x !== "picking") {
+        result[x] = this[x];
+      }
+    }
+    return result;
+  }
 }
 
 export default Buffer
