@@ -15,7 +15,8 @@ export const RadiusFactoryTypes = {
   'sstruc': 'by secondary structure',
   'bfactor': 'by bfactor',
   'size': 'size',
-  'data': 'data'
+  'data': 'data',
+  'explicit' : 'explicit'
 }
 export type RadiusType = keyof typeof RadiusFactoryTypes
 
@@ -80,6 +81,13 @@ class RadiusFactory {
 
       case 'data':
         r = defaults(this.data[ a.index ], 1.0)
+        break
+
+      case 'explicit':
+        // defaults is inappropriate as AtomProxy.radius returns
+        // null for missing radii
+        r = a.radius
+        if (r === null) r = this.size
         break
 
       default:

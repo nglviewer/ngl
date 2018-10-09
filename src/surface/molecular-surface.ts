@@ -5,12 +5,13 @@
  */
 
 import { WorkerRegistry } from '../globals'
+import { defaults } from '../utils'
 import Worker from '../worker/worker.js'
 import EDTSurface from './edt-surface.js'
 import { AVSurface } from './av-surface.js'
 import Surface, { SurfaceData } from './surface.js'
 import { Structure } from '../ngl';
-import { AtomData } from '../structure/structure-data';
+import { AtomData, RadiusParams } from '../structure/structure-data';
 
 WorkerRegistry.add('molsurf', function func (e: any, callback: (data: any, buffers: any[])=> void) {
   const a = e.data.args
@@ -48,7 +49,8 @@ export interface MolecularSurfaceParameters {
   smooth: number
   name: string
   cutoff: number
-  contour: boolean
+  contour: boolean,
+  radiusParams: RadiusParams
 }
 /**
  * Create Molecular surfaces
@@ -61,10 +63,12 @@ class MolecularSurface {
     this.structure = structure
   }
 
-  _getAtomData (): AtomData {
+  _getAtomData (params: Partial<MolecularSurfaceParameters>): AtomData {
     return this.structure.getAtomData({
       what: { position: true, radius: true, index: true },
-      radiusParams: { type: 'vdw', scale: 1 }
+      radiusParams: defaults(params.radiusParams, {
+        type: 'vdw', scale: 1.0
+      })
     })
   }
 
@@ -76,7 +80,7 @@ class MolecularSurface {
     surface.info.scaleFactor = p.scaleFactor
     surface.info.smooth = p.smooth
     surface.info.cutoff = p.cutoff
-  
+
     return surface
   }
 
@@ -88,7 +92,7 @@ class MolecularSurface {
   getSurface (params: Partial<MolecularSurfaceParameters>) {
     const p = params || {}
 
-    const atomData = this._getAtomData()
+    const atomData = this._getAtomData(params)
     const coordList = atomData.position
     const radiusList = atomData.radius
     const indexList = atomData.index
@@ -116,7 +120,7 @@ class MolecularSurface {
         this.worker = new Worker('molsurf')
       }
 
-      const atomData = this._getAtomData()
+      const atomData = this._getAtomData(params)
       const coordList = atomData.position
       const radiusList = atomData.radius
       const indexList = atomData.index
