@@ -67,11 +67,17 @@ declare global {
     msFullscreenEnabled: boolean
     msFullscreenElement: Element
     msExitFullscreen(): void
+
+    webkitFullscreenEnabled(): boolean
+    fullscreenElement: Element
+    webkitFullscreenElement: Element
+    webkitExitFullscreen(): void
   }
 
   interface Element {
     mozRequestFullScreen(): void
     msRequestFullscreen(): void
+    webkitRequestFullscreen(): void
   }
 }
 

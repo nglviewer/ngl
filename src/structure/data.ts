@@ -5,8 +5,8 @@ import { ValenceModel } from '../chemistry/valence-model'
 
 export interface Data {
   structure: Structure
-  '@spatialLookup': SpatialHash | undefined
-  '@valenceModel': ValenceModel | undefined
+  '@spatialLookup': SpatialHash | undefined | any
+  '@valenceModel': ValenceModel | undefined | any
 }
 
 export function createData(structure: Structure): Data {

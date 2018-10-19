@@ -8,7 +8,7 @@
 // Copyright 2012, Gregg Tavares. Modified BSD License
 
 export function createProgram(gl: WebGLRenderingContext, shaders: WebGLShader[], attribs?: string[], locations?: number[]) {
-  const program = gl.createProgram()
+  const program = gl.createProgram() as WebGLProgram // it's a WebGLProgram | null
   shaders.forEach(shader => gl.attachShader(program, shader))
   if (attribs) {
     attribs.forEach((attrib, i) => {
@@ -28,7 +28,7 @@ export function createProgram(gl: WebGLRenderingContext, shaders: WebGLShader[],
 }
 
 export function loadShader(gl: WebGLRenderingContext, shaderSource: string, shaderType: number) {
-  const shader = gl.createShader(shaderType)
+  const shader = gl.createShader(shaderType) as WebGLShader // it's a WebGLShader | null
   gl.shaderSource(shader, shaderSource)
   gl.compileShader(shader)
 
@@ -110,7 +110,7 @@ export function testTextureSupport (type: number) {
   if (!vertShader || !fragShader) return false
 
   // setup program
-  const program = createProgram(gl, [ vertShader, fragShader ])
+  const program = createProgram(gl, [ vertShader, fragShader ]) as WebGLProgram // it's a WebGLProgram | null
   gl.useProgram(program);
 
   // look up where the vertex data needs to go.
