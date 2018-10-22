@@ -284,7 +284,7 @@ export const calculateSecondaryStructure = (function () {
       if (isHelical(p, i)) {
         sstruc = 'h'
       } else if (isSheet(p, i)) {
-        sstruc = 's'
+        sstruc = 'e'
       }
       residueStore.sstruc[ offset + i ] = sstruc.charCodeAt(0)
     }
