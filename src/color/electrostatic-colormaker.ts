@@ -195,6 +195,7 @@ function buildStoreLike (positions: Vector3[]) {
 }
 
 function chargeForAtom (a: AtomProxy) {
+  if (a.partialCharge !== null) return a.partialCharge
   if (!a.isProtein()) { return 0.0 }
   return (
     (partialCharges[ a.resname ] &&
@@ -245,6 +246,14 @@ class ElectrostaticColormaker extends Colormaker {
     params.structure.eachAtom((ap: AtomProxy) => {
       this.charges[ ap.index ] = chargeForAtom(ap) * ap.occupancy
       if (ap.atomname === 'N') {
+
+        // In the specific case where N forms two bonds to
+        // CA and C, try and place a dummy hydrogen
+
+        if (ap.bondCount >= 3) return; // Skip if 3 bonds already (e.g. PRO)
+
+        if (ap.bondToElementCount(1)) return; // Skip if any H specificed
+
         const hPos = backboneNHPosition(ap)
         if (hPos !== undefined) {
           hPositions.push(hPos)
@@ -269,7 +278,7 @@ class ElectrostaticColormaker extends Colormaker {
     for (let i = 0; i < neighbours.length; i++) {
       const neighbour = neighbours[ i ]
       const charge = this.charges[ neighbour ]
-      if (charge !== 0.0) {
+      if (charge != null && charge !== 0.0) {
         this.atomProxy.index = neighbour
         this.delta.x = v.x - this.atomProxy.x
         this.delta.y = v.y - this.atomProxy.y

@@ -280,7 +280,7 @@ class PdbParser extends StructureParser {
             inscode = ''
             resname = ls![ 3 ]
             altloc = ''
-            occupancy = 0.0
+            occupancy = 1.0
           } else {
             serial = parseInt(line.substr(6, 5), serialRadix)
             if (hex && serial === 99999) {

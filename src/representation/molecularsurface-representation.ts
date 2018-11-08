@@ -126,7 +126,6 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
     }, this.parameters, {
 
-      radiusType: null,
       radius: null,
       scale: null
 
@@ -285,7 +284,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
   updateData (what: SurfaceDataFields, data: StructureRepresentationData) {
     const surfaceData: Partial<SurfaceData> = {}
 
-    if (what.position) {
+    if (what.position || what.radius) {
       this.__forceNewMolsurf = true
       this.build()
       return
@@ -332,7 +331,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       smooth: this.smooth && !this.contour,
       cutoff: this.cutoff as number,
       contour: this.contour as boolean,
-      useWorker: this.useWorker as boolean
+      useWorker: this.useWorker as boolean,
+      radiusParams: this.getRadiusParams()
     }, params)
 
     return p

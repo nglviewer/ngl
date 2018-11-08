@@ -281,6 +281,18 @@ class AtomProxy {
   }
 
   /**
+   * Explicit radius
+   */
+  get radius () {
+    return this.atomStore.radius ? this.atomStore.radius[ this.index ] : null
+  }
+  set radius (value) {
+    if (this.atomStore.radius) {
+      this.atomStore.radius[ this.index ] = value as number
+    }
+  }
+
+  /**
    * Formal charge
    */
   get formalCharge () {

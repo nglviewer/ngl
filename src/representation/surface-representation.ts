@@ -16,7 +16,7 @@ import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
 import {SurfaceData} from '../surface/surface'
 
-export type SurfaceDataFields = {position: boolean, color: boolean, index: boolean, normal: boolean}
+export type SurfaceDataFields = {position: boolean, color: boolean, index: boolean, normal: boolean, radius: boolean}
 
 /**
  * Surface representation parameter object. Extends {@link RepresentationParameters}
