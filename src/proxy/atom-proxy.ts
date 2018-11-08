@@ -536,8 +536,8 @@ class AtomProxy {
    * @return {Boolean} flag
    */
   isRing () {
-    const ringFlags = this.residueType.getRings()!.flags  // TODO
-    return ringFlags[ this.index - this.residueAtomOffset ] === 1
+    const atomRings = this.residueType.getRings()!.atomRings  // TODO
+    return atomRings[ this.index - this.residueAtomOffset ] !== undefined
   }
 
   isAromatic () {
