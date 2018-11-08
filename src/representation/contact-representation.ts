@@ -7,8 +7,9 @@
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
 import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
-import { calculateContacts, getContactData } from '../chemistry/interactions/contact'
+import { calculateContacts, getContactData, getLabelData } from '../chemistry/interactions/contact'
 import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import TextBuffer from '../buffer/text-buffer.js'
 import { getFixedCountDashData } from '../geometry/dash'
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';
@@ -125,6 +126,24 @@ class ContactRepresentation extends StructureRepresentation {
         type: 'text', rebuild: true
       },
 
+      labelVisible: {
+        type: 'boolean', rebuild: true
+      },
+
+      labelFixedSize: {
+        type: 'boolean', buffer: 'fixedSize'
+      },
+
+      labelSize: {
+        type: 'number', precision: 3, max: 10.0, min: 0.001, rebuild: true
+      },
+
+      labelUnit: {
+        type: 'select',
+        rebuild: true,
+        options: { '': '', angstrom: 'angstrom', nm: 'nm' }
+      },
+
       maxHydrophobicDist: {
         type: 'number', precision: 1, max: 10, min: 0.1, rebuild: true
       },
@@ -207,6 +226,10 @@ class ContactRepresentation extends StructureRepresentation {
     this.piStacking = defaults(p.piStacking, true)
 
     this.filterSele = defaults(p.filterSele, '')
+    this.labelVisible = defaults(p.labelVisible, false)
+    this.labelFixedSize = defaults(p.labelFixedSize, false)
+    this.labelSize = defaults(p.labelSize, 2.0)
+    this.labelUnit = defaults(p.labelUnit, '')
 
     this.maxHydrophobicDist = defaults(p.maxHydrophobicDist, 4.0)
     this.maxHbondDist = defaults(p.maxHbondDist, 3.5)
@@ -274,22 +297,33 @@ class ContactRepresentation extends StructureRepresentation {
     }
 
     const contacts = calculateContacts(sview, params)
-    const contactData = getContactData(contacts, sview, dataParams)
-
-    return getFixedCountDashData(contactData) 
+    return getContactData(contacts, sview, dataParams)
   }
 
   createData (sview: StructureView) {
+    const contactData = this.getContactData(sview)
+
     const bufferList = [
       new CylinderBuffer(
-        this.getContactData(sview),
+        getFixedCountDashData(contactData),
         this.getBufferParams({
           sphereDetail: 1,
           dullInterior: true,
           disableImpostor: this.disableImpostor
         })
-      ) as (CylinderGeometryBuffer | CylinderImpostorBuffer)
+      ) as (CylinderGeometryBuffer | CylinderImpostorBuffer | TextBuffer)
     ]
+
+    if (this.labelVisible) {
+      const labelParams = {
+        size: this.labelSize,
+        unit: this.labelUnit
+      }
+      bufferList.push(new TextBuffer(
+        getLabelData(contactData, labelParams),
+        {fixedSize: this.labelFixedSize}
+      ))
+    }
 
     return { bufferList }
   }
