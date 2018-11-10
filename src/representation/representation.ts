@@ -30,7 +30,7 @@ export interface RepresentationParameters {
   colorReverse: boolean,
   colorValue: number,
   colorDomain: number[],
-  colorMode: string,
+  colorMode: ColorMode,
   roughness: number,
   metalness: number,
   diffuse: Color,
