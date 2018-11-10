@@ -4,15 +4,14 @@
  * @private
  */
 
-import {  Vector3, Matrix4, Matrix3, BufferGeometry } from 'three'
+// @ts-ignore: unused import Vector3 required for declaration only
+ import {  Vector3, Matrix4, Matrix3, BufferGeometry } from 'three'
 
 import { getUintArray } from '../utils'
 import { serialBlockArray } from '../math/array-utils.js'
 import { applyMatrix3toVector3array, applyMatrix4toVector3array } from '../math/vector-utils.js'
 import MeshBuffer from './mesh-buffer.js'
 import { BufferParameters, BufferData } from './buffer'
-
-export type dumb = {v: Vector3}
 
 const matrix = new Matrix4()
 const normalMatrix = new Matrix3()

@@ -3,6 +3,8 @@
  * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
  */
+
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
 import { Color, Vector3, Matrix4 } from 'three'
 
 import Selection from '../selection/selection'
@@ -15,8 +17,6 @@ import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';
 import TextBuffer, { TextBufferData } from '../buffer/text-buffer';
-
-export type dumb = {v: Vector3, m: Matrix4}
 
 export interface LabelDataField {
   position?: boolean

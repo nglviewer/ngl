@@ -4,14 +4,13 @@
  * @private
  */
 
+// @ts-ignore: unused import Matrix4 required for declaration only
 import { Vector3, Matrix4 } from 'three'
 
 import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
 import { BufferDefaultParameters, BufferData } from './buffer'
-
-export type dumb = {m: Matrix4}
 
 const vTangent = new Vector3()
 const vMeshNormal = new Vector3()

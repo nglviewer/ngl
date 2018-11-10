@@ -4,12 +4,11 @@
  * @private
  */
 
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
 import { Group, BufferGeometry, Object3D, Mesh, LineSegments, Vector3, Matrix4 } from 'three'
 
 import Buffer, { BufferSide } from './buffer'
 import { Picker } from '../utils/picker'
-
-export type dumb = {v: Vector3, m: Matrix4}
 
 function setVisibilityTrue (m: Object3D) { m.visible = true }
 function setVisibilityFalse (m: Object3D) { m.visible = false }

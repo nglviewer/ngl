@@ -4,6 +4,7 @@
  * @private
  */
 
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
 import { DataTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/Point.vert'
@@ -13,8 +14,6 @@ import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
 import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
-
-export type dumb = {v: Vector3, m: Matrix4}
 
 function distance (x0: number, y0: number, x1: number, y1: number) {
   const dx = x1 - x0

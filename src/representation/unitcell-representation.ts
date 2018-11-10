@@ -15,6 +15,7 @@ import { AtomDataFields } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
+// @ts-ignore: unused import UnitcellPicker required for declaration only
 import { UnitcellPicker } from '../utils/picker';
 
 export interface UnitcellRepresentationParameters extends StructureRepresentationParameters {
@@ -22,10 +23,6 @@ export interface UnitcellRepresentationParameters extends StructureRepresentatio
   sphereDetail: number
   radialSegments: number
   disableImpostor: boolean
-}
-
-export interface dumb {
-  up: UnitcellPicker
 }
 
 /**

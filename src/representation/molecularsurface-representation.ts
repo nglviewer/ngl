@@ -13,12 +13,11 @@ import ContourBuffer from '../buffer/contour-buffer.js'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
 import Selection from '../selection/selection.js'
 import Viewer from '../viewer/viewer';
+// @ts-ignore: unused import Volume required for declaration only
 import { Structure, Vector3, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';
 import { SurfaceDataFields } from './surface-representation';
 import Surface, {SurfaceData} from '../surface/surface';
-
-export type dumb = {v: Volume }
 
 export interface MolecularSurfaceRepresentationParameters extends StructureRepresentationParameters {
   surfaceType: 'vws'|'sas'|'ms'|'ses'|'av'

@@ -6,11 +6,10 @@
 
 import { Debug, Log, ParserRegistry } from '../globals'
 import { defaults } from '../utils'
+// @ts-ignore: unused import XMLNode required for declaration only
 import { parseXml, XMLNode } from '../utils/parse-xml'
 import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
-
-export type dumb = {x: XMLNode}
 
 export interface XmlParserParameters extends ParserParameters {
   useDomParser: boolean

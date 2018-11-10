@@ -4,6 +4,7 @@
  * @private
  */
 
+// @ts-ignore: unused import Vector3 required for declaration only
 import { Matrix4, Vector3 } from 'three'
 
 import '../shader/CylinderImpostor.vert'
@@ -12,8 +13,6 @@ import '../shader/CylinderImpostor.frag'
 import MappedAlignedBoxBuffer from './mappedalignedbox-buffer.js'
 import { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
 import { CylinderBufferData } from './cylinder-buffer'
-
-export type dumb = {v: Vector3}
 
 export const CylinderImpostorBufferDefaultParameters = Object.assign({
   openEnded: false

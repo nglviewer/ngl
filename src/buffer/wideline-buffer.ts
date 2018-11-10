@@ -4,6 +4,7 @@
  * @private
  */
 
+// @ts-ignore: unused import Vector3 required for declaration only
 import { Vector2, Vector3, Matrix4 } from 'three'
 
 import '../shader/WideLine.vert'
@@ -12,8 +13,6 @@ import '../shader/WideLine.frag'
 import { BufferRegistry } from '../globals'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
-
-export type dumb = {v: Vector3}
 
 export interface WideLineBufferData extends BufferData {
   position1: Float32Array
