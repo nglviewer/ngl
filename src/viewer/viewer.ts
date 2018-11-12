@@ -43,6 +43,11 @@ import Buffer from '../buffer/buffer'
 const pixelBufferFloat = new Float32Array(4 * 25)
 const pixelBufferUint = new Uint8Array(4 * 25)
 
+// When picking, we read a 25 pixel (5x5) array (readRenderTargetPixels)
+// We read the pixels in the order below to find what was picked.
+// This starts at the center and tries successively further points.
+// (Many points will be at equal distance to the center, their order
+// is arbitrary).
 const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,24,20]
 
 
