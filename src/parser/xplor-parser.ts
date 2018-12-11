@@ -81,7 +81,7 @@ class XplorParser extends VolumeParser {
     const n = na * nb * nc
 
     const data = new Float32Array(n)
-    const lineSection = 1 + (na * nb) / 6
+    const lineSection = Math.ceil(1 + (na * nb) / 6)
     let count = 0
     let lineNo = 0
 
@@ -91,8 +91,9 @@ class XplorParser extends VolumeParser {
 
         if (lineNo >= dataStart && (lineNo - dataStart) % lineSection !== 0 && count < n) {
           for (let j = 0, lj = 6; j < lj; ++j) {
-            data[ count ] = parseFloat(line.substr(12 * j, 12))
-            ++count
+            const value = parseFloat(line.substr(12 * j, 12))
+            if (isNaN(value)) { break } // Last line of map section
+            data[count++] = value
           }
         } else if (count === n) {
           const lt = line.trim()
