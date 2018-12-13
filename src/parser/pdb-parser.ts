@@ -629,6 +629,11 @@ class PdbParser extends StructureParser {
       _parseChunkOfLines(0, lines.length, lines)
     })
 
+
+    // finalize ensures resname will be defined for all rp.resname
+    // (required in entity handling below)
+    sb.finalize()
+
     //
 
     const en = entityDataList.length
@@ -688,7 +693,6 @@ class PdbParser extends StructureParser {
       assignSecondaryStructure(s, secStruct)
     }
 
-    sb.finalize()
     s.finalizeAtoms()
     if (!isLegacy) calculateChainnames(s)
     calculateBonds(s)
