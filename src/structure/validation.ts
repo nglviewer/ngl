@@ -20,15 +20,24 @@ function getNamedItem(a: NamedNodeMap, name: string) {
 }
 
 function getSele (a: NamedNodeMap, atomname?: string, useAltcode = false) {
-  const icode = getNamedItem(a, 'icode')
-  const chain = getNamedItem(a, 'chain')
+  const icode = getNamedItem(a, 'icode').trim()
+  const chain = getNamedItem(a, 'chain').trim()
   const altcode = getNamedItem(a, 'altcode')
   let sele = getNamedItem(a, 'resnum')
-  if (icode.trim()) sele += '^' + icode
-  if (chain.trim()) sele += ':' + chain
+  if (icode) sele += '^' + icode
+  if (chain) sele += ':' + chain
   if (atomname) sele += '.' + atomname
   if (useAltcode && altcode.trim()) sele += '%' + altcode
   sele += '/' + (parseInt(getNamedItem(a, 'model')) - 1)
+  return sele
+}
+
+function getResSele (a: NamedNodeMap) {
+  const chain = getNamedItem(a, 'chain').trim()
+  const rescode = getNamedItem(a, 'rescode')
+  const resnum = getNamedItem(a, 'resnum')
+  let sele = `[${rescode}]${resnum}`
+  if (chain) sele += `:${chain}`
   return sele
 }
 
@@ -102,6 +111,22 @@ function getProblemCount (clashDict: { [k: string]: { [k: string]: string } }, g
 class Validation {
   rsrzDict: { [k: string]: number } = {}
   rsccDict: { [k: string]: number } = {}
+  /**
+   * Random Coil Index (RCI) - evaluates the proximity of residue structural
+   * and dynamic properties to the properties of flexible random coil regions
+   * from NMR chemical shifts.
+   *
+   * Mark V. Berjanskii and David S. Wishart (2005)
+   * A Simple Method To Predict Protein Flexibility Using Secondary Chemical Shifts
+   * J. Am. Chem. Soc., 2005, 127 (43), pp 14970–14971
+   * http://pubs.acs.org/doi/abs/10.1021/ja054842f
+   *
+   * Mark V. Berjanskii and David S. Wishart (2008)
+   * Application of the random coil index to studying protein flexibility.
+   * J Biomol NMR. 2008 Jan;40(1):31-48. Epub 2007 Nov 6.
+   * http://www.springerlink.com/content/2966482w10306126/
+   */
+  rciDict: { [k: string]: number } = {}
   clashDict: { [k: string]: { [k: string]: string } } = {}
   clashArray: { [k: string]: string }[] = []
   geoDict: { [k: string]: number } = {}
@@ -109,7 +134,7 @@ class Validation {
   atomDict: { [k: string]: boolean|number } = {}
   clashSele = 'NONE'
 
-  constructor (readonly name: string, readonlypath: string) {}
+  constructor (readonly name: string, readonly path: string) {}
 
   get type () { return 'validation' }
 
@@ -118,11 +143,25 @@ class Validation {
 
     const rsrzDict = this.rsrzDict
     const rsccDict = this.rsccDict
+    const rciDict = this.rciDict
     const clashDict = this.clashDict
     const clashArray = this.clashArray
     const geoDict = this.geoDict
     const geoAtomDict = this.geoAtomDict
     const atomDict = this.atomDict
+
+    const entries = xml.getElementsByTagName('Entry')
+    if (entries.length === 1) {
+      const chemicalShiftLists = entries[0].getElementsByTagName('chemical_shift_list')
+      if (chemicalShiftLists.length === 1) {
+        const randomCoilIndices = chemicalShiftLists[0].getElementsByTagName('random_coil_index')
+        for (let j = 0, jl = randomCoilIndices.length; j < jl; ++j) {
+          const rcia = randomCoilIndices[ j ].attributes
+          const sele = getResSele(rcia)
+          rciDict[ sele ] = parseFloat(getNamedItem(rcia, 'value'))
+        }
+      }
+    }
 
     const groups = xml.getElementsByTagName('ModelledSubgroup')
 
