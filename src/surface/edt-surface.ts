@@ -5,7 +5,7 @@
  */
 
 import { VolumeSurface } from './volume.js'
-import Grid from '../geometry/grid'
+import { iGrid, makeGrid } from '../geometry/grid'
 import { computeBoundingBox } from '../math/vector-utils.js'
 import { getRadiusDict, getSurfaceGrid } from './surface-utils.js'
 import { TypedArray } from '../types.js';
@@ -457,7 +457,7 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
 
     var i, j, k, n
 
-    var boundPoint = new Grid(
+    var boundPoint = makeGrid(
       pLength, pWidth, pHeight, Uint16Array, 3
     )
     var pWH = pWidth * pHeight
@@ -571,7 +571,7 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
     console.timeEnd('EDTSurface fastdistancemap')
   }
 
-  function fastoneshell (inarray: Int32Array, boundPoint: Grid, positin: number, outarray: Int32Array) {
+  function fastoneshell (inarray: Int32Array, boundPoint: iGrid, positin: number, outarray: Int32Array) {
     // *allocout,voxel2
     // ***boundPoint, int*
     // outnum, int *elimi)
@@ -810,7 +810,7 @@ function EDTSurface (this: EDTSurface, coordList: Float32Array, radiusList: Floa
   }
 }
 Object.assign(EDTSurface, {__deps: [
-  getSurfaceGrid, getRadiusDict, VolumeSurface, computeBoundingBox, Grid
+  getSurfaceGrid, getRadiusDict, VolumeSurface, computeBoundingBox, makeGrid
 ]})
 
 export default EDTSurface

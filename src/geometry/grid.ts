@@ -5,21 +5,17 @@ import { NumberArray, TypedArray } from "../types";
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-interface Grid {
+export interface iGrid {
   data: TypedArray
   index: (x: number, y: number, z: number) => number
   set: (x: number, y: number, z: number, ...arg: number[]) => void
   toArray: (x: number, y: number, z: number, array?: NumberArray, offset?: number) => void
   fromArray: (x: number, y: number, z: number, array: NumberArray, offset?: number) => void
-  copy: (grid: Grid) => void
-  clone: () => void
-}
-export interface GridConstructor {
- (this: Grid, length: number, width: number, height: number, DataCtor: any, elemSize: number): void
- new (length: number, width: number, height: number, DataCtor: any, elemSize: number): Grid
+  copy: (grid: iGrid) => void
+  // clone: () => iGrid
 }
 
-const Grid = (function Grid (this: Grid, length: number, width: number, height: number, DataCtor: any, elemSize: number) {
+function makeGrid (length: number, width: number, height: number, DataCtor: any, elemSize: number) : iGrid {
   DataCtor = DataCtor || Int32Array
   elemSize = elemSize || 1
 
@@ -29,11 +25,7 @@ const Grid = (function Grid (this: Grid, length: number, width: number, height: 
     return ((((x * width) + y) * height) + z) * elemSize
   }
 
-  this.data = data
-
-  this.index = index
-
-  this.set = function (x: number, y: number, z: number, ...args: number[]) {
+  function set (x: number, y: number, z: number, ...args: number[]) {
     const i = index(x, y, z)
 
     for (let j = 0; j < elemSize; ++j) {
@@ -41,7 +33,7 @@ const Grid = (function Grid (this: Grid, length: number, width: number, height: 
     }
   }
 
-  this.toArray = function (x: number, y, z: number, array: NumberArray = [], offset: number = 0) {
+  function toArray (x: number, y: number, z: number, array: NumberArray = [], offset: number = 0) {
     const i = index(x, y, z)
 
     for (let j = 0; j < elemSize; ++j) {
@@ -49,7 +41,7 @@ const Grid = (function Grid (this: Grid, length: number, width: number, height: 
     }
   }
 
-  this.fromArray = function (x: number, y: number, z: number, array: NumberArray, offset: number = 0) {
+  function fromArray(x: number, y: number, z: number, array: NumberArray, offset: number = 0) {
     const i = index(x, y, z)
 
     for (let j = 0; j < elemSize; ++j) {
@@ -57,15 +49,16 @@ const Grid = (function Grid (this: Grid, length: number, width: number, height: 
     }
   }
 
-  this.copy = function (grid: Grid) {
-    this.data.set(grid.data)
+  function copy(grid: iGrid) {
+    data.set(grid.data)
   }
 
-  this.clone = function () {
-    return new (Grid as GridConstructor)(
-      length, width, height, DataCtor, elemSize
-    ).copy(this)
-  }
-}) as GridConstructor
+  // function clone() {
+  //   return makeGrid(
+  //     length, width, height, DataCtor, elemSize
+  //   ).copy(this)
+  // }
+  return { data, index, set, toArray, fromArray, copy }
+}
 
-export default Grid
+export { makeGrid }
