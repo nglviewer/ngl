@@ -223,6 +223,7 @@ export default class Viewer {
   boundingBox = new Box3()
   private boundingBoxSize = new Vector3()
   private boundingBoxLength = 0
+  private expandBoundingBoxByFactor = 1 // 2 = double size, 3 = triple size, etc.
 
   private info = {
     memory: {
@@ -710,6 +711,12 @@ export default class Viewer {
       this.backgroundGroup.traverse(updateNode)
     }
 
+    // expand bbox: factor of 2 means double size, which means add half of size on both sides
+    // factor of 3 means triple size, so add 1x size on both sides, and so on
+    let bbsize = boundingBox.max.sub(boundingBox.min)
+    let add_amount = (this.expandBoundingBoxByFactor - 1) / 2
+    bbsize.multiplyScalar(add_amount)
+    boundingBox.expandByVector(bbsize)
     boundingBox.getSize(this.boundingBoxSize)
     this.boundingBoxLength = this.boundingBoxSize.length()
   }
@@ -873,6 +880,11 @@ export default class Viewer {
     this.holdTarget.setSize(dprWidth, dprHeight)
 
     this.requestRender()
+  }
+
+  setExpandBoundingBoxByFactor(factor: number) {
+    this.expandBoundingBoxByFactor = factor
+    this._updateBoundingBox()
   }
 
   handleResize () {

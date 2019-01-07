@@ -102,6 +102,8 @@ declare global {
  * @property {Color} ambientColor - ambient light color
  * @property {Float} ambientIntensity - ambient light intensity
  * @property {Integer} hoverTimeout - timeout for hovering
+ * @property {Float} expandBoundingBoxFactor - expand bounding box on all dimensions by this factor
+ *                               2 means double bbox, 3 means triple, etc.
  */
 
 export interface StageSignals {
@@ -138,6 +140,7 @@ export const StageDefaultParameters = {
   ambientIntensity: 0.2,
   hoverTimeout: 0,
   tooltip: true,
+  expandBoundingBoxFactor: 1,
   mousePreset: 'default' as MouseControlPreset
 }
 export type StageParameters = typeof StageDefaultParameters
@@ -263,6 +266,7 @@ class Stage {
     viewer.setSampling(tp.sampleLevel)
     viewer.setBackground(tp.backgroundColor)
     viewer.setLight(tp.lightColor, tp.lightIntensity, tp.ambientColor, tp.ambientIntensity)
+    viewer.setExpandBoundingBoxByFactor(tp.expandBoundingBoxFactor)
 
     this.signals.parametersChanged.dispatch(this.getParameters())
 
