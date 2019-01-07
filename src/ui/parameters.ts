@@ -57,6 +57,5 @@ export const UIStageParameters: { [k in keyof StageParameters]: ParamType } = {
   ambientIntensity: NumberParam(2, 10, 0),
   hoverTimeout: IntegerParam(10000, -1),
   tooltip: BooleanParam(),
-  expandBoundingBoxFactor: NumberParam(1, 1, 100),
   mousePreset: SelectParam(...Object.keys(MouseActionPresets))
 }
