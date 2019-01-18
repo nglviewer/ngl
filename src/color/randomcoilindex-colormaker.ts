@@ -22,7 +22,7 @@ class RandomcoilindexColormaker extends Colormaker {
       this.parameters.scale = 'RdYlBu'
     }
 
-    this.rciScale = this.getScale({ domain: [ 1, 0 ] })
+    this.rciScale = this.getScale({ domain: [ 0.6, 0 ] })
 
     const val = params.structure.validation
     if (val) this.rciDict = val.rciDict
