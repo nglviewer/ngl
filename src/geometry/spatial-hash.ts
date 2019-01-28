@@ -6,7 +6,12 @@
 
 import { Box3 } from 'three'
 
-export type Positions = { x: ArrayLike<number>, y: ArrayLike<number>, z: ArrayLike<number> }
+export type Positions = {
+  x: ArrayLike<number>,
+  y: ArrayLike<number>,
+  z: ArrayLike<number>,
+  count?:number
+}
 
 function createBoundingBox(positions: Positions) {
     const { x, y, z } = positions
@@ -56,7 +61,7 @@ export default class SpatialHash {
     this.boundZ = ((bb.max.z - this.minZ) >> this.exp) + 1
 
     const n = this.boundX * this.boundY * this.boundZ
-    const an = positions.x.length
+    const an = (positions.count !== undefined) ? positions.count : positions.x.length
 
     const xArray = positions.x
     const yArray = positions.y
