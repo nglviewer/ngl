@@ -40,8 +40,16 @@ import { testTextureSupport } from './gl-utils'
 
 import Buffer from '../buffer/buffer'
 
-const pixelBufferFloat = new Float32Array(4)
-const pixelBufferUint = new Uint8Array(4)
+const pixelBufferFloat = new Float32Array(4 * 25)
+const pixelBufferUint = new Uint8Array(4 * 25)
+
+// When picking, we read a 25 pixel (5x5) array (readRenderTargetPixels)
+// We read the pixels in the order below to find what was picked.
+// This starts at the center and tries successively further points.
+// (Many points will be at equal distance to the center, their order
+// is arbitrary).
+const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,24,20]
+
 
 const tmpMatrix = new Matrix4()
 
@@ -931,33 +939,42 @@ export default class Viewer {
     x *= window.devicePixelRatio
     y *= window.devicePixelRatio
 
-    let pid, instance, picker
+    x = Math.max(x - 2, 0)
+    y = Math.max(y - 2, 0)
+
+    let pid = 0, instance, picker
     const pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint
 
     this.render(true)
     this.renderer.readRenderTargetPixels(
-      this.pickingTarget, x, y, 1, 1, pixelBuffer
+      this.pickingTarget, x, y, 5, 5, pixelBuffer
     )
 
-    if (SupportsReadPixelsFloat) {
-      pid =
-        ((Math.round(pixelBuffer[0] * 255) << 16) & 0xFF0000) |
-        ((Math.round(pixelBuffer[1] * 255) << 8) & 0x00FF00) |
-        ((Math.round(pixelBuffer[2] * 255)) & 0x0000FF)
-    } else {
-      pid =
-        (pixelBuffer[0] << 16) |
-        (pixelBuffer[1] << 8) |
-        (pixelBuffer[2])
-    }
+    for (let i = 0; i < pixelOrder.length; i++) {
 
-    const oid = Math.round(pixelBuffer[ 3 ])
-    const object = this.pickingGroup.getObjectById(oid)
-    if (object) {
-      instance = object.userData.instance
-      picker = object.userData.buffer.picking
-    }
+      const offset = pixelOrder[i] * 4
 
+      const oid = Math.round(pixelBuffer[ offset + 3 ])
+      const object = this.pickingGroup.getObjectById(oid)
+      if (object) {
+        instance = object.userData.instance
+        picker = object.userData.buffer.picking
+      } else {
+        continue
+      }
+
+      if (SupportsReadPixelsFloat) {
+        pid =
+          ((Math.round(pixelBuffer[offset] * 255) << 16) & 0xFF0000) |
+          ((Math.round(pixelBuffer[offset + 1] * 255) << 8) & 0x00FF00) |
+          ((Math.round(pixelBuffer[offset + 2] * 255)) & 0x0000FF)
+      } else {
+        pid =
+          (pixelBuffer[offset] << 16) |
+          (pixelBuffer[offset + 1] << 8) |
+          (pixelBuffer[offset + 2])
+      }
+    }
     // if( Debug ){
     //   const rgba = Array.apply( [], pixelBuffer );
     //   Log.log( pixelBuffer );

@@ -397,12 +397,9 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
       normalCache = new Float32Array(n * 3)
     }
 
-    var vIndexLength = contour ? n * 3 : n
+    var vIndexLength = n * 3
 
     if (!vertexIndex || vertexIndex.length !== vIndexLength) {
-      // In contour mode we want all drawn edges parallel to one axis,
-      // so interpolation must be calculated in each dimension (rather
-      // than re-using a single interpolated vertex)
       vertexIndex = new Int32Array(vIndexLength)
     }
 
@@ -453,7 +450,7 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
   }
 
   function VIntX (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
-    var _q = contour ? 3 * q : q
+    var _q = 3 * q
 
     if (vertexIndex[ _q ] < 0) {
       var mu = (isolevel - valp1) / (valp2 - valp1)
@@ -485,7 +482,7 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
   }
 
   function VIntY (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
-    var _q = contour ? 3 * q + 1 : q
+    var _q = 3 * q + 1
 
     if (vertexIndex[ _q ] < 0) {
       var mu = (isolevel - valp1) / (valp2 - valp1)
@@ -518,7 +515,7 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
   }
 
   function VIntZ (q: number, offset: number, x: number, y: number, z: number, valp1: number, valp2: number) {
-    var _q = contour ? 3 * q + 2 : q
+    var _q = 3 * q + 2
 
     if (vertexIndex[ _q ] < 0) {
       var mu = (isolevel - valp1) / (valp2 - valp1)
@@ -812,15 +809,10 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
         for (y = yBeg2; y < yEnd2; ++y) {
           yOffset = zOffset + yd * y
           for (x = xBeg2; x < xEnd2; ++x) {
-            if (contour) {
-              q = 3 * (yOffset + x)
-              vertexIndex[ q ] = -1
-              vertexIndex[ q + 1 ] = -1
-              vertexIndex[ q + 2 ] = -1
-            } else {
-              q = (yOffset + x)
-              vertexIndex[ q ] = -1
-            }
+            q = 3 * (yOffset + x)
+            vertexIndex[ q ] = -1
+            vertexIndex[ q + 1 ] = -1
+            vertexIndex[ q + 2 ] = -1
           }
         }
       }
@@ -836,15 +828,10 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
       for (z = zBeg2; z < zEnd2; ++z) {
         for (y = yBeg2; y < yEnd2; ++y) {
           for (x = xBeg2; x < xEnd2; ++x) {
-            if (contour) {
-              q3 = index(x, y, z) * 3
-              vertexIndex[ q3 ] = -1
-              vertexIndex[ q3 + 1 ] = -1
-              vertexIndex[ q3 + 2 ] = -1
-            } else {
-              q = index(x, y, z)
-              vertexIndex[ q ] = -1
-            }
+            q3 = index(x, y, z) * 3
+            vertexIndex[ q3 ] = -1
+            vertexIndex[ q3 + 1 ] = -1
+            vertexIndex[ q3 + 2 ] = -1
           }
         }
       }

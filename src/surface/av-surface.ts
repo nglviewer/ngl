@@ -13,6 +13,7 @@ import {
 import { defaults } from '../utils'
 import { NumberArray } from '../types.js';
 
+
 /**
  * Modifed from SpatialHash
  *
@@ -35,11 +36,9 @@ export interface iAVHash {
   neighbourListLength: number
   withinRadii: (x: number, y: number, z: number, rExtra: number, out: Int32Array) => void
 }
-export interface AVHashConstructor {
-  (this: iAVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): void
-  new (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): iAVHash
-}
-const AVHash = (function AVHash (this: iAVHash, atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number) {
+
+
+function makeAVHash (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): iAVHash {
   var nAtoms = atomsX.length
 
   var minX = min[ 0 ]
@@ -106,7 +105,7 @@ const AVHash = (function AVHash (this: iAVHash, atomsX: Float32Array, atomsY: Fl
   }
 
   // Maximum number of neighbours we could ever produce (27 adjacent cells of equal population)
-  this.neighbourListLength = (27 * maxCellLength) + 1
+  const neighbourListLength = (27 * maxCellLength) + 1
 
   /**
    * Populate the supplied out array with atom indices that are within rAtom + rExtra
@@ -121,7 +120,7 @@ const AVHash = (function AVHash (this: iAVHash, atomsX: Float32Array, atomsY: Fl
    * @param  {Float32Array} out - pre-allocated output array
    * @return {undefined}
    */
-  this.withinRadii = function (x: number, y: number, z: number, rExtra: number, out: Int32Array) {
+  const withinRadii = function (x: number, y: number, z: number, rExtra: number, out: Int32Array) {
     var outIdx = 0
 
     var nearI = hashFunc(x, minX)
@@ -165,8 +164,11 @@ const AVHash = (function AVHash (this: iAVHash, atomsX: Float32Array, atomsY: Fl
     // Add terminator
     out[ outIdx ] = -1
   }
-}) as AVHashConstructor
-
+  return {
+    neighbourListLength: neighbourListLength,
+    withinRadii: withinRadii
+  }
+}
 
 interface AVSurface {
   getSurface: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean, smooth: number, contour: boolean) => any
@@ -302,7 +304,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
   }
 
   function initializeHash () {
-    hash = new AVHash(x, y, z, r, min, max, 2.01 * maxRadius)
+    hash = makeAVHash(x, y, z, r, min, max, 2.01 * maxRadius)
     neighbours = new Int32Array(hash.neighbourListLength)
   }
 
@@ -612,8 +614,8 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
 Object.assign(AVSurface, {__deps: [
   getSurfaceGrid, VolumeSurface, uniformArray, computeBoundingBox,
   v3multiplyScalar, v3cross, v3normalize,
-  AVHash,
+  makeAVHash,
   defaults
 ]})
 
-export { AVSurface, AVHash }
+export { AVSurface, makeAVHash }

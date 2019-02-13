@@ -106,6 +106,7 @@ class UnitcellRepresentation extends StructureRepresentation {
 
   updateData (what: AtomDataFields, data: StructureRepresentationData) {
     const structure = data.sview!.getStructure()
+    if (!structure.unitcell) return
     const unitcellData = this.getUnitcellData(structure)
     const sphereData: Partial<SphereBufferData> = {}
     const cylinderData: Partial<CylinderBufferData> = {}

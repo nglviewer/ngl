@@ -280,7 +280,7 @@ class PdbParser extends StructureParser {
             inscode = ''
             resname = ls![ 3 ]
             altloc = ''
-            occupancy = 0.0
+            occupancy = 1.0
           } else {
             serial = parseInt(line.substr(6, 5), serialRadix)
             if (hex && serial === 99999) {
@@ -629,6 +629,11 @@ class PdbParser extends StructureParser {
       _parseChunkOfLines(0, lines.length, lines)
     })
 
+
+    // finalize ensures resname will be defined for all rp.resname
+    // (required in entity handling below)
+    sb.finalize()
+
     //
 
     const en = entityDataList.length
@@ -688,7 +693,6 @@ class PdbParser extends StructureParser {
       assignSecondaryStructure(s, secStruct)
     }
 
-    sb.finalize()
     s.finalizeAtoms()
     if (!isLegacy) calculateChainnames(s)
     calculateBonds(s)

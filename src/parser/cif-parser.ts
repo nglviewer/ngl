@@ -179,7 +179,7 @@ function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureB
     alpha: parseFloat(cif.cell_angle_alpha),
     beta: parseFloat(cif.cell_angle_beta),
     gamma: parseFloat(cif.cell_angle_gamma),
-    spacegroup: trimQuotes(cif.symmetry_space_group_name_H)
+    spacegroup: trimQuotes(cif['symmetry_space_group_name_H-M'])
   })
 
   const v = new Vector3()

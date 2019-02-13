@@ -48,17 +48,17 @@ export function circularMean (array: NumberArray, max: number, stride = 1, offse
   return mean
 }
 
-export function calculateCenterArray (array1: NumberArray, array2: NumberArray, center?: NumberArray, offset = 0) {
+export function calculateCenterArray <T extends NumberArray = Float32Array>(array1: NumberArray, array2: NumberArray, center?: T, offset = 0): T {
   const n = array1.length
-  center = center || new Float32Array(n)
+  const c = center || new Float32Array(n)
 
   for (let i = 0; i < n; i += 3) {
-    center[ offset + i + 0 ] = (array1[ i + 0 ] + array2[ i + 0 ]) / 2.0
-    center[ offset + i + 1 ] = (array1[ i + 1 ] + array2[ i + 1 ]) / 2.0
-    center[ offset + i + 2 ] = (array1[ i + 2 ] + array2[ i + 2 ]) / 2.0
+    c[ offset + i + 0 ] = (array1[ i + 0 ] + array2[ i + 0 ]) / 2.0
+    c[ offset + i + 1 ] = (array1[ i + 1 ] + array2[ i + 1 ]) / 2.0
+    c[ offset + i + 2 ] = (array1[ i + 2 ] + array2[ i + 2 ]) / 2.0
   }
 
-  return center
+  return c as T
 }
 
 export function calculateDirectionArray (array1: NumberArray, array2: NumberArray) {
@@ -74,14 +74,14 @@ export function calculateDirectionArray (array1: NumberArray, array2: NumberArra
   return direction
 }
 
-export function uniformArray (n: number, a: number, optionalTarget?: NumberArray) {
+export function uniformArray <T extends NumberArray = Float32Array>(n: number, a: number, optionalTarget?: T): T {
   const array = optionalTarget || new Float32Array(n)
 
   for (let i = 0; i < n; ++i) {
     array[ i ] = a
   }
 
-  return array
+  return array as T
 }
 
 export function uniformArray3 (n: number, a: number, b: number, c: number, optionalTarget?: NumberArray) {

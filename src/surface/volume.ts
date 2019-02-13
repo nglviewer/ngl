@@ -67,9 +67,7 @@ WorkerRegistry.add('surf', function func (e: any, callback: (data: any, transfer
   const p = e.data.params
   if (a) {
     /* global self */
-    Object.assign(self, {
-      volsurf: new (VolumeSurface as any)(a[0], a[1], a[2], a[3], a[4]) as VolumeSurface
-    })
+    (self as any).volsurf = new (VolumeSurface as any)(a[0], a[1], a[2], a[3], a[4]) as VolumeSurface
   }
   if (p) {
     const sd = ((self as any).volsurf as VolumeSurface).getSurface(
