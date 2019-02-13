@@ -6,7 +6,7 @@
   "module": "dist/ngl.esm.js",
   "scripts": {
     "lint": "npm run lint-src && npm run lint-test && npm run lint-script",
-    "lint-src": "standard \"src/**/*.js\" --fix",
+    "lint-src": "standard \"src/**/*.js\"",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
     "ts": "tsc && cpx \"src/**/*.{vert,frag,glsl}\" build/js/src/ && cpx \"lib/*.js\" build/js/lib/ && cpx \"package.json\" build/js/ && cpx \"src/polyfills.js\" build/js/src/",

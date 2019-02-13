@@ -17,6 +17,7 @@ class PickingControls {
   constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
   }
+  
   /**
    * get picking data
    * @param {Number} x - canvas x coordinate
@@ -27,8 +28,8 @@ class PickingControls {
     const pickingData = this.viewer.pick(x, y)
 
     if (pickingData.picker &&
-      pickingData.picker.type !== 'ignore' &&
-      pickingData.pid !== undefined
+        pickingData.picker.type !== 'ignore' &&
+        pickingData.pid !== undefined
     ) {
       const pickerArray = pickingData.picker.array
       if (pickerArray && pickingData.pid >= pickerArray.length) {
