@@ -5,7 +5,7 @@
   "main": "dist/ngl.js",
   "module": "dist/ngl.esm.js",
   "scripts": {
-    "lint": "npm run-script lint-src && npm run-script lint-test && npm run-script lint-script",
+    "lint": "npm run lint-src && npm run lint-test && npm run lint-script",
     "lint-src": "standard \"src/**/*.js\" --fix",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
@@ -97,7 +97,5 @@
     "typescript": "^3.0.1",
     "uglify-js": "^3.4.6"
   },
-  "dependencies": {
-    "npm": "^6.3.0"
-  }
+  "dependencies": {}
 }
