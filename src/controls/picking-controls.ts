@@ -17,7 +17,7 @@ class PickingControls {
   constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
   }
-  
+
   /**
    * get picking data
    * @param {Number} x - canvas x coordinate
