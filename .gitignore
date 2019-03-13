@@ -1,4 +1,4 @@
-
+.gitignore
 *.sublime-workspace
 
 build/
@@ -7,3 +7,4 @@ node_modules/
 npm-debug.log
 
 *.offsets
+package-lock.json

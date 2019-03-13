@@ -94,7 +94,7 @@ class RemoteTrajectory extends Trajectory {
     request.addEventListener('load', () => {
       this._setFrameCount(parseInt(request.response))
     }, false)
-    request.send(null)
+    request.send()
   }
 }
 

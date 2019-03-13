@@ -7,10 +7,14 @@
         "sourceMap": false,
         "noUnusedLocals": true,
         "strictNullChecks": true,
-        "lib": [ "es6", "DOM", "es2016" ],
-        "outDir": "build/js",
-        "allowJs": true,
-        "moduleResolution": "node"
+        "lib": [ "es6", "dom", "es2016" ],
+        "outDir": "build/js/src",
+        "allowJs": false,
+        "moduleResolution": "node",
+        "typeRoots": [
+            "./types/",
+            "./node_modules/@types",
+        ]
     },
     "include": [ "src/**/*", "lib/**/*" ]
 }

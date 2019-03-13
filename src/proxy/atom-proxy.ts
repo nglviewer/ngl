@@ -24,6 +24,11 @@ import AtomMap from '../store/atom-map'
 import ResidueMap from '../store/residue-map'
 
 import BondProxy from '../proxy/bond-proxy'
+import AtomType from '../store/atom-type';
+import ResidueType from '../store/residue-type';
+import ResidueProxy from './residue-proxy';
+import Entity from '../structure/entity';
+import BondHash from '../store/bond-hash';
 
 /**
  * Atom proxy
@@ -54,13 +59,13 @@ class AtomProxy {
   /**
    * @type {BondHash}
    */
-  get bondHash () { return this.structure.bondHash }
+  get bondHash (): BondHash|undefined { return this.structure.bondHash }
 
   /**
    * Molecular enity
    * @type {Entity}
    */
-  get entity () {
+  get entity (): Entity {
     return this.structure.entityList[ this.entityIndex ]
   }
   get entityIndex () {
@@ -75,7 +80,7 @@ class AtomProxy {
   /**
    * @type {ResidueProxy}
    */
-  get residue () {
+  get residue (): ResidueProxy {
     console.warn('residue - might be expensive')
     return this.structure.getResidueProxy(this.residueIndex)
   }
@@ -130,13 +135,13 @@ class AtomProxy {
   /**
    * @type {ResidueType}
    */
-  get residueType () {
+  get residueType (): ResidueType {
     return this.residueMap.get(this.residueStore.residueTypeId[ this.residueIndex ])
   }
   /**
    * @type {AtomType}
    */
-  get atomType () {
+  get atomType (): AtomType {
     return this.atomMap.get(this.atomStore.atomTypeId[ this.index ])
   }
   get residueAtomOffset () {
@@ -272,6 +277,18 @@ class AtomProxy {
   set partialCharge (value) {
     if (this.atomStore.partialCharge) {
       this.atomStore.partialCharge[ this.index ] = value as number
+    }
+  }
+
+  /**
+   * Explicit radius
+   */
+  get radius () {
+    return this.atomStore.radius ? this.atomStore.radius[ this.index ] : null
+  }
+  set radius (value) {
+    if (this.atomStore.radius) {
+      this.atomStore.radius[ this.index ] = value as number
     }
   }
 
@@ -531,8 +548,8 @@ class AtomProxy {
    * @return {Boolean} flag
    */
   isRing () {
-    const ringFlags = this.residueType.getRings()!.flags  // TODO
-    return ringFlags[ this.index - this.residueAtomOffset ] === 1
+    const atomRings = this.residueType.getRings()!.atomRings  // TODO
+    return atomRings[ this.index - this.residueAtomOffset ] !== undefined
   }
 
   isAromatic () {

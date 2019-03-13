@@ -5,6 +5,8 @@
 [![Build Status](https://travis-ci.org/arose/ngl.svg?branch=master)](https://travis-ci.org/arose/ngl)
 [![Standard](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat)](https://standardjs.com)
 [![Gitter](https://badges.gitter.im/nglviewer/Lobby.svg)](https://gitter.im/nglviewer/Lobby)
+[![Code Quality: Javascript](https://img.shields.io/lgtm/grade/javascript/g/arose/ngl.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/arose/ngl/context:javascript)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/arose/ngl.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/arose/ngl/alerts)
 
 
 NGL Viewer is a web application for molecular visualization. [WebGL](https://get.webgl.org/) is employed to display molecules like proteins and DNA/RNA with a variety of representations.
@@ -78,5 +80,5 @@ Cite
 
 When using NGL please cite:
 
-* AS Rose, AR Bradley, Y Valasatava, JM Duarte, A Prlić and PW Rose. _Web-based molecular graphics for large complexes._ ACM Proceedings of the 21st International Conference on Web3D Technology (Web3D '16): 185-186, 2016. [doi:10.1145/2945292.2945324](http://dx.doi.org/10.1145/2945292.2945324)
+* AS Rose, AR Bradley, Y Valasatava, JM Duarte, A Prlić and PW Rose. _NGL viewer: web-based molecular graphics for large complexes._ Bioinformatics: bty419, 2018. [doi:10.1093/bioinformatics/bty419](http://dx.doi.org/10.1093/bioinformatics/bty419)
 * AS Rose and PW Hildebrand. _NGL Viewer: a web application for molecular visualization._ Nucl Acids Res (1 July 2015) 43 (W1): W576-W579 first published online April 29, 2015. [doi:10.1093/nar/gkv402](https://doi.org/10.1093/nar/gkv402)

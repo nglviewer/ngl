@@ -11,7 +11,7 @@ import { Log } from '../globals'
 import Buffer, { BufferParameters, BufferData } from './buffer'
 
 function getSize(data: BufferData){
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   const n1 = n - 1
   return n1 * 3 * 2
 }

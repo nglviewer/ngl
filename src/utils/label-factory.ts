@@ -8,7 +8,7 @@ import { AA1 } from '../structure/structure-constants'
 import AtomProxy from '../proxy/atom-proxy'
 import { sprintf } from 'sprintf-js'
 
-const LabelFactoryTypes = {
+export const LabelFactoryTypes = {
   '': '',
   'atomname': 'atom name',
   'atomindex': 'atom index',
@@ -25,7 +25,7 @@ const LabelFactoryTypes = {
   'format': 'format',
   'qualified': 'qualified name'
 }
-type LabelType = keyof typeof LabelFactoryTypes
+export type LabelType = keyof typeof LabelFactoryTypes
 
 class LabelFactory {
 

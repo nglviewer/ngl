@@ -195,7 +195,7 @@ export function download (data: Blob|string, downloadName = 'download') {
       // no downloading of blob urls in Safari
       var reader = new FileReader()
       reader.onloadend = function () {
-        open(reader.result)
+        open(reader.result as string)
       }
       reader.readAsDataURL(data)
     } else {

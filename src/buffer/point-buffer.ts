@@ -60,7 +60,7 @@ function makePointTexture (params: PointTextureParams) {
   return tex
 }
 
-const PointBufferDefaultParameters = Object.assign({
+export const PointBufferDefaultParameters = Object.assign({
   pointSize: 1,
   sizeAttenuation: true,
   sortParticles: false,
@@ -69,7 +69,7 @@ const PointBufferDefaultParameters = Object.assign({
   forceTransparent: false,
   edgeBleach: 0.0
 }, BufferDefaultParameters)
-type PointBufferParameters = typeof PointBufferDefaultParameters
+export type PointBufferParameters = typeof PointBufferDefaultParameters
 
 const PointBufferParameterTypes = Object.assign({
   pointSize: { uniform: 'size' },

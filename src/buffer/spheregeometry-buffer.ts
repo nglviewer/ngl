@@ -21,7 +21,7 @@ const scale = new Vector3()
 export const SphereGeometryBufferDefaultParameters = Object.assign({
   sphereDetail: 1
 }, BufferDefaultParameters)
-type SphereGeometryBufferParameters = typeof SphereGeometryBufferDefaultParameters
+export type SphereGeometryBufferParameters = typeof SphereGeometryBufferDefaultParameters
 
 /**
  * Sphere geometry buffer.

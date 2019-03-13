@@ -104,7 +104,7 @@ declare global {
  * @property {Integer} hoverTimeout - timeout for hovering
  */
 
-interface StageSignals {
+export interface StageSignals {
   parametersChanged: Signal
   fullscreenChanged: Signal
   componentAdded: Signal
@@ -113,9 +113,9 @@ interface StageSignals {
   hovered: Signal
 }
 
-type RenderQualityType = 'auto'|'low'|'medium'|'high'
+export type RenderQualityType = 'auto'|'low'|'medium'|'high'
 
-const StageDefaultParameters = {
+export const StageDefaultParameters = {
   impostor: true,
   quality: 'medium' as RenderQualityType,
   workerDefault: true,
@@ -142,7 +142,7 @@ const StageDefaultParameters = {
 }
 export type StageParameters = typeof StageDefaultParameters
 
-interface StageLoadFileParams extends LoaderParameters {
+export interface StageLoadFileParams extends LoaderParameters {
   defaultRepresentation: boolean
 }
 

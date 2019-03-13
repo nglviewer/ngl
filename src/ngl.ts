@@ -2,8 +2,6 @@
  * @file ngl
  * @private
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
- *
- * [[include:coloring.md]]
  */
 
 import './polyfills'
@@ -41,6 +39,7 @@ export { guessElement, concatStructures } from './structure/structure-utils'
 export { flatten, throttle, download, getQuery, uniqueArray } from './utils'
 import Queue from './utils/queue'
 import Counter from './utils/counter'
+import Frames from './trajectory/frames'
 
 //
 
@@ -63,6 +62,7 @@ import './color/moleculetype-colormaker'
 import './color/occupancy-colormaker'
 import './color/partialcharge-colormaker'
 import './color/random-colormaker'
+import './color/randomcoilindex-colormaker'
 import './color/residueindex-colormaker'
 import './color/resname-colormaker'
 import './color/sstruc-colormaker'
@@ -224,6 +224,7 @@ export {
   Assembly,
   TrajectoryPlayer,
   Superposition,
+  Frames,
 
   Queue,
   Counter,

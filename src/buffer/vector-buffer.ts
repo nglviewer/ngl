@@ -13,19 +13,19 @@ import { uniformArray3 } from '../math/array-utils'
 import Buffer, { BufferDefaultParameters, BufferData } from './buffer'
 
 function getSize(data: BufferData){
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   return n * 2 * 3
 }
 
-interface VectorBufferData extends BufferData {
+export interface VectorBufferData extends BufferData {
   vector: Float32Array
 }
 
-const VectorBufferDefaultParameters = Object.assign({
+export const VectorBufferDefaultParameters = Object.assign({
   scale: 1,
   color: 'grey'
 }, BufferDefaultParameters)
-type VectorBufferParameters = typeof VectorBufferDefaultParameters
+export type VectorBufferParameters = typeof VectorBufferDefaultParameters
 
 /**
  * Vector buffer. Draws vectors as lines.

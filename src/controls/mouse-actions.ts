@@ -10,9 +10,9 @@ import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
-type ScrollCallback = (stage: Stage, delta: number) => void
-type DragCallback = (stage: Stage, dx: number, dy: number) => void
-type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
+export type ScrollCallback = (stage: Stage, delta: number) => void
+export type DragCallback = (stage: Stage, dx: number, dy: number) => void
+export type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
 export type MouseActionCallback = ScrollCallback | DragCallback | PickCallback
 
 /**

@@ -29,22 +29,22 @@ const quadUvs = new Float32Array([
 
 type ImageFilterTypes = 'nearest'|'linear'|'cubic-bspline'|'cubic-catmulrom'|'cubic-mitchell'
 
-interface ImageBufferData {
+export interface ImageBufferData {
   position: Float32Array
-  imageData: Float32Array
+  imageData: Uint8Array
   width: number
   height: number
 
   picking?: Picker
 }
 
-const ImageBufferDefaultParameters = Object.assign({
+export const ImageBufferDefaultParameters = Object.assign({
   filter: 'nearest' as ImageFilterTypes,
   forceTransparent: true
 }, BufferDefaultParameters)
-type ImageBufferParameters = typeof ImageBufferDefaultParameters
+export type ImageBufferParameters = typeof ImageBufferDefaultParameters
 
-const ImageBufferParameterTypes = Object.assign({
+export const ImageBufferParameterTypes = Object.assign({
   filter: { updateShader: true, uniform: true }
 }, BufferParameterTypes)
 
