@@ -128,8 +128,9 @@ function superpose (s1: Structure, s2: Structure, align = false, sele1 = '', sel
   }
 
   const superpose = new Superposition(atoms1, atoms2)
-  superpose.transform(s1)
+  const result = superpose.transform(s1)
   s1.refreshPosition()
+  return result
 }
 
 export {
