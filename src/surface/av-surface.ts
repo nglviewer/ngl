@@ -275,7 +275,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
     dim = surfGrid.dim
     matrix = surfGrid.matrix
 
-    ngTorus = Math.min(5, 2 + Math.floor(probeRadius * scaleFactor))
+    ngTorus = Math.max(5, 2 + Math.floor(probeRadius * scaleFactor))
 
     grid = uniformArray(dim[0] * dim[1] * dim[2], -1001.0)
 
