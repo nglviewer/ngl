@@ -131,17 +131,17 @@ function makeAVHash (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32
     var loJ = Math.max(0, nearJ - 1)
     var loK = Math.max(0, nearK - 1)
 
-    var hiI = Math.min(iDim, nearI + 1)
-    var hiJ = Math.min(jDim, nearJ + 1)
-    var hiK = Math.min(kDim, nearK + 1)
+    var hiI = Math.min(iDim, nearI + 2)
+    var hiJ = Math.min(jDim, nearJ + 2)
+    var hiK = Math.min(kDim, nearK + 2)
 
-    for (var i = loI; i <= hiI; ++i) {
+    for (var i = loI; i < hiI; ++i) {
       var iOffset = i * jkDim
 
-      for (var j = loJ; j <= hiJ; ++j) {
+      for (var j = loJ; j < hiJ; ++j) {
         var jOffset = j * kDim
 
-        for (var k = loK; k <= hiK; ++k) {
+        for (var k = loK; k < hiK; ++k) {
           var cid = iOffset + jOffset + k
 
           var cellStart = cellOffsets[ cid ]

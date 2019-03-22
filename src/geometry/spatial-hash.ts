@@ -127,13 +127,13 @@ export default class SpatialHash {
     const loY = Math.max(0, (y - r - this.minY) >> this.exp)
     const loZ = Math.max(0, (z - r - this.minZ) >> this.exp)
 
-    const hiX = Math.min(this.boundX, (x + r - this.minX) >> this.exp)
-    const hiY = Math.min(this.boundY, (y + r - this.minY) >> this.exp)
-    const hiZ = Math.min(this.boundZ, (z + r - this.minZ) >> this.exp)
+    const hiX = Math.min(this.boundX, ((x + r - this.minX) >> this.exp) + 1)
+    const hiY = Math.min(this.boundY, ((y + r - this.minY) >> this.exp) + 1)
+    const hiZ = Math.min(this.boundZ, ((z + r - this.minZ) >> this.exp) + 1)
 
-    for (let ix = loX; ix <= hiX; ++ix) {
-      for (let iy = loY; iy <= hiY; ++iy) {
-        for (let iz = loZ; iz <= hiZ; ++iz) {
+    for (let ix = loX; ix < hiX; ++ix) {
+      for (let iy = loY; iy < hiY; ++iy) {
+        for (let iz = loZ; iz < hiZ; ++iz) {
           const idx = (((ix * this.boundY) + iy) * this.boundZ) + iz
           const bucketIdx = this.grid[ idx ]
 
