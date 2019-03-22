@@ -227,6 +227,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
   let neighbours: Int32Array
 
   // Vectors for Torus Projection
+  const atob = new Float32Array([ 0.0, 0.0, 0.0 ])
   const mid = new Float32Array([ 0.0, 0.0, 0.0 ])
   const n1 = new Float32Array([ 0.0, 0.0, 0.0 ])
   const n2 = new Float32Array([ 0.0, 0.0, 0.0 ])
@@ -275,7 +276,7 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
     dim = surfGrid.dim
     matrix = surfGrid.matrix
 
-    ngTorus = Math.min(5, 2 + Math.floor(probeRadius * scaleFactor))
+    ngTorus = Math.max(5, 2 + Math.floor(probeRadius * scaleFactor))
 
     grid = uniformArray(dim[0] * dim[1] * dim[2], -1001.0)
 
@@ -458,9 +459,9 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
   function projectTorus (a: number, b: number) {
     var r1 = r[ a ]
     var r2 = r[ b ]
-    var dx = mid[0] = x[ b ] - x[ a ]
-    var dy = mid[1] = y[ b ] - y[ a ]
-    var dz = mid[2] = z[ b ] - z[ a ]
+    var dx = atob[ 0 ] = x[ b ] - x[ a ]
+    var dy = atob[ 1 ] = y[ b ] - y[ a ]
+    var dz = atob[ 2 ] = z[ b ] - z[ a ]
     var d2 = dx * dx + dy * dy + dz * dz
 
     // This check now redundant as already done in AVHash.withinRadii
@@ -475,14 +476,14 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
     // distance along a->b at intersection
     var dmp = r1 * cosA
 
-    v3normalize(mid, mid)
+    v3normalize(atob, atob)
 
     // Create normal to line
-    normalToLine(n1 as any, mid)
+    normalToLine(n1 as any, atob)
     v3normalize(n1, n1)
 
     // Cross together for second normal vector
-    v3cross(n2, mid, n1)
+    v3cross(n2, atob, n1)
     v3normalize(n2, n2)
 
     // r is radius of circle of intersection
@@ -490,11 +491,11 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
 
     v3multiplyScalar(n1, n1, rInt)
     v3multiplyScalar(n2, n2, rInt)
-    v3multiplyScalar(mid, mid, dmp)
+    v3multiplyScalar(atob, atob, dmp)
 
-    mid[ 0 ] += x[ a ]
-    mid[ 1 ] += y[ a ]
-    mid[ 2 ] += z[ a ]
+    mid[ 0 ] = atob[ 0 ] + x[ a ]
+    mid[ 1 ] = atob[ 1 ] + y[ a ]
+    mid[ 2 ] = atob[ 2 ] + z[ a ]
 
     lastClip = -1
 
@@ -540,7 +541,12 @@ function AVSurface (this: AVSurface, coordList: Float32Array, radiusList: Float3
 
               if (current > 0.0 && d2 < (current * current)) {
                 grid[ idx ] = Math.sqrt(d2)
-                if (setAtomID) atomIndex[ idx ] = a
+                if (setAtomID) {
+                  // Is this grid point closer to a or b?
+                  // Take dot product of atob and gridpoint->p (dx, dy, dz)
+                  const dp = dx * atob[ 0 ] + dy * atob [ 1 ] + dz * atob[ 2 ]
+                  atomIndex[ idx ] = dp < 0.0 ? b : a
+                }
               }
             }
           }
