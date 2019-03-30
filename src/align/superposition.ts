@@ -66,8 +66,8 @@ class Superposition {
 
     // prep coords
 
-    this.prepCoords(atoms1, coords1, n)
-    this.prepCoords(atoms2, coords2, n)
+    this.prepCoords(atoms1, coords1, n, false)
+    this.prepCoords(atoms2, coords2, n, false)
 
     // superpose
 
@@ -97,53 +97,75 @@ class Superposition {
       multiply3x3(this.tmp, this.c, this.VH)
       multiply3x3(this.R, this.U, this.tmp)
     }
+
+    //get the transformation matrix
+
+    const transformMat_ = new Matrix(4,4)
+    const tmp_1 = new Matrix(4,4)
+    const tmp_2 = new Matrix(4,4)
+
+    const sub = new Matrix(4,4)
+    const mult = new Matrix(4,4)
+    const add = new Matrix(4,4)
+
+    const R = this.R.data
+    const M1 = this.mean1
+    const M2 = this.mean2
+
+    sub.data.set([ 1, 0, 0, -M1[0],
+                   0, 1, 0, -M1[1],
+                   0, 0, 1, -M1[2],
+                   0, 0, 0, 1 ])
+
+    mult.data.set([ R[0], R[1], R[2], 0,
+                    R[3], R[4], R[5], 0,
+                    R[6], R[7], R[8], 0,
+                    0, 0, 0, 1 ])
+
+    add.data.set([ 1, 0, 0, M2[0],
+                   0, 1, 0, M2[1],
+                   0, 0, 1, M2[2],
+                   0, 0, 0, 1 ])
+
+    transpose(tmp_1,sub)
+    multiplyABt(transformMat_,mult,tmp_1)
+    transpose(tmp_2,transformMat_)
+    multiplyABt(tmp_1,add,tmp_2)
+
+    transpose(transformMat_,tmp_1)
+    this.transformationMatrix.elements = transformMat_.data
+
   }
 
-  prepCoords (atoms: Structure|Float32Array, coords: Matrix, n: number) {
+  prepCoords (atoms: Structure|Float32Array, coords: Matrix, n: number, is4X4: boolean) {
     let i = 0
-    const n3 = n * 3
     const cd = coords.data
 
+    let c = 3
+    let d = n * 3
+
+    if (is4X4) {
+      d = n * 4
+      c = 4
+    }
     if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {
-        if (i < n3) {
+        if (i < d) {
           cd[ i + 0 ] = a.x
           cd[ i + 1 ] = a.y
           cd[ i + 2 ] = a.z
+          if (is4X4) cd[ i + 3 ] = 1
 
-          i += 3
+          i += c
         }
       })
     } else if (atoms instanceof Float32Array) {
-      cd.set(atoms.subarray(0, n3))
-    } else {
-      Log.warn('prepCoords: input type unknown')
-    }
-  }
-
-  prepCoords_4X4 (atoms: Structure|Float32Array, coords: Matrix, n: number) {
-    let i = 0
-    const n4 = n * 4
-    const cd = coords.data
-
-    if (atoms instanceof Structure) {
-      atoms.eachAtom(function (a) {
-        if (i < n4) {
-          cd[ i ] = a.x
-          cd[ i + 1 ] = a.y
-          cd[ i + 2 ] = a.z
-          cd[ i + 3 ] = 1
-
-          i += 4
-        }
-      })
-    } else if (atoms instanceof Float32Array) {
-      for (; i < n4; i += 4){
-        if (i < n4) {
+      for (; i < d; i += c){
+        if (i < d) {
           cd[ i ] = atoms[ i ]
           cd[ i + 1 ] = atoms[ i + 1 ]
           cd[ i + 2 ] = atoms[ i + 2 ]
-          cd[ i + 3 ] = 1
+          if (is4X4) cd[ i + 3 ] = 1
         }
       }
     } else {
@@ -168,53 +190,21 @@ class Superposition {
 
     // prep coords
 
-    this.prepCoords_4X4(atoms, coords, n)
-
-    const transformMat_ = new Matrix(4,4)
-    const tmp_1 = new Matrix(4,4)
-    const tmp_2 = new Matrix(4,4)
-    const sub = new Matrix(4,4)
-    const mult = new Matrix(4,4)
-    const add = new Matrix(4,4)
-
-    const R = this.R.data
-    const M1 = this.mean1
-    const M2 = this.mean2
-
-    sub.data.set([ 1, 0, 0, -M1[0],
-                   0, 1, 0, -M1[1],
-                   0, 0, 1, -M1[2],
-                   0, 0, 0, 1 ])
-
-    mult.data.set([ R[0], R[1], R[2], 0,
-                    R[3], R[4], R[5], 0,
-                    R[6], R[7], R[8], 0,
-                    0, 0, 0, 1 ])
-
-    add.data.set([ 1, 0, 0, M2[0],
-                   0, 1, 0, M2[1],
-                   0, 0, 1, M2[2],
-                   0, 0, 0, 1 ])
-
-    //get the transformation matrix
-
-    transpose(tmp_1,sub)
-    multiplyABt(transformMat_,mult,tmp_1)
-    transpose(tmp_2,transformMat_)
-    multiplyABt(tmp_1,add,tmp_2)
-
-    transpose(transformMat_,tmp_1)
-    this.transformationMatrix.elements = transformMat_.data
+    this.prepCoords(atoms, coords, n, true)
 
     // check for transformation matrix correctness
-    const det = this.transformationMatrix.determinant()
+
+    const transform = this.transformationMatrix
+    const det = transform.determinant()
     if (!det){
       return det
     }
 
     // do transform
 
-    multiply(tCoords,coords,transformMat_)
+    const mult = new Matrix(4,4)
+    mult.data = transform.elements
+    multiply(tCoords,coords,mult)
 
     let i = 0
     const cd = tCoords.data
@@ -227,9 +217,6 @@ class Superposition {
         })
 
         //update transformation matrices for each assembly
-
-        const transform = this.transformationMatrix
-        //transform.elements = this.transformMat.data
 
         const invertTrasform = new Matrix4()
         invertTrasform.getInverse(transform)
