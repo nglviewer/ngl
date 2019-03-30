@@ -64174,6 +64174,35 @@ function transpose(At, A) {
             { atd[pAt] = ad[Ai + j]; }
     }
 }
+// C = A * B
+function multiply(C, A, B) {
+    var i = 0;
+    var j = 0;
+    var k = 0;
+    var Ap = 0;
+    var pA = 0;
+    var pB = 0;
+    var _pB = 0;
+    var Cp = 0;
+    var ncols = A.cols;
+    var nrows = A.rows;
+    var mcols = B.cols;
+    var ad = A.data;
+    var bd = B.data;
+    var cd = C.data;
+    var sum = 0.0;
+    for (; i < nrows; Ap += ncols, i++) {
+        for (_pB = 0, j = 0; j < mcols; Cp++, _pB++, j++) {
+            pB = _pB;
+            pA = Ap;
+            sum = 0.0;
+            for (k = 0; k < ncols; pA++, pB += mcols, k++) {
+                sum += ad[pA] * bd[pB];
+            }
+            cd[Cp] = sum;
+        }
+    }
+}
 // C = A * B'
 function multiplyABt(C, A, B) {
     var i = 0;
@@ -64297,16 +64326,6 @@ function subRows(A, row) {
     for (var i = 0, p = 0; i < nrows; ++i) {
         for (var j = 0; j < ncols; ++j, ++p) {
             Ad[p] -= row[j];
-        }
-    }
-}
-function addRows(A, row) {
-    var nrows = A.rows;
-    var ncols = A.cols;
-    var Ad = A.data;
-    for (var i = 0, p = 0; i < nrows; ++i) {
-        for (var j = 0; j < ncols; ++j, ++p) {
-            Ad[p] += row[j];
         }
     }
 }
@@ -76834,6 +76853,7 @@ var Superposition = function Superposition(atoms1, atoms2) {
     var coords2 = new Matrix(3, n);
     this.coords1t = new Matrix(n, 3);
     this.coords2t = new Matrix(n, 3);
+    this.transformationMatrix = new Matrix4();
     this.c.data.set([1, 0, 0, 0, 1, 0, 0, 0, -1]);
     // prep coords
     this.prepCoords(atoms1, coords1, n);
@@ -76880,6 +76900,35 @@ Superposition.prototype.prepCoords = function prepCoords (atoms, coords, n) {
         Log.warn('prepCoords: input type unknown');
     }
 };
+Superposition.prototype.prepCoords_4X4 = function prepCoords_4X4 (atoms, coords, n) {
+    var i = 0;
+    var n4 = n * 4;
+    var cd = coords.data;
+    if (atoms instanceof Structure) {
+        atoms.eachAtom(function (a) {
+            if (i < n4) {
+                cd[i] = a.x;
+                cd[i + 1] = a.y;
+                cd[i + 2] = a.z;
+                cd[i + 3] = 1;
+                i += 4;
+            }
+        });
+    }
+    else if (atoms instanceof Float32Array) {
+        for (; i < n4; i += 4) {
+            if (i < n4) {
+                cd[i] = atoms[i];
+                cd[i + 1] = atoms[i + 1];
+                cd[i + 2] = atoms[i + 2];
+                cd[i + 3] = 1;
+            }
+        }
+    }
+    else {
+        Log.warn('prepCoords: input type unknown');
+    }
+};
 Superposition.prototype.transform = function transform (atoms) {
     // allocate data structures
     var n;
@@ -76892,31 +76941,84 @@ Superposition.prototype.transform = function transform (atoms) {
     else {
         return;
     }
-    var coords = new Matrix(3, n);
-    var tmp = new Matrix(n, 3);
+    var coords = new Matrix(4, n);
+    var tCoords = new Matrix(n, 4);
     // prep coords
-    this.prepCoords(atoms, coords, n);
+    this.prepCoords_4X4(atoms, coords, n);
+    var transformMat_ = new Matrix(4, 4);
+    var tmp_1 = new Matrix(4, 4);
+    var tmp_2 = new Matrix(4, 4);
+    var sub = new Matrix(4, 4);
+    var mult = new Matrix(4, 4);
+    var add = new Matrix(4, 4);
+    var R = this.R.data;
+    var M1 = this.mean1;
+    var M2 = this.mean2;
+    sub.data.set([1, 0, 0, -M1[0],
+        0, 1, 0, -M1[1],
+        0, 0, 1, -M1[2],
+        0, 0, 0, 1]);
+    mult.data.set([R[0], R[1], R[2], 0,
+        R[3], R[4], R[5], 0,
+        R[6], R[7], R[8], 0,
+        0, 0, 0, 1]);
+    add.data.set([1, 0, 0, M2[0],
+        0, 1, 0, M2[1],
+        0, 0, 1, M2[2],
+        0, 0, 0, 1]);
+    //get the transformation matrix
+    transpose(tmp_1, sub);
+    multiplyABt(transformMat_, mult, tmp_1);
+    transpose(tmp_2, transformMat_);
+    multiplyABt(tmp_1, add, tmp_2);
+    transpose(transformMat_, tmp_1);
+    this.transformationMatrix.elements = transformMat_.data;
+    // check for transformation matrix correctness
+    var det = this.transformationMatrix.determinant();
+    if (!det) {
+        return det;
+    }
     // do transform
-    subRows(coords, this.mean1);
-    multiplyABt(tmp, this.R, coords);
-    transpose(coords, tmp);
-    addRows(coords, this.mean2);
+    multiply(tCoords, coords, transformMat_);
     var i = 0;
-    var cd = coords.data;
+    var cd = tCoords.data;
     if (atoms instanceof Structure) {
         atoms.eachAtom(function (a) {
-            a.x = cd[i + 0];
+            a.x = cd[i];
             a.y = cd[i + 1];
             a.z = cd[i + 2];
-            i += 3;
+            i += 4;
         });
+        //update transformation matrices for each assembly
+        var transform = this.transformationMatrix;
+        //transform.elements = this.transformMat.data
+        var invertTrasform = new Matrix4();
+        invertTrasform.getInverse(transform);
+        var biomolDict = atoms.biomolDict;
+        for (var key in biomolDict) {
+            if (biomolDict.hasOwnProperty(key)) {
+                var assembly = biomolDict[key];
+                assembly.partList.forEach(function (part) {
+                    part.matrixList.forEach(function (mat) {
+                        mat.premultiply(transform);
+                        mat.multiply(invertTrasform);
+                    });
+                });
+            }
+        }
     }
     else if (atoms instanceof Float32Array) {
-        atoms.set(cd.subarray(0, n * 3));
+        var n4 = n * 4;
+        for (; i < n4; i += 4) {
+            atoms[i] = cd[i];
+            atoms[i + 1] = cd[i + 1];
+            atoms[i + 2] = cd[i + 2];
+        }
     }
     else {
         Log.warn('transform: input type unknown');
     }
+    return this.transformationMatrix;
 };
 
 /**
@@ -78499,8 +78601,9 @@ function superpose(s1, s2, align, sele1, sele2) {
         atoms2 = sviewCa2;
     }
     var superpose = new Superposition(atoms1, atoms2);
-    superpose.transform(s1);
+    var result = superpose.transform(s1);
     s1.refreshPosition();
+    return result;
 }
 
 /**
