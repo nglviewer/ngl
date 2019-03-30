@@ -56461,16 +56461,17 @@ var MouseObserver = function MouseObserver(domElement, params) {
     this._onTouchend = this._onTouchend.bind(this);
     this._onTouchmove = this._onTouchmove.bind(this);
     this._listen();
-    document.addEventListener('mousewheel', this._onMousewheel);
-    document.addEventListener('wheel', this._onMousewheel);
-    document.addEventListener('MozMousePixelScroll', this._onMousewheel);
-    document.addEventListener('mousemove', this._onMousemove);
-    document.addEventListener('mousedown', this._onMousedown);
-    document.addEventListener('mouseup', this._onMouseup);
-    document.addEventListener('contextmenu', this._onContextmenu);
-    document.addEventListener('touchstart', this._onTouchstart);
-    document.addEventListener('touchend', this._onTouchend);
-    document.addEventListener('touchmove', this._onTouchmove);
+    var opt = { passive: false }; // treat as 'passive' so preventDefault can be called
+    document.addEventListener('mousewheel', this._onMousewheel, opt);
+    document.addEventListener('wheel', this._onMousewheel, opt);
+    document.addEventListener('MozMousePixelScroll', this._onMousewheel, opt);
+    document.addEventListener('mousemove', this._onMousemove, opt);
+    document.addEventListener('mousedown', this._onMousedown, opt);
+    document.addEventListener('mouseup', this._onMouseup, opt);
+    document.addEventListener('contextmenu', this._onContextmenu, opt);
+    document.addEventListener('touchstart', this._onTouchstart, opt);
+    document.addEventListener('touchend', this._onTouchend, opt);
+    document.addEventListener('touchmove', this._onTouchmove, opt);
 };
 
 var prototypeAccessors$2 = { key: { configurable: true } };
@@ -59507,7 +59508,7 @@ var SpatialHash = function SpatialHash(positions, boundingBox) {
     this.boundY = ((bb.max.y - this.minY) >> this.exp) + 1;
     this.boundZ = ((bb.max.z - this.minZ) >> this.exp) + 1;
     var n = this.boundX * this.boundY * this.boundZ;
-    var an = positions.x.length;
+    var an = (positions.count !== undefined) ? positions.count : positions.x.length;
     var xArray = positions.x;
     var yArray = positions.y;
     var zArray = positions.z;
@@ -59567,12 +59568,12 @@ SpatialHash.prototype.eachWithin = function eachWithin (x, y, z, r, callback) {
     var loX = Math.max(0, (x - r - this.minX) >> this.exp);
     var loY = Math.max(0, (y - r - this.minY) >> this.exp);
     var loZ = Math.max(0, (z - r - this.minZ) >> this.exp);
-    var hiX = Math.min(this.boundX, (x + r - this.minX) >> this.exp);
-    var hiY = Math.min(this.boundY, (y + r - this.minY) >> this.exp);
-    var hiZ = Math.min(this.boundZ, (z + r - this.minZ) >> this.exp);
-    for (var ix = loX; ix <= hiX; ++ix) {
-        for (var iy = loY; iy <= hiY; ++iy) {
-            for (var iz = loZ; iz <= hiZ; ++iz) {
+    var hiX = Math.min(this.boundX, ((x + r - this.minX) >> this.exp) + 1);
+    var hiY = Math.min(this.boundY, ((y + r - this.minY) >> this.exp) + 1);
+    var hiZ = Math.min(this.boundZ, ((z + r - this.minZ) >> this.exp) + 1);
+    for (var ix = loX; ix < hiX; ++ix) {
+        for (var iy = loY; iy < hiY; ++iy) {
+            for (var iz = loZ; iz < hiZ; ++iz) {
                 var idx = (((ix * this$1.boundY) + iy) * this$1.boundZ) + iz;
                 var bucketIdx = this$1.grid[idx];
                 if (bucketIdx > 0) {
@@ -80092,7 +80093,6 @@ var partialCharges = {
     }
 };
 var maxRadius = 12.0;
-var maxRadius2 = maxRadius * maxRadius;
 var nHBondDistance = 1.04;
 var nHCharge = 0.25;
 /**
@@ -80193,7 +80193,7 @@ var ElectrostaticColormaker = (function (Colormaker$$1) {
             this.parameters.scale = 'rwb';
         }
         if (!params.domain) {
-            this.parameters.domain = [-0.5, 0, 0.5];
+            this.parameters.domain = [-50, 50];
         }
         this.scale = this.getScale();
         this.charges = new Float32Array(params.structure.atomCount);
@@ -80226,36 +80226,22 @@ var ElectrostaticColormaker = (function (Colormaker$$1) {
     ElectrostaticColormaker.prototype = Object.create( Colormaker$$1 && Colormaker$$1.prototype );
     ElectrostaticColormaker.prototype.constructor = ElectrostaticColormaker;
     ElectrostaticColormaker.prototype.positionColor = function positionColor (v) {
-        var this$1 = this;
-
+        var charges = this.charges;
+        var hCharges = this.hCharges;
         var p = 0.0;
-        var neighbours = this.hash.within(v.x, v.y, v.z, maxRadius);
-        for (var i = 0; i < neighbours.length; i++) {
-            var neighbour = neighbours[i];
-            var charge = this$1.charges[neighbour];
-            if (charge != null && charge !== 0.0) {
-                this$1.atomProxy.index = neighbour;
-                this$1.delta.x = v.x - this$1.atomProxy.x;
-                this$1.delta.y = v.y - this$1.atomProxy.y;
-                this$1.delta.z = v.z - this$1.atomProxy.z;
-                var r2 = this$1.delta.lengthSq();
-                if (r2 < maxRadius2) {
-                    p += charge / r2;
-                }
-            }
-        }
-        var hNeighbours = this.hHash.within(v.x, v.y, v.z, maxRadius);
-        for (var i$1 = 0; i$1 < hNeighbours.length; i$1++) {
-            var neighbour$1 = hNeighbours[i$1];
-            this$1.delta.x = v.x - this$1.hStore.x[neighbour$1];
-            this$1.delta.y = v.y - this$1.hStore.y[neighbour$1];
-            this$1.delta.z = v.z - this$1.hStore.z[neighbour$1];
-            var r2$1 = this$1.delta.lengthSq();
-            if (r2$1 < maxRadius2) {
-                p += this$1.hCharges[neighbour$1] / r2$1;
-            }
-        }
-        return this.scale(p);
+        this.hash.eachWithin(v.x, v.y, v.z, maxRadius, function (atomIndex, dSq) {
+            var charge = charges[atomIndex];
+            if (charge === 0.0)
+                { return; }
+            p += charge / dSq;
+        });
+        this.hHash.eachWithin(v.x, v.y, v.z, maxRadius, function (atomIndex, dSq) {
+            var charge = hCharges[atomIndex];
+            if (charge === 0.0)
+                { return; }
+            p += charge / dSq;
+        });
+        return this.scale(p * 332); // 332 to convert to kcal/mol
     };
 
     return ElectrostaticColormaker;
@@ -87128,14 +87114,14 @@ function makeAVHash(atomsX, atomsY, atomsZ, atomsR, min, max, maxDistance) {
         var loI = Math.max(0, nearI - 1);
         var loJ = Math.max(0, nearJ - 1);
         var loK = Math.max(0, nearK - 1);
-        var hiI = Math.min(iDim, nearI + 1);
-        var hiJ = Math.min(jDim, nearJ + 1);
-        var hiK = Math.min(kDim, nearK + 1);
-        for (var i = loI; i <= hiI; ++i) {
+        var hiI = Math.min(iDim, nearI + 2);
+        var hiJ = Math.min(jDim, nearJ + 2);
+        var hiK = Math.min(kDim, nearK + 2);
+        for (var i = loI; i < hiI; ++i) {
             var iOffset = i * jkDim;
-            for (var j = loJ; j <= hiJ; ++j) {
+            for (var j = loJ; j < hiJ; ++j) {
                 var jOffset = j * kDim;
-                for (var k = loK; k <= hiK; ++k) {
+                for (var k = loK; k < hiK; ++k) {
                     var cid = iOffset + jOffset + k;
                     var cellStart = cellOffsets[cid];
                     var cellEnd = cellStart + cellLengths[cid];
@@ -87201,6 +87187,7 @@ function AVSurface(coordList, radiusList, indexList) {
     // Neighbour array to be filled by hash
     var neighbours;
     // Vectors for Torus Projection
+    var atob = new Float32Array([0.0, 0.0, 0.0]);
     var mid = new Float32Array([0.0, 0.0, 0.0]);
     var n1 = new Float32Array([0.0, 0.0, 0.0]);
     var n2 = new Float32Array([0.0, 0.0, 0.0]);
@@ -87237,7 +87224,7 @@ function AVSurface(coordList, radiusList, indexList) {
         scaleFactor = surfGrid.scaleFactor;
         dim = surfGrid.dim;
         matrix = surfGrid.matrix;
-        ngTorus = Math.min(5, 2 + Math.floor(probeRadius * scaleFactor));
+        ngTorus = Math.max(5, 2 + Math.floor(probeRadius * scaleFactor));
         grid = uniformArray(dim[0] * dim[1] * dim[2], -1001.0);
         atomIndex = new Int32Array(grid.length);
         gridx = new Float32Array(dim[0]);
@@ -87390,9 +87377,9 @@ function AVSurface(coordList, radiusList, indexList) {
     function projectTorus(a, b) {
         var r1 = r[a];
         var r2 = r[b];
-        var dx = mid[0] = x[b] - x[a];
-        var dy = mid[1] = y[b] - y[a];
-        var dz = mid[2] = z[b] - z[a];
+        var dx = atob[0] = x[b] - x[a];
+        var dy = atob[1] = y[b] - y[a];
+        var dz = atob[2] = z[b] - z[a];
         var d2 = dx * dx + dy * dy + dz * dz;
         // This check now redundant as already done in AVHash.withinRadii
         // if( d2 > (( r1 + r2 ) * ( r1 + r2 )) ){ return; }
@@ -87402,21 +87389,21 @@ function AVSurface(coordList, radiusList, indexList) {
         var cosA = (r1 * r1 + d * d - r2 * r2) / (2.0 * r1 * d);
         // distance along a->b at intersection
         var dmp = r1 * cosA;
-        v3normalize(mid, mid);
+        v3normalize(atob, atob);
         // Create normal to line
-        normalToLine(n1, mid);
+        normalToLine(n1, atob);
         v3normalize(n1, n1);
         // Cross together for second normal vector
-        v3cross(n2, mid, n1);
+        v3cross(n2, atob, n1);
         v3normalize(n2, n2);
         // r is radius of circle of intersection
         var rInt = Math.sqrt(r1 * r1 - dmp * dmp);
         v3multiplyScalar(n1, n1, rInt);
         v3multiplyScalar(n2, n2, rInt);
-        v3multiplyScalar(mid, mid, dmp);
-        mid[0] += x[a];
-        mid[1] += y[a];
-        mid[2] += z[a];
+        v3multiplyScalar(atob, atob, dmp);
+        mid[0] = atob[0] + x[a];
+        mid[1] = atob[1] + y[a];
+        mid[2] = atob[2] + z[a];
         lastClip = -1;
         var ng = ngTorus;
         for (var i = 0; i < probePositions; i++) {
@@ -87451,8 +87438,12 @@ function AVSurface(coordList, radiusList, indexList) {
                             var current = grid[idx];
                             if (current > 0.0 && d2 < (current * current)) {
                                 grid[idx] = Math.sqrt(d2);
-                                if (setAtomID)
-                                    { atomIndex[idx] = a; }
+                                if (setAtomID) {
+                                    // Is this grid point closer to a or b?
+                                    // Take dot product of atob and gridpoint->p (dx, dy, dz)
+                                    var dp = dx * atob[0] + dy * atob[1] + dz * atob[2];
+                                    atomIndex[idx] = dp < 0.0 ? b : a;
+                                }
                             }
                         }
                     }
@@ -100766,7 +100757,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.34";
+var version$1 = "2.0.0-dev.35";
 
 /**
  * @file Version
