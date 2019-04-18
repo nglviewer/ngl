@@ -293,7 +293,7 @@ class Volume {
 
     const box = this._getBox(center, size)
     const sd = this.volsurf.getSurface(
-      isolevel, smooth, box!, this.matrix.elements, contour, wrap
+      isolevel, smooth, box!, new Float32Array(this.matrix.elements), contour, wrap
     )
 
     return this._makeSurface(sd, isolevel, smooth)
@@ -379,7 +379,7 @@ class Volume {
         }
       }
 
-      applyMatrix4toVector3array(this.matrix.elements, position)
+      applyMatrix4toVector3array(new Float32Array(this.matrix.elements), position)
       this._position = position
     }
 

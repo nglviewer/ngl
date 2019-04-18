@@ -133,7 +133,7 @@ class Superposition {
     multiplyABt(tmp_1,add,tmp_2)
 
     transpose(transformMat_,tmp_1)
-    this.transformationMatrix.elements = transformMat_.data
+    this.transformationMatrix.elements = Array.from(transformMat_.data)
 
   }
 
@@ -203,7 +203,7 @@ class Superposition {
     // do transform
 
     const mult = new Matrix(4,4)
-    mult.data = transform.elements
+    mult.data = new Float32Array(transform.elements)
     multiply(tCoords,coords,mult)
 
     let i = 0
