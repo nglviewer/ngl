@@ -29,6 +29,11 @@ import StlWriter from './writer/stl-writer'
 import Stage from './stage/stage'
 import Collection from './component/collection'
 import ComponentCollection from './component/component-collection'
+import Component from './component/component'
+import ShapeComponent from './component/shape-component'
+import StructureComponent, {StructureRepresentationType} from './component/structure-component'
+import SurfaceComponent from './component/surface-component'
+import VolumeComponent from './component/volume-component'
 import RepresentationCollection from './component/representation-collection'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
@@ -220,6 +225,12 @@ export {
   Collection,
   ComponentCollection,
   RepresentationCollection,
+  Component,
+  ShapeComponent,
+  StructureComponent,
+  SurfaceComponent,
+  VolumeComponent,
+  StructureRepresentationType,
 
   Assembly,
   TrajectoryPlayer,
