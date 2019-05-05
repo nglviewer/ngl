@@ -993,6 +993,81 @@ export default class Viewer {
     return { pid, instance, picker }
   }
 
+  pickAll (x0: number, y0: number, dx: number, dy: number) {
+
+    if (this.parameters.cameraType === 'stereo') {
+      // TODO picking broken for stereo camera
+      return []
+    }
+
+    let picked = []
+
+    x0 *= window.devicePixelRatio
+    y0 *= window.devicePixelRatio
+    dx *= window.devicePixelRatio
+    dy *= window.devicePixelRatio
+
+    let x = Math.min(x0, x0 + dx)
+    let y = Math.min(y0, y0 + dy)
+
+    let px = Math.abs(dx)
+    let py = Math.abs(dy)
+
+    let _pixelBufferFloat = new Float32Array(4 * px * py)
+    let _pixelBufferUint = new Uint8Array(4 * px * py)
+    const pixelBuffer = SupportsReadPixelsFloat ? _pixelBufferFloat : _pixelBufferUint
+
+    this.render(true)
+    this.renderer.readRenderTargetPixels(
+      this.pickingTarget, x, y, px, py, pixelBuffer
+    )
+
+    for (let i = 0; i < px*py; i++) {
+
+      let pid = 0, instance, picker      
+      const offset = i * 4
+
+      const oid = Math.round(pixelBuffer[ offset + 3 ])
+      const object = this.pickingGroup.getObjectById(oid)
+      if (object) {
+        instance = object.userData.instance
+        picker = object.userData.buffer.picking
+      } else {
+        continue
+      }
+
+      if (SupportsReadPixelsFloat) {
+        pid =
+          ((Math.round(pixelBuffer[offset] * 255) << 16) & 0xFF0000) |
+          ((Math.round(pixelBuffer[offset + 1] * 255) << 8) & 0x00FF00) |
+          ((Math.round(pixelBuffer[offset + 2] * 255)) & 0x0000FF)
+      } else {
+        pid =
+          (pixelBuffer[offset] << 16) |
+          (pixelBuffer[offset + 1] << 8) |
+          (pixelBuffer[offset + 2])
+      }
+
+      picked.push({ pid, instance, picker })
+    }
+    // if( Debug ){
+    //   const rgba = Array.apply( [], pixelBuffer );
+    //   Log.log( pixelBuffer );
+    //   Log.log(
+    //     "picked color",
+    //     rgba.map( c => { return c.toPrecision( 2 ) } )
+    //   );
+    //   Log.log( "picked pid", pid );
+    //   Log.log( "picked oid", oid );
+    //   Log.log( "picked object", object );
+    //   Log.log( "picked instance", instance );
+    //   Log.log( "picked position", x, y );
+    //   Log.log( "devicePixelRatio", window.devicePixelRatio );
+    // }
+
+    return picked
+  }
+
   requestRender () {
     if (this.renderPending) {
       // Log.info("there is still a 'render' call pending")

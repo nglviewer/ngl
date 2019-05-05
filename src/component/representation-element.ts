@@ -155,6 +155,19 @@ class RepresentationElement extends Element {
   }
 
   /**
+   * Set selected atoms via indices
+   * @param {number[]} indices array of selected atom indices
+   * @return {RepresentationElement} this object
+   */
+  setSelectedAtomIndices (indices: number[]) {
+    if (indices) {
+      return this.setSelection('@'+indices.join())
+    } else {
+      return this.setSelection('none')
+    }
+  }
+
+  /**
    * Set representation parameters
    * @param {RepresentationParameters} params - parameter object
    * @return {RepresentationElement} this object

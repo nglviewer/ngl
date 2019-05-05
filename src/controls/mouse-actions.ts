@@ -9,6 +9,7 @@ import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
+import AtomProxy from '../proxy/atom-proxy';
 
 export type ScrollCallback = (stage: Stage, delta: number) => void
 export type DragCallback = (stage: Stage, dx: number, dy: number) => void
@@ -176,6 +177,35 @@ class MouseActions {
     stage.trackballControls.rotateComponent(dx, dy)
   }
 
+  static drawDragBox (stage: Stage, dx: number, dy: number) {
+    
+  }
+
+  static updateDragBox (stage: Stage, dx: number, dy: number) {
+    
+  }
+  /**
+   * Move picked component based on mouse coordinate changes
+   * @param {Stage} stage 
+   * @param {Number} dx - amount to move in x direction
+   * @param {Number} dy - amount to move in y direction
+   * @return {undefined}
+   */
+  static moveComponentDrag (stage: Stage, dx: number, dy: number) {
+    return; // TODO**
+  }
+
+  /**
+   * Pick component based on mouse coordinate changes
+   * @param {Stage} stage 
+   * @param {Number} dx - amount to select in x direction
+   * @param {Number} dy - amount to select in y direction
+   * @return {undefined}
+   */
+  static lassoComponentDrag (stage: Stage, dx: number, dy: number) {
+    return; // TODO**
+  }
+
   /**
    * Move picked element to the center of the screen
    * @param {Stage} stage - the stage
@@ -217,6 +247,54 @@ class MouseActions {
       stage.measureClear()
     }
   }
+
+  /**
+   * Add pick
+   * @param {Stage} stage - the stage
+   * @param {PickingProxy} pickingProxy - the picking data object
+   * @return {undefined}
+   */
+  static selectPick (stage: Stage, pickingProxy: PickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+      const atoms = [pickingProxy.atom] || pickingProxy.bond.atoms
+      const sc = pickingProxy.component as StructureComponent
+      sc.selectedPick(atoms)
+    }
+  }
+
+  static selectPickAll (stage: Stage, pickingProxies: PickingProxy[]) {
+    let components: StructureComponent[] = []
+    let picked: AtomProxy[][] = []
+
+    pickingProxies.forEach(function (pickingProxy) {
+      if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+        let atoms = [pickingProxy.atom] || pickingProxy.bond.atoms
+        let sc = pickingProxy.component as StructureComponent
+
+        if (!components.includes(sc)) {
+          let _new: AtomProxy[] = []
+          components.push(sc)
+          picked.push(_new)
+        }
+
+        let j = components.indexOf(sc)
+        atoms.forEach(function (a) {
+          if (!picked[j].includes(a)) picked[j].push(a)
+        })
+      }
+    })
+
+    for (var i = 0; i < components.length; i++) {
+      components[i].selectedPick(picked[i])
+    }
+  }
+
+  static clearSelect (stage: Stage) {
+    stage.eachComponent(function (sc: StructureComponent) {
+      sc.selectedAtomIndices.clear()
+    }, "structure")
+  }
+
 }
 
 type MouseActionPreset = [ string, MouseActionCallback ][]
@@ -271,7 +349,27 @@ export const MouseActionPresets = {
     [ 'scroll', MouseActions.focusScroll ],
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'hoverPick', MouseActions.tooltipPick ]
-  ] as MouseActionPreset
+  ] as MouseActionPreset,
+  iqmol: [
+    [ 'scroll', MouseActions.zoomScroll ],
+    // [ 'scroll-shift', MouseActions.focusScroll ],
+    // [ 'scroll-ctrl', MouseActions.isolevelScroll ],
+    // [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
+
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-right', MouseActions.panDrag ],
+    [ 'drag-ctrl-left', MouseActions.rotatePositionComponentDrag ],
+    [ 'drag-ctrl-right', MouseActions.moveComponentDrag ],
+    [ 'drag-shift-left', MouseActions.selectPickAll ],
+    [ 'drag-middle', MouseActions.zoomFocusDrag ],
+
+    [ 'clickPick-shift-left', MouseActions.selectPick ],
+    [ 'doubleClick-shift-left', MouseActions.clearSelect], 
+    
+    [ 'clickPick-right', MouseActions.measurePick ],
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick ]
+  ]
 }
 
 export default MouseActions

@@ -25,11 +25,12 @@ import Stage from '../stage/stage'
 import StructureRepresentation from '../representation/structure-representation'
 import AtomProxy from '../proxy/atom-proxy'
 import { Vector3, Box3 } from 'three';
+import { createToggleSet, ToggleSet } from '../utils/toggle-set';
 
 export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
   'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
-  'ribbon'|'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
+  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'
 )
 
 export const StructureComponentDefaultParameters = Object.assign({
@@ -66,11 +67,13 @@ class StructureComponent extends Component {
   pickBuffer: RingBuffer<number>
   pickDict: SimpleDict<number[], number[]>
   lastPick?: number
+  selectedAtomIndices: ToggleSet<number>
 
   spacefillRepresentation: RepresentationElement
   distanceRepresentation: RepresentationElement
   angleRepresentation: RepresentationElement
   dihedralRepresentation: RepresentationElement
+  selectedRepresentation: RepresentationElement
 
   measureRepresentations: RepresentationCollection
 
@@ -89,6 +92,7 @@ class StructureComponent extends Component {
 
     this.pickBuffer = createRingBuffer(4)
     this.pickDict = createSimpleDict()
+    this.selectedAtomIndices = createToggleSet()
 
     this.spacefillRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
@@ -106,6 +110,9 @@ class StructureComponent extends Component {
     )
     this.dihedralRepresentation = this.addRepresentation(
       'dihedral', MeasurementDefaultParams, true
+    )
+    this.selectedRepresentation = this.addRepresentation(
+      'selected', MeasurementDefaultParams, true
     )
 
     this.measureRepresentations = new RepresentationCollection([
@@ -174,13 +181,14 @@ class StructureComponent extends Component {
    * @return {undefined}
    */
   setDefaultAssembly (value:string) {
-    // filter out non-exsisting assemblies
+    // filter out non-existing assemblies
     if (this.structure.biomolDict[value] === undefined) value = ''
     // only set default assembly when changed
     if (this.parameters.defaultAssembly !== value) {
       const reprParams = { defaultAssembly: value }
       this.reprList.forEach(repr => repr.setParameters(reprParams))
       this.measureRepresentations.setParameters(reprParams)
+      this.selectedRepresentation.setParameters(reprParams)
       this.parameters.defaultAssembly = value
       this.signals.defaultAssemblyChanged.dispatch(value)
     }
@@ -196,6 +204,7 @@ class StructureComponent extends Component {
       repr.build()
     })
     this.measureRepresentations.build()
+    this.selectedRepresentation.build()
   }
 
   /**
@@ -211,6 +220,7 @@ class StructureComponent extends Component {
   updateRepresentations (what: any) {
     super.updateRepresentations(what)
     this.measureRepresentations.update(what)
+    this.selectedRepresentation.update(what)
   }
 
   addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
@@ -258,6 +268,7 @@ class StructureComponent extends Component {
     this.trajList.length = 0
     this.structure.dispose()
     this.measureRepresentations.dispose()
+    this.selectedRepresentation.dispose()
 
     super.dispose()
   }
@@ -430,6 +441,25 @@ class StructureComponent extends Component {
       this.pickDict.add(atomListSorted, atomList)
     }
     this.measureBuild()
+  }
+
+  selectedPick (atoms: AtomProxy[]) {
+    var atomIndices = atoms.map(x => x.index)
+    this.selectedAtomIndices.toggleAny(atomIndices)
+    this.selectedUpdate()
+  }
+
+  selectedUpdate () {
+    const pickData = this.selectedAtomIndices.list
+    const radiusData: { [k: number]: number } = {}
+    pickData.forEach(ai => {
+      const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
+      radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
+    })
+    this.spacefillRepresentation.setSelection(
+      pickData.length ? ( '@' + pickData.join(',') ) : 'none'
+    )
+    this.spacefillRepresentation.setParameters({ radiusData })
   }
 }
 

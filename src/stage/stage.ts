@@ -899,6 +899,11 @@ class Stage {
     this.eachComponent((sc: StructureComponent) => sc.measureUpdate(), 'structure')
   }
 
+  selectedUpdate () {
+    this.eachComponent((sc: StructureComponent) => sc.selectedUpdate(), 'structure')
+  }
+
+
   /**
    * Cleanup when disposing of a stage object
    */
