@@ -62,6 +62,7 @@ function triggerFromString (str: string) {
   let type = ''
   if (tokens.includes('scroll')) type = 'scroll'
   if (tokens.includes('drag')) type = 'drag'
+  if (tokens.includes('drag')) type = 'drag'
   if (tokens.includes('click')) type = 'click'
   if (tokens.includes('doubleClick')) type = 'doubleClick'
   if (tokens.includes('hover')) type = 'hover'
