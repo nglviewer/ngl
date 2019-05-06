@@ -177,13 +177,6 @@ class MouseActions {
     stage.trackballControls.rotateComponent(dx, dy)
   }
 
-  static drawDragBox (stage: Stage, dx: number, dy: number) {
-    
-  }
-
-  static updateDragBox (stage: Stage, dx: number, dy: number) {
-    
-  }
   /**
    * Move picked component based on mouse coordinate changes
    * @param {Stage} stage 
@@ -192,18 +185,7 @@ class MouseActions {
    * @return {undefined}
    */
   static moveComponentDrag (stage: Stage, dx: number, dy: number) {
-    return; // TODO**
-  }
-
-  /**
-   * Pick component based on mouse coordinate changes
-   * @param {Stage} stage 
-   * @param {Number} dx - amount to select in x direction
-   * @param {Number} dy - amount to select in y direction
-   * @return {undefined}
-   */
-  static lassoComponentDrag (stage: Stage, dx: number, dy: number) {
-    return; // TODO**
+    stage.trackballControls.translateAtoms(dx, dy)
   }
 
   /**
@@ -238,6 +220,8 @@ class MouseActions {
     }
   }
 
+  
+
   static measurePick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
@@ -262,7 +246,7 @@ class MouseActions {
     }
   }
 
-  static selectPickAll (stage: Stage, pickingProxies: PickingProxy[]) {
+  static selectPickAll (stage: Stage, pickingProxies: PickingProxy[], x:number, y:number) {
     let components: StructureComponent[] = []
     let picked: AtomProxy[][] = []
 
@@ -287,12 +271,33 @@ class MouseActions {
     for (var i = 0; i < components.length; i++) {
       components[i].selectedPick(picked[i])
     }
+
+    stage.dragSelection.moveSelection(x, y)
   }
 
   static clearSelect (stage: Stage) {
     stage.eachComponent(function (sc: StructureComponent) {
       sc.selectedAtomIndices.clear()
     }, "structure")
+  }
+
+  static onSelectDown (stage: Stage, x: number, y: number) {
+    const ds = stage.dragSelection
+    const sp = stage.getParameters() as any
+    if (sp.dragSelection) {
+      ds.createSelection(x, y)
+    } else {
+      ds.removeSelection()
+    }
+  }
+
+  static onSelectDragXY (stage: Stage, x: number, y: number) {
+    const ds = stage.dragSelection
+    ds.moveSelection(x, y)
+  }
+
+  static onSelectUp (stage: Stage) {
+    stage.dragSelection.removeSelection()
   }
 
 }
@@ -358,7 +363,7 @@ export const MouseActionPresets = {
 
     [ 'drag-left', MouseActions.rotateDrag ],
     [ 'drag-right', MouseActions.panDrag ],
-    [ 'drag-ctrl-left', MouseActions.rotatePositionComponentDrag ],
+    [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
     [ 'drag-ctrl-right', MouseActions.moveComponentDrag ],
     [ 'drag-shift-left', MouseActions.selectPickAll ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],

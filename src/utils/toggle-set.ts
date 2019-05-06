@@ -1,7 +1,5 @@
-import value from "*.frag";
-
 /**
- * @file Queue
+ * @file toggle-set
  * @author Lily Wang <lily.wang@anu.edu.au>
  * @private
  */

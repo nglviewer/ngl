@@ -15,6 +15,7 @@ import { degToRad, clamp, pclamp } from '../math/math-utils'
 import Counter from '../utils/counter'
 import Viewer from '../viewer/viewer'
 import { ImageParameters } from '../viewer/viewer-utils'
+import DragSelection from '../viewer/drag-selection'
 import MouseObserver from './mouse-observer'
 
 import TrackballControls from '../controls/trackball-controls'
@@ -138,6 +139,7 @@ export const StageDefaultParameters = {
   ambientIntensity: 0.2,
   hoverTimeout: 0,
   tooltip: true,
+  dragSelection: true,
   mousePreset: 'default' as MouseControlPreset
 }
 export type StageParameters = typeof StageDefaultParameters
@@ -177,6 +179,7 @@ class Stage {
 
   viewer: Viewer
   tooltip: HTMLElement
+  dragSelection: DragSelection
   lastFullscreenElement: HTMLElement
 
   mouseObserver: MouseObserver
@@ -211,6 +214,8 @@ class Stage {
       fontFamily: 'sans-serif'
     })
     this.viewer.container.appendChild(this.tooltip)
+
+    this.dragSelection = new DragSelection(this.viewer)
 
     this.mouseObserver = new MouseObserver(this.viewer.renderer.domElement)
     this.viewerControls = new ViewerControls(this)
@@ -901,6 +906,17 @@ class Stage {
 
   selectedUpdate () {
     this.eachComponent((sc: StructureComponent) => sc.selectedUpdate(), 'structure')
+  }
+
+  get selectedProxies () {
+    let proxies: AtomProxy[] = [];
+    this.eachComponent(function (sc: StructureComponent) {
+      sc.selectedAtomIndices.list.forEach(function (i) {
+        let ap = sc.structure.getAtomProxy(i)
+        proxies.push(ap)
+      })
+    }, "structure")
+    return proxies
   }
 
 

@@ -20,7 +20,7 @@ class PickingBehavior {
     this.controls = stage.mouseControls
 
     this.mouse.signals.clicked.add(this._onClick, this)
-    this.mouse.signals.dragged.add(this._onDragXY, this)
+    this.mouse.signals.draggedXY.add(this._onDragXY, this)
     this.mouse.signals.doubleClicked.add(this._onDoubleClick, this)
   }
 
@@ -31,19 +31,21 @@ class PickingBehavior {
   }
 
   _onDragXY (x0: number, y0: number, x1: number, y1: number) {
-    const pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1-x0, y1-y0)
-    this.controls.run('select')
-
-    
+    const sp = this.stage.getParameters() as any
+    if (sp.dragSelection) {
+      const pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1-x0, y1-y0)
+      this.controls.run('drag', pickedProxies, x1, y1)
+    }
   }
 
-  _onMouseDown (x: number, y: number) {
-
+  _onDoubleClick (x: number, y: number) {
+    this.controls.run('doubleClick')
   }
 
   dispose () {
     this.mouse.signals.clicked.remove(this._onClick, this)
-    this.mouse.signals.hovered.remove(this._onHover, this)
+    this.mouse.signals.draggedXY.remove(this._onDragXY, this)
+    this.mouse.signals.doubleClicked.remove(this._onDoubleClick, this)
   }
 }
 
