@@ -365,7 +365,7 @@ export const MouseActionPresets = {
     [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
     [ 'drag-ctrl-right', MouseActions.moveComponentDrag ],
-    [ 'drag-shift-left', MouseActions.selectPickAll ],
+    [ 'dragXY-shift-left', MouseActions.selectPickAll ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],
 
     [ 'clickPick-shift-left', MouseActions.selectPick ],

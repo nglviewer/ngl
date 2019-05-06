@@ -93,6 +93,7 @@ class StructureComponent extends Component {
     this.pickBuffer = createRingBuffer(4)
     this.pickDict = createSimpleDict()
     this.selectedAtomIndices = createToggleSet()
+    console.log('THIS IS', this.selectedAtomIndices)
 
     this.spacefillRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
@@ -111,9 +112,15 @@ class StructureComponent extends Component {
     this.dihedralRepresentation = this.addRepresentation(
       'dihedral', MeasurementDefaultParams, true
     )
-    this.selectedRepresentation = this.addRepresentation(
-      'selected', MeasurementDefaultParams, true
-    )
+
+    this.selectedRepresentation = this.addRepresentation('spacefill', {
+      sele: 'none',
+      color: MeasurementDefaultParams.color,
+      opacity: 0.4,
+      disablePicking: true,
+      radiusType: 'data'
+    }, true)
+
 
     this.measureRepresentations = new RepresentationCollection([
       this.spacefillRepresentation,

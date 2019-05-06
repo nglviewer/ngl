@@ -42,7 +42,8 @@ class PickingControls {
 
   pickAll (x0: number, y0: number, dx: number, dy: number) {
     const pickedData = this.viewer.pickAll(x0, y0, dx, dy)
-    let picked = []
+    console.log('PICKED DATA IS', pickedData)
+    let picked: PickingProxy[] = []
 
     for (var i = 0; i < pickedData.length; i++) {
       let pickingData = pickedData[i]

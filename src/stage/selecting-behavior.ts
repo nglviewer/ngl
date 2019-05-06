@@ -33,8 +33,8 @@ class PickingBehavior {
   _onDragXY (x0: number, y0: number, x1: number, y1: number) {
     const sp = this.stage.getParameters() as any
     if (sp.dragSelection) {
-      const pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1-x0, y1-y0)
-      this.controls.run('drag', pickedProxies, x1, y1)
+      let pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1-x0, y1-y0)
+      this.controls.run('dragXY', pickedProxies, x1, y1)
     }
   }
 

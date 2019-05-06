@@ -1050,21 +1050,6 @@ export default class Viewer {
 
       picked.push({ pid, instance, picker })
     }
-    // if( Debug ){
-    //   const rgba = Array.apply( [], pixelBuffer );
-    //   Log.log( pixelBuffer );
-    //   Log.log(
-    //     "picked color",
-    //     rgba.map( c => { return c.toPrecision( 2 ) } )
-    //   );
-    //   Log.log( "picked pid", pid );
-    //   Log.log( "picked oid", oid );
-    //   Log.log( "picked object", object );
-    //   Log.log( "picked instance", instance );
-    //   Log.log( "picked position", x, y );
-    //   Log.log( "devicePixelRatio", window.devicePixelRatio );
-    // }
-
     return picked
   }
 

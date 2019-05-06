@@ -20,8 +20,16 @@ export function createToggleSet<T> (): ToggleSet<T> {
 
   return {
     has: function (value: T) { return list.indexOf(value) !== -1 },
-    add: function (value: T) { if (!this.has(value)) list.push(value); },
-    del: function (value: T) { if (this.has(value)) list.splice(list.indexOf(value), 1); },
+    add: function (value: T) { 
+      if (list.indexOf(value) === -1) {
+        list.push(value)
+      } 
+    },
+    del: function (value: T) { 
+      if (list.indexOf(value) !== -1) {
+        list.splice(list.indexOf(value), 1)
+     }
+    },
     toggle: function (value: T) {
       if (this.has(value)) {
         this.del(value)
@@ -35,7 +43,17 @@ export function createToggleSet<T> (): ToggleSet<T> {
         if (!this.has(values[i])) addAll = true;
       }
 
-      if (addAll) values.forEach(this.add); else values.forEach(this.del)
+      let action
+      if (addAll) {
+        action = this.add
+      } else {
+        action = this.del
+      }
+
+      for (var i = 0; i < values.length; i++) {
+        console.log('THIS ISSSS', this, action, i, values[i])
+        action(values[i])
+      }
     },
     get count () { return list.length },
     get list () {return list},
