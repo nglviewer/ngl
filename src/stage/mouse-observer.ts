@@ -67,6 +67,7 @@ export interface MouseSignals {
   clicked: Signal  // on click
   hovered: Signal  // on hover
   doubleClicked: Signal
+  pressed: Signal
 }
 
 export interface MouseParams {
@@ -111,7 +112,8 @@ class MouseObserver {
     dropped: new Signal(),
     clicked: new Signal(),
     hovered: new Signal(),
-    doubleClicked: new Signal()
+    doubleClicked: new Signal(),
+    pressed: new Signal(),
   }
 
   hoverTimeout: number
@@ -304,6 +306,7 @@ class MouseObserver {
     this.buttons = getMouseButtons(event)
     this.pressed = true
     this._setCanvasPosition(event)
+    this.signals.pressed.dispatch(event.clientX, event.clientY)
   }
 
   /**
@@ -326,6 +329,7 @@ class MouseObserver {
         this.doubleClickPending = false
       }
       this.signals.clicked.dispatch(cp.x, cp.y)
+      this.signals.dropped.dispatch();
       this.doubleClickPending = true
       this.prevClickCP.copy(cp)
     }

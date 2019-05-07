@@ -15,6 +15,7 @@ import _Promise from 'promise-polyfill'
 export {
   Debug, setDebug,
   MeasurementDefaultParams, setMeasurementDefaultParams,
+  SelectionDefaultParams, setSelectionDefaultParams,
   ScriptExtensions, ColormakerRegistry,
   DatasourceRegistry, DecompressorRegistry,
   ParserRegistry, RepresentationRegistry,

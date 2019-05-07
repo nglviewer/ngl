@@ -26,6 +26,7 @@ import MouseControls, { MouseControlPreset } from '../controls/mouse-controls'
 import KeyControls from '../controls/key-controls'
 
 import PickingBehavior from './picking-behavior'
+import SelectingBehavior from './selecting-behavior'
 import MouseBehavior from './mouse-behavior'
 import AnimationBehavior from './animation-behavior'
 import KeyBehavior from './key-behavior'
@@ -191,6 +192,7 @@ class Stage {
   keyControls: KeyControls
 
   pickingBehavior: PickingBehavior
+  selectingBehavior: SelectingBehavior
   mouseBehavior: MouseBehavior
   animationBehavior: AnimationBehavior
   keyBehavior: KeyBehavior
@@ -226,6 +228,7 @@ class Stage {
     this.keyControls = new KeyControls(this)
 
     this.pickingBehavior = new PickingBehavior(this)
+    this.selectingBehavior = new SelectingBehavior(this)
     this.mouseBehavior = new MouseBehavior(this)
     this.animationBehavior = new AnimationBehavior(this)
     this.keyBehavior = new KeyBehavior(this)
@@ -917,6 +920,14 @@ class Stage {
       })
     }, "structure")
     return proxies
+  }
+
+  get structureComponents () {
+    let comps: StructureComponent[] = [];
+    this.eachComponent(function (sc: StructureComponent) {
+      comps.push(sc)
+    }, "structure")
+    return comps
   }
 
 

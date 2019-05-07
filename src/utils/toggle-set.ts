@@ -51,7 +51,6 @@ export function createToggleSet<T> (): ToggleSet<T> {
       }
 
       for (var i = 0; i < values.length; i++) {
-        console.log('THIS ISSSS', this, action, i, values[i])
         action(values[i])
       }
     },

@@ -188,6 +188,10 @@ class MouseActions {
     stage.trackballControls.translateAtoms(dx, dy)
   }
 
+  static rotateSelectionDrag (stage: Stage, dx: number, dy: number) {
+    stage.trackballControls.rotateAtoms(dx, dy)
+  }
+
   /**
    * Move picked element to the center of the screen
    * @param {Stage} stage - the stage
@@ -278,16 +282,19 @@ class MouseActions {
   static clearSelect (stage: Stage) {
     stage.eachComponent(function (sc: StructureComponent) {
       sc.selectedAtomIndices.clear()
+      sc.selectedUpdate()
     }, "structure")
   }
 
   static onSelectDown (stage: Stage, x: number, y: number) {
+    console.log('ON SELECT DOWN')
     const ds = stage.dragSelection
     const sp = stage.getParameters() as any
     if (sp.dragSelection) {
       ds.createSelection(x, y)
     } else {
       ds.removeSelection()
+      console.log('rem??')
     }
   }
 
@@ -357,13 +364,16 @@ export const MouseActionPresets = {
   // ] as MouseActionPreset,
   // iqmol: [
     [ 'scroll', MouseActions.zoomScroll ],
-    // [ 'scroll-shift', MouseActions.focusScroll ],
-    // [ 'scroll-ctrl', MouseActions.isolevelScroll ],
-    // [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
+    [ 'scroll-shift', MouseActions.focusScroll ],
+    [ 'scroll-ctrl', MouseActions.isolevelScroll ],
+    [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
+
+    [ 'press-shift-left', MouseActions.onSelectDown],
+    [ 'drop-shift-left', MouseActions.onSelectUp],
 
     [ 'drag-left', MouseActions.rotateDrag ],
     [ 'drag-right', MouseActions.panDrag ],
-    [ 'drag-ctrl-left', MouseActions.rotateComponentDrag ],
+    [ 'drag-ctrl-left', MouseActions.rotateSelectionDrag ],
     [ 'drag-ctrl-right', MouseActions.moveComponentDrag ],
     [ 'dragXY-shift-left', MouseActions.selectPickAll ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],

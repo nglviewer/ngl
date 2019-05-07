@@ -152,10 +152,10 @@ class TrackballControls {
   }
 
   translateAtoms (x: number, y: number) {
-    let _move = this._translateComponent
-    this.stage.eachComponent(function (sc: StructureComponent) {
-      _move(sc, x, y)
-    })
+    let comps = this.stage.structureComponents
+    for (var i = 0; i < comps.length; i++) {
+      this._translateComponent(comps[i], x, y)
+    }
   }
 
   rotate (x: number, y: number) {
@@ -194,6 +194,50 @@ class TrackballControls {
     this.component.updateMatrix()
   }
 
+  _rotateAtoms (comp: StructureComponent, x:  number, y: number) {
+    // TODO
+    // Fix rotation
+    const [ dx, dy ] = this._getRotateXY(x, y)
+
+    let rot: Matrix4 = this.viewer.rotationGroup.matrix
+    let rotInv: Matrix4 = this.viewer.rotationGroup.matrix
+    rotInv.getInverse(rotInv)
+
+    tmpRotateMatrix.extractRotation(comp.transform)
+    tmpRotateMatrix.premultiply(rot)
+    tmpRotateMatrix.getInverse(tmpRotateMatrix)
+    tmpRotateVector.set(1, 0, 0)
+    tmpRotateVector.applyMatrix4(tmpRotateMatrix)
+    tmpRotateXMatrix.makeRotationAxis(tmpRotateVector, dy)
+    tmpRotateVector.set(0, 1, 0)
+    tmpRotateVector.applyMatrix4(tmpRotateMatrix)
+    tmpRotateYMatrix.makeRotationAxis(tmpRotateVector, dx)
+    tmpRotateXMatrix.multiply(tmpRotateYMatrix)
+    tmpRotateQuaternion.setFromRotationMatrix(tmpRotateXMatrix)
+
+    for (var j = 0; j < comp.selectedAtomIndices.list.length; j++) {
+      let i = comp.selectedAtomIndices.list[j]
+      let atom = comp.structure.getAtomProxy(i)
+      let _tmpAtomVector = new Vector3();
+      atom.positionToVector3(_tmpAtomVector)
+
+      _tmpAtomVector.add(this.viewer.translationGroup.position)
+      _tmpAtomVector.applyMatrix4(rot)
+      _tmpAtomVector.applyQuaternion(tmpRotateQuaternion)
+      _tmpAtomVector.applyMatrix4(rotInv)
+      _tmpAtomVector.sub(this.viewer.translationGroup.position)
+      atom.positionFromVector3(_tmpAtomVector)
+    }
+
+    comp.updateRepresentations({'position': true})
+  }
+
+  rotateAtoms (x: number, y: number) {
+    let comps = this.stage.structureComponents
+    for (var i = 0; i < comps.length; i++) {
+      this._rotateAtoms(comps[i], x, y)
+    }
+  }
 }
 
 export default TrackballControls

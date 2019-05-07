@@ -42,6 +42,7 @@ export default class DragSelection {
   }
 
   createSelection (x: number, y: number) {
+    console.log('creatin gsel')
     this.element.style.display = 'block';
     this.element.style.left = x + 'px';
     this.element.style.top = y + 'px';
@@ -50,10 +51,13 @@ export default class DragSelection {
 
     this.startPoint.x = x;
     this.startPoint.y = y;
+
+    this.isDown = true;
   }
 
   moveSelection (x: number, y: number) {
     if (!this.isDown) return;
+    console.log('mv seling')
 
     this.pointBottomRight.x = Math.max( this.startPoint.x, x );
     this.pointBottomRight.y = Math.max( this.startPoint.y, y );
@@ -67,6 +71,7 @@ export default class DragSelection {
   }
 
   removeSelection () {
+    console.log('removed')
     this.element.style.display = 'none';
     this.isDown = false;
   }

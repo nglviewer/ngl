@@ -6,7 +6,7 @@
 
 import { Signal } from 'signals'
 
-import { ComponentRegistry, MeasurementDefaultParams } from '../globals'
+import { ComponentRegistry, MeasurementDefaultParams, SelectionDefaultParams } from '../globals'
 import {
   defaults, /*deepEqual, */createRingBuffer, RingBuffer, createSimpleDict, SimpleDict
 } from '../utils'
@@ -30,7 +30,7 @@ import { createToggleSet, ToggleSet } from '../utils/toggle-set';
 export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
   'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
-  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'
+  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'|'selected'
 )
 
 export const StructureComponentDefaultParameters = Object.assign({
@@ -93,7 +93,6 @@ class StructureComponent extends Component {
     this.pickBuffer = createRingBuffer(4)
     this.pickDict = createSimpleDict()
     this.selectedAtomIndices = createToggleSet()
-    console.log('THIS IS', this.selectedAtomIndices)
 
     this.spacefillRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
@@ -115,7 +114,7 @@ class StructureComponent extends Component {
 
     this.selectedRepresentation = this.addRepresentation('spacefill', {
       sele: 'none',
-      color: MeasurementDefaultParams.color,
+      color: SelectionDefaultParams.color,
       opacity: 0.4,
       disablePicking: true,
       radiusType: 'data'
@@ -451,7 +450,10 @@ class StructureComponent extends Component {
   }
 
   selectedPick (atoms: AtomProxy[]) {
-    var atomIndices = atoms.map(x => x.index)
+    let atomIndices: number[] = []
+    atoms.forEach(function (x) {
+      atomIndices.push(x.index)
+    })
     this.selectedAtomIndices.toggleAny(atomIndices)
     this.selectedUpdate()
   }
@@ -463,10 +465,10 @@ class StructureComponent extends Component {
       const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
       radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
     })
-    this.spacefillRepresentation.setSelection(
+    this.selectedRepresentation.setSelection(
       pickData.length ? ( '@' + pickData.join(',') ) : 'none'
     )
-    this.spacefillRepresentation.setParameters({ radiusData })
+    this.selectedRepresentation.setParameters({ radiusData })
   }
 }
 
