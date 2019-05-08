@@ -286,8 +286,8 @@ class MouseObserver {
       this.signals.draggedXY.dispatch(
         this.prevPosition.x,
         this.prevPosition.y,
-        this.position.x,
-        this.position.y
+        this.canvasPosition.x,
+        this.canvasPosition.y
       )
     }
   }
@@ -320,9 +320,10 @@ class MouseObserver {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
-    this.signals.dropped.dispatch();
+    
     this._setKeys(event)
     const cp = this.canvasPosition
+    this.signals.dropped.dispatch();
     if (this._distance() < 4) {
       this.lastClicked = window.performance.now()
       if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {

@@ -254,6 +254,8 @@ class MouseActions {
     let components: StructureComponent[] = []
     let picked: SimpleSet<number>[] = []
 
+    stage.dragSelection.moveSelection(x, y)
+
     pickingProxies.forEach(function (pickingProxy) {
       if (pickingProxy && pickingProxy.atom) {
         let a = pickingProxy.atom.index
@@ -274,7 +276,7 @@ class MouseActions {
       components[i].setSelectedIndices(picked[i].list)
     }
 
-    stage.dragSelection.moveSelection(x, y)
+    
   }
 
   static clearSelect(stage: Stage) {
@@ -292,11 +294,6 @@ class MouseActions {
     } else {
       ds.removeSelection()
     }
-  }
-
-  static onSelectDragXY(stage: Stage, x: number, y: number) {
-    const ds = stage.dragSelection
-    ds.moveSelection(x, y)
   }
 
   static onSelectUp(stage: Stage) {
