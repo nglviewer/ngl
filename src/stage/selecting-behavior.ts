@@ -14,7 +14,7 @@ class SelectingBehavior {
   mouse: MouseObserver
   controls: MouseControls
 
-  constructor (readonly stage: Stage) {
+  constructor(readonly stage: Stage) {
     this.stage = stage
     this.mouse = stage.mouseObserver
     this.controls = stage.mouseControls
@@ -32,18 +32,20 @@ class SelectingBehavior {
   //   this.controls.run('clickPick', pickingProxy)
   // }
 
-  _onPress (x: number, y: number) {
+  _onPress(x: number, y: number) {
     this.controls.run('press', x, y)
   }
 
-  _onDrop () {
+  _onDrop() {
     this.controls.run('drop')
   }
 
-  _onDragXY (x0: number, y0: number, x1: number, y1: number) {
+  _onDragXY(x1: number, y1: number) {
     // const sp = this.stage.getParameters() as any
     if (this.stage.dragSelection.isDown) {
-      let pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1-x0, y1-y0)
+      const x0 = this.stage.dragSelection.startPoint.x
+      const y0 = this.stage.dragSelection.startPoint.y
+      let pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1, y1)
       this.controls.run('dragXY', pickedProxies, x1, y1)
     }
   }
@@ -52,7 +54,7 @@ class SelectingBehavior {
   //   this.controls.run('doubleClick')
   // }
 
-  dispose () {
+  dispose() {
     // this.mouse.signals.clicked.remove(this._onClick, this)
     this.mouse.signals.pressed.remove(this._onPress, this)
     this.mouse.signals.draggedXY.remove(this._onDragXY, this)

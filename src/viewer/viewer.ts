@@ -48,12 +48,12 @@ const pixelBufferUint = new Uint8Array(4 * 25)
 // This starts at the center and tries successively further points.
 // (Many points will be at equal distance to the center, their order
 // is arbitrary).
-const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,24,20]
+const pixelOrder = [12, 7, 13, 17, 11, 6, 8, 18, 16, 2, 14, 22, 10, 1, 3, 9, 19, 23, 21, 15, 5, 0, 4, 24, 20]
 
 
 const tmpMatrix = new Matrix4()
 
-function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera|OrthographicCamera, geometry: Geometry, material: ShaderMaterial/*, group */) {
+function onBeforeRender(this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera | OrthographicCamera, geometry: Geometry, material: ShaderMaterial/*, group */) {
   const u = material.uniforms
   const updateList = []
 
@@ -63,7 +63,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   }
 
   if (u.modelViewMatrixInverse || u.modelViewMatrixInverseTranspose ||
-      u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
+    u.modelViewProjectionMatrix || u.modelViewProjectionMatrixInverse
   ) {
     this.modelViewMatrix.multiplyMatrices(camera.matrixWorldInverse, this.matrixWorld)
   }
@@ -122,13 +122,13 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
       const pu = p.getUniforms()
 
       updateList.forEach(function (name) {
-        pu.setValue(gl, name, u[ name ].value)
+        pu.setValue(gl, name, u[name].value)
       })
     }
   }
 }
 
-export type CameraType = 'perspective'|'orthographic'|'stereo'
+export type CameraType = 'perspective' | 'orthographic' | 'stereo'
 
 export interface ViewerSignals {
   ticked: Signal,
@@ -189,7 +189,7 @@ export default class Viewer {
   perspectiveCamera: PerspectiveCamera
   private orthographicCamera: OrthographicCamera
   private stereoCamera: StereoCamera
-  camera: PerspectiveCamera|OrthographicCamera
+  camera: PerspectiveCamera | OrthographicCamera
 
   width: number
   height: number
@@ -240,7 +240,7 @@ export default class Viewer {
 
   private distVector = new Vector3()
 
-  constructor (idOrElement: string|HTMLElement) {
+  constructor(idOrElement: string | HTMLElement) {
     this.signals = {
       ticked: new Signal(),
       rendered: new Signal()
@@ -250,7 +250,7 @@ export default class Viewer {
       const elm = document.getElementById(idOrElement)
       if (elm === null) {
         this.container = document.createElement('div')
-      }else {
+      } else {
         this.container = elm
       }
     } else if (idOrElement instanceof HTMLElement) {
@@ -292,7 +292,7 @@ export default class Viewer {
     this.animate = this.animate.bind(this)
   }
 
-  private _initParams () {
+  private _initParams() {
     this.parameters = {
       fogColor: new Color(0x000000),
       fogNear: 50,
@@ -318,9 +318,9 @@ export default class Viewer {
     }
   }
 
-  private _initCamera () {
+  private _initCamera() {
     const lookAt = new Vector3(0, 0, 0)
-    const {width, height} = this
+    const { width, height } = this
 
     this.perspectiveCamera = new PerspectiveCamera(
       this.parameters.cameraFov, width / height
@@ -341,7 +341,7 @@ export default class Viewer {
     const cameraType = this.parameters.cameraType
     if (cameraType === 'orthographic') {
       this.camera = this.orthographicCamera
-    } else if(cameraType === 'perspective' || cameraType === 'stereo') {
+    } else if (cameraType === 'perspective' || cameraType === 'stereo') {
       this.camera = this.perspectiveCamera
     } else {
       throw new Error(`Unknown cameraType '${cameraType}'`)
@@ -349,11 +349,11 @@ export default class Viewer {
     this.camera.updateProjectionMatrix()
   }
 
-  private _initStats () {
+  private _initStats() {
     this.stats = new Stats()
   }
 
-  private _initScene () {
+  private _initScene() {
     if (!this.scene) {
       this.scene = new Scene()
       this.scene.name = 'scene'
@@ -400,9 +400,9 @@ export default class Viewer {
     this.scene.add(this.ambientLight)
   }
 
-  private _initRenderer () {
+  private _initRenderer() {
     const dpr = window.devicePixelRatio
-    const {width, height} = this
+    const { width, height } = this
 
     try {
       this.renderer = new WebGLRenderer({
@@ -527,7 +527,7 @@ export default class Viewer {
     ))
   }
 
-  private _initHelper () {
+  private _initHelper() {
     const indices = new Uint16Array([
       0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
       6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7
@@ -547,19 +547,19 @@ export default class Viewer {
     this.helperGroup.add(this.boundingBoxMesh)
   }
 
-  updateHelper () {
+  updateHelper() {
     const position = ((this.boundingBoxMesh.geometry as BufferGeometry).attributes as any).position  // TODO
     const array = position.array
-    const {min, max} = this.boundingBox
+    const { min, max } = this.boundingBox
 
-    array[ 0 ] = max.x; array[ 1 ] = max.y; array[ 2 ] = max.z
-    array[ 3 ] = min.x; array[ 4 ] = max.y; array[ 5 ] = max.z
-    array[ 6 ] = min.x; array[ 7 ] = min.y; array[ 8 ] = max.z
-    array[ 9 ] = max.x; array[ 10 ] = min.y; array[ 11 ] = max.z
-    array[ 12 ] = max.x; array[ 13 ] = max.y; array[ 14 ] = min.z
-    array[ 15 ] = min.x; array[ 16 ] = max.y; array[ 17 ] = min.z
-    array[ 18 ] = min.x; array[ 19 ] = min.y; array[ 20 ] = min.z
-    array[ 21 ] = max.x; array[ 22 ] = min.y; array[ 23 ] = min.z
+    array[0] = max.x; array[1] = max.y; array[2] = max.z
+    array[3] = min.x; array[4] = max.y; array[5] = max.z
+    array[6] = min.x; array[7] = min.y; array[8] = max.z
+    array[9] = max.x; array[10] = min.y; array[11] = max.z
+    array[12] = max.x; array[13] = max.y; array[14] = min.z
+    array[15] = min.x; array[16] = max.y; array[17] = min.z
+    array[18] = min.x; array[19] = min.y; array[20] = min.z
+    array[21] = max.x; array[22] = min.y; array[23] = min.z
 
     position.needsUpdate = true
 
@@ -568,7 +568,7 @@ export default class Viewer {
     }
   }
 
-  add (buffer: Buffer, instanceList?: BufferInstance[]) {
+  add(buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
     if (instanceList) {
@@ -594,10 +594,10 @@ export default class Viewer {
     // Log.timeEnd( "Viewer.add" );
   }
 
-  addBuffer (buffer: Buffer, instance?: BufferInstance) {
+  addBuffer(buffer: Buffer, instance?: BufferInstance) {
     // Log.time( "Viewer.addBuffer" );
 
-    function setUserData (object: Object3D) {
+    function setUserData(object: Object3D) {
       if (object instanceof Group) {
         object.children.forEach(setUserData)
       } else {
@@ -647,7 +647,7 @@ export default class Viewer {
     // Log.timeEnd( "Viewer.addBuffer" );
   }
 
-  remove (buffer: Buffer) {
+  remove(buffer: Buffer) {
     this.translationGroup.children.forEach(function (group) {
       group.remove(buffer.group)
       group.remove(buffer.wireframeGroup)
@@ -663,10 +663,10 @@ export default class Viewer {
     // this.requestRender();
   }
 
-  private _updateBoundingBox (geometry?: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
+  private _updateBoundingBox(geometry?: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
     const boundingBox = this.boundingBox
 
-    function updateGeometry (geometry: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
+    function updateGeometry(geometry: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
       if (!geometry.boundingBox) {
         geometry.computeBoundingBox()
       }
@@ -689,7 +689,7 @@ export default class Viewer {
       boundingBox.union(geoBoundingBox)
     }
 
-    function updateNode (node: Mesh) {
+    function updateNode(node: Mesh) {
       if (node.geometry !== undefined) {
         let matrix, instanceMatrix
         if (node.userData.buffer) {
@@ -714,13 +714,13 @@ export default class Viewer {
     this.boundingBoxLength = this.boundingBoxSize.length()
   }
 
-  updateBoundingBox () {
+  updateBoundingBox() {
     this._updateBoundingBox()
     if (Debug) this.updateHelper()
   }
 
-  getPickingPixels () {
-    const {width, height} = this
+  getPickingPixels() {
+    const { width, height } = this
 
     const n = width * height * 4
     const imgBuffer = SupportsReadPixelsFloat ? new Float32Array(n) : new Uint8Array(n)
@@ -733,17 +733,17 @@ export default class Viewer {
     return imgBuffer
   }
 
-  getImage (picking: boolean) {
+  getImage(picking: boolean) {
     return new Promise(resolve => {
       if (picking) {
-        const {width, height} = this
+        const { width, height } = this
         const n = width * height * 4
         let imgBuffer = this.getPickingPixels()
 
         if (SupportsReadPixelsFloat) {
           const imgBuffer2 = new Uint8Array(n)
           for (let i = 0; i < n; ++i) {
-            imgBuffer2[ i ] = Math.round(imgBuffer[ i ] * 255)
+            imgBuffer2[i] = Math.round(imgBuffer[i] * 255)
           }
           imgBuffer = imgBuffer2
         }
@@ -762,11 +762,11 @@ export default class Viewer {
     })
   }
 
-  makeImage (params: Partial<ImageParameters> = {}) {
+  makeImage(params: Partial<ImageParameters> = {}) {
     return makeImage(this, params)
   }
 
-  setLight (color: Color|number|string, intensity: number, ambientColor: Color|number|string, ambientIntensity: number) {
+  setLight(color: Color | number | string, intensity: number, ambientColor: Color | number | string, ambientIntensity: number) {
     const p = this.parameters
 
     if (color !== undefined) p.lightColor.set(color as string)  // TODO
@@ -777,7 +777,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setFog (color?: Color|number|string, near?: number, far?: number) {
+  setFog(color?: Color | number | string, near?: number, far?: number) {
     const p = this.parameters
 
     if (color !== undefined) p.fogColor.set(color as string)  // TODO
@@ -787,7 +787,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setBackground (color?: Color|number|string) {
+  setBackground(color?: Color | number | string) {
     const p = this.parameters
 
     if (color) p.backgroundColor.set(color as string)  // TODO
@@ -799,7 +799,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setSampling (level: number) {
+  setSampling(level: number) {
     if (level !== undefined) {
       this.parameters.sampleLevel = level
       this.sampleLevel = level
@@ -808,7 +808,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setCamera (type: CameraType, fov?: number, eyeSep?: number) {
+  setCamera(type: CameraType, fov?: number, eyeSep?: number) {
     const p = this.parameters
 
     if (type) p.cameraType = type
@@ -839,7 +839,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setClip (near: number, far: number, dist: number) {
+  setClip(near: number, far: number, dist: number) {
     const p = this.parameters
 
     if (near !== undefined) p.clipNear = near
@@ -849,7 +849,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setSize (width: number, height: number) {
+  setSize(width: number, height: number) {
     this.width = width || 1
     this.height = height || 1
 
@@ -875,7 +875,7 @@ export default class Viewer {
     this.requestRender()
   }
 
-  handleResize () {
+  handleResize() {
     if (this.container === document.body) {
       this.setSize(window.innerWidth, window.innerHeight)
     } else {
@@ -884,7 +884,7 @@ export default class Viewer {
     }
   }
 
-  updateInfo (reset?: boolean) {
+  updateInfo(reset?: boolean) {
     const { memory, render } = this.info
 
     if (reset) {
@@ -909,7 +909,7 @@ export default class Viewer {
     }
   }
 
-  animate () {
+  animate() {
     this.signals.ticked.dispatch(this.stats)
     const delta = window.performance.now() - this.stats.startTime
 
@@ -926,7 +926,7 @@ export default class Viewer {
     window.requestAnimationFrame(this.animate)
   }
 
-  pick (x: number, y: number) {
+  pick(x: number, y: number) {
     if (this.parameters.cameraType === 'stereo') {
       // TODO picking broken for stereo camera
       return {
@@ -954,7 +954,7 @@ export default class Viewer {
 
       const offset = pixelOrder[i] * 4
 
-      const oid = Math.round(pixelBuffer[ offset + 3 ])
+      const oid = Math.round(pixelBuffer[offset + 3])
       const object = this.pickingGroup.getObjectById(oid)
       if (object) {
         instance = object.userData.instance
@@ -993,7 +993,7 @@ export default class Viewer {
     return { pid, instance, picker }
   }
 
-  pickAll (x0: number, y0: number, dx: number, dy: number) {
+  pickAll(x0: number, y0: number, x1: number, y1: number) {
 
     if (this.parameters.cameraType === 'stereo') {
       // TODO picking broken for stereo camera
@@ -1004,14 +1004,17 @@ export default class Viewer {
 
     x0 *= window.devicePixelRatio
     y0 *= window.devicePixelRatio
-    dx *= window.devicePixelRatio
-    dy *= window.devicePixelRatio
+    x1 *= window.devicePixelRatio
+    y1 *= window.devicePixelRatio
 
-    let x = Math.min(x0, x0 + dx)
-    let y = Math.min(y0, y0 + dy)
+    let x = Math.max(x0 - 2, x1 - 2, 0)
+    let y = Math.min(y0 - 2, y1 - 2, 0)
 
-    let px = Math.abs(dx)
-    let py = Math.abs(dy)
+
+    let px = Math.abs(x1 - x0) + 5
+    let py = Math.abs(y1 - y0) + 5
+
+    console.log(x0, y0, x1, y1, x, y, px, py)
 
     let _pixelBufferFloat = new Float32Array(4 * px * py)
     let _pixelBufferUint = new Uint8Array(4 * px * py)
@@ -1022,12 +1025,13 @@ export default class Viewer {
       this.pickingTarget, x, y, px, py, pixelBuffer
     )
 
-    for (let i = 0; i < px*py; i++) {
+    for (let i = 0; i < px * py; i++) {
 
-      let pid = 0, instance, picker      
-      const offset = i * 4
+      let pid: number = 0, instance, picker
 
-      const oid = Math.round(pixelBuffer[ offset + 3 ])
+      let offset = i * 4
+
+      const oid = Math.round(pixelBuffer[offset + 3])
       const object = this.pickingGroup.getObjectById(oid)
       if (object) {
         instance = object.userData.instance
@@ -1035,6 +1039,8 @@ export default class Viewer {
       } else {
         continue
       }
+
+      if (!picker) continue;
 
       if (SupportsReadPixelsFloat) {
         pid =
@@ -1053,7 +1059,7 @@ export default class Viewer {
     return picked
   }
 
-  requestRender () {
+  requestRender() {
     if (this.renderPending) {
       // Log.info("there is still a 'render' call pending")
       return
@@ -1073,13 +1079,13 @@ export default class Viewer {
     })
   }
 
-  updateZoom () {
+  updateZoom() {
     const fov = degToRad(this.perspectiveCamera.fov)
     const height = 2 * Math.tan(fov / 2) * -this.camera.position.z
     this.orthographicCamera.zoom = this.height / height
   }
 
-  private __updateClipping () {
+  private __updateClipping() {
     const p = this.parameters
 
     // clipping
@@ -1128,7 +1134,7 @@ export default class Viewer {
     }
   }
 
-  private __updateCamera () {
+  private __updateCamera() {
     const camera = this.camera
     camera.updateMatrix()
     camera.updateMatrixWorld(true)
@@ -1138,14 +1144,14 @@ export default class Viewer {
     sortProjectedPosition(this.scene, camera)
   }
 
-  private __setVisibility (model: boolean, picking: boolean, background: boolean, helper: boolean) {
+  private __setVisibility(model: boolean, picking: boolean, background: boolean, helper: boolean) {
     this.modelGroup.visible = model
     this.pickingGroup.visible = picking
     this.backgroundGroup.visible = background
     this.helperGroup.visible = helper
   }
 
-  private __updateLights () {
+  private __updateLights() {
     this.spotLight.color.set(this.parameters.lightColor)
     this.spotLight.intensity = this.parameters.lightIntensity
 
@@ -1156,7 +1162,7 @@ export default class Viewer {
     this.ambientLight.intensity = this.parameters.ambientIntensity
   }
 
-  private __renderPickingGroup (camera: PerspectiveCamera|OrthographicCamera) {
+  private __renderPickingGroup(camera: PerspectiveCamera | OrthographicCamera) {
     this.renderer.clearTarget(this.pickingTarget, true, true, true)
     this.__setVisibility(false, true, false, false)
     this.renderer.render(this.scene, camera, this.pickingTarget)
@@ -1173,7 +1179,7 @@ export default class Viewer {
     // }
   }
 
-  private __renderModelGroup (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
+  private __renderModelGroup(camera: PerspectiveCamera | OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     if (renderTarget) {
       this.renderer.clearTarget(renderTarget, true, true, true)
     } else {
@@ -1194,14 +1200,14 @@ export default class Viewer {
     this.updateInfo()
   }
 
-  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera) {
+  private __renderSuperSample(camera: PerspectiveCamera | OrthographicCamera) {
     // based on the Supersample Anti-Aliasing Render Pass
     // contributed to three.js by bhouston / http://clara.io/
     //
     // This manual approach to SSAA re-renders the scene ones for
     // each sample with camera jitter and accumulates the results.
     // References: https://en.wikipedia.org/wiki/Supersampling
-    const offsetList = JitterVectors[ Math.max(0, Math.min(this.sampleLevel, 5)) ]
+    const offsetList = JitterVectors[Math.max(0, Math.min(this.sampleLevel, 5))]
 
     const baseSampleWeight = 1.0 / offsetList.length
     const roundingRange = 1 / 32
@@ -1217,9 +1223,9 @@ export default class Viewer {
     // render the scene multiple times, each slightly jitter offset
     // from the last and accumulate the results.
     for (let i = 0; i < offsetList.length; ++i) {
-      const offset = offsetList[ i ]
+      const offset = offsetList[i]
       camera.setViewOffset(
-        width, height, offset[ 0 ], offset[ 1 ], width, height
+        width, height, offset[0], offset[1], width, height
       )
       camera.updateProjectionMatrix()
       updateCameraUniforms(this.scene, camera)
@@ -1247,7 +1253,7 @@ export default class Viewer {
     this.renderer.render(this.compositeScene, this.compositeCamera, null!, true)
   }
 
-  private __renderStereo (picking = false) {
+  private __renderStereo(picking = false) {
     const stereoCamera = this.stereoCamera
     stereoCamera.update(this.perspectiveCamera);
 
@@ -1270,7 +1276,7 @@ export default class Viewer {
     renderer.setViewport(0, 0, size.width, size.height)
   }
 
-  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera) {
+  private __render(picking = false, camera: PerspectiveCamera | OrthographicCamera) {
     if (picking) {
       if (!this.lastRenderedPicking) this.__renderPickingGroup(camera)
     } else if (this.sampleLevel > 0 && this.parameters.cameraType !== 'stereo') {
@@ -1281,7 +1287,7 @@ export default class Viewer {
     }
   }
 
-  render (picking = false) {
+  render(picking = false) {
     if (this.rendering) {
       Log.warn("'tried to call 'render' from within 'render'")
       return
@@ -1312,14 +1318,14 @@ export default class Viewer {
     // Log.log(this.info.memory, this.info.render)
   }
 
-  clear () {
+  clear() {
     Log.log('scene cleared')
     this.scene.remove(this.rotationGroup)
     this._initScene()
     this.renderer.clear()
   }
 
-  dispose () {
+  dispose() {
     this.renderer.dispose()
   }
 }

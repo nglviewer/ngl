@@ -28,9 +28,9 @@ import { Vector3, Box3 } from 'three';
 import { createToggleSet, ToggleSet } from '../utils/toggle-set';
 
 export type StructureRepresentationType = (
-  'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
-  'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
-  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'|'selected'
+  'angle' | 'axes' | 'backbone' | 'ball+stick' | 'base' | 'cartoon' | 'contact' | 'dihedral' |
+  'distance' | 'helixorient' | 'hyperball' | 'label' | 'licorice' | 'line' | 'surface' |
+  'ribbon' | 'rocket' | 'rope' | 'selected' | 'spacefill' | 'trace' | 'tube' | 'unitcell' | 'selected'
 )
 
 export const StructureComponentDefaultParameters = Object.assign({
@@ -58,7 +58,7 @@ export interface StructureComponentSignals extends ComponentSignals {
 class StructureComponent extends Component {
   readonly signals: StructureComponentSignals
   readonly parameters: StructureComponentParameters
-  get defaultParameters () { return StructureComponentDefaultParameters }
+  get defaultParameters() { return StructureComponentDefaultParameters }
 
   selection: Selection
   structureView: StructureView
@@ -77,7 +77,7 @@ class StructureComponent extends Component {
 
   measureRepresentations: RepresentationCollection
 
-  constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
+  constructor(stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, structure, Object.assign({ name: structure.name }, params))
 
     this.signals = Object.assign(this.signals, {
@@ -137,7 +137,7 @@ class StructureComponent extends Component {
    * Component type
    * @type {String}
    */
-  get type () { return 'structure' }
+  get type() { return 'structure' }
 
   /**
    * Initialize selection
@@ -145,7 +145,7 @@ class StructureComponent extends Component {
    * @param {String} sele - selection string
    * @return {undefined}
    */
-  initSelection (sele: string) {
+  initSelection(sele: string) {
     /**
      * Selection for {@link StructureComponent#structureView}
      * @private
@@ -175,7 +175,7 @@ class StructureComponent extends Component {
    * @param {String} string - selection string
    * @return {StructureComponent} this object
    */
-  setSelection (string: string) {
+  setSelection(string: string) {
     this.parameters.sele = string
     this.selection.setString(string)
     return this
@@ -186,7 +186,7 @@ class StructureComponent extends Component {
    * @param {String} value - assembly name
    * @return {undefined}
    */
-  setDefaultAssembly (value:string) {
+  setDefaultAssembly(value: string) {
     // filter out non-existing assemblies
     if (this.structure.biomolDict[value] === undefined) value = ''
     // only set default assembly when changed
@@ -205,7 +205,7 @@ class StructureComponent extends Component {
    * Rebuild all representations
    * @return {undefined}
    */
-  rebuildRepresentations () {
+  rebuildRepresentations() {
     this.reprList.forEach((repr: RepresentationElement) => {
       repr.build()
     })
@@ -217,19 +217,19 @@ class StructureComponent extends Component {
    * Rebuild all trajectories
    * @return {undefined}
    */
-  rebuildTrajectories () {
+  rebuildTrajectories() {
     this.trajList.forEach(trajComp => {
       trajComp.trajectory.setStructure(this.structureView)
     })
   }
 
-  updateRepresentations (what: any) {
+  updateRepresentations(what: any) {
     super.updateRepresentations(what)
     this.measureRepresentations.update(what)
     this.selectedRepresentation.update(what)
   }
 
-  addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
+  addRepresentation(type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
     const reprComp = this._addRepresentation(type, this.structureView, params, hidden)
@@ -242,7 +242,7 @@ class StructureComponent extends Component {
   /**
    * Add a new trajectory component to the structure
    */
-  addTrajectory (trajPath = '', params: { [k: string]: any } = {}) {
+  addTrajectory(trajPath = '', params: { [k: string]: any } = {}) {
     const traj = makeTrajectory(trajPath, this.structureView, params as TrajectoryParameters)
 
     traj.signals.frameChanged.add(() => {
@@ -256,7 +256,7 @@ class StructureComponent extends Component {
     return trajComp
   }
 
-  removeTrajectory (traj: TrajectoryElement) {
+  removeTrajectory(traj: TrajectoryElement) {
     const idx = this.trajList.indexOf(traj)
     if (idx !== -1) {
       this.trajList.splice(idx, 1)
@@ -267,7 +267,7 @@ class StructureComponent extends Component {
     this.signals.trajectoryRemoved.dispatch(traj)
   }
 
-  dispose () {
+  dispose() {
     // copy via .slice because side effects may change trajList
     this.trajList.slice().forEach(traj => traj.dispose())
 
@@ -285,8 +285,8 @@ class StructureComponent extends Component {
    * @param  {Integer} [duration] - duration of the animation, defaults to 0
    * @return {undefined}
    */
-  autoView (duration?: number): any
-  autoView (sele?: string|number, duration?: number) {
+  autoView(duration?: number): any
+  autoView(sele?: string | number, duration?: number) {
     if (typeof sele === 'number') {
       duration = sele
       sele = ''
@@ -299,7 +299,7 @@ class StructureComponent extends Component {
     )
   }
 
-  getBoxUntransformed (sele: string): Box3 {
+  getBoxUntransformed(sele: string): Box3 {
     let bb
 
     if (sele) {
@@ -311,7 +311,7 @@ class StructureComponent extends Component {
     return bb
   }
 
-  getCenterUntransformed (sele: string): Vector3 {
+  getCenterUntransformed(sele: string): Vector3 {
     if (sele && typeof sele === 'string') {
       return this.structure.atomCenter(new Selection(sele))
     } else {
@@ -319,7 +319,7 @@ class StructureComponent extends Component {
     }
   }
 
-  superpose (component: StructureComponent, align: boolean, sele1: string, sele2: string) {
+  superpose(component: StructureComponent, align: boolean, sele1: string, sele2: string) {
     superpose(
       this.structureView, component.structureView, align, sele1, sele2
     )
@@ -329,7 +329,7 @@ class StructureComponent extends Component {
     return this
   }
 
-  getMaxRepresentationRadius (atomIndex: number) {
+  getMaxRepresentationRadius(atomIndex: number) {
     let maxRadius = 0
     const atom = this.structure.getAtomProxy(atomIndex)
     this.eachRepresentation(reprElem => {
@@ -341,7 +341,7 @@ class StructureComponent extends Component {
     return maxRadius
   }
 
-  measurePick (atom: AtomProxy) {
+  measurePick(atom: AtomProxy) {
     const pickCount = this.pickBuffer.count
 
     if (this.lastPick === atom.index && pickCount >= 1) {
@@ -379,33 +379,33 @@ class StructureComponent extends Component {
     this.measureUpdate()
   }
 
-  measureClear () {
+  measureClear() {
     this.pickBuffer.clear()
     this.lastPick = undefined
     this.spacefillRepresentation.setSelection('none')
   }
 
-  measureBuild () {
+  measureBuild() {
     const md = this.measureData()
     this.distanceRepresentation.setParameters({ atomPair: md.distance })
     this.angleRepresentation.setParameters({ atomTriple: md.angle })
     this.dihedralRepresentation.setParameters({ atomQuad: md.dihedral })
   }
 
-  measureUpdate () {
+  measureUpdate() {
     const pickData = this.pickBuffer.data
     const radiusData: { [k: number]: number } = {}
     pickData.forEach(ai => {
       const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
-      radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
+      radiusData[ai] = r * (2.3 - smoothstep(0.1, 2, r))
     })
     this.spacefillRepresentation.setSelection(
-      pickData.length ? ( '@' + pickData.join(',') ) : 'none'
+      pickData.length ? ('@' + pickData.join(',')) : 'none'
     )
     this.spacefillRepresentation.setParameters({ radiusData })
   }
 
-  measureData () {
+  measureData() {
     const pv = this.pickDict.values
     return {
       distance: pv.filter(l => l.length === 2),
@@ -417,7 +417,7 @@ class StructureComponent extends Component {
   /**
    * Remove all measurements, optionally limit to distance, angle or dihedral
    */
-  removeAllMeasurements (type?: MeasurementFlags) {
+  removeAllMeasurements(type?: MeasurementFlags) {
     const pd = this.pickDict
     const pv = pd.values
     const remove = function (len: number) {
@@ -432,7 +432,7 @@ class StructureComponent extends Component {
   /**
    * Remove a measurement given as a pair, triple, quad of atom indices
    */
-  removeMeasurement (atomList: number[]) {
+  removeMeasurement(atomList: number[]) {
     this.pickDict.del(atomList.slice().sort())
     this.measureBuild()
   }
@@ -440,7 +440,7 @@ class StructureComponent extends Component {
   /**
    * Add a measurement given as a pair, triple, quad of atom indices
    */
-  addMeasurement (atomList: number[]) {
+  addMeasurement(atomList: number[]) {
     if (atomList.length < 2 || atomList.length > 4) return
     const atomListSorted = atomList.slice().sort()
     if (!this.pickDict.has(atomListSorted)) {
@@ -449,24 +449,37 @@ class StructureComponent extends Component {
     this.measureBuild()
   }
 
-  selectedPick (atoms: AtomProxy[]) {
+  selectedPick(atoms: AtomProxy[]) {
     let atomIndices: number[] = []
     atoms.forEach(function (x) {
       atomIndices.push(x.index)
     })
+    this.selectedPickIndices(atomIndices)
+  }
+
+  selectedPickIndices(atomIndices: number[]) {
     this.selectedAtomIndices.toggleAny(atomIndices)
     this.selectedUpdate()
   }
 
-  selectedUpdate () {
+  setSelectedIndices(atomIndices: number[]) {
+    this.selectedAtomIndices.clear()
+    for (var i = 0; i < atomIndices.length; i++) {
+      this.selectedAtomIndices.add(atomIndices[i])
+    }
+    this.selectedUpdate()
+  }
+
+
+  selectedUpdate() {
     const pickData = this.selectedAtomIndices.list
     const radiusData: { [k: number]: number } = {}
     pickData.forEach(ai => {
       const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
-      radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
+      radiusData[ai] = r * (2.3 - smoothstep(0.1, 2, r))
     })
     this.selectedRepresentation.setSelection(
-      pickData.length ? ( '@' + pickData.join(',') ) : 'none'
+      pickData.length ? ('@' + pickData.join(',')) : 'none'
     )
     this.selectedRepresentation.setParameters({ radiusData })
   }

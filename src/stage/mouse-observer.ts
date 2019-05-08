@@ -25,14 +25,14 @@ import MouseControls from '../controls/mouse-controls'
  * @property {Signal} hovered - on hover
  */
 
-function getTouchDistance (event: TouchEvent) {
-  const dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX
-  const dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY
+function getTouchDistance(event: TouchEvent) {
+  const dx = event.touches[0].pageX - event.touches[1].pageX
+  const dy = event.touches[0].pageY - event.touches[1].pageY
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-function getMouseButtons (event: MouseEvent) {
-    if (typeof event === 'object') {
+function getMouseButtons(event: MouseEvent) {
+  if (typeof event === 'object') {
     if ('buttons' in event) {
       return event.buttons
     } else if ('which' in event as any) {
@@ -72,7 +72,7 @@ export interface MouseSignals {
 
 export interface MouseParams {
   hoverTimeout?: number
-  handleScroll?:boolean
+  handleScroll?: boolean
   doubleClickSpeed?: number
 }
 
@@ -117,7 +117,7 @@ class MouseObserver {
   }
 
   hoverTimeout: number
-  handleScroll:boolean
+  handleScroll: boolean
   doubleClickSpeed: number
 
   viewer: Viewer
@@ -134,9 +134,9 @@ class MouseObserver {
   hovering = true  // Flag indicating if the mouse is hovering
   scrolled = false  // Flag indicating if there was a scolling event since the last mouse move
   lastMoved = Infinity  // Timestamp of last mouse move
-  which? = 0  // 0: No button; 1: Left button; 2: Middle button; 3: Right button
-  buttons? = 0  // 0: No button; 1: Left button; 2: Right button; 4: Middle button
-  pressed? = false  // Flag indicating if the mouse is pressed down
+  which?= 0  // 0: No button; 1: Left button; 2: Middle button; 3: Right button
+  buttons?= 0  // 0: No button; 1: Left button; 2: Right button; 4: Middle button
+  pressed?= false  // Flag indicating if the mouse is pressed down
   altKey = false  // Flag indicating if the alt key is pressed
   ctrlKey = false  // Flag indicating if the ctrl key is pressed
   metaKey = false  // Flag indicating if the meta key is pressed
@@ -155,7 +155,7 @@ class MouseObserver {
    * @param  {Boolean} params.handleScroll - whether or not to handle scroll events
    * @param  {Integer} params.doubleClickSpeed - max time in ms to trigger double click
    */
-  constructor (readonly domElement: HTMLCanvasElement, params: MouseParams = {}) {
+  constructor(readonly domElement: HTMLCanvasElement, params: MouseParams = {}) {
     this.domElement.style.touchAction = 'none'
 
     this.hoverTimeout = defaults(params.hoverTimeout, 50)
@@ -187,7 +187,7 @@ class MouseObserver {
     document.addEventListener('touchmove', this._onTouchmove, opt)
   }
 
-  get key () {
+  get key() {
     let key = 0
     if (this.altKey) key += 1
     if (this.ctrlKey) key += 2
@@ -196,7 +196,7 @@ class MouseObserver {
     return key
   }
 
-  setParameters (params: MouseParams = {}) {
+  setParameters(params: MouseParams = {}) {
     this.hoverTimeout = defaults(params.hoverTimeout, this.hoverTimeout)
   }
 
@@ -206,7 +206,7 @@ class MouseObserver {
    * @emits {MouseSignals.hovered} when hovered
    * @return {undefined}
    */
-  _listen () {
+  _listen() {
     const now = window.performance.now()
     const cp = this.canvasPosition
     if (this.doubleClickPending && now - this.lastClicked > this.doubleClickSpeed) {
@@ -231,7 +231,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousewheel (event: MouseWheelEvent) {
+  _onMousewheel(event: MouseWheelEvent) {
     if (event.target !== this.domElement || !this.handleScroll) {
       return
     }
@@ -264,7 +264,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousemove (event: MouseEvent) {
+  _onMousemove(event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
       this.overElement = true
@@ -288,11 +288,11 @@ class MouseObserver {
         this.prevPosition.y,
         this.position.x,
         this.position.y
-        )
+      )
     }
   }
 
-  _onMousedown (event: MouseEvent) {
+  _onMousedown(event: MouseEvent) {
     if (event.target !== this.domElement) {
       return
     }
@@ -316,10 +316,11 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMouseup (event: MouseEvent) {
+  _onMouseup(event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
+    this.signals.dropped.dispatch();
     this._setKeys(event)
     const cp = this.canvasPosition
     if (this._distance() < 4) {
@@ -329,7 +330,6 @@ class MouseObserver {
         this.doubleClickPending = false
       }
       this.signals.clicked.dispatch(cp.x, cp.y)
-      this.signals.dropped.dispatch();
       this.doubleClickPending = true
       this.prevClickCP.copy(cp)
     }
@@ -341,13 +341,13 @@ class MouseObserver {
     // }
   }
 
-  _onContextmenu (event: MouseEvent) {
+  _onContextmenu(event: MouseEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
   }
 
-  _onTouchstart (event: TouchEvent) {
+  _onTouchstart(event: TouchEvent) {
     if (event.target !== this.domElement) {
       return
     }
@@ -358,32 +358,32 @@ class MouseObserver {
         this.moving = false
         this.hovering = false
         this.down.set(
-          event.touches[ 0 ].pageX,
-          event.touches[ 0 ].pageY
+          event.touches[0].pageX,
+          event.touches[0].pageY
         )
         this.position.set(
-          event.touches[ 0 ].pageX,
-          event.touches[ 0 ].pageY
+          event.touches[0].pageX,
+          event.touches[0].pageY
         )
-        this._setCanvasPosition(event.touches[ 0 ])
+        this._setCanvasPosition(event.touches[0])
         break
       }
 
       case 2: {
         this.down.set(
-          (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-          (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+          (event.touches[0].pageX + event.touches[1].pageX) / 2,
+          (event.touches[0].pageY + event.touches[1].pageY) / 2
         )
         this.position.set(
-          (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-          (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+          (event.touches[0].pageX + event.touches[1].pageX) / 2,
+          (event.touches[0].pageY + event.touches[1].pageY) / 2
         )
         this.lastTouchDistance = getTouchDistance(event)
       }
     }
   }
 
-  _onTouchend (event: TouchEvent) {
+  _onTouchend(event: TouchEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
@@ -392,7 +392,7 @@ class MouseObserver {
     this.pressed = undefined
   }
 
-  _onTouchmove (event: TouchEvent) {
+  _onTouchmove(event: TouchEvent) {
     if (event.target === this.domElement) {
       event.preventDefault()
       this.overElement = true
@@ -409,21 +409,19 @@ class MouseObserver {
         this.lastMoved = window.performance.now()
         this.prevPosition.copy(this.position)
         this.position.set(
-          event.touches[ 0 ].pageX,
-          event.touches[ 0 ].pageY
+          event.touches[0].pageX,
+          event.touches[0].pageY
         )
-        this._setCanvasPosition(event.touches[ 0 ])
+        this._setCanvasPosition(event.touches[0])
         const dx = this.prevPosition.x - this.position.x
         const dy = this.prevPosition.y - this.position.y
         this.signals.moved.dispatch(dx, dy)
         if (this.pressed) {
           this.signals.dragged.dispatch(dx, dy)
           this.signals.draggedXY.dispatch(
-            this.prevPosition.x,
-            this.prevPosition.y,
             this.position.x,
             this.position.y
-            )
+          )
         }
         break
       }
@@ -434,11 +432,11 @@ class MouseObserver {
         this.lastTouchDistance = touchDistance
         this.prevPosition.copy(this.position)
         this.position.set(
-          (event.touches[ 0 ].pageX + event.touches[ 1 ].pageX) / 2,
-          (event.touches[ 0 ].pageY + event.touches[ 1 ].pageY) / 2
+          (event.touches[0].pageX + event.touches[1].pageX) / 2,
+          (event.touches[0].pageY + event.touches[1].pageY) / 2
         )
         if (Math.abs(delta) > 2 && this.handleScroll &&
-            this.position.distanceTo(this.prevPosition) < 2
+          this.position.distanceTo(this.prevPosition) < 2
         ) {
           this.which = 0
           this.buttons = 0
@@ -456,18 +454,18 @@ class MouseObserver {
               this.prevPosition.y,
               this.position.x,
               this.position.y
-              )
+            )
           }
         }
       }
     }
   }
 
-  _distance () {
+  _distance() {
     return this.position.distanceTo(this.down)
   }
 
-  _setCanvasPosition (event: any) {  // TODO
+  _setCanvasPosition(event: any) {  // TODO
     const box = this.domElement.getBoundingClientRect()
     let offsetX, offsetY
     if ('offsetX' in event && 'offsetY' in event) {
@@ -480,14 +478,14 @@ class MouseObserver {
     this.canvasPosition.set(offsetX, box.height - offsetY)
   }
 
-  _setKeys (event: MouseEvent|TouchEvent) {
+  _setKeys(event: MouseEvent | TouchEvent) {
     this.altKey = event.altKey
     this.ctrlKey = event.ctrlKey
     this.metaKey = event.metaKey
     this.shiftKey = event.shiftKey
   }
 
-  dispose () {
+  dispose() {
     document.removeEventListener('mousewheel', this._onMousewheel)
     document.removeEventListener('wheel', this._onMousewheel)
     document.removeEventListener('MozMousePixelScroll', this._onMousewheel)
