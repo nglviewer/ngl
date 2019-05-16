@@ -941,11 +941,11 @@ export const AA1: { [k: string]: string } = {
 
 export const AA3 = Object.keys(AA1)
 
-export const RnaBases = [ 'A', 'C', 'T', 'G', 'U' ]
+export const RnaBases = [ 'A', 'C', 'T', 'G', 'U', 'I' ]
 
-export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU' ]
+export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'DI' ]
 
-export const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
+export const PurinBases = [ 'A', 'G', 'I', 'DA', 'DG', 'DI' ]
 
 export const Bases = RnaBases.concat(DnaBases)
 
