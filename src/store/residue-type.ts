@@ -203,6 +203,8 @@ export default class ResidueType {
   isRna () {
     if (this.chemCompType) {
       return ChemCompRna.includes(this.chemCompType)
+    } else if (this.hetero === 1) {
+      return false
     } else {
       return (
         this.hasAtomWithName(
@@ -217,6 +219,8 @@ export default class ResidueType {
   isDna () {
     if (this.chemCompType) {
       return ChemCompDna.includes(this.chemCompType)
+    } else if (this.hetero === 1) {
+      return false
     } else {
       return (
         (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
