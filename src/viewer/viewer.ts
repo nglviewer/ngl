@@ -139,6 +139,7 @@ export interface ViewerParameters {
   fogColor: Color
   fogNear: number
   fogFar: number
+  fogIsAbsolute: boolean
 
   backgroundColor: Color
 
@@ -150,6 +151,7 @@ export interface ViewerParameters {
   clipNear: number
   clipFar: number
   clipDist: number
+  clipIsAbsolute: boolean
 
   lightColor: Color
   lightIntensity: number
@@ -297,6 +299,7 @@ export default class Viewer {
       fogColor: new Color(0x000000),
       fogNear: 50,
       fogFar: 100,
+      fogIsAbsolute: false,
 
       backgroundColor: new Color(0x000000),
 
@@ -308,6 +311,7 @@ export default class Viewer {
       clipNear: 0,
       clipFar: 100,
       clipDist: 10,
+      clipIsAbsolute: false,
 
       lightColor: new Color(0xdddddd),
       lightIntensity: 1.0,
@@ -777,12 +781,13 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setFog (color?: Color|number|string, near?: number, far?: number) {
+  setFog (color?: Color|number|string, near?: number, far?: number, isAbsolute?: boolean) {
     const p = this.parameters
 
     if (color !== undefined) p.fogColor.set(color as string)  // TODO
     if (near !== undefined) p.fogNear = near
     if (far !== undefined) p.fogFar = far
+    if (isAbsolute !== undefined) p.fogIsAbsolute = isAbsolute
 
     this.requestRender()
   }
@@ -839,12 +844,13 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setClip (near: number, far: number, dist: number) {
+  setClip (near: number, far: number, dist: number, isAbsolute?: boolean) {
     const p = this.parameters
 
     if (near !== undefined) p.clipNear = near
     if (far !== undefined) p.clipFar = far
     if (dist !== undefined) p.clipDist = dist
+    if (isAbsolute !== undefined) p.clipIsAbsolute = isAbsolute
 
     this.requestRender()
   }
@@ -1022,39 +1028,57 @@ export default class Viewer {
   private __updateClipping () {
     const p = this.parameters
 
+    const debugClipping = false
+
     // clipping
 
     // cDist = distVector.copy( camera.position )
     //           .sub( controls.target ).length();
     this.cDist = this.distVector.copy(this.camera.position).length()
-    // console.log( "cDist", cDist )
+    if (debugClipping)
+      console.log( "cDist", this.cDist )
     if (!this.cDist) {
       // recover from a broken (NaN) camera position
       this.camera.position.set(0, 0, p.cameraZ)
       this.cDist = Math.abs(p.cameraZ)
     }
 
-    this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
-    this.bRadius += this.boundingBox.getCenter(this.distVector).length()
-    // console.log( "bRadius", bRadius )
-    if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
-      // console.warn( "something wrong with bRadius" );
-      this.bRadius = 50
+    if (!p.clipIsAbsolute && !p.fogIsAbsolute || debugClipping) {
+      // Compute bbox radius if needed for relative clip/fog
+      this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
+      this.bRadius += this.boundingBox.getCenter(this.distVector).length()
+      if (debugClipping)
+        console.log( "bRadius", this.bRadius )
+      if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
+        // console.warn( "something wrong with bRadius" );
+        this.bRadius = 50
+      }
     }
 
-    const nearFactor = (50 - p.clipNear) / 50
-    const farFactor = -(50 - p.clipFar) / 50
-    this.camera.near = this.cDist - (this.bRadius * nearFactor)
-    this.camera.far = this.cDist + (this.bRadius * farFactor)
+    if (p.clipIsAbsolute) {
+      this.camera.near = p.clipNear
+      this.camera.far = p.clipFar
+    } else {
+      const nearFactor = (50 - p.clipNear) / 50
+      const farFactor = -(50 - p.clipFar) / 50
+      this.camera.near = this.cDist - (this.bRadius * nearFactor)
+      this.camera.far = this.cDist + (this.bRadius * farFactor)
+    }
 
     // fog
 
-    const fogNearFactor = (50 - p.fogNear) / 50
-    const fogFarFactor = -(50 - p.fogFar) / 50
     const fog = this.scene.fog as any  // TODO
     fog.color.set(p.fogColor)
-    fog.near = this.cDist - (this.bRadius * fogNearFactor)
-    fog.far = this.cDist + (this.bRadius * fogFarFactor)
+
+    if (p.fogIsAbsolute) {
+      fog.near = p.fogNear
+      fog.far = p.fogFar
+    } else {
+      const fogNearFactor = (50 - p.fogNear) / 50
+      const fogFarFactor = -(50 - p.fogFar) / 50
+      fog.near = this.cDist - (this.bRadius * fogNearFactor)
+      fog.far = this.cDist + (this.bRadius * fogFarFactor)
+    }
 
     if (this.camera.type === 'PerspectiveCamera') {
       this.camera.near = Math.max(0.1, p.clipDist, this.camera.near)
