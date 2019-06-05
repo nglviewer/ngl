@@ -1056,8 +1056,8 @@ export default class Viewer {
     }
 
     if (p.clipIsAbsolute) {
-      this.camera.near = p.clipNear
-      this.camera.far = p.clipFar
+      this.camera.near = this.cDist - p.clipNear
+      this.camera.far = this.cDist + p.clipFar
     } else {
       const nearFactor = (50 - p.clipNear) / 50
       const farFactor = -(50 - p.clipFar) / 50
@@ -1071,8 +1071,8 @@ export default class Viewer {
     fog.color.set(p.fogColor)
 
     if (p.fogIsAbsolute) {
-      fog.near = p.fogNear
-      fog.far = p.fogFar
+      fog.near = this.cDist - p.fogNear
+      fog.far = this.cDist + p.fogFar
     } else {
       const fogNearFactor = (50 - p.fogNear) / 50
       const fogFarFactor = -(50 - p.fogFar) / 50
