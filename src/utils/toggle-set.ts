@@ -40,7 +40,6 @@ export function createToggleSet<T>(): ToggleSet<T> {
     toggleAny: function (values: T[]) {
       let addAll = false;
       for (var i = 0; i < values.length; i++) {
-        console.log('toggle', list, values[i], addAll, list.includes(values[i]))
         if (!list.includes(values[i])) {
           addAll = true;
         }
@@ -54,7 +53,6 @@ export function createToggleSet<T>(): ToggleSet<T> {
           }
         }
       } else {
-        console.log('deleting')
         for (var i = 0; i < values.length; i++) {
           let value = values[i]
           if (list.indexOf(value) !== -1) {

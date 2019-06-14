@@ -36,23 +36,21 @@ class SelectingBehavior {
     this.controls.run('press', x, y)
   }
 
-  _onDrop() {
-    this.controls.run('drop')
+  _onDrop(x: number, y: number) {
+    if (this.stage.dragSelection.isDown) {
+      const x0 = this.stage.dragSelection.startPoint.x
+      const y0 = this.stage.dragSelection.startPoint.y
+      let pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x, y)
+      this.controls.run('drop', pickedProxies)
+    }
   }
 
   _onDragXY(x1: number, y1: number) {
     // const sp = this.stage.getParameters() as any
     if (this.stage.dragSelection.isDown) {
-      const x0 = this.stage.dragSelection.startPoint.x
-      const y0 = this.stage.dragSelection.startPoint.y
-      let pickedProxies = this.stage.pickingControls.pickAll(x0, y0, x1, y1)
-      this.controls.run('dragXY', pickedProxies, x1, y1)
+      this.controls.run('dragXY', x1, y1)
     }
   }
-
-  // _onDoubleClick (x: number, y: number) {
-  //   this.controls.run('doubleClick')
-  // }
 
   dispose() {
     // this.mouse.signals.clicked.remove(this._onClick, this)

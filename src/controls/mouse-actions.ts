@@ -250,9 +250,11 @@ class MouseActions {
     }
   }
 
-  static selectPickAll(stage: Stage, pickingProxies: PickingProxy[], x: number, y: number) {
+  static selectPickAll(stage: Stage, pickingProxies: PickingProxy[]) {
     let components: StructureComponent[] = []
     let picked: SimpleSet<number>[] = []
+
+    stage.dragSelection.removeSelection()
 
     pickingProxies.forEach(function (pickingProxy) {
       if (pickingProxy && pickingProxy.atom) {
@@ -269,11 +271,12 @@ class MouseActions {
         picked[j].add(a)
       }
     })
-    console.log('picked', picked)
     for (var i = 0; i < components.length; i++) {
-      components[i].setSelectedIndices(picked[i].list)
+      components[i].selectedPickIndices(picked[i].list)
     }
+  }
 
+  static onDragXY(stage: Stage, x: number, y: number) {
     stage.dragSelection.moveSelection(x, y)
   }
 
@@ -365,14 +368,14 @@ export const MouseActionPresets = {
     ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
 
     ['press-shift-left', MouseActions.onSelectDown],
-    ['drop-shift-left', MouseActions.onSelectUp],
-    ['drop-left', MouseActions.onSelectUp],
+    ['drop-shift-left', MouseActions.selectPickAll],
+    ['drop-left', MouseActions.selectPickAll],
 
     ['drag-left', MouseActions.rotateDrag],
     ['drag-right', MouseActions.panDrag],
     ['drag-ctrl-left', MouseActions.rotateSelectionDrag],
     ['drag-ctrl-right', MouseActions.moveComponentDrag],
-    ['dragXY-shift-left', MouseActions.selectPickAll],
+    ['dragXY-shift-left', MouseActions.onDragXY],
     ['drag-middle', MouseActions.zoomFocusDrag],
 
     ['clickPick-shift-left', MouseActions.selectPick],

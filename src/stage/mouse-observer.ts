@@ -320,7 +320,7 @@ class MouseObserver {
     if (event.target === this.domElement) {
       event.preventDefault()
     }
-    this.signals.dropped.dispatch();
+    this.signals.dropped.dispatch(event.clientX, event.clientY);
     this._setKeys(event)
     const cp = this.canvasPosition
     if (this._distance() < 4) {

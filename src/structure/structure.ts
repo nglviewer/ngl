@@ -129,7 +129,7 @@ export type StructureSignals = {
 /**
  * Structure
  */
-class Structure implements Structure{
+class Structure implements Structure {
   signals: StructureSignals = {
     refreshed: new Signal()
   }
@@ -138,11 +138,11 @@ class Structure implements Structure{
    * @param {String} name - structure name
    * @param {String} path - source path
    */
-  constructor (name = '', path = '') {
+  constructor(name = '', path = '') {
     this.init(name, path)
   }
 
-  init (name: string, path: string) {
+  init(name: string, path: string) {
     this.name = name
     this.path = path
     this.title = ''
@@ -191,9 +191,9 @@ class Structure implements Structure{
     this._cp = this.getChainProxy()
   }
 
-  get type () { return 'Structure' }
+  get type() { return 'Structure' }
 
-  finalizeAtoms () {
+  finalizeAtoms() {
     this.atomSet = this.getAtomSet()
     this.atomCount = this.atomStore.count
     this.boundingBox = this.getBoundingBox(undefined, this.boundingBox)
@@ -201,7 +201,7 @@ class Structure implements Structure{
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
   }
 
-  finalizeBonds () {
+  finalizeBonds() {
     this.bondSet = this.getBondSet()
     this.bondCount = this.bondStore.count
     this.bondHash = new BondHash(this.bondStore, this.atomStore.count)
@@ -212,35 +212,35 @@ class Structure implements Structure{
     }
 
     for (let name in this.atomSetDict) {
-      this.atomSetCache[ '__' + name ] = this.atomSetDict[ name ].clone()
+      this.atomSetCache['__' + name] = this.atomSetDict[name].clone()
     }
   }
 
   //
 
-  getBondProxy (index?: number) {
+  getBondProxy(index?: number) {
     return new BondProxy(this, index)
   }
 
-  getAtomProxy (index?: number) {
+  getAtomProxy(index?: number) {
     return new AtomProxy(this, index)
   }
 
-  getResidueProxy (index?: number) {
+  getResidueProxy(index?: number) {
     return new ResidueProxy(this, index)
   }
 
-  getChainProxy (index?: number) {
+  getChainProxy(index?: number) {
     return new ChainProxy(this, index)
   }
 
-  getModelProxy (index?: number) {
+  getModelProxy(index?: number) {
     return new ModelProxy(this, index)
   }
 
   //
 
-  getBondSet (/* selection */) {
+  getBondSet(/* selection */) {
     // TODO implement selection parameter
 
     const n = this.bondStore.count
@@ -269,7 +269,7 @@ class Structure implements Structure{
     return bondSet
   }
 
-  getBackboneBondSet (/* selection */) {
+  getBackboneBondSet(/* selection */) {
     // TODO implement selection parameter
 
     const n = this.backboneBondStore.count
@@ -293,7 +293,7 @@ class Structure implements Structure{
     return backboneBondSet
   }
 
-  getRungBondSet (/* selection */) {
+  getRungBondSet(/* selection */) {
     // TODO implement selection parameter
 
     const n = this.rungBondStore.count
@@ -326,7 +326,7 @@ class Structure implements Structure{
    *                                      BitArray: return bit array
    * @return {BitArray} set of atoms
    */
-  getAtomSet (selection?: boolean|Selection|BitArray) {
+  getAtomSet(selection?: boolean | Selection | BitArray) {
     const n = this.atomStore.count
 
     if (selection === undefined) {
@@ -338,7 +338,7 @@ class Structure implements Structure{
     } else if (selection && selection.test) {
       const seleString = selection.string
       if (seleString in this.atomSetCache) {
-        return this.atomSetCache[ seleString ]
+        return this.atomSetCache[seleString]
       } else {
         if (seleString === '') {
           return new BitArray(n, true)
@@ -347,7 +347,7 @@ class Structure implements Structure{
           this.eachAtom(function (ap: AtomProxy) {
             atomSet.set(ap.index)
           }, selection)
-          this.atomSetCache[ seleString ] = atomSet
+          this.atomSetCache[seleString] = atomSet
           return atomSet
         }
       }
@@ -364,7 +364,7 @@ class Structure implements Structure{
    * @param  {Number} radius - radius to select within
    * @return {BitArray} set of atoms
    */
-  getAtomSetWithinSelection (selection: boolean|Selection|BitArray, radius: number) {
+  getAtomSetWithinSelection(selection: boolean | Selection | BitArray, radius: number) {
     const spatialHash = this.spatialHash
     const atomSet = this.getAtomSet(false)
     const ap = this.getAtomProxy()
@@ -387,7 +387,7 @@ class Structure implements Structure{
    * @param  {Number} radius - radius to select within
    * @return {BitArray} set of atoms
    */
-  getAtomSetWithinPoint (point: Vector3|AtomProxy, radius: number) {
+  getAtomSetWithinPoint(point: Vector3 | AtomProxy, radius: number) {
     const p = point
     const atomSet = this.getAtomSet(false)
 
@@ -409,7 +409,7 @@ class Structure implements Structure{
    * @param  {[type]} outside - use only values falling outside of the min/max values
    * @return {BitArray} set of atoms
    */
-  getAtomSetWithinVolume (volume: Volume, radius: number, minValue: number, maxValue: number, outside: boolean) {
+  getAtomSetWithinVolume(volume: Volume, radius: number, minValue: number, maxValue: number, outside: boolean) {
     const fv = new FilteredVolume(volume, minValue, maxValue, outside) as any  // TODO
 
     const dp = fv.getDataPosition()
@@ -420,7 +420,7 @@ class Structure implements Structure{
     if (!this.spatialHash) return atomSet
 
     for (let i = 0; i < n; i += 3) {
-      this.spatialHash.within(dp[ i ], dp[ i + 1 ], dp[ i + 2 ], r).forEach(function (idx) {
+      this.spatialHash.within(dp[i], dp[i + 1], dp[i + 2], r).forEach(function (idx) {
         atomSet.set(idx)
       })
     }
@@ -433,13 +433,13 @@ class Structure implements Structure{
    * @param  {Selection} selection - the selection object
    * @return {BitArray} set of atoms
    */
-  getAtomSetWithinGroup (selection: boolean|Selection) {
+  getAtomSetWithinGroup(selection: boolean | Selection) {
     const atomResidueIndex = this.atomStore.residueIndex
     const atomSet = this.getAtomSet(false)
     const rp = this.getResidueProxy()
 
     this.getAtomSet(selection).forEach(function (idx) {
-      rp.index = atomResidueIndex[ idx ]
+      rp.index = atomResidueIndex[idx]
       for (let idx2 = rp.atomOffset; idx2 <= rp.atomEnd; ++idx2) {
         atomSet.set(idx2)
       }
@@ -450,11 +450,11 @@ class Structure implements Structure{
 
   //
 
-  getSelection (): false|Selection {
+  getSelection(): false | Selection {
     return false
   }
 
-  getStructure (): Structure|StructureView {
+  getStructure(): Structure | StructureView {
     return this
   }
 
@@ -464,7 +464,7 @@ class Structure implements Structure{
    * @param  {EntityType} type - entity type
    * @return {undefined}
    */
-  eachEntity (callback: (entity: Entity) => void, type: number) {
+  eachEntity(callback: (entity: Entity) => void, type: number) {
     this.entityList.forEach(function (entity) {
       if (type === undefined || entity.getEntityType() === type) {
         callback(entity)
@@ -478,7 +478,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachBond (callback: (entity: BondProxy) => void, selection?: Selection) {
+  eachBond(callback: (entity: BondProxy) => void, selection?: Selection) {
     const bp = this.getBondProxy()
     let bondSet
 
@@ -509,7 +509,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachAtom (callback: (entity: AtomProxy) => void, selection?: Selection) {
+  eachAtom(callback: (entity: AtomProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
         mp.eachAtom(callback, selection)
@@ -530,7 +530,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachResidue (callback: (entity: ResidueProxy) => void, selection?: Selection) {
+  eachResidue(callback: (entity: ResidueProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       const mn = this.modelStore.count
       const mp = this.getModelProxy()
@@ -564,19 +564,19 @@ class Structure implements Structure{
    * @param  {function(residueList: ResidueProxy[])} callback - the callback
    * @return {undefined}
    */
-  eachResidueN (n: number, callback: (...entityArray: ResidueProxy[]) => void) {
+  eachResidueN(n: number, callback: (...entityArray: ResidueProxy[]) => void) {
     const rn = this.residueStore.count
     if (rn < n) return
     const array: ResidueProxy[] = new Array(n)
 
     for (let i = 0; i < n; ++i) {
-      array[ i ] = this.getResidueProxy(i)
+      array[i] = this.getResidueProxy(i)
     }
     callback.apply(this, array)
 
     for (let j = n; j < rn; ++j) {
       for (let i = 0; i < n; ++i) {
-        array[ i ].index += 1
+        array[i].index += 1
       }
       callback.apply(this, array)
     }
@@ -588,7 +588,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachPolymer (callback: (entity: Polymer) => void, selection?: Selection) {
+  eachPolymer(callback: (entity: Polymer) => void, selection?: Selection) {
     if (selection && selection.modelOnlyTest) {
       const modelOnlyTest = selection.modelOnlyTest
 
@@ -610,7 +610,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachChain (callback: (entity: ChainProxy) => void, selection?: Selection) {
+  eachChain(callback: (entity: ChainProxy) => void, selection?: Selection) {
     if (selection && selection.test) {
       this.eachModel(function (mp) {
         mp.eachChain(callback, selection)
@@ -631,7 +631,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {undefined}
    */
-  eachModel (callback: (entity: ModelProxy) => void, selection?: Selection) {
+  eachModel(callback: (entity: ModelProxy) => void, selection?: Selection) {
     const n = this.modelStore.count
     const mp = this.getModelProxy()
 
@@ -660,7 +660,7 @@ class Structure implements Structure{
 
   //
 
-  getAtomData (params: AtomDataParams) {
+  getAtomData(params: AtomDataParams) {
     const p = Object.assign({}, params)
     if (p.colorParams) p.colorParams.structure = this.getStructure()
 
@@ -692,7 +692,7 @@ class Structure implements Structure{
       atomData.index = new Uint32Array(atomCount)
     }
 
-    const {position, color, picking, radius, index} = atomData
+    const { position, color, picking, radius, index } = atomData
 
     atomSet.forEach((idx: number, i: number) => {
       const i3 = i * 3
@@ -704,19 +704,19 @@ class Structure implements Structure{
         colormaker.atomColorToArray(ap, color, i3)
       }
       if (picking) {
-        picking.array![ i ] = idx
+        picking.array![i] = idx
       }
       if (radius) {
-        radius[ i ] = radiusFactory.atomRadius(ap)
+        radius[i] = radiusFactory.atomRadius(ap)
       }
       if (index) {
-        index[ i ] = idx
+        index[i] = idx
       }
     })
     return atomData
   }
 
-  getBondData (params: BondDataParams) {
+  getBondData(params: BondDataParams) {
     const p = Object.assign({}, params)
     if (p.colorParams) p.colorParams.structure = this.getStructure()
 
@@ -742,7 +742,7 @@ class Structure implements Structure{
       const storeBondOrder = bp.bondStore.bondOrder
       bondCount = 0
       bondSet.forEach(function (index: number) {
-        bondCount += storeBondOrder[ index ]
+        bondCount += storeBondOrder[index]
       })
     } else {
       bondCount = bondSet.getSize()
@@ -770,7 +770,7 @@ class Structure implements Structure{
       }
     }
 
-    const {position1, position2, color, color2, picking, radius, radius2} = bondData
+    const { position1, position2, color, color2, picking, radius, radius2 } = bondData
 
     let i = 0
     let j, i3, k, bondOrder, absOffset
@@ -856,28 +856,28 @@ class Structure implements Structure{
         }
       }
       if (picking && picking.array) {
-        picking.array[ i ] = index
+        picking.array[i] = index
         if (isMulti && bondOrder > 1) {
           for (j = 1; j < bondOrder; ++j) {
-            picking.array[ i + j ] = index
+            picking.array[i + j] = index
           }
         }
       }
       if (radius) {
-        radius[ i ] = radiusFactory.atomRadius(ap1)
+        radius[i] = radiusFactory.atomRadius(ap1)
         if (isMulti && bondOrder > 1) {
-          multiRadius = radius[ i ] * bondScale / (isOffset ? 1 : (0.5 * bondOrder))
+          multiRadius = radius[i] * bondScale / (isOffset ? 1 : (0.5 * bondOrder))
           for (j = isOffset ? 1 : 0; j < bondOrder; ++j) {
-            radius[ i + j ] = multiRadius
+            radius[i + j] = multiRadius
           }
         }
       }
       if (radius2) {
-        radius2[ i ] = radiusFactory.atomRadius(ap2)
+        radius2[i] = radiusFactory.atomRadius(ap2)
         if (isMulti && bondOrder > 1) {
-          multiRadius = radius2[ i ] * bondScale / (isOffset ? 1 : (0.5 * bondOrder))
+          multiRadius = radius2[i] * bondScale / (isOffset ? 1 : (0.5 * bondOrder))
           for (j = isOffset ? 1 : 0; j < bondOrder; ++j) {
-            radius2[ i + j ] = multiRadius
+            radius2[i + j] = multiRadius
           }
         }
       }
@@ -887,7 +887,7 @@ class Structure implements Structure{
     return bondData
   }
 
-  getBackboneAtomData (params: AtomDataParams) {
+  getBackboneAtomData(params: AtomDataParams) {
     params = Object.assign({
       atomSet: this.atomSetCache.__backbone
     }, params)
@@ -895,7 +895,7 @@ class Structure implements Structure{
     return this.getAtomData(params)
   }
 
-  getBackboneBondData (params: BondDataParams) {
+  getBackboneBondData(params: BondDataParams) {
     params = Object.assign({
       bondSet: this.getBackboneBondSet(),
       bondStore: this.backboneBondStore
@@ -904,7 +904,7 @@ class Structure implements Structure{
     return this.getBondData(params)
   }
 
-  getRungAtomData (params: AtomDataParams) {
+  getRungAtomData(params: AtomDataParams) {
     params = Object.assign({
       atomSet: this.atomSetCache.__rung
     }, params)
@@ -912,7 +912,7 @@ class Structure implements Structure{
     return this.getAtomData(params)
   }
 
-  getRungBondData (params: BondDataParams) {
+  getRungBondData(params: BondDataParams) {
     params = Object.assign({
       bondSet: this.getRungBondSet(),
       bondStore: this.rungBondStore
@@ -929,7 +929,7 @@ class Structure implements Structure{
    * @param  {Box3} [box] - optional target
    * @return {Vector3} the box
    */
-  getBoundingBox (selection?: Selection, box?: Box3) {
+  getBoundingBox(selection?: Selection, box?: Box3) {
     if (Debug) Log.time('getBoundingBox')
 
     box = box || new Box3()
@@ -969,7 +969,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {PrincipalAxes} the principal axes
    */
-  getPrincipalAxes (selection?: Selection) {
+  getPrincipalAxes(selection?: Selection) {
     if (Debug) Log.time('getPrincipalAxes')
 
     let i = 0
@@ -977,9 +977,9 @@ class Structure implements Structure{
     const cd = coords.data
 
     this.eachAtom(a => {
-      cd[ i + 0 ] = a.x
-      cd[ i + 1 ] = a.y
-      cd[ i + 2 ] = a.z
+      cd[i + 0] = a.x
+      cd[i + 1] = a.y
+      cd[i + 2] = a.z
       i += 3
     }, selection)
 
@@ -993,7 +993,7 @@ class Structure implements Structure{
    * @param  {Selection} [selection] - the selection
    * @return {Vector3} the center
    */
-  atomCenter (selection?: Selection) {
+  atomCenter(selection?: Selection) {
     if (selection) {
       return this.getBoundingBox(selection).getCenter(new Vector3())
     } else {
@@ -1001,7 +1001,7 @@ class Structure implements Structure{
     }
   }
 
-  hasCoords () {
+  hasCoords() {
     if (this._hasCoords === undefined) {
       const atomStore = this.atomStore
       this._hasCoords = (
@@ -1009,14 +1009,14 @@ class Structure implements Structure{
         arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
         arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
       ) || (
-        // allow models with a single atom at the origin
-        atomStore.count / this.modelStore.count === 1
-      )
+          // allow models with a single atom at the origin
+          atomStore.count / this.modelStore.count === 1
+        )
     }
     return this._hasCoords;
   }
 
-  getSequence (selection?: Selection) {
+  getSequence(selection?: Selection) {
     const seq: string[] = []
     const rp = this.getResidueProxy()
 
@@ -1030,7 +1030,7 @@ class Structure implements Structure{
     return seq
   }
 
-  getAtomIndices (selection?: Selection) {
+  getAtomIndices(selection?: Selection) {
     if (selection && selection.string) {
       const indices: number[] = []
       this.eachAtom(function (ap: AtomProxy) {
@@ -1048,7 +1048,7 @@ class Structure implements Structure{
    * @param  {Selection} selection - limit count to selection
    * @return {Integer} count
    */
-  getChainnameCount (selection?: Selection) {
+  getChainnameCount(selection?: Selection) {
     const chainnames = new Set()
     this.eachChain(function (cp: ChainProxy) {
       if (cp.residueCount) {
@@ -1061,7 +1061,7 @@ class Structure implements Structure{
 
   //
 
-  updatePosition (position: Float32Array|number[]) {
+  updatePosition(position: Float32Array | number[]) {
     let i = 0
 
     this.eachAtom(function (ap: AtomProxy) {
@@ -1072,7 +1072,7 @@ class Structure implements Structure{
     this._hasCoords = undefined  // to trigger recalculation
   }
 
-  refreshPosition () {
+  refreshPosition() {
     this.getBoundingBox(undefined, this.boundingBox)
     this.boundingBox.getCenter(this.center)
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
@@ -1083,7 +1083,7 @@ class Structure implements Structure{
    * Unsets properties to help garbage collection.
    * @return {undefined}
    */
-  dispose () {
+  dispose() {
     if (this.frames) this.frames.length = 0
     if (this.boxes) this.boxes.length = 0
 

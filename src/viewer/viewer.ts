@@ -1007,14 +1007,12 @@ export default class Viewer {
     x1 *= window.devicePixelRatio
     y1 *= window.devicePixelRatio
 
-    let x = Math.max(x0 - 2, x1 - 2, 0)
-    let y = Math.min(y0 - 2, y1 - 2, 0)
+    let x = Math.min(x0, x1)
+    let y = this.pickingTarget.height - Math.min(y0, y1)
 
 
-    let px = Math.abs(x1 - x0) + 5
-    let py = Math.abs(y1 - y0) + 5
-
-    console.log(x0, y0, x1, y1, x, y, px, py)
+    let px = Math.abs(x1 - x0)
+    let py = Math.abs(y1 - y0)
 
     let _pixelBufferFloat = new Float32Array(4 * px * py)
     let _pixelBufferUint = new Uint8Array(4 * px * py)
