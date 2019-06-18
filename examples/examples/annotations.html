@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NGL - test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <script src="../build/js/ngl.dev.js"></script>
+  <script>
+    // Datasources
+    NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("../data/"))
+    var stage;
+    document.addEventListener("DOMContentLoaded", function () {
+      stage = new NGL.Stage('viewport')
+      // Handle window resizing
+      window.addEventListener( "resize", function( event ){
+          stage.handleResize();
+      }, false );
+      stage.loadFile("data://3SN6.cif").then(function (o) {
+        o.addRepresentation("cartoon", { color: "chainid" })
+        var chainText = {
+          'A': 'alpha subunit',
+          'B': 'beta subunit',
+          'G': 'gamma subunit',
+          'R': 'beta 2 adrenergic receptor',
+          'N': 'nanobody'
+        }
+      
+        var ap = o.structure.getAtomProxy()
+        o.structure.eachChain(function (cp) {
+          ap.index = cp.atomOffset + Math.floor(cp.atomCount / 2)
+          o.addAnnotation(ap.positionToVector3(), chainText[ cp.chainname ])
+        }, new NGL.Selection('polymer'))
+      
+        o.autoView()
+      
+        var pa = o.structure.getPrincipalAxes()
+        var q = pa.getRotationQuaternion()
+        q.multiply(o.quaternion.clone().inverse())
+        stage.animationControls.rotate(q, 0)
+        stage.animationControls.move(o.getCenter(), 0)
+      })
+    })
+  </script>
+  <div id="viewport" style="width:30%; height:400px; margin: 0 auto;"></div>
+</body>
+</html>

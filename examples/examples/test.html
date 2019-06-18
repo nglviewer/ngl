@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NGL - test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <script src="../build/js/ngl.dev.js"></script>
+  <script>
+    // Datasources
+    NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("../data/"))
+
+    var stage;
+    document.addEventListener("DOMContentLoaded", function () {
+      stage = new NGL.Stage("viewport")
+      var load = NGL.getQuery("load")
+      if (load) stage.loadFile(load, {defaultRepresentation: true})
+      var script = NGL.getQuery("script")
+      if (script) stage.loadScript("./scripts/" + script + ".js")
+    })
+  </script>
+  <div id="viewport" style="width:100%; height:100%;"></div>
+</body>
+</html>

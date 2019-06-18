@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NGL - grid</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+  <script src="../build/js/ngl.dev.js"></script>
+  <script>
+    var stage, viewport, heading;
+    var width = 150;
+    var height = 200;
+    var done = false;
+    var hiddenImg, activeName;
+
+    function loadList (pdbList) {
+      var i = 0;
+      pdbList.reduce(function (acc, name) {
+        return acc.then(function () {
+          i += 1;
+          heading.innerText = "Grid loading entry " + i + " of " + pdbList.length + " entries";
+          return stage.loadFile("rcsb://" + name)
+            .then(addDiv)
+            .then(prepareImage)
+            .then(makeImage)
+            .then(appendImage);
+          });
+      }, Promise.resolve()).then(function () {
+        done = true;
+        heading.innerText = "Grid showing " + pdbList.length + " entries";
+      });
+    }
+
+    function addDiv (o) {
+      var div = document.createElement("div");
+      div.style.display = "inline-block";
+      div.appendChild(viewport);
+      activeName = name;
+      document.body.appendChild(div);
+      return {
+        div: div,
+        comp: o
+      };
+    }
+
+    function prepareImage (data) {
+      var o = data.comp;
+      stage.eachRepresentation(function (r) {
+          r.dispose();
+      });
+      stage.defaultFileRepresentation(o);
+      o.autoView();
+      stage.autoView();
+      var pa = o.structure.getPrincipalAxes();
+      stage.animationControls.rotate(pa.getRotationQuaternion(), 0);
+      return data;
+    }
+
+    function showEntry (name) {
+      var o = stage.getComponentsByName(name).list[0];
+      prepareImage({comp: o});
+    }
+
+    function makeImage (data) {
+      return stage.makeImage().then(function (imgBlob) {
+        data.imgBlob = imgBlob;
+        return data;
+      });
+    }
+
+    function sample (array, n) {
+      n = Math.max(Math.min(n, array.length), 0);
+      var last = array.length - 1;
+      for (var index = 0; index < n; ++index) {
+        var rand = index + Math.floor(Math.random() * (last - index + 1));
+        var temp = array[index];
+        array[index] = array[rand];
+        array[rand] = temp;
+      }
+      return array.slice(0, n);
+    }
+
+    function appendImage (data) {
+      var div = data.div;
+      var name = data.comp.name;
+      var imgBlob = data.imgBlob;
+
+      var objectURL = URL.createObjectURL(imgBlob);
+      var img = document.createElement("img");
+      img.src = objectURL;
+      img.style.width = width + "px";
+      img.style.height = height + "px";
+      img.title = name;
+      img.style.display = "none";
+      var activate = function(e) {
+        if (!done || e.buttons !== 0 || activeName === name) return;
+        img.style.display = "none";
+        div.appendChild(viewport);
+        activeName = name;
+        if (hiddenImg) hiddenImg.style.display = "inline-block";
+        hiddenImg = img;
+        showEntry( name );
+      };
+      img.addEventListener( "mouseup", activate );
+      img.addEventListener( "mousemove", activate );
+      if (hiddenImg) hiddenImg.style.display = "inline-block";
+      hiddenImg = img;
+      div.appendChild(img);
+    }
+
+    function loadArchive (count) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "//www.rcsb.org/pdb/json/getCurrent");
+      xhr.responseType = "json";
+      xhr.onload = function () {
+        var list = sample(this.response.idList, count);
+        loadList(list);
+      };
+      xhr.send();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      heading = document.getElementById("heading");
+      viewport = document.createElement("div");
+      viewport.style.display = "inline-block";
+      viewport.style.width = width + "px";
+      viewport.style.height = height + "px";
+      document.body.appendChild(viewport);
+      stage = new NGL.Stage(viewport, {
+        backgroundColor: "white",
+        tooltip: false
+      });
+      stage.mouseObserver.handleScroll = false;
+
+      var archiveSample = NGL.getQuery("archiveSample");
+      var idList = NGL.getQuery("idList");
+      if (archiveSample) {
+        loadArchive(archiveSample);
+      } else if (idList) {
+        loadList(idList.split(","));
+      } else {
+        loadArchive( 30 );
+      }
+    });
+  </script>
+  <h1 id="heading">Grid</h1>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NGL - parallel</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+  <script>
+    var blob, stage;
+    function load (o) {
+      stage.loadFile(blob, {ext: "mmtf", defaultRepresentation: true});
+    }
+    var url = "http://mmtf.rcsb.org/v1.0/full/3sn6";
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.addEventListener('load', function (event) {
+      blob = new Blob([new Uint8Array(xhr.response)], {type: 'application/octet-binary'});
+      if(stage) load();
+    });
+    xhr.responseType = "arraybuffer";
+    xhr.send(null);
+  </script>
+  <script src="../build/js/ngl.dev.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      stage = new NGL.Stage("viewport");
+      if (blob) load();
+    });
+  </script>
+  <div id="viewport" style="width:800px; height:800px;"></div>
+</body>
+</html>

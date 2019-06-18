@@ -188,6 +188,14 @@ class MouseActions {
     stage.trackballControls.translateAtoms(dx, dy)
   }
 
+  /**
+   * Rotate picked component based on mouse coordinate changes.
+   * Doesn't work very well.
+   * @param {Stage} stage
+   * @param {Number} dx - amount to move in x direction
+   * @param {Number} dy - amount to move in y direction
+   * @return {undefined}
+   */
   static rotateSelectionDrag(stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotateAtoms(dx, dy)
   }
@@ -311,57 +319,60 @@ class MouseActions {
 type MouseActionPreset = [string, MouseActionCallback][]
 export const MouseActionPresets = {
   default: [
-    //   [ 'scroll', MouseActions.zoomScroll ],
-    //   [ 'scroll-shift', MouseActions.focusScroll ],
-    //   [ 'scroll-ctrl', MouseActions.isolevelScroll ],
-    //   [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
+    ['scroll', MouseActions.zoomScroll],
+    ['scroll-shift', MouseActions.focusScroll],
+    ['scroll-ctrl', MouseActions.isolevelScroll],
+    ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
 
-    //   [ 'drag-left', MouseActions.rotateDrag ],
-    //   [ 'drag-right', MouseActions.panDrag ],
-    //   [ 'drag-ctrl-left', MouseActions.panDrag ],
-    //   [ 'drag-ctrl-right', MouseActions.zRotateDrag ],
-    //   [ 'drag-shift-left', MouseActions.zoomDrag ],
-    //   [ 'drag-middle', MouseActions.zoomFocusDrag ],
+    ['drag-left', MouseActions.rotateDrag],
+    ['drag-right', MouseActions.panDrag],
+    ['drag-ctrl-left', MouseActions.panDrag],
+    ['drag-ctrl-right', MouseActions.zRotateDrag],
+    ['drag-shift-left', MouseActions.zoomDrag],
+    ['drag-middle', MouseActions.zoomFocusDrag],
 
-    //   [ 'drag-ctrl-shift-right', MouseActions.panComponentDrag ],
-    //   [ 'drag-ctrl-shift-left', MouseActions.rotateComponentDrag ],
+    ['drag-ctrl-shift-right', MouseActions.moveComponentDrag],
+    ['drag-ctrl-shift-left', MouseActions.rotateComponentDrag],
 
-    //   [ 'clickPick-right', MouseActions.measurePick ],
-    //   [ 'clickPick-ctrl-left', MouseActions.measurePick ],
-    //   [ 'clickPick-middle', MouseActions.movePick ],
-    //   [ 'clickPick-left', MouseActions.movePick ],
-    //   [ 'hoverPick', MouseActions.tooltipPick ]
-    // ] as MouseActionPreset,
-    // pymol: [
-    //   [ 'drag-left', MouseActions.rotateDrag ],
-    //   [ 'drag-middle', MouseActions.panDrag ],
-    //   [ 'drag-right', MouseActions.zoomDrag ],
-    //   [ 'drag-shift-right', MouseActions.focusScroll ],
+    ['clickPick-shift-left', MouseActions.selectPick],
+    ['doubleClick-shift-left', MouseActions.clearSelect],
 
-    //   [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
-    //   [ 'hoverPick', MouseActions.tooltipPick ]
-    // ] as MouseActionPreset,
-    // coot: [
-    //   [ 'scroll', MouseActions.isolevelScroll ],
+    ['clickPick-right', MouseActions.measurePick],
+    ['clickPick-ctrl-left', MouseActions.measurePick],
+    ['clickPick-middle', MouseActions.movePick],
+    ['clickPick-left', MouseActions.movePick],
+    ['hoverPick', MouseActions.tooltipPick]
+  ] as MouseActionPreset,
+  pymol: [
+    ['drag-left', MouseActions.rotateDrag],
+    ['drag-middle', MouseActions.panDrag],
+    ['drag-right', MouseActions.zoomDrag],
+    ['drag-shift-right', MouseActions.focusScroll],
 
-    //   [ 'drag-left', MouseActions.rotateDrag ],
-    //   [ 'drag-middle', MouseActions.panDrag ],
-    //   [ 'drag-ctrl-left', MouseActions.panDrag ],
-    //   [ 'drag-right', MouseActions.zoomFocusDrag ],
-    //   [ 'drag-ctrl-right', MouseActions.focusScroll ],
+    ['clickPick-ctrl+shift-middle', MouseActions.movePick],
+    ['hoverPick', MouseActions.tooltipPick]
+  ] as MouseActionPreset,
+  coot: [
+    ['scroll', MouseActions.isolevelScroll],
 
-    //   [ 'clickPick-middle', MouseActions.movePick ],
-    //   [ 'hoverPick', MouseActions.tooltipPick ]
-    // ] as MouseActionPreset,
-    // astexviewer: [
-    //   [ 'drag-left', MouseActions.rotateDrag ],
-    //   [ 'drag-ctrl-left', MouseActions.panDrag ],
-    //   [ 'drag-shift-left', MouseActions.zoomDrag ],
-    //   [ 'scroll', MouseActions.focusScroll ],
-    //   [ 'clickPick-middle', MouseActions.movePick ],
-    //   [ 'hoverPick', MouseActions.tooltipPick ]
-    // ] as MouseActionPreset,
-    // iqmol: [
+    ['drag-left', MouseActions.rotateDrag],
+    ['drag-middle', MouseActions.panDrag],
+    ['drag-ctrl-left', MouseActions.panDrag],
+    ['drag-right', MouseActions.zoomFocusDrag],
+    ['drag-ctrl-right', MouseActions.focusScroll],
+
+    ['clickPick-middle', MouseActions.movePick],
+    ['hoverPick', MouseActions.tooltipPick]
+  ] as MouseActionPreset,
+  astexviewer: [
+    ['drag-left', MouseActions.rotateDrag],
+    ['drag-ctrl-left', MouseActions.panDrag],
+    ['drag-shift-left', MouseActions.zoomDrag],
+    ['scroll', MouseActions.focusScroll],
+    ['clickPick-middle', MouseActions.movePick],
+    ['hoverPick', MouseActions.tooltipPick]
+  ] as MouseActionPreset,
+  iqmol: [
     ['scroll', MouseActions.zoomScroll],
     ['scroll-shift', MouseActions.focusScroll],
     ['scroll-ctrl', MouseActions.isolevelScroll],

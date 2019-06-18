@@ -1,0 +1,14 @@
+
+stage.loadFile('data://5gob.pdb', {
+  defaultAssembly: 'AU'
+}).then(function (o) {
+  o.addRepresentation('cartoon', {
+    color: 'residueindex',
+    colorReverse: true
+  })
+  o.addRepresentation('licorice', {
+    sele: 'ligand',
+    scale: 2.0
+  })
+  o.autoView()
+})
