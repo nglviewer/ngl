@@ -993,69 +993,6 @@ export default class Viewer {
     return { pid, instance, picker }
   }
 
-  pickAll(x0: number, y0: number, x1: number, y1: number) {
-
-    if (this.parameters.cameraType === 'stereo') {
-      return []
-    }
-
-    let picked = []
-
-    x0 *= window.devicePixelRatio
-    y0 *= window.devicePixelRatio
-    x1 *= window.devicePixelRatio
-    y1 *= window.devicePixelRatio
-
-    let x = Math.min(x0, x1)
-    let y = this.pickingTarget.height - Math.min(y0, y1)
-
-
-    let px = Math.abs(x1 - x0)
-    let py = Math.abs(y1 - y0)
-
-    let _pixelBufferFloat = new Float32Array(4 * px * py)
-    let _pixelBufferUint = new Uint8Array(4 * px * py)
-    const pixelBuffer = SupportsReadPixelsFloat ? _pixelBufferFloat : _pixelBufferUint
-
-    this.render(true)
-    this.renderer.readRenderTargetPixels(
-      this.pickingTarget, x, y, px, py, pixelBuffer
-    )
-
-    for (let i = 0; i < px * py; i++) {
-
-      let pid: number = 0, instance, picker
-
-      let offset = i * 4
-
-      const oid = Math.round(pixelBuffer[offset + 3])
-      const object = this.pickingGroup.getObjectById(oid)
-      if (object) {
-        instance = object.userData.instance
-        picker = object.userData.buffer.picking
-      } else {
-        continue
-      }
-
-      if (!picker) continue;
-
-      if (SupportsReadPixelsFloat) {
-        pid =
-          ((Math.round(pixelBuffer[offset] * 255) << 16) & 0xFF0000) |
-          ((Math.round(pixelBuffer[offset + 1] * 255) << 8) & 0x00FF00) |
-          ((Math.round(pixelBuffer[offset + 2] * 255)) & 0x0000FF)
-      } else {
-        pid =
-          (pixelBuffer[offset] << 16) |
-          (pixelBuffer[offset + 1] << 8) |
-          (pixelBuffer[offset + 2])
-      }
-
-      picked.push({ pid, instance, picker })
-    }
-    return picked
-  }
-
   requestRender() {
     if (this.renderPending) {
       // Log.info("there is still a 'render' call pending")

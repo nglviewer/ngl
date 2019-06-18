@@ -9,7 +9,6 @@ import { almostIdentity } from '../math/math-utils'
 import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
-import { SimpleSet, createSimpleSet } from '../utils';
 
 export type ScrollCallback = (stage: Stage, delta: number) => void
 export type DragCallback = (stage: Stage, dx: number, dy: number) => void
@@ -190,7 +189,7 @@ class MouseActions {
 
   /**
    * Rotate picked component based on mouse coordinate changes.
-   * Doesn't work very well.
+   * Doesn't work very well; not implemented in mouse presets.
    * @param {Stage} stage
    * @param {Number} dx - amount to move in x direction
    * @param {Number} dy - amount to move in y direction
@@ -233,7 +232,6 @@ class MouseActions {
   }
 
 
-
   static measurePick(stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
@@ -258,57 +256,12 @@ class MouseActions {
     }
   }
 
-  static selectPickAll(stage: Stage, pickingProxies: PickingProxy[]) {
-    let components: StructureComponent[] = []
-    let picked: SimpleSet<number>[] = []
-
-    stage.dragSelection.removeSelection()
-
-    pickingProxies.forEach(function (pickingProxy) {
-      if (pickingProxy && pickingProxy.atom) {
-        let a = pickingProxy.atom.index
-        let sc = pickingProxy.component as StructureComponent
-
-        if (!components.includes(sc)) {
-          let _new = createSimpleSet<number>()
-          components.push(sc)
-          picked.push(_new)
-        }
-
-        let j = components.indexOf(sc)
-        picked[j].add(a)
-      }
-    })
-    for (var i = 0; i < components.length; i++) {
-      components[i].selectedPickIndices(picked[i].list)
-    }
-  }
-
-  static onDragXY(stage: Stage, x: number, y: number) {
-    stage.dragSelection.moveSelection(x, y)
-  }
-
   static clearSelect(stage: Stage) {
     stage.eachComponent(function (sc: StructureComponent) {
       sc.selectedAtomIndices.clear()
       sc.selectedUpdate()
     }, "structure")
   }
-
-  static onSelectDown(stage: Stage, x: number, y: number) {
-    const ds = stage.dragSelection
-    const sp = stage.getParameters() as any
-    if (sp.dragSelection) {
-      ds.createSelection(x, y)
-    } else {
-      ds.removeSelection()
-    }
-  }
-
-  static onSelectUp(stage: Stage) {
-    stage.dragSelection.removeSelection()
-  }
-
 }
 
 type MouseActionPreset = [string, MouseActionCallback][]
@@ -323,11 +276,9 @@ export const MouseActionPresets = {
     ['drag-right', MouseActions.panDrag],
     ['drag-ctrl-left', MouseActions.panDrag],
     ['drag-ctrl-right', MouseActions.zRotateDrag],
+    ['drag-shift-right', MouseActions.moveComponentDrag],
     ['drag-shift-left', MouseActions.zoomDrag],
     ['drag-middle', MouseActions.zoomFocusDrag],
-
-    ['drag-ctrl-shift-right', MouseActions.moveComponentDrag],
-    ['drag-ctrl-shift-left', MouseActions.rotateComponentDrag],
 
     ['clickPick-shift-left', MouseActions.selectPick],
     ['doubleClick-shift-left', MouseActions.clearSelect],
@@ -364,30 +315,6 @@ export const MouseActionPresets = {
     ['drag-ctrl-left', MouseActions.panDrag],
     ['drag-shift-left', MouseActions.zoomDrag],
     ['scroll', MouseActions.focusScroll],
-    ['clickPick-middle', MouseActions.movePick],
-    ['hoverPick', MouseActions.tooltipPick]
-  ] as MouseActionPreset,
-  iqmol: [
-    ['scroll', MouseActions.zoomScroll],
-    ['scroll-shift', MouseActions.focusScroll],
-    ['scroll-ctrl', MouseActions.isolevelScroll],
-    ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
-
-    ['press-shift-left', MouseActions.onSelectDown],
-    ['drop-shift-left', MouseActions.selectPickAll],
-    ['drop-left', MouseActions.selectPickAll],
-
-    ['drag-left', MouseActions.rotateDrag],
-    ['drag-right', MouseActions.panDrag],
-    ['drag-ctrl-left', MouseActions.rotateSelectionDrag],
-    ['drag-ctrl-right', MouseActions.moveComponentDrag],
-    ['dragXY-shift-left', MouseActions.onDragXY],
-    ['drag-middle', MouseActions.zoomFocusDrag],
-
-    ['clickPick-shift-left', MouseActions.selectPick],
-    ['doubleClick-shift-left', MouseActions.clearSelect],
-
-    ['clickPick-right', MouseActions.measurePick],
     ['clickPick-middle', MouseActions.movePick],
     ['hoverPick', MouseActions.tooltipPick]
   ] as MouseActionPreset

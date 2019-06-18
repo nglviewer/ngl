@@ -151,24 +151,12 @@ The default controls are as follows:
 - `drag-ctrl-left` rotate hovered component
 - `clickPick-middle` auto view picked component element
 - `hoverPick` show tooltip for hovered component element
-
-Four presets are available: "default", "coot", "astexviewer", and "iqmol". The iqmol preset allows you to select atoms and drag them to edit their positions.
-
-The iqmol controls are as follows:
-
-- `scroll` zoom scene
-- `scroll-ctrl` move near clipping plane
-- `scroll-shift` move near clipping plane and far fog
-- `scroll-alt` change isolevel of isosurfaces
-- `drag-right` pan/translate scene
-- `drag-left` rotate scene
-- `drag-middle` zoom scene
-- `drag-shift-left` select atoms via lasso
-- `drag-ctrl-right` drag selected atoms
-- `drag-ctrl-left` rotate selected atoms
+- `clickPick-shift-left` de/select an atom
 - `doubleClick-shift-left` clear selected atoms
-- `clickPick-middle` auto view picked component element
-- `hoverPick` show tooltip for hovered component element
+- `drag-shift-left` move selected atoms
+
+
+Four presets are available: "default", "coot", and "astexviewer". 
 
 
 ### Observer

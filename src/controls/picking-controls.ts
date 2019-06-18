@@ -39,26 +39,6 @@ class PickingControls {
       }
     }
   }
-
-  pickAll(x0: number, y0: number, x1: number, y1: number) {
-    const pickedData = this.viewer.pickAll(x0, y0, x1, y1)
-    let picked: PickingProxy[] = []
-
-    for (var i = 0; i < pickedData.length; i++) {
-      let pickingData = pickedData[i]
-      if (pickingData.picker.type !== 'ignore' &&
-        pickingData.pid !== undefined
-      ) {
-        let pickerArray = pickingData.picker.array
-        if (pickerArray && pickingData.pid >= pickerArray.length) {
-          console.error('pid >= picker.array.length')
-        } else {
-          picked.push(new PickingProxy(pickingData, this.stage))
-        }
-      }
-    }
-    return picked
-  }
 }
 
 export default PickingControls
