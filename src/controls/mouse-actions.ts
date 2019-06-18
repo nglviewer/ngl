@@ -305,11 +305,6 @@ class MouseActions {
     }
   }
 
-  static onSelectDragXY(stage: Stage, x: number, y: number) {
-    const ds = stage.dragSelection
-    ds.moveSelection(x, y)
-  }
-
   static onSelectUp(stage: Stage) {
     stage.dragSelection.removeSelection()
   }

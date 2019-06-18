@@ -996,7 +996,6 @@ export default class Viewer {
   pickAll(x0: number, y0: number, x1: number, y1: number) {
 
     if (this.parameters.cameraType === 'stereo') {
-      // TODO picking broken for stereo camera
       return []
     }
 
