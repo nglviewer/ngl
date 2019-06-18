@@ -14,7 +14,7 @@ import Viewer from '../viewer/viewer'
 class PickingControls {
   viewer: Viewer
 
-  constructor(readonly stage: Stage) {
+  constructor (readonly stage: Stage) {
     this.viewer = stage.viewer
   }
 
@@ -24,12 +24,12 @@ class PickingControls {
    * @param {Number} y - canvas y coordinate
    * @return {PickingProxy|undefined} picking proxy
    */
-  pick(x: number, y: number) {
+  pick (x: number, y: number) {
     const pickingData = this.viewer.pick(x, y)
 
     if (pickingData.picker &&
-      pickingData.picker.type !== 'ignore' &&
-      pickingData.pid !== undefined
+        pickingData.picker.type !== 'ignore' &&
+        pickingData.pid !== undefined
     ) {
       const pickerArray = pickingData.picker.array
       if (pickerArray && pickingData.pid >= pickerArray.length) {

@@ -14,7 +14,7 @@ class PickingBehavior {
   mouse: MouseObserver
   controls: MouseControls
 
-  constructor(readonly stage: Stage) {
+  constructor (readonly stage: Stage) {
     this.stage = stage
     this.mouse = stage.mouseObserver
     this.controls = stage.mouseControls
@@ -23,13 +23,13 @@ class PickingBehavior {
     this.mouse.signals.hovered.add(this._onHover, this)
   }
 
-  _onClick(x: number, y: number) {
+  _onClick (x: number, y: number) {
     const pickingProxy = this.stage.pickingControls.pick(x, y)
     this.stage.signals.clicked.dispatch(pickingProxy)
     this.controls.run('clickPick', pickingProxy)
   }
 
-  _onHover(x: number, y: number) {
+  _onHover (x: number, y: number) {
     const pickingProxy = this.stage.pickingControls.pick(x, y)
     if (pickingProxy && this.mouse.down.equals(this.mouse.position)) {
       this.stage.transformComponent = pickingProxy.component
@@ -39,7 +39,7 @@ class PickingBehavior {
     this.controls.run('hoverPick', pickingProxy)
   }
 
-  dispose() {
+  dispose () {
     this.mouse.signals.clicked.remove(this._onClick, this)
     this.mouse.signals.hovered.remove(this._onHover, this)
   }

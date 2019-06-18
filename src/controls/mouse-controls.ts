@@ -14,7 +14,7 @@ export interface MouseControlsParams {
   disabled?: boolean
 }
 
-export type MouseActionType = ''|'scroll'|'drag'|'click'|'doubleClick'|'hover'|'clickPick'|'hoverPick'|'dragXY'|'press'|'drop'
+export type MouseActionType = ''|'scroll'|'drag'|'click'|'doubleClick'|'hover'|'clickPick'|'hoverPick'
 export interface MouseAction {
   type: MouseActionType
   key: number
@@ -62,14 +62,11 @@ function triggerFromString (str: string) {
   let type = ''
   if (tokens.includes('scroll')) type = 'scroll'
   if (tokens.includes('drag')) type = 'drag'
-  if (tokens.includes('dragXY')) type = 'dragXY'
   if (tokens.includes('click')) type = 'click'
   if (tokens.includes('doubleClick')) type = 'doubleClick'
   if (tokens.includes('hover')) type = 'hover'
   if (tokens.includes('clickPick')) type = 'clickPick'
   if (tokens.includes('hoverPick')) type = 'hoverPick'
-  if (tokens.includes('press')) type = 'press'
-  if (tokens.includes('drop')) type = 'drop'
 
   let key = 0
   if (tokens.includes('alt')) key += 1

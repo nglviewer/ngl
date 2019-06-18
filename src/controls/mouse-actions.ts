@@ -25,7 +25,7 @@ class MouseActions {
    * @param {Number} delta - amount to zoom
    * @return {undefined}
    */
-  static zoomScroll(stage: Stage, delta: number) {
+  static zoomScroll (stage: Stage, delta: number) {
     stage.trackballControls.zoom(delta)
   }
 
@@ -35,7 +35,7 @@ class MouseActions {
    * @param {Number} delta - amount to move clipping plane
    * @return {undefined}
    */
-  static clipNearScroll(stage: Stage, delta: number) {
+  static clipNearScroll (stage: Stage, delta: number) {
     const sp = stage.getParameters()
     stage.setParameters({ clipNear: sp.clipNear + delta / 10 })
   }
@@ -46,7 +46,7 @@ class MouseActions {
    * @param {Number} delta - amount to move focus planes
    * @return {undefined}
    */
-  static focusScroll(stage: Stage, delta: number) {
+  static focusScroll (stage: Stage, delta: number) {
     const sp = stage.getParameters()
     const focus = sp.clipNear * 2
     const sign = Math.sign(delta)
@@ -61,7 +61,7 @@ class MouseActions {
    * @param {Number} delta - amount to move focus planes and zoom
    * @return {undefined}
    */
-  static zoomFocusScroll(stage: Stage, delta: number) {
+  static zoomFocusScroll (stage: Stage, delta: number) {
     stage.trackballControls.zoom(delta)
     const z = stage.viewer.camera.position.z
     stage.setFocus(100 - Math.abs(z / 8))
@@ -73,7 +73,7 @@ class MouseActions {
    * @param {Number} delta - amount to change isolevel
    * @return {undefined}
    */
-  static isolevelScroll(stage: Stage, delta: number) {
+  static isolevelScroll (stage: Stage, delta: number) {
     const d = Math.sign(delta) / 10
     stage.eachRepresentation((reprElem, comp) => {
       if (reprElem.repr instanceof SurfaceRepresentation) {
@@ -92,7 +92,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panDrag(stage: Stage, dx: number, dy: number) {
+  static panDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.pan(dx, dy)
   }
 
@@ -103,7 +103,7 @@ class MouseActions {
    * @param {Number} dy - amount to rotate in y direction
    * @return {undefined}
    */
-  static rotateDrag(stage: Stage, dx: number, dy: number) {
+  static rotateDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotate(dx, dy)
   }
 
@@ -114,7 +114,7 @@ class MouseActions {
    * @param {Number} dy - amount to rotate in y direction
    * @return {undefined}
    */
-  static zRotateDrag(stage: Stage, dx: number, dy: number) {
+  static zRotateDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.zRotate(dx, dy)
   }
 
@@ -125,7 +125,7 @@ class MouseActions {
    * @param {Number} dy - amount to zoom
    * @return {undefined}
    */
-  static zoomDrag(stage: Stage, dx: number, dy: number) {
+  static zoomDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.zoom((dx + dy) / -2)
   }
 
@@ -137,7 +137,7 @@ class MouseActions {
    * @param {Number} dy - amount to zoom and focus
    * @return {undefined}
    */
-  static zoomFocusDrag(stage: Stage, dx: number, dy: number) {
+  static zoomFocusDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.zoom((dx + dy) / -2)
     const z = stage.viewer.camera.position.z
     stage.setFocus(100 - Math.abs(z / 8))
@@ -150,7 +150,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panComponentDrag(stage: Stage, dx: number, dy: number) {
+  static panComponentDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.panComponent(dx, dy)
   }
 
@@ -161,7 +161,7 @@ class MouseActions {
    * @param {Number} dy - amount to pan in y direction
    * @return {undefined}
    */
-  static panAtomDrag(stage: Stage, dx: number, dy: number) {
+  static panAtomDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.panAtom(dx, dy)
   }
 
@@ -172,7 +172,7 @@ class MouseActions {
    * @param {Number} dy - amount to rotate in y direction
    * @return {undefined}
    */
-  static rotateComponentDrag(stage: Stage, dx: number, dy: number) {
+  static rotateComponentDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotateComponent(dx, dy)
   }
 
@@ -183,7 +183,7 @@ class MouseActions {
    * @param {Number} dy - amount to move in y direction
    * @return {undefined}
    */
-  static moveComponentDrag(stage: Stage, dx: number, dy: number) {
+  static moveComponentDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.translateAtoms(dx, dy)
   }
 
@@ -195,7 +195,7 @@ class MouseActions {
    * @param {Number} dy - amount to move in y direction
    * @return {undefined}
    */
-  static rotateSelectionDrag(stage: Stage, dx: number, dy: number) {
+  static rotateSelectionDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotateAtoms(dx, dy)
   }
 
@@ -205,7 +205,7 @@ class MouseActions {
    * @param {PickingProxy} pickingProxy - the picking data object
    * @return {undefined}
    */
-  static movePick(stage: Stage, pickingProxy: PickingProxy) {
+  static movePick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy) {
       stage.animationControls.move(pickingProxy.position.clone())
     }
@@ -217,7 +217,7 @@ class MouseActions {
    * @param {PickingProxy} pickingProxy - the picking data object
    * @return {undefined}
    */
-  static tooltipPick(stage: Stage, pickingProxy: PickingProxy) {
+  static tooltipPick (stage: Stage, pickingProxy: PickingProxy) {
     const tt = stage.tooltip
     const sp = stage.getParameters() as any
     if (sp.tooltip && pickingProxy) {
@@ -232,7 +232,7 @@ class MouseActions {
   }
 
 
-  static measurePick(stage: Stage, pickingProxy: PickingProxy) {
+  static measurePick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
       const sc = pickingProxy.component as StructureComponent
@@ -248,7 +248,7 @@ class MouseActions {
    * @param {PickingProxy} pickingProxy - the picking data object
    * @return {undefined}
    */
-  static selectPick(stage: Stage, pickingProxy: PickingProxy) {
+  static selectPick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atoms = [pickingProxy.atom.index] || [pickingProxy.bond.atom1.index, pickingProxy.bond.atom2.index]
       const sc = pickingProxy.component as StructureComponent
@@ -256,7 +256,7 @@ class MouseActions {
     }
   }
 
-  static clearSelect(stage: Stage) {
+  static clearSelect (stage: Stage) {
     stage.eachComponent(function (sc: StructureComponent) {
       sc.selectedAtomIndices.clear()
       sc.selectedUpdate()
@@ -267,56 +267,56 @@ class MouseActions {
 type MouseActionPreset = [string, MouseActionCallback][]
 export const MouseActionPresets = {
   default: [
-    ['scroll', MouseActions.zoomScroll],
-    ['scroll-shift', MouseActions.focusScroll],
-    ['scroll-ctrl', MouseActions.isolevelScroll],
-    ['scroll-shift-ctrl', MouseActions.zoomFocusScroll],
+    [ 'scroll', MouseActions.zoomScroll ],
+    [ 'scroll-shift', MouseActions.focusScroll ],
+    [ 'scroll-ctrl', MouseActions.isolevelScroll ],
+    [ 'scroll-shift-ctrl', MouseActions.zoomFocusScroll ],
 
-    ['drag-left', MouseActions.rotateDrag],
-    ['drag-right', MouseActions.panDrag],
-    ['drag-ctrl-left', MouseActions.panDrag],
-    ['drag-ctrl-right', MouseActions.zRotateDrag],
-    ['drag-shift-right', MouseActions.moveComponentDrag],
-    ['drag-shift-left', MouseActions.zoomDrag],
-    ['drag-middle', MouseActions.zoomFocusDrag],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-right', MouseActions.panDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-ctrl-right', MouseActions.zRotateDrag ],
+    [ 'drag-shift-right', MouseActions.moveComponentDrag ],
+    [ 'drag-shift-left', MouseActions.zoomDrag ],
+    [ 'drag-middle', MouseActions.zoomFocusDrag ],
 
-    ['clickPick-shift-left', MouseActions.selectPick],
-    ['doubleClick-shift-left', MouseActions.clearSelect],
+    [ 'clickPick-shift-left', MouseActions.selectPick ],
+    [ 'doubleClick-shift-left', MouseActions.clearSelect ],
 
-    ['clickPick-right', MouseActions.measurePick],
-    ['clickPick-ctrl-left', MouseActions.measurePick],
-    ['clickPick-middle', MouseActions.movePick],
-    ['clickPick-left', MouseActions.movePick],
-    ['hoverPick', MouseActions.tooltipPick]
+    [ 'clickPick-right', MouseActions.measurePick ],
+    [ 'clickPick-ctrl-left', MouseActions.measurePick ],
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'clickPick-left', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick]
   ] as MouseActionPreset,
   pymol: [
-    ['drag-left', MouseActions.rotateDrag],
-    ['drag-middle', MouseActions.panDrag],
-    ['drag-right', MouseActions.zoomDrag],
-    ['drag-shift-right', MouseActions.focusScroll],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-middle', MouseActions.panDrag ],
+    [ 'drag-right', MouseActions.zoomDrag ],
+    [ 'drag-shift-right', MouseActions.focusScroll ],
 
-    ['clickPick-ctrl+shift-middle', MouseActions.movePick],
-    ['hoverPick', MouseActions.tooltipPick]
+    [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick]
   ] as MouseActionPreset,
   coot: [
-    ['scroll', MouseActions.isolevelScroll],
+    [ 'scroll', MouseActions.isolevelScroll ],
 
-    ['drag-left', MouseActions.rotateDrag],
-    ['drag-middle', MouseActions.panDrag],
-    ['drag-ctrl-left', MouseActions.panDrag],
-    ['drag-right', MouseActions.zoomFocusDrag],
-    ['drag-ctrl-right', MouseActions.focusScroll],
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-middle', MouseActions.panDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-right', MouseActions.zoomFocusDrag ],
+    [ 'drag-ctrl-right', MouseActions.focusScroll ],
 
-    ['clickPick-middle', MouseActions.movePick],
-    ['hoverPick', MouseActions.tooltipPick]
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick]
   ] as MouseActionPreset,
   astexviewer: [
-    ['drag-left', MouseActions.rotateDrag],
-    ['drag-ctrl-left', MouseActions.panDrag],
-    ['drag-shift-left', MouseActions.zoomDrag],
-    ['scroll', MouseActions.focusScroll],
-    ['clickPick-middle', MouseActions.movePick],
-    ['hoverPick', MouseActions.tooltipPick]
+    [ 'drag-left', MouseActions.rotateDrag ],
+    [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-shift-left', MouseActions.zoomDrag ],
+    [ 'scroll', MouseActions.focusScroll ],
+    [ 'clickPick-middle', MouseActions.movePick ],
+    [ 'hoverPick', MouseActions.tooltipPick]
   ] as MouseActionPreset
 }
 

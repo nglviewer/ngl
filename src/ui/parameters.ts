@@ -7,32 +7,32 @@ import { StageParameters } from '../stage/stage'
 import { MouseActionPresets } from '../controls/mouse-actions'
 
 export type BooleanParam = { type: 'boolean' }
-function BooleanParam() { return { type: 'boolean' } as BooleanParam }
+function BooleanParam () { return { type: 'boolean' } as BooleanParam }
 
 export type ColorParam = { type: 'color' }
-function ColorParam() { return { type: 'color' } as ColorParam }
+function ColorParam () { return { type: 'color' } as ColorParam }
 
 export type IntegerParam = { type: 'integer', max: number, min: number }
-function IntegerParam(max: number, min: number) {
+function IntegerParam (max: number, min: number) {
   return { type: 'integer', max, min } as IntegerParam
 }
 
 export type NumberParam = { type: 'number', precision: number, max: number, min: number }
-function NumberParam(precision: number, max: number, min: number) {
+function NumberParam (precision: number, max: number, min: number) {
   return { type: 'number', precision, max, min } as NumberParam
 }
 
 export type RangeParam = { type: 'range', step: number, max: number, min: number }
-function RangeParam(step: number, max: number, min: number) {
+function RangeParam (step: number, max: number, min: number) {
   return { type: 'range', step, max, min } as RangeParam
 }
 
 export type SelectParam = { type: 'select', options: { [k: string]: string } }
-function SelectParam(...options: string[]) {
+function SelectParam (...options: string[]) {
   return { type: 'select', options: options.reduce((o, k) => ({ ...o, [k]: k }), {}) } as SelectParam
 }
 
-export type ParamType = BooleanParam | ColorParam | IntegerParam | NumberParam | RangeParam | SelectParam
+export type ParamType = BooleanParam|ColorParam|IntegerParam|NumberParam|RangeParam|SelectParam
 
 export const UIStageParameters: { [k in keyof StageParameters]: ParamType } = {
   backgroundColor: ColorParam(),
