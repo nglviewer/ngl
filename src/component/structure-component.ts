@@ -30,7 +30,7 @@ import { createToggleSet, ToggleSet } from '../utils/toggle-set';
 export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral' |
   'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface' |
-  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'|'selected'
+  'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'
 )
 
 export const StructureComponentDefaultParameters = Object.assign({
@@ -397,10 +397,10 @@ class StructureComponent extends Component {
     const radiusData: { [k: number]: number } = {}
     pickData.forEach(ai => {
       const r = Math.max(0.1, this.getMaxRepresentationRadius(ai))
-      radiusData[ai] = r * (2.3 - smoothstep(0.1, 2, r))
+      radiusData[ ai ] = r * (2.3 - smoothstep(0.1, 2, r))
     })
     this.spacefillRepresentation.setSelection(
-      pickData.length ? ('@' + pickData.join(',')) : 'none'
+      pickData.length ? ( '@' + pickData.join(',') ) : 'none'
     )
     this.spacefillRepresentation.setParameters({ radiusData })
   }
@@ -440,7 +440,7 @@ class StructureComponent extends Component {
   /**
    * Add a measurement given as a pair, triple, quad of atom indices
    */
-  addMeasurement(atomList: number[]) {
+  addMeasurement (atomList: number[]) {
     if (atomList.length < 2 || atomList.length > 4) return
     const atomListSorted = atomList.slice().sort()
     if (!this.pickDict.has(atomListSorted)) {
@@ -449,7 +449,7 @@ class StructureComponent extends Component {
     this.measureBuild()
   }
 
-  selectedPick(atoms: AtomProxy[]) {
+  selectedPick (atoms: AtomProxy[]) {
     let atomIndices: number[] = []
     atoms.forEach(function (x) {
       atomIndices.push(x.index)
@@ -457,12 +457,12 @@ class StructureComponent extends Component {
     this.selectedPickIndices(atomIndices)
   }
 
-  selectedPickIndices(atomIndices: number[]) {
+  selectedPickIndices (atomIndices: number[]) {
     this.selectedAtomIndices.toggleAny(atomIndices)
     this.selectedUpdate()
   }
 
-  setSelectedIndices(atomIndices: number[]) {
+  setSelectedIndices (atomIndices: number[]) {
     this.selectedAtomIndices.clear()
     for (var i = 0; i < atomIndices.length; i++) {
       this.selectedAtomIndices.add(atomIndices[i])
@@ -471,7 +471,7 @@ class StructureComponent extends Component {
   }
 
 
-  selectedUpdate() {
+  selectedUpdate () {
     const pickData = this.selectedAtomIndices.list
     const radiusData: { [k: number]: number } = {}
     pickData.forEach(ai => {

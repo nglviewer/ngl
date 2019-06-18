@@ -29,7 +29,7 @@ function RangeParam (step: number, max: number, min: number) {
 
 export type SelectParam = { type: 'select', options: { [k: string]: string } }
 function SelectParam (...options: string[]) {
-  return { type: 'select', options: options.reduce((o, k) => ({ ...o, [k]: k }), {}) } as SelectParam
+  return { type: 'select', options: options.reduce((o, k) => ({ ...o, [k]: k}), {}) } as SelectParam
 }
 
 export type ParamType = BooleanParam|ColorParam|IntegerParam|NumberParam|RangeParam|SelectParam

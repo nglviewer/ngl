@@ -231,7 +231,6 @@ class MouseActions {
     }
   }
 
-
   static measurePick (stage: Stage, pickingProxy: PickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       const atom = pickingProxy.atom || pickingProxy.closestBondAtom
@@ -264,7 +263,7 @@ class MouseActions {
   }
 }
 
-type MouseActionPreset = [string, MouseActionCallback][]
+type MouseActionPreset = [ string, MouseActionCallback ][]
 export const MouseActionPresets = {
   default: [
     [ 'scroll', MouseActions.zoomScroll ],
@@ -280,6 +279,8 @@ export const MouseActionPresets = {
     [ 'drag-shift-left', MouseActions.zoomDrag ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],
 
+    [ 'drag-ctrl-shift-right', MouseActions.panComponentDrag ],
+    [ 'drag-ctrl-shift-left', MouseActions.rotateComponentDrag ],
     [ 'clickPick-shift-left', MouseActions.selectPick ],
     [ 'doubleClick-shift-left', MouseActions.clearSelect ],
 
@@ -287,7 +288,7 @@ export const MouseActionPresets = {
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
     [ 'clickPick-middle', MouseActions.movePick ],
     [ 'clickPick-left', MouseActions.movePick ],
-    [ 'hoverPick', MouseActions.tooltipPick]
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ] as MouseActionPreset,
   pymol: [
     [ 'drag-left', MouseActions.rotateDrag ],
@@ -296,7 +297,7 @@ export const MouseActionPresets = {
     [ 'drag-shift-right', MouseActions.focusScroll ],
 
     [ 'clickPick-ctrl+shift-middle', MouseActions.movePick ],
-    [ 'hoverPick', MouseActions.tooltipPick]
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ] as MouseActionPreset,
   coot: [
     [ 'scroll', MouseActions.isolevelScroll ],
@@ -308,7 +309,7 @@ export const MouseActionPresets = {
     [ 'drag-ctrl-right', MouseActions.focusScroll ],
 
     [ 'clickPick-middle', MouseActions.movePick ],
-    [ 'hoverPick', MouseActions.tooltipPick]
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ] as MouseActionPreset,
   astexviewer: [
     [ 'drag-left', MouseActions.rotateDrag ],
@@ -316,7 +317,7 @@ export const MouseActionPresets = {
     [ 'drag-shift-left', MouseActions.zoomDrag ],
     [ 'scroll', MouseActions.focusScroll ],
     [ 'clickPick-middle', MouseActions.movePick ],
-    [ 'hoverPick', MouseActions.tooltipPick]
+    [ 'hoverPick', MouseActions.tooltipPick ]
   ] as MouseActionPreset
 }
 

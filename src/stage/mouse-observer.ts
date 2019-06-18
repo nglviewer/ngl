@@ -256,7 +256,6 @@ class MouseObserver {
    * handle mouse move
    * @emits {MouseSignals.moved} when moved
    * @emits {MouseSignals.dragged} when dragged
-   * @emits {MouseSignals.draggedXY} when dragged
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
@@ -311,7 +310,6 @@ class MouseObserver {
     }
     this._setKeys(event)
     const cp = this.canvasPosition
-    this.signals.dropped.dispatch();
     if (this._distance() < 4) {
       this.lastClicked = window.performance.now()
       if (this.doubleClickPending && this.prevClickCP.distanceTo(cp) < 4) {
