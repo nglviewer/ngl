@@ -62,7 +62,6 @@ export interface MouseSignals {
   moved: Signal  // on move: deltaX, deltaY
   scrolled: Signal  // on scroll: delta
   dragged: Signal  // on drag: deltaX, deltaY
-  draggedXY: Signal //on drag: x0, y0, x1, y1
   dropped: Signal  // on drop
   clicked: Signal  // on click
   hovered: Signal  // on hover
@@ -107,7 +106,6 @@ class MouseObserver {
     moved: new Signal(),
     scrolled: new Signal(),
     dragged: new Signal(),
-    draggedXY: new Signal(),
     dropped: new Signal(),
     clicked: new Signal(),
     hovered: new Signal(),
@@ -409,10 +407,6 @@ class MouseObserver {
         this.signals.moved.dispatch(dx, dy)
         if (this.pressed) {
           this.signals.dragged.dispatch(dx, dy)
-          this.signals.draggedXY.dispatch(
-            this.position.x,
-            this.position.y
-          )
         }
         break
       }
@@ -440,12 +434,6 @@ class MouseObserver {
           this.signals.moved.dispatch(dx, dy)
           if (this.pressed) {
             this.signals.dragged.dispatch(dx, dy)
-            this.signals.draggedXY.dispatch(
-              this.prevPosition.x,
-              this.prevPosition.y,
-              this.position.x,
-              this.position.y
-            )
           }
         }
       }
