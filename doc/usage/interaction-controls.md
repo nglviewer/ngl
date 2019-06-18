@@ -81,7 +81,6 @@ Note that the [MouseControls](../class/src/controls/mouse-controls.js~MouseContr
 stage.signals.clicked.add(function (pickingProxy) {...});
 ```
 
-
 ### Hovered
 
 Basis usage:
@@ -156,7 +155,7 @@ The default controls are as follows:
 - `drag-shift-left` move selected atoms
 
 
-Four presets are available: "default", "coot", and "astexviewer". 
+Four presets are available: "default", "pymol", "coot", and "astexviewer". 
 
 
 ### Observer
