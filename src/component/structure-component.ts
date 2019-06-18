@@ -28,8 +28,8 @@ import { Vector3, Box3 } from 'three';
 import { createToggleSet, ToggleSet } from '../utils/toggle-set';
 
 export type StructureRepresentationType = (
-  'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral' |
-  'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface' |
+  'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
+  'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
   'ribbon'|'rocket'|'rope'|'selected'|'spacefill'|'trace'|'tube'|'unitcell'
 )
 

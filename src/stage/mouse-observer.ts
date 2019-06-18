@@ -32,7 +32,7 @@ function getTouchDistance (event: TouchEvent) {
 }
 
 function getMouseButtons (event: MouseEvent) {
-  if (typeof event === 'object') {
+    if (typeof event === 'object') {
     if ('buttons' in event) {
       return event.buttons
     } else if ('which' in event as any) {
@@ -70,7 +70,7 @@ export interface MouseSignals {
 
 export interface MouseParams {
   hoverTimeout?: number
-  handleScroll?: boolean
+  handleScroll?:boolean
   doubleClickSpeed?: number
 }
 
@@ -113,7 +113,7 @@ class MouseObserver {
   }
 
   hoverTimeout: number
-  handleScroll: boolean
+  handleScroll:boolean
   doubleClickSpeed: number
 
   viewer: Viewer
