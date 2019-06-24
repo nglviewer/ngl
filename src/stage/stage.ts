@@ -90,12 +90,14 @@ declare global {
  * @property {Float} clipFar - position of camera far/back clipping plane
  *                               in percent of scene bounding box
  * @property {Float} clipDist - camera clipping distance in Angstrom
- * @property {Boolean} clipIsAbsolute - when true, clipNear and clipFar are in absolute Angstroms rather than percent of bounding box
+ * @property {String} clipMode - how to interpret clipNear/Far values: "scene" for scene-relative, "camera" for camera-relative
+ * @property {String} clipScale - "relative" or "absolute": interpret clipNear/Far as percentage of bounding box or absolute Angstroms (ignored when clipMode==camera)
  * @property {Float} fogNear - position of the start of the fog effect
  *                               in percent of scene bounding box
  * @property {Float} fogFar - position where the fog is in full effect
  *                              in percent of scene bounding box
- * @property {Boolean} fogIsAbsolute - when true, fogNear and fogFar are in absolute Angstroms rather than percent of bounding box
+ * @property {String} fogMode - how to interpret fogNear/Far values: "scene" for scene-relative, "camera" for camera-relative
+ * @property {String} fogScale - "relative" or "absolute": interpret fogNear/Far as percentage of bounding box or absolute Angstroms (ignored when fogMode==camera)
  * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
  * @property {Float} cameraFov - perspective camera field of view in degree, between 15 and 120
  * @property {Float} cameraEyeSep - stereo camera eye seperation
@@ -129,10 +131,12 @@ export const StageDefaultParameters = {
   clipNear: 0,
   clipFar: 100,
   clipDist: 10,
-  clipIsAbsolute: false,
+  clipMode: 'scene',
+  clipScale: 'relative',
   fogNear: 50,
   fogFar: 100,
-  fogIsAbsolute: false,
+  fogMode: 'scene',
+  fogScale: 'relative',
   cameraFov: 40,
   cameraEyeSep: 0.3,
   cameraType: 'perspective' as 'perspective'|'orthographic'|'stereo',
@@ -261,8 +265,8 @@ class Stage {
     if (p.panSpeed !== undefined) controls.panSpeed = tp.panSpeed
     if (p.mousePreset !== undefined) this.mouseControls.preset(tp.mousePreset)
     this.mouseObserver.setParameters({ hoverTimeout: tp.hoverTimeout })
-    viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist, tp.clipIsAbsolute)
-    viewer.setFog(undefined, tp.fogNear, tp.fogFar, tp.fogIsAbsolute)
+    viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist, tp.clipMode, tp.clipScale)
+    viewer.setFog(undefined, tp.fogNear, tp.fogFar, tp.fogMode, tp.fogScale)
     viewer.setCamera(tp.cameraType, tp.cameraFov, tp.cameraEyeSep)
     viewer.setSampling(tp.sampleLevel)
     viewer.setBackground(tp.backgroundColor)
@@ -718,14 +722,14 @@ class Stage {
     const clipFar = 100 - clipNear
     const diffHalf = (clipFar - clipNear) / 2
 
-    if (!this.parameters.clipIsAbsolute) {
+    if (this.parameters.clipMode == 'scene') {
       this.setParameters({
         clipNear,
         clipFar
       })
     }
 
-    if (!this.parameters.fogIsAbsolute) {
+    if (this.parameters.fogMode == 'scene') {
       this.setParameters({
         fogNear: pclamp(clipFar - diffHalf),
         fogFar: pclamp(clipFar + diffHalf)
