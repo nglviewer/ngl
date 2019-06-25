@@ -3,6 +3,16 @@ stage.loadFile('data://1blu.mmtf').then(function (o) {
   o.addRepresentation('cartoon', { color: 'bfactor' })
   o.autoView()
 })
+stage.setParameters({
+  clipMode: 'camera',
+  clipScale: 'absolute',
+  clipNear: 0.01,
+  clipFar: 100000,
+  fogMode: 'camera',
+  fogScale: 'absolute',
+  fogNear: 0.01,
+  fogFar: 100000
+})
 
 var textDiv = document.createElement('div')
 
@@ -30,9 +40,13 @@ function updateDiv () {
   var v = stage.viewer
   var camera = v.camera
 
-  data.push(['Absolute mode', sp.clipIsAbsolute])
+  data.push(['Clipping mode', sp.clipMode])
+  data.push(['Clipping scale', sp.clipScale])
+  data.push(['Fog mode', sp.fogMode])
+  data.push(['Fog scale', sp.fogScale])
 
-  var pnames = ['clipNear', 'clipFar', 'clipDist']
+  var pnames = [
+    'clipNear', 'clipFar', 'clipDist', 'fogNear', 'fogFar']
 
   for (i = 0; i < pnames.length; i++) {
     var key = pnames[i]
