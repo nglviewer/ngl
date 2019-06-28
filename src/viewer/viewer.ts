@@ -1070,8 +1070,8 @@ export default class Viewer {
       // scene mode
       if (p.clipScale == 'absolute') {
         // absolute scene mode: offset clip planes from scene center
-        // (clipNear should typically be negative for this mode)
-        this.camera.near = this.cDist + p.clipNear
+        // (note: positive clipNear means closer to the camera)
+        this.camera.near = this.cDist - p.clipNear
         this.camera.far = this.cDist + p.clipFar
       } else {
         // relative scene mode (default): convert percentages to Angstroms
