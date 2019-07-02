@@ -631,7 +631,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
   }
 
   stage.signals.fullscreenChanged.add(function (isFullscreen) {
-    var icon = menuConfig[ 6 ].children[ 0 ]
+    var icon = menuConfig[ 7 ].children[ 0 ]
     if (isFullscreen) {
       icon.switchClass('compress', 'expand')
     } else {
