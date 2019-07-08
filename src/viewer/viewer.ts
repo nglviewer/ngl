@@ -1042,7 +1042,7 @@ export default class Viewer {
    * 50.0 -> 0.0
    */
   relativeToAbsolute (d: number) : number {
-    return this.bRadius * (1 - d/50)
+    return this.bRadius * (1 - d / 50)
   }
 
   /**
@@ -1083,8 +1083,11 @@ export default class Viewer {
       fog.far = p.fogFar
 
     } else {
+      // scene mode
 
       if (p.clipScale === 'absolute') {
+        // absolute scene mode; offset clip planes from scene center
+        // (note: positive values move near plane towards camera and rear plane away)
 
         this.camera.near = this.cDist - p.clipNear
         this.camera.far = this.cDist + p.clipFar
@@ -1092,6 +1095,8 @@ export default class Viewer {
         fog.far = this.cDist + p.fogFar
 
       } else {
+        // relative scene mode (default): convert pecentages to Angstroms
+
         const nearFactor = (50 - p.clipNear) / 50
         const farFactor = -(50 - p.clipFar) / 50
         this.camera.near = this.cDist - (this.bRadius * nearFactor)

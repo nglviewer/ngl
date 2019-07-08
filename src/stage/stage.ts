@@ -90,8 +90,8 @@ declare global {
  * @property {Float} clipFar - position of camera far/back clipping plane
  *                               in percent of scene bounding box
  * @property {Float} clipDist - camera clipping distance in Angstrom
- * @property {String} clipMode - how to interpret clipNear/Far values: "scene" for scene-relative, "camera" for camera-relative
- * @property {String} clipScale - "relative" or "absolute": interpret clipNear/Far as percentage of bounding box or absolute Angstroms (ignored when clipMode==camera)
+ * @property {String} clipMode - how to interpret clipNear/Far and fogNear/Far values: "scene" for scene-relative, "camera" for camera-relative
+ * @property {String} clipScale - "relative" or "absolute": interpret clipNear/Far and fogNear/Far as percentage of bounding box or absolute Angstroms (ignored when clipMode==camera)
  * @property {Float} fogNear - position of the start of the fog effect
  *                               in percent of scene bounding box
  * @property {Float} fogFar - position where the fog is in full effect
