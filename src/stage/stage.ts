@@ -96,8 +96,6 @@ declare global {
  *                               in percent of scene bounding box
  * @property {Float} fogFar - position where the fog is in full effect
  *                              in percent of scene bounding box
- * @property {String} fogMode - how to interpret fogNear/Far values: "scene" for scene-relative, "camera" for camera-relative
- * @property {String} fogScale - "relative" or "absolute": interpret fogNear/Far as percentage of bounding box or absolute Angstroms (ignored when fogMode==camera)
  * @property {String} cameraType - type of camera, either 'persepective' or 'orthographic'
  * @property {Float} cameraFov - perspective camera field of view in degree, between 15 and 120
  * @property {Float} cameraEyeSep - stereo camera eye seperation
@@ -135,8 +133,6 @@ export const StageDefaultParameters = {
   clipScale: 'relative',
   fogNear: 50,
   fogFar: 100,
-  fogMode: 'scene',
-  fogScale: 'relative',
   cameraFov: 40,
   cameraEyeSep: 0.3,
   cameraType: 'perspective' as 'perspective'|'orthographic'|'stereo',
@@ -266,7 +262,7 @@ class Stage {
     if (p.mousePreset !== undefined) this.mouseControls.preset(tp.mousePreset)
     this.mouseObserver.setParameters({ hoverTimeout: tp.hoverTimeout })
     viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist, tp.clipMode, tp.clipScale)
-    viewer.setFog(undefined, tp.fogNear, tp.fogFar, tp.fogMode, tp.fogScale)
+    viewer.setFog(undefined, tp.fogNear, tp.fogFar)
     viewer.setCamera(tp.cameraType, tp.cameraFov, tp.cameraEyeSep)
     viewer.setSampling(tp.sampleLevel)
     viewer.setBackground(tp.backgroundColor)
@@ -717,24 +713,55 @@ class Stage {
     this.setRock(this.rockAnimation.paused)
   }
 
+  /**
+   * Get the current focus from the current clipNear value expressed
+   * as 0 (full view) to 100 (completely clipped)
+   * Negative values may be returned in some cases.
+   *
+   * In 'camera' clipMode focus isn't applicable, this method returns 0.0
+   *
+   * @return {number} focus
+   */
+  getFocus () : number {
+    const p = this.parameters
+    if (p.clipMode !== 'scene') return 0.0
+
+    let clipNear = p.clipNear
+    if (p.clipScale === 'absolute') {
+      clipNear = this.viewer.absoluteToRelative(clipNear)
+    }
+    return clipNear * 2
+  }
+
+
+  /**
+   * Set the focus, a value of 0 sets clipping planes to show full scene,
+   * while a value of 100 will compltely clip the scene.
+   *
+   * @param {number} value focus
+   */
   setFocus (value: number) {
-    const clipNear = clamp(value / 2, 0, 49.9)
-    const clipFar = 100 - clipNear
-    const diffHalf = (clipFar - clipNear) / 2
+    if (this.parameters.clipMode !== 'scene') return
 
-    if (this.parameters.clipMode == 'scene') {
-      this.setParameters({
-        clipNear,
-        clipFar
-      })
+    let clipNear
+    let clipFar
+    let fogNear
+    let fogFar
+
+    if (this.parameters.clipScale === 'relative') {
+      clipNear = clamp(value / 2.0, 0.0, 49.9)
+      clipFar = 100 - clipNear
+      fogNear = 50
+      fogFar = pclamp(2 * clipFar - 50)
+
+    } else {
+      clipNear = this.viewer.relativeToAbsolute(value / 2.0)
+      clipFar = clipNear
+      fogNear = 0
+      fogFar = 2 * clipFar
     }
 
-    if (this.parameters.fogMode == 'scene') {
-      this.setParameters({
-        fogNear: pclamp(clipFar - diffHalf),
-        fogFar: pclamp(clipFar + diffHalf)
-      })
-    }
+    this.setParameters({ clipNear, clipFar, fogNear, fogFar })
   }
 
   getZoomForBox (boundingBox: Box3) {

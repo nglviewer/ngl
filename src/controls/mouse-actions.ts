@@ -41,14 +41,13 @@ class MouseActions {
   }
 
   /**
-   * Move focus planes based on scroll-delta
+   * Move clipping planes based on scroll-delta.
    * @param {Stage} stage - the stage
-   * @param {Number} delta - amount to move focus planes
+   * @param {Number} delta - direction to move planes
    * @return {undefined}
    */
   static focusScroll (stage: Stage, delta: number) {
-    const sp = stage.getParameters()
-    const focus = sp.clipNear * 2
+    const focus = stage.getFocus()
     const sign = Math.sign(delta)
     const step = sign * almostIdentity((100 - focus) / 10, 5, 0.2)
     stage.setFocus(focus + step)
