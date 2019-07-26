@@ -36,7 +36,7 @@ export const ShapeDefaultParameters = {
   pointSize: 2,
   sizeAttenuation: false,
   useTexture: true,
-  lineWidth: 2
+  linewidth: 2
 }
 export type ShapeParameters = typeof ShapeDefaultParameters
 
@@ -120,9 +120,10 @@ class Shape {
    * @param {String} [name] - text
    * @return {Shape} this object
    */
-  addMesh (position: Float32Array|number[], color:Float32Array|number[], index: Uint32Array|Uint16Array|number[], normal: Float32Array|number[], name?: string) {
+  addMesh (position: Float32Array|number[], color:Float32Array|number[], index: Uint32Array|Uint16Array|number[], normal?: Float32Array|number[], name?: string) {
     position = ensureFloat32Array(position)
     color = ensureFloat32Array(color)
+
     if (Array.isArray(index)) {
       index = getUintArray(index, position.length)
     }
@@ -130,7 +131,13 @@ class Shape {
       normal = ensureFloat32Array(normal)
     }
 
-    const data = { position, color, index, normal }
+    let data
+    if (normal === undefined || normal.length == 0 ) {
+      data = { position, color, index }
+    } else {
+      data = { position, color, index, normal }
+    }
+    //const data = { position, color, index, normal }
     const picking = new MeshPicker(
       this, Object.assign({ serial: this.meshCount, name }, data)
     )
@@ -367,7 +374,8 @@ class Shape {
    * @param {String} [name] - text
    * @return {Shape} this object
    */
-  addWideline (position1: Vector3|[number, number, number], position2: Vector3|[number, number, number], color: Color|[number, number, number], name: string) {
+  addWideline (position1: Vector3|[number, number, number], position2: Vector3|[number, number, number], color: Color|[number, number, number], linewidth: number, name: string) {
+    this.parameters.linewidth = linewidth
     WidelinePrimitive.objectToShape(
       this, { position1, position2, color, name }
     )

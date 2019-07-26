@@ -34,7 +34,7 @@
     "transform": {
       "\\.ts$": "ts-jest"
     },
-    "testRegex": "\\.spec\\.ts$",
+    "testRegex": "\\.spec\\.ts|kin.*test.ts$",
     "testURL": "http://localhost"
   },
   "homepage": "https://github.com/arose/ngl#readme",
