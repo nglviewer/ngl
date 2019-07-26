@@ -171,7 +171,7 @@ export interface TrajectoryParameters {
   superpose: boolean  // superpose on initial frame
 }
 
-interface TrajectorySignals {
+export interface TrajectorySignals {
   countChanged: Signal
   frameChanged: Signal
   playerChanged: Signal

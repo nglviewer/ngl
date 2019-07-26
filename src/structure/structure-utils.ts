@@ -54,7 +54,7 @@ export function reorderAtoms (structure: Structure) {
   if (Debug) Log.timeEnd('reorderAtoms')
 }
 
-interface SecStruct {
+export interface SecStruct {
   helices: [string, number, string, string, number, string, number][]
   sheets: [string, number, string, string, number, string][]
 }
@@ -284,7 +284,7 @@ export const calculateSecondaryStructure = (function () {
       if (isHelical(p, i)) {
         sstruc = 'h'
       } else if (isSheet(p, i)) {
-        sstruc = 's'
+        sstruc = 'e'
       }
       residueStore.sstruc[ offset + i ] = sstruc.charCodeAt(0)
     }
@@ -677,12 +677,14 @@ export function calculateBondsWithin (structure: Structure, onlyAddRung = false)
       const nn = atomIndices1.length
 
       for (let i = 0; i < nn; ++i) {
-        const ai1 = atomIndices1[ i ] + offset
-        const ai2 = atomIndices2[ i ] + offset
+        const rai1 = atomIndices1[ i ]
+        const rai2 = atomIndices2[ i ]
+        const ai1 = rai1 + offset
+        const ai2 = rai2 + offset
         const tmp = atomBondMap[ ai1 ]
         if (tmp !== undefined && tmp[ ai2 ] !== undefined) {
           bp.index = tmp[ ai2 ]
-          const residueTypeBondIndex = r.residueType.getBondIndex(ai1, ai2)!  // TODO
+          const residueTypeBondIndex = r.residueType.getBondIndex(rai1, rai2)!  // TODO
           // overwrite residueType bondOrder with value from existing bond
           bondOrders[ residueTypeBondIndex ] = bp.bondOrder
         } else {
@@ -939,6 +941,8 @@ export function assignResidueTypeBonds (structure: Structure) {
     var bondOrders: number[] = []
     var bondDict: { [k: string]: boolean } = {}
 
+    const nextAtomOffset = atomOffset + rp.atomCount
+
     rp.eachAtom(function (ap) {
       const index = ap.index
       const offset = offsetArray[ index ]
@@ -946,7 +950,15 @@ export function assignResidueTypeBonds (structure: Structure) {
       for (let i = 0, il = count; i < il; ++i) {
         bp.index = indexArray[ offset + i ]
         let idx1 = bp.atomIndex1
+        if (idx1 < atomOffset || idx1 >= nextAtomOffset) {
+          // Don't add bonds outside of this resiude
+          continue
+        }
         let idx2 = bp.atomIndex2
+        if (idx2 < atomOffset || idx2 >= nextAtomOffset) {
+          continue
+        }
+
         if (idx1 > idx2) {
           const tmp = idx2
           idx2 = idx1

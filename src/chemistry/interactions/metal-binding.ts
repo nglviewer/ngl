@@ -6,7 +6,7 @@
 import { defaults } from '../../utils'
 import Structure from '../../structure/structure'
 // import { valenceModel } from '../../structure/data'
-import { Elements } from '../../structure/structure-constants'
+import { Elements, AA3, Bases } from '../../structure/structure-constants'
 // import { hasAromaticNeighbour } from '../functional-groups'
 import {
   Features, FeatureType,
@@ -29,17 +29,27 @@ export function addMetalBinding (structure: Structure, features: Features) {
     let dative = false
     let ionic = false
 
-    if (a.isProtein()){
+    const isStandardAminoacid = AA3.includes(a.resname)
+    const isStandardBase = Bases.includes(a.resname)
+
+    if (!isStandardAminoacid && !isStandardBase) {
+      if (a.isHalogen() || a.number === Elements.O || a.number === Elements.S) {
+        dative = true
+        ionic = true
+      } else if (a.number === Elements.N) {
+        dative = true
+      }
+    } else if (isStandardAminoacid){
       // main chain oxygen atom or oxygen, nitrogen and sulfur from specific amino acids
       if (a.number === Elements.O) {
-        if(['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN', 'CSO'].includes(a.resname) && a.isSidechain()) {
+        if(['ASP', 'GLU', 'SER', 'THR', 'TYR', 'ASN', 'GLN'].includes(a.resname) && a.isSidechain()) {
           dative = true
           ionic = true
         } else if (a.isBackbone()) {
           dative = true
           ionic = true
         }
-      } else if (a.number === Elements.S && ['CYS', 'CSO'].includes(a.resname)) {
+      } else if (a.number === Elements.S && 'CYS' === a.resname) {
         dative = true
         ionic = true
       } else if (a.number === Elements.N) {
@@ -47,14 +57,7 @@ export function addMetalBinding (structure: Structure, features: Features) {
           dative = true
         }
       }
-    } else if (!a.isPolymer()) {
-      if (a.isHalogen() || a.number === Elements.O || a.number === Elements.S) {
-        dative = true
-        ionic = true
-      } else if (a.number === Elements.N) {
-        dative = true
-      }
-    } else if (a.isNucleic()){
+    } else if (isStandardBase){
       // http://pubs.acs.org/doi/pdf/10.1021/acs.accounts.6b00253
       // http://onlinelibrary.wiley.com/doi/10.1002/anie.200900399/full
       if (a.number === Elements.O && a.isBackbone()) {

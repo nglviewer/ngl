@@ -17,8 +17,8 @@ describe('structure/structure-view', function () {
 
     before(function () {
       _BaceCgProteinAtomistic = fs.readFileSync(
-            path.join(__dirname, '/../data/BaceCgProteinAtomistic.pdb'), 'utf-8'
-        )
+        path.join(__dirname, '/../data/BaceCgProteinAtomistic.pdb'), 'utf-8'
+      )
     })
 
     it('basic selection', function () {

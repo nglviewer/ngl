@@ -8,7 +8,7 @@ import { defaults } from '../utils'
 import { Camera, WebGLRenderer } from 'three'
 import Viewer from './viewer'
 
-interface TiledRendererParams {
+export interface TiledRendererParams {
   factor?: number
   antialias?: boolean
   onProgress?: Function
@@ -85,12 +85,14 @@ class TiledRenderer {
     viewer.render()
 
     if (this._antialias) {
+        const w = Math.round((offsetX + width) / 2) - Math.round (offsetX / 2);
+        const h = Math.round((offsetY + height) / 2) - Math.round (offsetY / 2);
       this._ctx.drawImage(
         viewer.renderer.domElement,
-        Math.floor(offsetX / 2),
-        Math.floor(offsetY / 2),
-        Math.ceil(width / 2),
-        Math.ceil(height / 2)
+        Math.round(offsetX / 2),
+        Math.round(offsetY / 2),
+        w,
+        h
       )
     } else {
       this._ctx.drawImage(

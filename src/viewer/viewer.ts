@@ -40,8 +40,16 @@ import { testTextureSupport } from './gl-utils'
 
 import Buffer from '../buffer/buffer'
 
-const pixelBufferFloat = new Float32Array(4)
-const pixelBufferUint = new Uint8Array(4)
+const pixelBufferFloat = new Float32Array(4 * 25)
+const pixelBufferUint = new Uint8Array(4 * 25)
+
+// When picking, we read a 25 pixel (5x5) array (readRenderTargetPixels)
+// We read the pixels in the order below to find what was picked.
+// This starts at the center and tries successively further points.
+// (Many points will be at equal distance to the center, their order
+// is arbitrary).
+const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,24,20]
+
 
 const tmpMatrix = new Matrix4()
 
@@ -122,25 +130,30 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 
 export type CameraType = 'perspective'|'orthographic'|'stereo'
 
-interface ViewerSignals {
+export interface ViewerSignals {
   ticked: Signal,
   rendered: Signal
 }
 
-interface ViewerParameters {
+export interface ViewerParameters {
   fogColor: Color
   fogNear: number
   fogFar: number
+  fogMode: string               // "scene" or "camera"
+  fogScale: string              // "relative" or "absolute"
 
   backgroundColor: Color
 
   cameraType: CameraType
   cameraFov: number
+  cameraEyeSep: number
   cameraZ: number
 
   clipNear: number
   clipFar: number
   clipDist: number
+  clipMode: string               // "scene" or "camera"
+  clipScale: string              // "relative" or "absolute"
 
   lightColor: Color
   lightIntensity: number
@@ -150,7 +163,7 @@ interface ViewerParameters {
   sampleLevel: number
 }
 
-interface BufferInstance {
+export interface BufferInstance {
   matrix: Matrix4
 }
 
@@ -288,16 +301,21 @@ export default class Viewer {
       fogColor: new Color(0x000000),
       fogNear: 50,
       fogFar: 100,
+      fogMode: 'scene',
+      fogScale: 'relative',
 
       backgroundColor: new Color(0x000000),
 
       cameraType: 'perspective',
       cameraFov: 40,
+      cameraEyeSep: 0.3,
       cameraZ: -80, // FIXME initial value should be automatically determined
 
       clipNear: 0,
       clipFar: 100,
       clipDist: 10,
+      clipMode: 'scene',
+      clipScale: 'relative',
 
       lightColor: new Color(0xdddddd),
       lightIntensity: 1.0,
@@ -326,6 +344,7 @@ export default class Viewer {
 
     this.stereoCamera = new StereoCamera()
     this.stereoCamera.aspect = 0.5
+    this.stereoCamera.eyeSep = this.parameters.cameraEyeSep
 
     const cameraType = this.parameters.cameraType
     if (cameraType === 'orthographic') {
@@ -557,7 +576,7 @@ export default class Viewer {
     }
   }
 
-  add (buffer: Buffer, instanceList: BufferInstance[]) {
+  add (buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
     if (instanceList) {
@@ -766,12 +785,15 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setFog (color?: Color|number|string, near?: number, far?: number) {
+  setFog (color?: Color|number|string, near?: number, far?: number,
+          fogMode?: string, fogScale?: string) {
     const p = this.parameters
 
     if (color !== undefined) p.fogColor.set(color as string)  // TODO
     if (near !== undefined) p.fogNear = near
     if (far !== undefined) p.fogFar = far
+    if (fogMode !== undefined) p.fogMode = fogMode
+    if (fogScale !== undefined) p.fogScale = fogScale
 
     this.requestRender()
   }
@@ -797,11 +819,12 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setCamera (type: CameraType, fov?: number) {
+  setCamera (type: CameraType, fov?: number, eyeSep?: number) {
     const p = this.parameters
 
     if (type) p.cameraType = type
     if (fov) p.cameraFov = fov
+    if (eyeSep) p.cameraEyeSep = eyeSep
 
     if (p.cameraType === 'orthographic') {
       if (this.camera !== this.orthographicCamera) {
@@ -821,17 +844,20 @@ export default class Viewer {
     }
 
     this.perspectiveCamera.fov = p.cameraFov
+    this.stereoCamera.eyeSep = p.cameraEyeSep
     this.camera.updateProjectionMatrix()
 
     this.requestRender()
   }
 
-  setClip (near: number, far: number, dist: number) {
+  setClip (near: number, far: number, dist: number, clipMode?: string, clipScale?: string) {
     const p = this.parameters
 
     if (near !== undefined) p.clipNear = near
     if (far !== undefined) p.clipFar = far
     if (dist !== undefined) p.clipDist = dist
+    if (clipMode !== undefined) p.clipMode = clipMode
+    if (clipScale !== undefined) p.clipScale = clipScale
 
     this.requestRender()
   }
@@ -881,7 +907,6 @@ export default class Viewer {
 
       render.calls = 0
       render.vertices = 0
-      render.faces = 0
       render.points = 0
     } else {
       const rInfo = this.renderer.info
@@ -892,8 +917,7 @@ export default class Viewer {
       memory.textures = rMemory.textures
 
       render.calls += rRender.calls
-      render.vertices += rRender.vertices
-      render.faces += rRender.faces
+      render.faces += rRender.triangles
       render.points += rRender.points
     }
   }
@@ -928,33 +952,42 @@ export default class Viewer {
     x *= window.devicePixelRatio
     y *= window.devicePixelRatio
 
-    let pid, instance, picker
+    x = Math.max(x - 2, 0)
+    y = Math.max(y - 2, 0)
+
+    let pid = 0, instance, picker
     const pixelBuffer = SupportsReadPixelsFloat ? pixelBufferFloat : pixelBufferUint
 
     this.render(true)
     this.renderer.readRenderTargetPixels(
-      this.pickingTarget, x, y, 1, 1, pixelBuffer
+      this.pickingTarget, x, y, 5, 5, pixelBuffer
     )
 
-    if (SupportsReadPixelsFloat) {
-      pid =
-        ((Math.round(pixelBuffer[0] * 255) << 16) & 0xFF0000) |
-        ((Math.round(pixelBuffer[1] * 255) << 8) & 0x00FF00) |
-        ((Math.round(pixelBuffer[2] * 255)) & 0x0000FF)
-    } else {
-      pid =
-        (pixelBuffer[0] << 16) |
-        (pixelBuffer[1] << 8) |
-        (pixelBuffer[2])
-    }
+    for (let i = 0; i < pixelOrder.length; i++) {
 
-    const oid = Math.round(pixelBuffer[ 3 ])
-    const object = this.pickingGroup.getObjectById(oid)
-    if (object) {
-      instance = object.userData.instance
-      picker = object.userData.buffer.picking
-    }
+      const offset = pixelOrder[i] * 4
 
+      const oid = Math.round(pixelBuffer[ offset + 3 ])
+      const object = this.pickingGroup.getObjectById(oid)
+      if (object) {
+        instance = object.userData.instance
+        picker = object.userData.buffer.picking
+      } else {
+        continue
+      }
+
+      if (SupportsReadPixelsFloat) {
+        pid =
+          ((Math.round(pixelBuffer[offset] * 255) << 16) & 0xFF0000) |
+          ((Math.round(pixelBuffer[offset + 1] * 255) << 8) & 0x00FF00) |
+          ((Math.round(pixelBuffer[offset + 2] * 255)) & 0x0000FF)
+      } else {
+        pid =
+          (pixelBuffer[offset] << 16) |
+          (pixelBuffer[offset + 1] << 8) |
+          (pixelBuffer[offset + 2])
+      }
+    }
     // if( Debug ){
     //   const rgba = Array.apply( [], pixelBuffer );
     //   Log.log( pixelBuffer );
@@ -1002,39 +1035,77 @@ export default class Viewer {
   private __updateClipping () {
     const p = this.parameters
 
+    const debugClipping = false
+
     // clipping
 
     // cDist = distVector.copy( camera.position )
     //           .sub( controls.target ).length();
     this.cDist = this.distVector.copy(this.camera.position).length()
-    // console.log( "cDist", cDist )
+    if (debugClipping)
+      console.log( "cDist", this.cDist )
     if (!this.cDist) {
       // recover from a broken (NaN) camera position
       this.camera.position.set(0, 0, p.cameraZ)
       this.cDist = Math.abs(p.cameraZ)
     }
 
-    this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
-    this.bRadius += this.boundingBox.getCenter(this.distVector).length()
-    // console.log( "bRadius", bRadius )
-    if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
-      // console.warn( "something wrong with bRadius" );
-      this.bRadius = 50
+    if (p.clipScale !== 'absolute' || p.fogScale !== 'absolute') {
+      // Compute bbox radius if needed for relative clip/fog
+      this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
+      this.bRadius += this.boundingBox.getCenter(this.distVector).length()
+      // console.log( "bRadius", this.bRadius )
+      if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
+        // console.warn( "something wrong with bRadius" );
+        this.bRadius = 50
+      }
     }
 
-    const nearFactor = (50 - p.clipNear) / 50
-    const farFactor = -(50 - p.clipFar) / 50
-    this.camera.near = this.cDist - (this.bRadius * nearFactor)
-    this.camera.far = this.cDist + (this.bRadius * farFactor)
+    if (p.clipMode == 'camera') {
+      // clip camera mode ignores clipScale; always absolute
+      this.camera.near = p.clipNear
+      this.camera.far = p.clipFar
+    }
+    else {
+      // scene mode
+      if (p.clipScale == 'absolute') {
+        // absolute scene mode: offset clip planes from scene center
+        // (note: positive clipNear means closer to the camera)
+        this.camera.near = this.cDist - p.clipNear
+        this.camera.far = this.cDist + p.clipFar
+      } else {
+        // relative scene mode (default): convert percentages to Angstroms
+        const nearFactor = (50 - p.clipNear) / 50
+        const farFactor = -(50 - p.clipFar) / 50
+        this.camera.near = this.cDist - (this.bRadius * nearFactor)
+        this.camera.far = this.cDist + (this.bRadius * farFactor)
+      }
+    }
 
     // fog
 
-    const fogNearFactor = (50 - p.fogNear) / 50
-    const fogFarFactor = -(50 - p.fogFar) / 50
     const fog = this.scene.fog as any  // TODO
     fog.color.set(p.fogColor)
-    fog.near = this.cDist - (this.bRadius * fogNearFactor)
-    fog.far = this.cDist + (this.bRadius * fogFarFactor)
+
+    if (p.fogMode == 'camera') {
+      // fog camera mode ignores clipScale; always absolute
+      fog.near = p.fogNear
+      fog.far = p.fogFar
+    }
+    else {
+      // scene mode
+      if (p.fogScale == 'absolute') {
+        // absolute scene mode: offset fog planes from scene center
+        // (fogNear should typically be negative for this mode)
+        fog.near = this.cDist + p.fogNear
+        fog.far = this.cDist + p.fogFar
+      } else {
+        const fogNearFactor = (50 - p.fogNear) / 50
+        const fogFarFactor = -(50 - p.fogFar) / 50
+        fog.near = this.cDist - (this.bRadius * fogNearFactor)
+        fog.far = this.cDist + (this.bRadius * fogFarFactor)
+      }
+    }
 
     if (this.camera.type === 'PerspectiveCamera') {
       this.camera.near = Math.max(0.1, p.clipDist, this.camera.near)
@@ -1237,5 +1308,9 @@ export default class Viewer {
     this.scene.remove(this.rotationGroup)
     this._initScene()
     this.renderer.clear()
+  }
+
+  dispose () {
+    this.renderer.dispose()
   }
 }

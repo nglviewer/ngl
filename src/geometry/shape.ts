@@ -25,7 +25,7 @@ const Primitives = [
   TextPrimitive, TorusPrimitive, PointPrimitive, WidelinePrimitive
 ]
 
-const ShapeDefaultParameters = {
+export const ShapeDefaultParameters = {
   aspectRatio: 1.5,
   sphereDetail: 2,
   radialSegments: 50,
@@ -38,7 +38,7 @@ const ShapeDefaultParameters = {
   useTexture: true,
   lineWidth: 2
 }
-type ShapeParameters = typeof ShapeDefaultParameters
+export type ShapeParameters = typeof ShapeDefaultParameters
 
 /**
  * Class for building custom shapes.
@@ -410,7 +410,7 @@ class Shape {
 
   get center () {
     if (!this._center) {
-      this._center = this.boundingBox.getCenter()
+      this._center = this.boundingBox.getCenter(new Vector3())
     }
     return this._center
   }

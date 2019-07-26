@@ -187,10 +187,10 @@ var loadFofcButton = createFileButton('load fofc', {
 addElement(loadFofcButton)
 
 var exampleSelect = createSelect([
-    [ '', 'load example' ],
-    [ '3ek3', '3ek3' ],
-    [ '3nzd', '3nzd' ],
-    [ '1lee', '1lee' ]
+  [ '', 'load example' ],
+  [ '3ek3', '3ek3' ],
+  [ '3nzd', '3nzd' ],
+  [ '1lee', '1lee' ]
 ], {
   onchange: function (e) {
     var id = e.target.value
@@ -251,10 +251,10 @@ var seleInput = createElement('input', {
 addElement(seleInput)
 
 var surfaceSelect = createSelect([
-    [ 'contour', 'contour' ],
-    [ 'wireframe', 'wireframe' ],
-    [ 'smooth', 'smooth' ],
-    [ 'flat', 'flat' ]
+  [ 'contour', 'contour' ],
+  [ 'wireframe', 'wireframe' ],
+  [ 'smooth', 'smooth' ],
+  [ 'flat', 'flat' ]
 ], {
   onchange: function (e) {
     var v = e.target.value
@@ -350,9 +350,9 @@ var screenshotButton = createElement('input', {
 addElement(screenshotButton)
 
 var scrollSelect = createSelect([
-    [ '2fofc', 'scroll 2fofc' ],
-    [ 'fofc', 'scroll fofc' ],
-    [ 'both', 'scroll both' ]
+  [ '2fofc', 'scroll 2fofc' ],
+  [ 'fofc', 'scroll fofc' ],
+  [ 'both', 'scroll both' ]
 ], {
   onchange: function (e) {
     var v = e.target.value
@@ -392,12 +392,12 @@ var loadEdmapInput = createElement('input', {
 addElement(loadEdmapInput)
 
 var isolevel2fofcText = createElement(
-    'span', {}, { bottom: '32px', left: '12px', color: 'lightgrey' }
+  'span', {}, { bottom: '32px', left: '12px', color: 'lightgrey' }
 )
 addElement(isolevel2fofcText)
 
 var isolevelFofcText = createElement(
-    'span', {}, { bottom: '12px', left: '12px', color: 'lightgrey' }
+  'span', {}, { bottom: '12px', left: '12px', color: 'lightgrey' }
 )
 addElement(isolevelFofcText)
 

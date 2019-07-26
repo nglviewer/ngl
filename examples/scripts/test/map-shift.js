@@ -23,10 +23,10 @@ Promise.all([
 
   stage.setFocus(95)
 
-    // remove default scroll mouse action
+  // remove default scroll mouse action
   stage.mouseControls.remove('scroll')
 
-    // change isolevel on mouse scroll
+  // change isolevel on mouse scroll
   stage.mouseControls.add('scroll', function (stage, delta) {
     var d = Math.sign(delta) / 5
     var l = surfRepr.getParameters().isolevel

@@ -15,14 +15,16 @@ import Volume from '../surface/volume'
 import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
-const ScaleDefaultParameters = {
+export type ColorMode = 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
+
+export const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
-  mode: 'hcl' as 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl',
+  mode: 'hcl' as ColorMode,
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false
 }
-type ScaleParameters = typeof ScaleDefaultParameters
+export type ScaleParameters = typeof ScaleDefaultParameters
 
 export interface ColormakerParameters extends ScaleParameters {
   structure?: Structure

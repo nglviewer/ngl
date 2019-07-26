@@ -10,7 +10,7 @@ import AtomProxy from '../proxy/atom-proxy'
 import ChainProxy from '../proxy/chain-proxy'
 import ModelProxy from '../proxy/model-proxy'
 
-type ChainnameDict = { [k: string]: number }
+export type ChainnameDict = { [k: string]: number }
 
 /**
  * Color by chain name

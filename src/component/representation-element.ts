@@ -8,7 +8,7 @@ import { Signal } from 'signals'
 import { Color } from 'three'
 
 import Stage from '../stage/stage'
-import Representation from '../representation/representation'
+import Representation, { RepresentationParameters } from '../representation/representation'
 import Component from './component'
 import Element, { ElementDefaultParameters, ElementSignals } from './element'
 
@@ -172,7 +172,7 @@ class RepresentationElement extends Element {
    * Get representation parameters
    * @return {RepresentationParameters} parameter object
    */
-  getParameters () {
+  getParameters (): Partial<RepresentationParameters> {
     return this.repr.getParameters()
   }
 

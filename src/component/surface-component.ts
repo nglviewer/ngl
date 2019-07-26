@@ -8,8 +8,10 @@ import { ComponentRegistry } from '../globals'
 import Component, { ComponentParameters } from './component'
 import Stage from '../stage/stage'
 import Surface from '../surface/surface'
+import { Vector3, Box3 } from '../../node_modules/@types/three';
+import RepresentationElement from './representation-element';
 
-type SurfaceRepresentationType = 'surface'|'dot'
+export type SurfaceRepresentationType = 'surface'|'dot'
 
 /**
  * Component wrapping a {@link Surface} object
@@ -45,15 +47,15 @@ class SurfaceComponent extends Component {
    * @return {RepresentationComponent} the created representation wrapped into
    *                                   a representation component object
    */
-  addRepresentation (type: SurfaceRepresentationType, params: { [k: string]: any } = {}) {
+  addRepresentation (type: SurfaceRepresentationType, params: { [k: string]: any } = {}): RepresentationElement {
     return this._addRepresentation(type, this.surface, params)
   }
 
-  getBoxUntransformed () {
+  getBoxUntransformed (): Box3 {
     return this.surface.boundingBox
   }
 
-  getCenterUntransformed () {
+  getCenterUntransformed (): Vector3 {
     return this.surface.center
   }
 

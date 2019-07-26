@@ -2,7 +2,7 @@
 import StringStreamer from '../../src/streamer/string-streamer.js'
 import PdbParser from '../../src/parser/pdb-parser.js'
 import {
-    PolymerEntity, NonPolymerEntity, WaterEntity
+  PolymerEntity, NonPolymerEntity, WaterEntity
 } from '../../src/structure/structure-constants.js'
 
 import { assert } from 'chai'
@@ -36,17 +36,17 @@ describe('parser/pdb-parser', function () {
         assert.strictEqual(structure.rungBondStore.count, 0)
 
         assert.deepEqual(
-                structure.boundingBox.max.toArray(),
-                [ 24.284000396728516, 20.937000274658203, 19.579999923706055 ]
-            )
+          structure.boundingBox.max.toArray(),
+          [ 24.284000396728516, 20.937000274658203, 19.579999923706055 ]
+        )
         assert.deepEqual(
-                structure.boundingBox.min.toArray(),
-                [ -3.0969998836517334, -0.515999972820282, -7.421999931335449 ]
-            )
+          structure.boundingBox.min.toArray(),
+          [ -3.0969998836517334, -0.515999972820282, -7.421999931335449 ]
+        )
         assert.deepEqual(
-                structure.center.toArray(),
-                [ 10.593500256538391, 10.21050015091896, 6.078999996185303 ]
-            )
+          structure.center.toArray(),
+          [ 10.593500256538391, 10.21050015091896, 6.078999996185303 ]
+        )
 
         assert.deepEqual(structure.boxes, [
           new Float32Array([
@@ -57,15 +57,15 @@ describe('parser/pdb-parser', function () {
         ])
         assert.deepEqual(structure.frames, [])
         assert.deepEqual(structure.header, {})
-            // TODO
-            // assert.deepEqual( structure.header, {
-            //     "depositionDate": "1981-04-30",
-            //     "releaseDate": "2012-07-11",
-            //     "experimentalMethods": [
-            //         "X-RAY DIFFRACTION"
-            //     ],
-            //     "resolution": 1.5
-            // } );
+        // TODO
+        // assert.deepEqual( structure.header, {
+        //     "depositionDate": "1981-04-30",
+        //     "releaseDate": "2012-07-11",
+        //     "experimentalMethods": [
+        //         "X-RAY DIFFRACTION"
+        //     ],
+        //     "resolution": 1.5
+        // } );
         assert.strictEqual(structure.id, '1CRN')
         assert.strictEqual(structure.title, 'WATER STRUCTURE OF A HYDROPHOBIC PROTEIN AT ATOMIC RESOLUTION. PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN')
 

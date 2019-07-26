@@ -16,14 +16,14 @@ const quadIndices = new Uint16Array([
   1, 3, 2
 ])
 
-interface RibbonBufferData extends BufferData {
+export interface RibbonBufferData extends BufferData {
   normal: Float32Array
   dir: Float32Array
   size: Float32Array
 }
 
 function getSize(data: RibbonBufferData){
-  const n = (data.position.length / 3) - 1
+  const n = (data.position!.length / 3) - 1
   const n4 = n * 4
   const x = n4 * 3
   return x
@@ -54,7 +54,7 @@ class RibbonBuffer extends MeshBuffer {
       picking: data.picking
     }, params)
 
-    const n = (data.position.length / 3) - 1
+    const n = (data.position!.length / 3) - 1
     const n4 = n * 4
     const x = n4 * 3
 

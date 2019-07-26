@@ -16,6 +16,20 @@ import AtomProxy from '../proxy/atom-proxy'
 import ResidueProxy from '../proxy/residue-proxy'
 import ChainProxy from '../proxy/chain-proxy'
 import ModelProxy from '../proxy/model-proxy'
+import SpatialHash from '../geometry/spatial-hash';
+import BondHash from '../store/bond-hash';
+import ResidueMap from '../store/residue-map';
+import AtomMap from '../store/atom-map';
+import ModelStore from '../store/model-store';
+import ChainStore from '../store/chain-store';
+import ResidueStore from '../store/residue-store';
+import AtomStore from '../store/atom-store';
+import BondStore from '../store/bond-store';
+import Validation from './validation';
+import Unitcell from '../symmetry/unitcell';
+import Entity from './entity';
+import Assembly from '../symmetry/assembly';
+import { Data } from './data';
 
 /**
  * Get view on structure restricted to the selection
@@ -69,25 +83,25 @@ class StructureView extends Structure {
   get path () { return this.structure.path }
   get title () { return this.structure.title }
   get id () { return this.structure.id }
-  get data () { return this.structure.data }
+  get data (): Data { return this.structure.data }
   get atomSetDict () { return this.structure.atomSetDict }
-  get biomolDict () { return this.structure.biomolDict }
-  get entityList () { return this.structure.entityList }
-  get unitcell () { return this.structure.unitcell }
+  get biomolDict (): {[k: string]: Assembly} { return this.structure.biomolDict }
+  get entityList (): Entity[] { return this.structure.entityList }
+  get unitcell (): Unitcell|undefined { return this.structure.unitcell }
   get frames () { return this.structure.frames }
   get boxes () { return this.structure.boxes }
-  get validation () { return this.structure.validation }
+  get validation (): Validation|undefined { return this.structure.validation }
   get bondStore () { return this.structure.bondStore }
   get backboneBondStore () { return this.structure.backboneBondStore }
-  get rungBondStore () { return this.structure.rungBondStore }
-  get atomStore () { return this.structure.atomStore }
-  get residueStore () { return this.structure.residueStore }
-  get chainStore () { return this.structure.chainStore }
-  get modelStore () { return this.structure.modelStore }
-  get atomMap () { return this.structure.atomMap }
-  get residueMap () { return this.structure.residueMap }
-  get bondHash () { return this.structure.bondHash }
-  get spatialHash () { return this.structure.spatialHash }
+  get rungBondStore (): BondStore { return this.structure.rungBondStore }
+  get atomStore (): AtomStore { return this.structure.atomStore }
+  get residueStore (): ResidueStore { return this.structure.residueStore }
+  get chainStore (): ChainStore { return this.structure.chainStore }
+  get modelStore (): ModelStore { return this.structure.modelStore }
+  get atomMap (): AtomMap { return this.structure.atomMap }
+  get residueMap (): ResidueMap { return this.structure.residueMap }
+  get bondHash (): BondHash|undefined { return this.structure.bondHash }
+  get spatialHash (): SpatialHash|undefined { return this.structure.spatialHash }
 
   get _hasCoords () { return this.structure._hasCoords }
   set _hasCoords (value) { this.structure._hasCoords = value }
@@ -151,7 +165,7 @@ class StructureView extends Structure {
       this.bondCount = this.bondSet.getSize()
 
       this.boundingBox = this.getBoundingBox()
-      this.center = this.boundingBox.getCenter()
+      this.center = this.boundingBox.getCenter(new Vector3())
     }
 
     if (Debug) Log.timeEnd('StructureView.refresh')

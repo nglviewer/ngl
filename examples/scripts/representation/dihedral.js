@@ -1,7 +1,7 @@
 
 stage.loadFile('data://1blu.pdb').then(function (o) {
   var atomQuad = [
-    ['1.C', '2.N', '2.CA', '2.CB'],
+    [2, 5, 6, 9],
     ['1.C', '1.N', '1.CA', '1.CB'],
     ['3.CB', '3.CA', '3.N', '3.C']
     // ['1.N', '1.C', '1.CB', '1.CA']

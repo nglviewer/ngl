@@ -15,7 +15,7 @@ import {
   ProteinBackboneType, RnaBackboneType, DnaBackboneType, UnknownBackboneType,
   CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
   ChemCompProtein, ChemCompRna, ChemCompDna, ChemCompSaccharide,
-  AA3, PurinBases, RnaBases, DnaBases, IonNames, WaterNames, SaccharideNames,
+  AA3, PurinBases, RnaBases, DnaBases, Bases, IonNames, WaterNames, SaccharideNames,
   ProteinBackboneAtoms, NucleicBackboneAtoms, ResidueTypeAtoms
 } from '../structure/structure-constants'
 import Structure from '../structure/structure'
@@ -27,7 +27,8 @@ export interface BondGraph {
 }
 
 export interface RingData {
-  flags: Int8Array  // 1 when belonging to any ring(s)
+  atomRings: number[][]  // sparse array:
+                         // atomRings[atomIdx] -> array of ring indices
   rings: number[][]  // rings as arrays of indices
 }
 
@@ -202,6 +203,8 @@ export default class ResidueType {
   isRna () {
     if (this.chemCompType) {
       return ChemCompRna.includes(this.chemCompType)
+    } else if (this.hetero === 1) {
+      return false
     } else {
       return (
         this.hasAtomWithName(
@@ -216,6 +219,8 @@ export default class ResidueType {
   isDna () {
     if (this.chemCompType) {
       return ChemCompDna.includes(this.chemCompType)
+    } else if (this.hetero === 1) {
+      return false
     } else {
       return (
         (this.hasAtomWithName([ 'P', "O3'", 'O3*' ], [ "C3'", 'C3*' ]) &&
@@ -243,6 +248,14 @@ export default class ResidueType {
     } else {
       return SaccharideNames.includes(this.resname)
     }
+  }
+
+  isStandardAminoacid () {
+    return AA3.includes(this.resname)
+  }
+
+  isStandardBase () {
+    return Bases.includes(this.resname)
   }
 
   hasBackboneAtoms (position: number, type: number) {
@@ -437,7 +450,7 @@ export default class ResidueType {
       findRings(state, i)
     }
 
-    this.rings = { flags: state.flags, rings: state.rings }
+    this.rings = { atomRings: state.atomRings, rings: state.rings }
   }
 
   isAromatic (atom: AtomProxy) {
@@ -471,7 +484,7 @@ export default class ResidueType {
   assignBondReferenceAtomIndices () {
     const bondGraph = this.getBondGraph()!  // TODO
     const rings = this.getRings()!  // TODO
-    const ringFlags = rings.flags
+    const atomRings = rings.atomRings
     const ringData = rings.rings
 
     const bonds = this.bonds!  // TODO
@@ -488,62 +501,45 @@ export default class ResidueType {
       // Not required for single bonds
       if (bondOrders[i] <= 1) continue
 
+      let refRing
+
       const ai1 = atomIndices1[i]
       const ai2 = atomIndices2[i]
 
+      const rings1 = atomRings[ ai1 ]
+      const rings2 = atomRings[ ai2 ]
       // Are both atoms in a ring?
-      if (ringFlags[ ai1 ] && ringFlags[ ai2 ]) {
-        // Select another ring atom
-        // I *think* we can simply take the first ring atom
-        // we find in a ring that contains either ai1 or ai2
-        // where the ring atom is not ai1 or ai2
-        for (let ri = 0; ri < ringData.length; ++ri) {
-          // Have we already found it?
-          if (bondReferenceAtomIndices[i] !== undefined) { break }
-
-          const ring = ringData[ ri ]
-          // Try to find this atom and reference atom in no more than 1 full
-          // iteration through loop
-          let refAtom = null
-          let found = false
-          for (let rai = 0; rai < ring.length; ++rai) {
-            const ai3 = ring[ rai ]
-            if (ai3 === ai1 || ai3 === ai2) {
-              found = true
-            } else {
-              // refAtom is any other atom
-              refAtom = ai3
-            }
-            if (found && refAtom !== null) {
-              bondReferenceAtomIndices[i] = refAtom
-              break
-            }
+      if (rings1 && rings2) {
+        // Are they in the same ring? (If not, ignore ring info)
+        for (let ri1 = 0; ri1 < rings1.length; ri1++){
+          if (rings2.indexOf(rings1[ ri1 ]) !== -1) {
+            refRing = ringData[ rings1[ ri1 ] ]
+            break
           }
         }
-        if (bondReferenceAtomIndices[i] !== undefined) { continue }
       }
 
-      // Not a ring (or not one we can process), simply take the first
-      // neighbouring atom
-
+      // Find the first neighbour.
       if (bondGraph[ ai1 ].length > 1) {
         for (let j = 0; j < bondGraph[ ai1 ].length; ++j) {
           const ai3 = bondGraph[ ai1 ][ j ]
           if (ai3 !== ai2) {
-            bondReferenceAtomIndices[i] = ai3
-            break
+            if (refRing === undefined || refRing.indexOf(ai3) !== -1){
+              bondReferenceAtomIndices[i] = ai3
+              break
+            }
           }
         }
-        continue
       } else if (bondGraph[ ai2 ].length > 1) {
         for (let j = 0; j < bondGraph[ ai2 ].length; ++j) {
           const ai3 = bondGraph[ ai2 ][ j ]
           if (ai3 !== ai1) {
-            bondReferenceAtomIndices[i] = ai3
-            break
+            if (refRing === undefined || refRing.indexOf(ai3) !== -1){
+              bondReferenceAtomIndices[i] = ai3
+              break
+            }
           }
         }
-        continue
       } // No reference atom could be found (e.g. diatomic molecule/fragment)
     }
   }
@@ -665,9 +661,15 @@ function addRing(state: RingFinderState, a: number, b: number) {
     ring[ringOffset++] = right[t]
   }
 
-  // set atom-in-ring flags
+  const ri = state.rings.length
+  // set atomRing indices:
   for (let i = 0; i < rn; ++i) {
-    state.flags[ring[i]] = 1
+    const ai = ring[i]
+    if (state.atomRings[ai]) {
+      state.atomRings[ai].push(ri)
+    } else {
+      state.atomRings[ai] = [ri]
+    }
   }
 
   state.rings.push(ring)
@@ -722,7 +724,7 @@ interface RingFinderState {
   currentColor: number,
 
   rings: number[][],
-  flags: Int8Array,
+  atomRings: number[][],
 
   bonds: BondGraph
 }
@@ -738,7 +740,7 @@ function RingFinderState(bonds: BondGraph, capacity: number): RingFinderState {
     color: new Int32Array(capacity),
     currentColor: 0,
     rings: [],
-    flags: new Int8Array(capacity),
+    atomRings: [],
     bonds
   }
   for (let i = 0; i < capacity; i++) {

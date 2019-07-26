@@ -8,7 +8,7 @@ import { ParserRegistry } from '../globals'
 import Loader from './loader'
 import { LoaderParameters, LoaderInput } from './loader-utils'
 
-interface ParserParams {
+export interface ParserParams {
   voxelSize?: number
   firstModelOnly?: boolean
   asTrajectory?: boolean

@@ -6,7 +6,12 @@
 
 import { Box3 } from 'three'
 
-type Positions = { x: ArrayLike<number>, y: ArrayLike<number>, z: ArrayLike<number> }
+export type Positions = {
+  x: ArrayLike<number>,
+  y: ArrayLike<number>,
+  z: ArrayLike<number>,
+  count?:number
+}
 
 function createBoundingBox(positions: Positions) {
     const { x, y, z } = positions
@@ -56,7 +61,7 @@ export default class SpatialHash {
     this.boundZ = ((bb.max.z - this.minZ) >> this.exp) + 1
 
     const n = this.boundX * this.boundY * this.boundZ
-    const an = positions.x.length
+    const an = (positions.count !== undefined) ? positions.count : positions.x.length
 
     const xArray = positions.x
     const yArray = positions.y
@@ -127,13 +132,13 @@ export default class SpatialHash {
     const loY = Math.max(0, (y - r - this.minY) >> this.exp)
     const loZ = Math.max(0, (z - r - this.minZ) >> this.exp)
 
-    const hiX = Math.min(this.boundX, (x + r - this.minX) >> this.exp)
-    const hiY = Math.min(this.boundY, (y + r - this.minY) >> this.exp)
-    const hiZ = Math.min(this.boundZ, (z + r - this.minZ) >> this.exp)
+    const hiX = Math.min(this.boundX, ((x + r - this.minX) >> this.exp) + 1)
+    const hiY = Math.min(this.boundY, ((y + r - this.minY) >> this.exp) + 1)
+    const hiZ = Math.min(this.boundZ, ((z + r - this.minZ) >> this.exp) + 1)
 
-    for (let ix = loX; ix <= hiX; ++ix) {
-      for (let iy = loY; iy <= hiY; ++iy) {
-        for (let iz = loZ; iz <= hiZ; ++iz) {
+    for (let ix = loX; ix < hiX; ++ix) {
+      for (let iy = loY; iy < hiY; ++iy) {
+        for (let iz = loZ; iz < hiZ; ++iz) {
           const idx = (((ix * this.boundY) + iy) * this.boundZ) + iz
           const bucketIdx = this.grid[ idx ]
 

@@ -12,7 +12,7 @@ import { defaults } from '../utils'
 import { AtomPicker, BondPicker } from '../utils/picker'
 import { copyWithin, arrayMin, arrayMax } from '../math/array-utils'
 import BitArray from '../utils/bitarray'
-import RadiusFactory from '../utils/radius-factory'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory'
 import { Matrix } from '../math/matrix-utils'
 import PrincipalAxes from '../math/principal-axes'
 import SpatialHash from '../geometry/spatial-hash'
@@ -108,7 +108,7 @@ interface Structure {
   _cp: ChainProxy
 }
 
-type StructureHeader = {
+export type StructureHeader = {
   releaseDate?: string
   depositionDate?: string
   resolution?: number
@@ -117,12 +117,12 @@ type StructureHeader = {
   experimentalMethods?: string[]
 }
 
-type StructureExtraData = {
+export type StructureExtraData = {
   cif?: object
   sdf?: object[]
 }
 
-type StructureSignals = {
+export type StructureSignals = {
   refreshed: Signal
 }
 
@@ -197,7 +197,7 @@ class Structure implements Structure{
     this.atomSet = this.getAtomSet()
     this.atomCount = this.atomStore.count
     this.boundingBox = this.getBoundingBox(undefined, this.boundingBox)
-    this.center = this.boundingBox.getCenter()
+    this.center = this.boundingBox.getCenter(new Vector3())
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
   }
 
@@ -686,7 +686,7 @@ class Structure implements Structure{
     }
     if (!what || what.radius) {
       atomData.radius = new Float32Array(atomCount)
-      radiusFactory = new RadiusFactory(p.radiusParams)
+      radiusFactory = new RadiusFactory(p.radiusParams as RadiusParams)
     }
     if (!what || what.index) {
       atomData.index = new Uint32Array(atomCount)
@@ -704,7 +704,7 @@ class Structure implements Structure{
         colormaker.atomColorToArray(ap, color, i3)
       }
       if (picking) {
-        picking.array[ i ] = idx
+        picking.array![ i ] = idx
       }
       if (radius) {
         radius[ i ] = radiusFactory.atomRadius(ap)
@@ -758,10 +758,10 @@ class Structure implements Structure{
       colormaker = ColormakerRegistry.getScheme(p.colorParams)
     }
     if (!what || what.picking) {
-      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore)
+      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore!) as any
     }
     if (!what || what.radius || (isMulti && what.position)) {
-      radiusFactory = new RadiusFactory(p.radiusParams)
+      radiusFactory = new RadiusFactory(p.radiusParams as RadiusParams)
     }
     if (!what || what.radius) {
       bondData.radius = new Float32Array(bondCount)
@@ -855,7 +855,7 @@ class Structure implements Structure{
           }
         }
       }
-      if (picking) {
+      if (picking && picking.array) {
         picking.array[ i ] = index
         if (isMulti && bondOrder > 1) {
           for (j = 1; j < bondOrder; ++j) {
@@ -995,7 +995,7 @@ class Structure implements Structure{
    */
   atomCenter (selection?: Selection) {
     if (selection) {
-      return this.getBoundingBox(selection).getCenter()
+      return this.getBoundingBox(selection).getCenter(new Vector3())
     } else {
       return this.center.clone()
     }
@@ -1008,6 +1008,9 @@ class Structure implements Structure{
         arrayMin(atomStore.x) !== 0 || arrayMax(atomStore.x) !== 0 ||
         arrayMin(atomStore.y) !== 0 || arrayMax(atomStore.y) !== 0 ||
         arrayMin(atomStore.z) !== 0 || arrayMax(atomStore.z) !== 0
+      ) || (
+        // allow models with a single atom at the origin
+        atomStore.count / this.modelStore.count === 1
       )
     }
     return this._hasCoords;

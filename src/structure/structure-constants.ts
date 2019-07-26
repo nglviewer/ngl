@@ -935,17 +935,17 @@ export const AA1: { [k: string]: string } = {
   'GLU': 'E',
   'THR': 'T',
 
-  'ASH': 'D',
-  'GLH': 'E'
+  'SEC': 'U',  // as per IUPAC definition
+  'PYL': 'O',  // as per IUPAC definition
 }
 
 export const AA3 = Object.keys(AA1)
 
-export const RnaBases = [ 'A', 'C', 'T', 'G', 'U' ]
+export const RnaBases = [ 'A', 'C', 'T', 'G', 'U', 'I' ]
 
-export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'TCY', 'MCY', '5CM' ]
+export const DnaBases = [ 'DA', 'DC', 'DT', 'DG', 'DU', 'DI' ]
 
-export const PurinBases = [ 'A', 'G', 'DA', 'DG' ]
+export const PurinBases = [ 'A', 'G', 'I', 'DA', 'DG', 'DI' ]
 
 export const Bases = RnaBases.concat(DnaBases)
 
@@ -1054,8 +1054,9 @@ export const ProteinBackboneAtoms = [
 ]
 
 export const NucleicBackboneAtoms = [
-  'P', 'OP1', 'OP2',
+  'P', 'OP1', 'OP2', 'HOP2', 'HOP3',
   "O2'", "O3'", "O4'", "O5'", "C1'", "C2'", "C3'", "C4'", "C5'",
+  "H1'", "H2'", "H2''", "HO2'", "H3'", "H4'", "H5'", "H5''", "HO3'", "HO5'",
   'O2*', 'O3*', 'O4*', 'O5*', 'C1*', 'C2*', 'C3*', 'C4*', 'C5*'
 ]
 

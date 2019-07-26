@@ -2,8 +2,6 @@
  * @file ngl
  * @private
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
- *
- * [[include:coloring.md]]
  */
 
 import './polyfills'
@@ -31,6 +29,11 @@ import StlWriter from './writer/stl-writer'
 import Stage from './stage/stage'
 import Collection from './component/collection'
 import ComponentCollection from './component/component-collection'
+import Component from './component/component'
+import ShapeComponent from './component/shape-component'
+import StructureComponent, {StructureRepresentationType} from './component/structure-component'
+import SurfaceComponent from './component/surface-component'
+import VolumeComponent from './component/volume-component'
 import RepresentationCollection from './component/representation-collection'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
@@ -41,6 +44,7 @@ export { guessElement, concatStructures } from './structure/structure-utils'
 export { flatten, throttle, download, getQuery, uniqueArray } from './utils'
 import Queue from './utils/queue'
 import Counter from './utils/counter'
+import Frames from './trajectory/frames'
 
 //
 
@@ -63,6 +67,7 @@ import './color/moleculetype-colormaker'
 import './color/occupancy-colormaker'
 import './color/partialcharge-colormaker'
 import './color/random-colormaker'
+import './color/randomcoilindex-colormaker'
 import './color/residueindex-colormaker'
 import './color/resname-colormaker'
 import './color/sstruc-colormaker'
@@ -220,10 +225,17 @@ export {
   Collection,
   ComponentCollection,
   RepresentationCollection,
+  Component,
+  ShapeComponent,
+  StructureComponent,
+  SurfaceComponent,
+  VolumeComponent,
+  StructureRepresentationType,
 
   Assembly,
   TrajectoryPlayer,
   Superposition,
+  Frames,
 
   Queue,
   Counter,

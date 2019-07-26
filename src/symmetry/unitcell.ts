@@ -14,7 +14,7 @@ import {
 import { UnitcellPicker } from '../utils/picker'
 import Structure from '../structure/structure'
 
-interface UnitcellParams {
+export interface UnitcellParams {
   a: number
   b: number
   c: number
@@ -35,7 +35,7 @@ const DefaultBoxParams = {
   spacegroup: 'P 1'
 }
 
-interface UnitcellDataParams {
+export interface UnitcellDataParams {
   colorValue?: string|number,
   radius?: number
 }

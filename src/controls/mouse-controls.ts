@@ -9,13 +9,13 @@ import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 
 export type MouseControlPreset = keyof typeof MouseActionPresets
-interface MouseControlsParams {
+export interface MouseControlsParams {
   preset?: MouseControlPreset
   disabled?: boolean
 }
 
-type MouseActionType = ''|'scroll'|'drag'|'click'|'doubleClick'|'hover'|'clickPick'|'hoverPick'
-interface MouseAction {
+export type MouseActionType = ''|'scroll'|'drag'|'click'|'doubleClick'|'hover'|'clickPick'|'hoverPick'
+export interface MouseAction {
   type: MouseActionType
   key: number
   button: number

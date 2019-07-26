@@ -125,7 +125,6 @@ const partialCharges: { [k: string]: { [k: string]: number } } = {
 }
 
 const maxRadius = 12.0
-const maxRadius2 = maxRadius * maxRadius
 const nHBondDistance = 1.04
 const nHCharge = 0.25
 
@@ -194,13 +193,14 @@ function buildStoreLike (positions: Vector3[]) {
   return { x: x, y: y, z: z, count: n }
 }
 
-function chargeForAtom (a: AtomProxy) {
+function chargeForAtom (a: AtomProxy): number {
+  if (a.partialCharge !== null) return a.partialCharge
   if (!a.isProtein()) { return 0.0 }
   return (
     (partialCharges[ a.resname ] &&
         partialCharges[ a.resname ][ a.atomname ]) ||
     partialCharges[ 'backbone' ][ a.atomname ] || 0.0
-  ) as number
+  )
 }
 
 /**
@@ -234,7 +234,7 @@ class ElectrostaticColormaker extends Colormaker {
       this.parameters.scale = 'rwb'
     }
     if (!params.domain) {
-      this.parameters.domain = [ -0.5, 0, 0.5 ]
+      this.parameters.domain = [ -50, 50 ]
     }
 
     this.scale = this.getScale()
@@ -245,6 +245,14 @@ class ElectrostaticColormaker extends Colormaker {
     params.structure.eachAtom((ap: AtomProxy) => {
       this.charges[ ap.index ] = chargeForAtom(ap) * ap.occupancy
       if (ap.atomname === 'N') {
+
+        // In the specific case where N forms two bonds to
+        // CA and C, try and place a dummy hydrogen
+
+        if (ap.bondCount >= 3) return; // Skip if 3 bonds already (e.g. PRO)
+
+        if (ap.bondToElementCount(1)) return; // Skip if any H specificed
+
         const hPos = backboneNHPosition(ap)
         if (hPos !== undefined) {
           hPositions.push(hPos)
@@ -263,36 +271,24 @@ class ElectrostaticColormaker extends Colormaker {
   }
 
   positionColor (v: Vector3) {
+
+    const charges = this.charges
+    const hCharges = this.hCharges
+
     let p = 0.0
-    const neighbours = this.hash.within(v.x, v.y, v.z, maxRadius)
+    this.hash.eachWithin(v.x, v.y, v.z, maxRadius, (atomIndex, dSq) => {
+      const charge = charges[atomIndex]
+      if (charge === 0.0) return
+      p += charge / dSq
+    })
 
-    for (let i = 0; i < neighbours.length; i++) {
-      const neighbour = neighbours[ i ]
-      const charge = this.charges[ neighbour ]
-      if (charge !== 0.0) {
-        this.atomProxy.index = neighbour
-        this.delta.x = v.x - this.atomProxy.x
-        this.delta.y = v.y - this.atomProxy.y
-        this.delta.z = v.z - this.atomProxy.z
-        const r2 = this.delta.lengthSq()
-        if (r2 < maxRadius2) {
-          p += charge / r2
-        }
-      }
-    }
+    this.hHash.eachWithin(v.x, v.y, v.z, maxRadius, (atomIndex, dSq) => {
+      const charge = hCharges[atomIndex]
+      if (charge === 0.0) return
+      p += charge / dSq
+    })
 
-    const hNeighbours = this.hHash.within(v.x, v.y, v.z, maxRadius)
-    for (let i = 0; i < hNeighbours.length; i++) {
-      const neighbour = hNeighbours[ i ]
-      this.delta.x = v.x - this.hStore.x[ neighbour ]
-      this.delta.y = v.y - this.hStore.y[ neighbour ]
-      this.delta.z = v.z - this.hStore.z[ neighbour ]
-      const r2 = this.delta.lengthSq()
-      if (r2 < maxRadius2) {
-        p += this.hCharges[ neighbour ] / r2
-      }
-    }
-    return this.scale(p)
+    return this.scale(p * 332) // 332 to convert to kcal/mol
   }
 }
 

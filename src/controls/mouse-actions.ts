@@ -10,9 +10,9 @@ import Stage from '../stage/stage'
 import StructureComponent from '../component/structure-component'
 import SurfaceRepresentation from '../representation/surface-representation'
 
-type ScrollCallback = (stage: Stage, delta: number) => void
-type DragCallback = (stage: Stage, dx: number, dy: number) => void
-type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
+export type ScrollCallback = (stage: Stage, delta: number) => void
+export type DragCallback = (stage: Stage, dx: number, dy: number) => void
+export type PickCallback = (stage: Stage, pickingProxy: PickingProxy) => void
 export type MouseActionCallback = ScrollCallback | DragCallback | PickCallback
 
 /**
@@ -105,6 +105,17 @@ class MouseActions {
    */
   static rotateDrag (stage: Stage, dx: number, dy: number) {
     stage.trackballControls.rotate(dx, dy)
+  }
+
+  /**
+   * Rotate scene around z axis based on mouse coordinate changes
+   * @param {Stage} stage - the stage
+   * @param {Number} dx - amount to rotate in x direction
+   * @param {Number} dy - amount to rotate in y direction
+   * @return {undefined}
+   */
+  static zRotateDrag (stage: Stage, dx: number, dy: number) {
+    stage.trackballControls.zRotate(dx, dy)
   }
 
   /**
@@ -219,6 +230,7 @@ export const MouseActionPresets = {
     [ 'drag-left', MouseActions.rotateDrag ],
     [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-ctrl-left', MouseActions.panDrag ],
+    [ 'drag-ctrl-right', MouseActions.zRotateDrag ],
     [ 'drag-shift-left', MouseActions.zoomDrag ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],
 

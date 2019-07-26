@@ -4,11 +4,11 @@
  * @private
  */
 
-import { Signal } from 'signals'
+import * as signalsWrapper from 'signals'
 
 export default class Stats {
   signals = {
-    updated: new Signal()
+    updated: new signalsWrapper.Signal()
   }
 
   maxDuration = -Infinity

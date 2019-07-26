@@ -124,8 +124,8 @@ class DoubleSidedBuffer {
       front = this.frontBuffer.getMesh()
     }
 
-    this.frontMeshes.push(front)
-    this.backMeshes.push(back)
+    this.frontMeshes.push(<LineSegments|Mesh>front)
+    this.backMeshes.push(<LineSegments|Mesh>back)
 
     this.setParameters({ side: this.side })
 
@@ -200,6 +200,20 @@ class DoubleSidedBuffer {
   dispose () {
     this.frontBuffer.dispose()
     this.backBuffer.dispose()
+  }
+
+  /**
+   * Customize JSON serialization to avoid circular references.
+   * Only export simple params which could be useful.
+   */
+  toJSON () {
+    var result: any = {};
+    for (var x in this) {
+      if (['side', 'size', 'visible', 'matrix', 'parameters'].includes(x)) {
+        result[x] = this[x];
+      }
+    }
+    return result;
   }
 }
 

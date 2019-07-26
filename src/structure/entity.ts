@@ -26,13 +26,28 @@ function entityTypeFromString (string: string) {
   }
 }
 
-const EntityTypeString = {
+function entityFromType (type: number) {
+  switch (type) {
+    case PolymerEntity:
+      return 'polymer'
+    case NonPolymerEntity:
+      return 'non-polymer'
+    case MacrolideEntity:
+      return 'macrolide'
+    case WaterEntity:
+      return 'water'
+    default:
+      return undefined
+  }
+}
+
+export const EntityTypeString = {
   'polymer': PolymerEntity,
   'non-polymer': NonPolymerEntity,
   'macrolide': MacrolideEntity,
   'water': WaterEntity,
 }
-type EntityTypeString = keyof typeof EntityTypeString
+export type EntityTypeString = keyof typeof EntityTypeString
 
 /**
  * Entity of a {@link Structure}
@@ -51,7 +66,7 @@ export default class Entity {
    * @param {String} type - entity type
    * @param {Array} chainIndexList - entity chainIndexList
    */
-  constructor (structure: Structure, index: number, description = '', type?: EntityTypeString, chainIndexList = []) {
+  constructor (structure: Structure, index: number, description = '', type?: EntityTypeString, chainIndexList: number[] = []) {
     this.structure = structure
     this.index = index
     this.description = description
@@ -63,7 +78,7 @@ export default class Entity {
     })
   }
 
-  get type () { return 'Entity' }
+  get type () { return entityFromType(this.entityType) }
 
   getEntityType () {
     return this.entityType

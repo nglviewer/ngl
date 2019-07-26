@@ -24,8 +24,9 @@ import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
 import StructureRepresentation from '../representation/structure-representation'
 import AtomProxy from '../proxy/atom-proxy'
+import { Vector3, Box3 } from 'three';
 
-type StructureRepresentationType = (
+export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
   'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
   'ribbon'|'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
@@ -37,7 +38,7 @@ export const StructureComponentDefaultParameters = Object.assign({
 }, ComponentDefaultParameters)
 export type StructureComponentParameters = typeof StructureComponentDefaultParameters
 
-interface StructureComponentSignals extends ComponentSignals {
+export interface StructureComponentSignals extends ComponentSignals {
   trajectoryAdded: Signal  // when a trajectory is added
   trajectoryRemoved: Signal  // when a trajectory is removed
   defaultAssemblyChanged: Signal  // on default assembly change
@@ -281,7 +282,7 @@ class StructureComponent extends Component {
     )
   }
 
-  getBoxUntransformed (sele: string) {
+  getBoxUntransformed (sele: string): Box3 {
     let bb
 
     if (sele) {
@@ -293,7 +294,7 @@ class StructureComponent extends Component {
     return bb
   }
 
-  getCenterUntransformed (sele: string) {
+  getCenterUntransformed (sele: string): Vector3 {
     if (sele && typeof sele === 'string') {
       return this.structure.atomCenter(new Selection(sele))
     } else {
@@ -432,7 +433,7 @@ class StructureComponent extends Component {
   }
 }
 
-const enum MeasurementFlags {
+export const enum MeasurementFlags {
   Distance = 0x1,
   Angle = 0x2,
   Dihedral = 0x4

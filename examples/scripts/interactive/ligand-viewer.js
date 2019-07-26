@@ -222,7 +222,7 @@ function setLigandOptions () {
     if (rp.inscode) sele += '^' + rp.inscode
     if (rp.chain) sele += ':' + rp.chainname
     var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-    if (rp.entity.description) name += ' (' + rp.entity.description + ')'
+    if (rp.entity && rp.entity.description) name += ' (' + rp.entity.description + ')'
     options.push([sele, name])
   }, new NGL.Selection(ligandSele))
   options.forEach(function (d) {
@@ -237,7 +237,7 @@ function setChainOptions () {
   var options = [['', 'select chain']]
   struc.structure.eachChain(function (cp) {
     var name = cp.chainname
-    if (cp.entity.description) name += ' (' + cp.entity.description + ')'
+    if (cp.entity && cp.entity.description) name += ' (' + cp.entity.description + ')'
     options.push([cp.chainname, name])
   }, new NGL.Selection('polymer'))
   options.forEach(function (d) {
@@ -327,7 +327,7 @@ function showLigand (sele) {
   neighborSele = expandedSele
 
   var sview = s.getView(new NGL.Selection(sele))
-  pocketRadius = Math.max(sview.boundingBox.getSize().length() / 2, 2) + 5
+  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
@@ -398,14 +398,14 @@ var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: getTopPosition(16), left: '12px' })
 clipNearRange.oninput = function (e) {
-  var sceneRadius = stage.viewer.boundingBox.getSize().length() / 2
+  var sceneRadius = stage.viewer.boundingBox.getSize(new NGL.Vector3()).length() / 2
 
   var f = pocketRadius / sceneRadius
-  var v = parseFloat(e.target.value) / 10000  // must be between 0 and 1
+  var v = parseFloat(e.target.value) / 10000 // must be between 0 and 1
   var c = 0.5 - f / 2 + v * f
 
   pocketRepr.setParameters({
-    clipNear: c * 100  // must be between 0 and 100
+    clipNear: c * 100 // must be between 0 and 100
   })
 }
 addElement(clipNearRange)

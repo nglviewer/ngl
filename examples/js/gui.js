@@ -37,9 +37,10 @@ NGL.createParameterInput = function (p, v) {
   var input
 
   if (p.type === 'number') {
-    input = new UI.Number(parseFloat(value))
+    input = new UI.Number(0)
       .setRange(p.min, p.max)
       .setPrecision(p.precision)
+      .setValue(parseFloat(value))
   } else if (p.type === 'integer') {
     input = new UI.Integer(parseInt(value))
       .setRange(p.min, p.max)
@@ -110,7 +111,7 @@ NGL.Preferences = function (id, defaultParams) {
     hoverTimeout: 0
   }
 
-    // overwrite default values with params
+  // overwrite default values with params
   for (var key in this.storage) {
     if (dp[ key ] !== undefined) {
       this.storage[ key ] = dp[ key ]
@@ -305,7 +306,7 @@ NGL.StageWidget = function (stage) {
     }, false
   )
 
-    //
+  //
 
   document.addEventListener('dragover', function (e) {
     e.stopPropagation()
@@ -336,6 +337,13 @@ NGL.ViewportWidget = function (stage) {
   container.dom = viewer.container
   container.setPosition('absolute')
 
+  var fileTypesOpen = NGL.flatten([
+    NGL.ParserRegistry.getStructureExtensions(),
+    NGL.ParserRegistry.getVolumeExtensions(),
+    NGL.ParserRegistry.getSurfaceExtensions(),
+    NGL.DecompressorRegistry.names
+  ])
+
   // event handlers
 
   container.dom.addEventListener('dragover', function (e) {
@@ -349,9 +357,15 @@ NGL.ViewportWidget = function (stage) {
     e.preventDefault()
 
     var fn = function (file, callback) {
-      stage.loadFile(file, {
-        defaultRepresentation: true
-      }).then(function () { callback() })
+      var ext = file.name.split('.').pop().toLowerCase()
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(file).then(callback)
+      } else if (fileTypesOpen.includes(ext)) {
+        stage.loadFile(file, { defaultRepresentation: true }).then(callback)
+      } else {
+        console.error('unknown filetype: ' + ext)
+        callback()
+      }
     }
     var queue = new NGL.Queue(fn, e.dataTransfer.files)
   }, false)
@@ -464,7 +478,10 @@ NGL.MenubarFileWidget = function (stage) {
     var dirWidget
     function onListingClick (info) {
       var ext = info.path.split('.').pop().toLowerCase()
-      if (fileTypesOpen.includes(ext)) {
+      if (NGL.ScriptExtensions.includes(ext)) {
+        stage.loadScript(NGL.ListingDatasource.getUrl(info.path))
+        dirWidget.dispose()
+      } else if (fileTypesOpen.includes(ext)) {
         stage.loadFile(NGL.ListingDatasource.getUrl(info.path), {
           defaultRepresentation: true
         })
@@ -526,7 +543,7 @@ NGL.MenubarFileWidget = function (stage) {
     stage.defaultFileParams.cAlphaOnly = e.target.checked
   }
 
-    // configure menu contents
+  // configure menu contents
 
   var createOption = UI.MenubarHelper.createOption
   var createInput = UI.MenubarHelper.createInput
@@ -557,7 +574,7 @@ NGL.MenubarFileWidget = function (stage) {
 }
 
 NGL.MenubarViewWidget = function (stage, preferences) {
-    // event handlers
+  // event handlers
 
   function onLightThemeOptionClick () {
     preferences.setKey('theme', 'light')
@@ -597,12 +614,12 @@ NGL.MenubarViewWidget = function (stage, preferences) {
 
   function onGetOrientationClick () {
     window.prompt(
-    'Get orientation',
+      'Get orientation',
       JSON.stringify(
         stage.viewerControls.getOrientation().toArray(),
-          function (k, v) {
-            return v.toFixed ? Number(v.toFixed(2)) : v
-          }
+        function (k, v) {
+          return v.toFixed ? Number(v.toFixed(2)) : v
+        }
       )
     )
   }
@@ -614,7 +631,7 @@ NGL.MenubarViewWidget = function (stage, preferences) {
   }
 
   stage.signals.fullscreenChanged.add(function (isFullscreen) {
-    var icon = menuConfig[ 6 ].children[ 0 ]
+    var icon = menuConfig[ 7 ].children[ 0 ]
     if (isFullscreen) {
       icon.switchClass('compress', 'expand')
     } else {
@@ -685,7 +702,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     overviewWidget
       .setOpacity('0.9')
       .setDisplay('block')
-      .setWidgetPosition( 50, 80 )
+      .setWidgetPosition(50, 80)
   }
 
   function onDocOptionClick () {
@@ -708,7 +725,7 @@ NGL.MenubarHelpWidget = function (stage, preferences) {
     preferencesWidget
       .setOpacity('0.9')
       .setDisplay('block')
-      .setWidgetPosition( 50, 80 )
+      .setWidgetPosition(50, 80)
   }
 
   // export image
@@ -818,7 +835,7 @@ NGL.OverviewWidget = function (stage, preferences) {
   container.add(headingPanel)
   container.add(listingPanel)
 
-    //
+  //
 
   function addIcon (name, text) {
     var panel = new UI.Panel()
@@ -956,12 +973,12 @@ NGL.PreferencesWidget = function (stage, preferences) {
       .onClick(function () {
         container.setDisplay('none')
       })
-    )
+  )
 
   container.add(headingPanel)
   container.add(listingPanel)
 
-    //
+  //
 
   Object.keys(NGL.UIStageParameters).forEach(function (name) {
     var p = NGL.UIStageParameters[ name ]
@@ -1020,7 +1037,7 @@ NGL.ExportImageWidget = function (stage) {
       .onClick(function () {
         container.setDisplay('none')
       })
-    )
+  )
 
   container.add(headingPanel)
   container.add(listingPanel)
@@ -1158,7 +1175,7 @@ NGL.SidebarWidget = function (stage) {
     }
   })
 
-    // actions
+  // actions
 
   var expandAll = new UI.Icon('plus-square')
     .setTitle('expand all')
@@ -1198,7 +1215,7 @@ NGL.SidebarWidget = function (stage) {
     .setMarginLeft('10px')
   settingsMenu.entryLabelWidth = '120px'
 
-    // Busy indicator
+  // Busy indicator
 
   var busy = new UI.Panel()
     .setDisplay('inline')
@@ -1252,7 +1269,7 @@ NGL.SidebarWidget = function (stage) {
     settingsMenu.addEntry(name, input)
   })
 
-    //
+  //
 
   var actions = new UI.Panel()
     .setClass('Panel Sticky')
@@ -1352,7 +1369,7 @@ NGL.StructureComponentWidget = function (component, stage) {
 
   var trajExt = []
   NGL.ParserRegistry.getTrajectoryExtensions().forEach(function (ext) {
-    trajExt.push('.'+ext, '.'+ext+'.gz')
+    trajExt.push('.' + ext, '.' + ext + '.gz')
   })
 
   function framesInputOnChange (e) {
@@ -1388,7 +1405,7 @@ NGL.StructureComponentWidget = function (component, stage) {
       'xtc', 'trr', 'netcdf', 'dcd', 'ncdf', 'nc', 'gro', 'pdb',
       'lammpstrj', 'xyz', 'mdcrd', 'gz', 'binpos', 'h5', 'dtr',
       'arc', 'tng', 'trj', 'trz'
-      ]
+    ]
     var dirWidget
 
     function onListingClick (info) {
@@ -1545,9 +1562,9 @@ NGL.StructureComponentWidget = function (component, stage) {
     .addMenuEntry('Superpose', superpose)
     .addMenuEntry(
       'File', new UI.Text(component.structure.path)
-                .setMaxWidth('100px')
-                .setOverflow('auto')
-                // .setWordWrap( "break-word" )
+        .setMaxWidth('100px')
+        .setOverflow('auto')
+      // .setWordWrap( "break-word" )
     )
     .addMenuEntry('Trajectory', traj)
     .addMenuEntry('Principal axes', alignAxes)
@@ -1584,7 +1601,7 @@ NGL.SurfaceComponentWidget = function (component, stage) {
     )
   })
 
-    // Add representation
+  // Add representation
 
   var repr = new UI.Select()
     .setColor('#444')
@@ -1644,9 +1661,9 @@ NGL.SurfaceComponentWidget = function (component, stage) {
     .setMargin('0px')
     .addMenuEntry('Representation', repr)
     .addMenuEntry(
-        'File', new UI.Text(component.surface.path)
-                    .setMaxWidth('100px')
-                    .setWordWrap('break-word'))
+      'File', new UI.Text(component.surface.path)
+        .setMaxWidth('100px')
+        .setWordWrap('break-word'))
     .addMenuEntry('Position', position)
     .addMenuEntry('Rotation', rotation)
     .addMenuEntry('Scale', scale)
@@ -1672,7 +1689,7 @@ NGL.VolumeComponentWidget = function (component, stage) {
     )
   })
 
-    // Add representation
+  // Add representation
 
   var repr = new UI.Select()
     .setColor('#444')
@@ -1734,8 +1751,8 @@ NGL.VolumeComponentWidget = function (component, stage) {
     .addMenuEntry('Representation', repr)
     .addMenuEntry(
       'File', new UI.Text(component.volume.path)
-                .setMaxWidth('100px')
-                .setWordWrap('break-word'))
+        .setMaxWidth('100px')
+        .setWordWrap('break-word'))
     .addMenuEntry('Position', position)
     .addMenuEntry('Rotation', rotation)
     .addMenuEntry('Scale', scale)
@@ -1761,7 +1778,7 @@ NGL.ShapeComponentWidget = function (component, stage) {
     )
   })
 
-    // Add representation
+  // Add representation
 
   var repr = new UI.Select()
     .setColor('#444')
@@ -1813,7 +1830,7 @@ NGL.ShapeComponentWidget = function (component, stage) {
     scale.setValue(component.scale.x)
   })
 
-    // Component panel
+  // Component panel
 
   var componentPanel = new UI.ComponentPanel(component)
     .setDisplay('inline-block')
@@ -1821,8 +1838,8 @@ NGL.ShapeComponentWidget = function (component, stage) {
     .addMenuEntry('Representation', repr)
     .addMenuEntry(
       'File', new UI.Text(component.shape.path)
-                .setMaxWidth('100px')
-                .setWordWrap('break-word'))
+        .setMaxWidth('100px')
+        .setWordWrap('break-word'))
     .addMenuEntry('Position', position)
     .addMenuEntry('Rotation', rotation)
     .addMenuEntry('Scale', scale)
@@ -1857,7 +1874,7 @@ NGL.RepresentationElementWidget = function (element, stage) {
     container.dispose()
   })
 
-    // Name
+  // Name
 
   var name = new UI.EllipsisText(element.name)
     .setWidth('103px')
@@ -1888,7 +1905,7 @@ NGL.RepresentationElementWidget = function (element, stage) {
   if ((element.parent.type === 'structure' ||
           element.parent.type === 'trajectory') &&
         element.repr.selection && element.repr.selection.type === 'selection'
-    ) {
+  ) {
     container.add(
       new UI.SelectionPanel(element.repr.selection)
         .setMarginLeft('20px')
@@ -1904,7 +1921,7 @@ NGL.RepresentationElementWidget = function (element, stage) {
 
   menu.addEntry('type', new UI.Text(element.repr.type))
 
-    // Parameters
+  // Parameters
 
   var repr = element.repr
   var rp = repr.getParameters()
@@ -1976,9 +1993,9 @@ NGL.TrajectoryElementWidget = function (element, stage) {
     frame.setValue(value)
     if (traj.deltaTime && value >= 0) {
       var t = traj.getFrameTime(value) / 1000
-      time.setValue(t.toFixed(9).replace(/\.?0+$/g, '') + "ns")
-    }else{
-      time.setValue("")
+      time.setValue(t.toFixed(9).replace(/\.?0+$/g, '') + 'ns')
+    } else {
+      time.setValue('')
     }
     frameRange.setValue(value)
     frameCount.clear().add(frame.setWidth('40px'))
@@ -2149,7 +2166,6 @@ NGL.TrajectoryElementWidget = function (element, stage) {
 
   frameRow.add(playerButton, frameRange, frameCount)
 
-
   // Selection
 
   container.add(
@@ -2264,7 +2280,7 @@ NGL.TrajectoryElementWidget = function (element, stage) {
 // Listing
 
 NGL.DirectoryListingWidget = function (datasource, stage, heading, filter, callback) {
-    // from http://stackoverflow.com/a/20463021/1435042
+  // from http://stackoverflow.com/a/20463021/1435042
   function fileSizeSI (a, b, c, d, e) {
     return (b = Math, c = b.log, d = 1e3, e = c(a) / c(d) | 0, a / b.pow(d, e)).toFixed(2) +
             String.fromCharCode(160) + (e ? 'kMGTPEZY'[--e] + 'B' : 'Bytes')

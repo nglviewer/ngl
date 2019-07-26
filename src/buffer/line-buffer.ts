@@ -15,7 +15,7 @@ function getSize(data: LineBufferData){
   return attrSize * 3
 }
 
-interface LineBufferData extends BufferData {
+export interface LineBufferData extends BufferData {
   position1: Float32Array
   position2: Float32Array
   color2: Float32Array

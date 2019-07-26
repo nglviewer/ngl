@@ -110,7 +110,7 @@ void main(){
 
     #if defined( PICKING )
 
-        if( gl_FragColor.a < 0.7 )
+        if( gl_FragColor.a < 0.3 )
             discard;
         gl_FragColor = vec4( texture2D( pickingMap, vUv ).xyz, objectId );
 

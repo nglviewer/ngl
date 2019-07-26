@@ -13,7 +13,7 @@ import {
 } from './selection-test'
 import { SelectAllKeyword, SelectNoneKeyword } from './selection-constants'
 
-type SelectionSignals = {
+export type SelectionSignals = {
   stringChanged: Signal
 }
 
@@ -39,7 +39,7 @@ class Selection {
    * Create Selection
    * @param {String} string - selection string, see {@tutorial selection-language}
    */
-  constructor (string: string) {
+  constructor (string?: string) {
     this.signals = {
       stringChanged: new Signal()
     }
@@ -49,7 +49,7 @@ class Selection {
 
   get type () { return 'selection' }
 
-  setString (string: string, silent?: boolean) {
+  setString (string?: string, silent?: boolean) {
     if (string === undefined) string = this.string || ''
     if (string === this.string) return
 

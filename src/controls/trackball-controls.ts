@@ -11,9 +11,12 @@ import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 import Viewer from '../viewer/viewer'
 import ViewerControls from './viewer-controls'
+import AtomProxy from '../proxy/atom-proxy';
+import Component from '../component/component';
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
+const tmpRotateZMatrix = new Matrix4()
 const tmpRotateMatrix = new Matrix4()
 const tmpRotateVector = new Vector3()
 const tmpRotateQuaternion = new Quaternion()
@@ -21,7 +24,7 @@ const tmpPanMatrix = new Matrix4()
 const tmpPanVector = new Vector3()
 const tmpAtomVector = new Vector3()
 
-interface TrackballControlsParams {
+export interface TrackballControlsParams {
   rotateSpeed?: number
   zoomSpeed?: number
   panSpeed?: number
@@ -49,11 +52,11 @@ class TrackballControls {
     this.controls = stage.viewerControls
   }
 
-  get component () {
+  get component (): Component|undefined {
     return this.stage.transformComponent
   }
 
-  get atom () {
+  get atom (): AtomProxy|undefined {
     return this.stage.transformAtom
   }
 
@@ -122,6 +125,13 @@ class TrackballControls {
     tmpRotateYMatrix.makeRotationY(dx)
     tmpRotateXMatrix.multiply(tmpRotateYMatrix)
     this.controls.applyMatrix(tmpRotateXMatrix)
+  }
+
+  zRotate (x: number, y: number) {
+    const dz = this.rotateSpeed * ((-x + y) / -2) * 0.01
+
+    tmpRotateZMatrix.makeRotationZ(dz)
+    this.controls.applyMatrix(tmpRotateZMatrix)
   }
 
   rotateComponent (x: number, y: number) {

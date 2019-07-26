@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Matrix3, BufferGeometry } from 'three'
+import {  Matrix4, Matrix3, BufferGeometry } from 'three'
 
 import { getUintArray } from '../utils'
 import { serialBlockArray } from '../math/array-utils.js'
@@ -19,7 +19,7 @@ function getData(data: BufferData, geo: BufferGeometry){
   const geoPosition = (geo.attributes as any).position.array
   const geoIndex = geo.index ? geo.index.array : undefined
 
-  const n = data.position.length / 3
+  const n = data.position!.length / 3
   const m = geoPosition.length / 3
 
   const size = n * m
@@ -86,7 +86,7 @@ abstract class GeometryBuffer extends MeshBuffer {
     this.geoNormal = geoNormal
     this.geoIndex = geoIndex
 
-    this.positionCount = data.position.length / 3
+    this.positionCount = data.position!.length / 3
     this.geoPositionCount = geoPosition.length / 3
 
     this.transformedGeoPosition = new Float32Array(this.geoPositionCount * 3)

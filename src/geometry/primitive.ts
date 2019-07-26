@@ -23,13 +23,13 @@ function addElement (elm: any, array: any[]) {
 
 const tmpVec = new Vector3()
 
-type PrimitiveFields = { [k: string]: string }
+export type PrimitiveFields = { [k: string]: string }
 
 /**
  * Base class for geometry primitives
  * @interface
  */
-abstract class Primitive {
+export abstract class Primitive {
   static type = ''
   static fields: PrimitiveFields = {}
 

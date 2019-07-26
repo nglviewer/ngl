@@ -8,8 +8,10 @@ import { ComponentRegistry } from '../globals'
 import Component, { ComponentParameters } from './component'
 import Stage from '../stage/stage'
 import Shape from '../geometry/shape'
+import { Vector3, Box3 } from 'three';
+import RepresentationElement from './representation-element';
 
-type ShapeRepresentationType = 'buffer'
+export type ShapeRepresentationType = 'buffer'
 
 /**
  * Component wrapping a {@link Shape} object
@@ -40,15 +42,15 @@ class ShapeComponent extends Component {
    * @return {RepresentationComponent} the created representation wrapped into
    *                                   a representation component object
    */
-  addRepresentation (type: ShapeRepresentationType, params: { [k: string]: any } = {}) {
+  addRepresentation (type: ShapeRepresentationType, params: { [k: string]: any } = {}): RepresentationElement {
     return this._addRepresentation(type, this.shape, params)
   }
 
-  getBoxUntransformed () {
+  getBoxUntransformed (): Box3 {
     return this.shape.boundingBox
   }
 
-  getCenterUntransformed () {
+  getCenterUntransformed (): Vector3 {
     return this.shape.center
   }
 

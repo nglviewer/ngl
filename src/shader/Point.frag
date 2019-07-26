@@ -33,6 +33,8 @@ void main(){
                 discard;
         #endif
 
+        if( opacity < 0.3 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #else

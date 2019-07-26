@@ -38,7 +38,7 @@ export const TrajectoryElementDefaultParameters = Object.assign({
 }, ElementDefaultParameters)
 export type TrajectoryElementParameters = typeof TrajectoryElementDefaultParameters
 
-interface TrajectoryElementSignals extends ElementSignals {
+export interface TrajectoryElementSignals extends ElementSignals {
   frameChanged: Signal  // on frame change
   playerChanged: Signal  // on player change
   countChanged: Signal  // when frame count is available

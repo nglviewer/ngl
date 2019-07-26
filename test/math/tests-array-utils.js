@@ -1,6 +1,6 @@
 
 import {
-    quicksortIP, quicksortCmp, arraySortedCmp, quickselectCmp
+  quicksortIP, quicksortCmp, arraySortedCmp, quickselectCmp
 } from '../../src/math/array-utils.js'
 
 import { assert } from 'chai'
@@ -9,74 +9,74 @@ describe('math/array-utils', function () {
   describe('quicksortIP', function () {
     it('eleSize 1', function () {
       var list = [ 3, 0, 5, 9, 2, 1, 7 ]
-        // console.log( list );
+      // console.log( list );
 
       var arr1 = new Float32Array(list)
       quicksortIP(arr1, 1, 0)
-        // console.log( arr1 );
+      // console.log( arr1 );
 
       var arr2 = new Float32Array(list)
       quicksortIP(arr2, 1, 0, 3, 6)
-        // console.log( arr2 );
+      // console.log( arr2 );
 
       assert.deepEqual(
-            Array.from(arr1),
-            [ 0, 1, 2, 3, 5, 7, 9 ],
-            'Passed! full sort'
-        )
+        Array.from(arr1),
+        [ 0, 1, 2, 3, 5, 7, 9 ],
+        'Passed! full sort'
+      )
       assert.deepEqual(
-            Array.from(arr2),
-            [ 3, 0, 5, 1, 2, 9, 7 ],
-            'Passed! partial sort'
-        )
+        Array.from(arr2),
+        [ 3, 0, 5, 1, 2, 9, 7 ],
+        'Passed! partial sort'
+      )
     })
 
     it('eleSize 2', function () {
       var list = [ 3, 0, 0, 0, 5, 0, 9, 0, 2, 0, 1, 0, 7, 0 ]
-        // console.log( list );
+      // console.log( list );
 
       var arr1 = new Float32Array(list)
       quicksortIP(arr1, 2, 0)
-        // console.log( arr1 );
+      // console.log( arr1 );
 
       var arr2 = new Float32Array(list)
       quicksortIP(arr2, 2, 0, 3, 6)
-        // console.log( arr2 );
+      // console.log( arr2 );
 
       assert.deepEqual(
-            Array.from(arr1),
-            [ 0, 0, 1, 0, 2, 0, 3, 0, 5, 0, 7, 0, 9, 0 ],
-            'Passed! full sort'
-        )
+        Array.from(arr1),
+        [ 0, 0, 1, 0, 2, 0, 3, 0, 5, 0, 7, 0, 9, 0 ],
+        'Passed! full sort'
+      )
       assert.deepEqual(
-            Array.from(arr2),
-            [ 3, 0, 0, 0, 5, 0, 1, 0, 2, 0, 9, 0, 7, 0 ],
-            'Passed! partial sort'
-        )
+        Array.from(arr2),
+        [ 3, 0, 0, 0, 5, 0, 1, 0, 2, 0, 9, 0, 7, 0 ],
+        'Passed! partial sort'
+      )
     })
 
     it('eleSize 3', function () {
       var list = [ 3, 0, 0, 0, 0, 0, 5, 0, 0, 9, 0, 0, 2, 0, 0, 1, 0, 0, 7, 0, 0 ]
-        // console.log( list );
+      // console.log( list );
 
       var arr1 = new Float32Array(list)
       quicksortIP(arr1, 3, 0)
-        // console.log( arr1 );
+      // console.log( arr1 );
 
       var arr2 = new Float32Array(list)
       quicksortIP(arr2, 3, 0, 3, 6)
-        // console.log( arr2 );
+      // console.log( arr2 );
 
       assert.deepEqual(
-            Array.from(arr1),
-            [ 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 5, 0, 0, 7, 0, 0, 9, 0, 0 ],
-            'Passed! full sort'
-        )
+        Array.from(arr1),
+        [ 0, 0, 0, 1, 0, 0, 2, 0, 0, 3, 0, 0, 5, 0, 0, 7, 0, 0, 9, 0, 0 ],
+        'Passed! full sort'
+      )
       assert.deepEqual(
-            Array.from(arr2),
-            [ 3, 0, 0, 0, 0, 0, 5, 0, 0, 1, 0, 0, 2, 0, 0, 9, 0, 0, 7, 0, 0 ],
-            'Passed! partial sort'
-        )
+        Array.from(arr2),
+        [ 3, 0, 0, 0, 0, 0, 5, 0, 0, 1, 0, 0, 2, 0, 0, 9, 0, 0, 7, 0, 0 ],
+        'Passed! partial sort'
+      )
     })
   })
 
@@ -93,26 +93,26 @@ describe('math/array-utils', function () {
       var arr1 = new Float32Array(list)
       quicksortCmp(arr1)
       assert.deepEqual(
-            Array.from(arr1),
-            [ 0, 1, 2, 3, 5, 7, 9 ],
-            'Passed! full sort'
-        )
+        Array.from(arr1),
+        [ 0, 1, 2, 3, 5, 7, 9 ],
+        'Passed! full sort'
+      )
       assert.isTrue(
-            arraySortedCmp(arr1, cmp),
-            'Passed! full sort'
-        )
+        arraySortedCmp(arr1, cmp),
+        'Passed! full sort'
+      )
 
       var arr2 = new Float32Array(list)
       quicksortCmp(arr2, undefined, 3, 6)
       assert.deepEqual(
-            Array.from(arr2),
-            [ 3, 0, 5, 1, 2, 9, 7 ],
-            'Passed! partial sort'
-        )
+        Array.from(arr2),
+        [ 3, 0, 5, 1, 2, 9, 7 ],
+        'Passed! partial sort'
+      )
       assert.isTrue(
-            arraySortedCmp(arr2.subarray(3, 6), cmp),
-            'Passed! partial sort'
-        )
+        arraySortedCmp(arr2.subarray(3, 6), cmp),
+        'Passed! partial sort'
+      )
 
       var cmpInv = function (a, b) {
         if (a > b) return -1
@@ -122,14 +122,14 @@ describe('math/array-utils', function () {
       var arr3 = new Float32Array(list)
       quicksortCmp(arr3, cmpInv)
       assert.deepEqual(
-            Array.from(arr3),
-            [ 9, 7, 5, 3, 2, 1, 0 ],
-            'Passed! full sort inverted'
-        )
+        Array.from(arr3),
+        [ 9, 7, 5, 3, 2, 1, 0 ],
+        'Passed! full sort inverted'
+      )
       assert.isTrue(
-            arraySortedCmp(arr3, cmpInv),
-            'Passed! full sort inverted'
-        )
+        arraySortedCmp(arr3, cmpInv),
+        'Passed! full sort inverted'
+      )
     })
 
     it('points', function () {
@@ -143,20 +143,20 @@ describe('math/array-utils', function () {
 
       quicksortCmp(points, cmp)
       assert.isTrue(
-            arraySortedCmp(points, cmp),
-            'Passed! sort points'
-        )
+        arraySortedCmp(points, cmp),
+        'Passed! sort points'
+      )
     })
   })
 
   describe('quickselectCmp', function () {
     it('basic', function () {
       var list1 = [ 13, 10, 15, 19, 12, 11, 17 ]
-        //            0   1   2   3   4   5   6
+      //            0   1   2   3   4   5   6
       var sort1 = [ 10, 11, 12, 13, 15, 17, 19 ]
 
       var list2 = [ 10, 2, 30, 4, 50, 6, 70, 8 ]
-        //            0   1   2   3   4   5   6
+      //            0   1   2   3   4   5   6
       var sort2 = [ 2, 4, 6, 8, 10, 30, 50, 70 ]
 
       var cmp = function (a, b) {
@@ -169,25 +169,25 @@ describe('math/array-utils', function () {
         for (var i = 0, il = list.length; i < il; ++i) {
           var arr = new Float32Array(list)
           var selected = quickselectCmp(arr, i)
-                // console.log( Array.from( arr ) );
+          // console.log( Array.from( arr ) );
           assert.strictEqual(
-                    selected,
-                    sort[ i ],
-                    'selected ' + i + 'th item'
-                )
+            selected,
+            sort[ i ],
+            'selected ' + i + 'th item'
+          )
           var j
           for (j = 0; j < i; ++j) {
             assert.isTrue(
-                        cmp(arr[ j ], arr[ i ]) <= 0,
-                        '' + j + 'th item should be smaller (selected ' + i + 'th item)'
-                    )
+              cmp(arr[ j ], arr[ i ]) <= 0,
+              '' + j + 'th item should be smaller (selected ' + i + 'th item)'
+            )
           }
           for (j = i + 1; j < il; ++j) {
-                    // console.log( arr[ j ], arr[ i ] );
+            // console.log( arr[ j ], arr[ i ] );
             assert.isTrue(
-                        cmp(arr[ j ], arr[ i ]) >= 0,
-                        '' + j + 'th item should be larger (selected ' + i + 'th item)'
-                    )
+              cmp(arr[ j ], arr[ i ]) >= 0,
+              '' + j + 'th item should be larger (selected ' + i + 'th item)'
+            )
           }
         }
       }
@@ -211,16 +211,16 @@ describe('math/array-utils', function () {
         var j
         for (j = 0; j < i; ++j) {
           assert.isTrue(
-                    cmp(arr[ j ], arr[ i ]) <= 0,
-                    '' + j + 'th item should be smaller (selected ' + i + 'th item)'
-                )
+            cmp(arr[ j ], arr[ i ]) <= 0,
+            '' + j + 'th item should be smaller (selected ' + i + 'th item)'
+          )
         }
         for (j = i + 1; j < il; ++j) {
-                // console.log( arr[ j ], arr[ i ] );
+          // console.log( arr[ j ], arr[ i ] );
           assert.isTrue(
-                    cmp(arr[ j ], arr[ i ]) >= 0,
-                    '' + j + 'th item should be larger (selected ' + i + 'th item)'
-                )
+            cmp(arr[ j ], arr[ i ]) >= 0,
+            '' + j + 'th item should be larger (selected ' + i + 'th item)'
+          )
         }
       }
     })

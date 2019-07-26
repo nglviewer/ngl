@@ -6,7 +6,8 @@ import { ColormakerParameters } from '../color/colormaker'
 
 export interface RadiusParams {
     scale: number
-    radius: number
+    radius?: number
+    type?: string
 }
 
 //

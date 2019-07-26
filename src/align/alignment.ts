@@ -81,7 +81,7 @@ const SubstitutionMatrices = (function () {
     blosum62x: prepareMatrix(aminoacidsX, blosum62x)
   }
 }())
-type SubstitutionMatrix = ''|'blosum62'|'blosum62x'
+export type SubstitutionMatrix = ''|'blosum62'|'blosum62x'
 
 class Alignment {
   substMatrix: { [k: string]: { [k: string]: number } }

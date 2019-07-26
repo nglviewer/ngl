@@ -19,10 +19,10 @@ export interface WideLineBufferData extends BufferData {
   color2: Float32Array
 }
 
-const WideLineBufferDefaultParameters = Object.assign({
+export const WideLineBufferDefaultParameters = Object.assign({
   linewidth: 2
 }, BufferDefaultParameters)
-type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
+export type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
 
 const WideLineBufferParameterTypes = Object.assign({
   linewidth: { uniform: true }
@@ -47,7 +47,7 @@ class WideLineBuffer extends MappedQuadBuffer {
   vertexShader = 'WideLine.vert'
   fragmentShader ='WideLine.frag'
 
-  constructor (data: WideLineBufferData, params: Partial<WideLineBufferParameters> = {}) {
+  constructor (data: Partial<WideLineBufferData>, params: Partial<WideLineBufferParameters> = {}) {
     super(data, params)
 
     if (!data.color2 && data.color) data.color2 = data.color
@@ -66,6 +66,10 @@ class WideLineBuffer extends MappedQuadBuffer {
 
     this.setAttributes(data)
     this.makeMapping()
+  }
+
+  setParameters (params: Partial<WideLineBufferParameters>) {
+    super.setParameters(params)
   }
 }
 

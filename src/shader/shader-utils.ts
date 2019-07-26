@@ -18,7 +18,7 @@ import './chunk/unpack_color.glsl'
 
 import { ShaderRegistry } from '../globals'
 
-type ShaderDefine = (
+export type ShaderDefine = (
   'NEAR_CLIP'|'RADIUS_CLIP'|'PICKING'|'NOLIGHT'|'FLAT_SHADED'|'OPAQUE_BACK'|
   'DIFFUSE_INTERIOR'|'USE_INTERIOR_COLOR'|
   'USE_SIZEATTENUATION'|'USE_MAP'|'ALPHATEST'|'SDF'|'FIXED_SIZE'|

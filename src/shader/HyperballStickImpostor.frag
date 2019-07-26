@@ -48,7 +48,7 @@ varying float vRadius2;
     #include common
     #include fog_pars_fragment
     #include bsdfs
-    #include lights_pars
+    #include lights_pars_begin
     #include lights_physical_pars_fragment
 #endif
 
@@ -252,6 +252,8 @@ void main(){
 
     #ifdef PICKING
 
+        if( opacity < 0.3 )
+            discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
     #else
@@ -274,11 +276,12 @@ void main(){
         #include roughnessmap_fragment
         #include metalnessmap_fragment
 
-        // don't use #include normal_fragment
+        // don't use #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
 
         #include lights_physical_fragment
-        #include lights_template
+        #include lights_fragment_begin
+        #include lights_fragment_end
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
 

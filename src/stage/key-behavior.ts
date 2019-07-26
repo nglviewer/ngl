@@ -65,7 +65,14 @@ class KeyBehavior {
    */
   _onKeypress (event: KeyboardEvent) {
     // console.log( "press", event.keyCode, String.fromCharCode( event.keyCode ) );
-    this.controls.run(event.keyCode)
+    let pressedKey: string;
+    if ("key" in KeyboardEvent.prototype) {
+      pressedKey = event.key;
+    // some mobile browsers don't support this attribute
+    } else {
+      pressedKey = String.fromCharCode(event.which || event.keyCode);
+    }
+    this.controls.run(pressedKey);
   }
 
   _focusDomElement () {

@@ -12,8 +12,8 @@ Promise.all([
   o2.addRepresentation('licorice', { sele: 'hetero' })
 
   var as = o2.structure.getAtomSetWithinVolume(
-        o1.volume, 2, o1.volume.getValueForSigma(2.7)
-    )
+    o1.volume, 2, o1.volume.getValueForSigma(2.7)
+  )
   var as2 = o2.structure.getAtomSetWithinGroup(as)
   o2.addRepresentation('ball+stick', { sele: as2.toSeleString() })
 

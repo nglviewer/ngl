@@ -47,7 +47,7 @@ class NetworkStreamer extends Streamer {
       }
       // xhr.crossOrigin = true;
 
-      xhr.send(null)
+      xhr.send()
     })
   }
 }

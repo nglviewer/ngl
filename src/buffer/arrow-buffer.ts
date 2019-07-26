@@ -22,13 +22,13 @@ export interface ArrowBufferData extends BufferData {
   radius: Float32Array
 }
 
-const ArrowBufferDefaultParameters = Object.assign({
+export const ArrowBufferDefaultParameters = Object.assign({
   aspectRatio: 1.5,
   radialSegments: 50,
   openEnded: false,
   disableImpostor: false
 }, BufferDefaultParameters)
-type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
+export type ArrowBufferParameters = typeof ArrowBufferDefaultParameters
 
 /**
  * Arrow buffer. Draws arrows made from a cylinder and a cone.

@@ -15,6 +15,8 @@ import ResidueStore from '../store/residue-store'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 import AtomProxy from '../proxy/atom-proxy'
+import ModelProxy from './model-proxy';
+import Entity from '../structure/entity';
 
 /**
  * Chain proxy
@@ -39,14 +41,14 @@ class ChainProxy {
    * Entity
    * @type {Entity}
    */
-  get entity () {
+  get entity (): Entity {
     return this.structure.entityList[ this.entityIndex ]
   }
   /**
    * Model
    * @type {ModelProxy}
    */
-  get model () {
+  get model (): ModelProxy {
     return this.structure.getModelProxy(this.modelIndex)
   }
 

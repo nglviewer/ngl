@@ -4,16 +4,19 @@
  * @private
  */
 
+import { Matrix4 } from 'three'
 import { Debug, Log } from '../globals'
 import {
-    Matrix, svd, meanRows, subRows, addRows, transpose,
-    multiplyABt, invert3x3, multiply3x3, mat3x3determinant
+    Matrix, svd, meanRows, subRows, transpose,
+    multiplyABt, invert3x3, multiply3x3, mat3x3determinant, multiply
 } from '../math/matrix-utils.js'
 import Structure from '../structure/structure'
 
 class Superposition {
   coords1t: Matrix
   coords2t: Matrix
+
+  transformationMatrix: Matrix4
 
   mean1: number[]
   mean2: number[]
@@ -57,12 +60,14 @@ class Superposition {
     this.coords1t = new Matrix(n, 3)
     this.coords2t = new Matrix(n, 3)
 
+    this.transformationMatrix = new Matrix4()
+
     this.c.data.set([ 1, 0, 0, 0, 1, 0, 0, 0, -1 ])
 
     // prep coords
 
-    this.prepCoords(atoms1, coords1, n)
-    this.prepCoords(atoms2, coords2, n)
+    this.prepCoords(atoms1, coords1, n, false)
+    this.prepCoords(atoms2, coords2, n, false)
 
     // superpose
 
@@ -92,25 +97,77 @@ class Superposition {
       multiply3x3(this.tmp, this.c, this.VH)
       multiply3x3(this.R, this.U, this.tmp)
     }
+
+    //get the transformation matrix
+
+    const transformMat_ = new Matrix(4,4)
+    const tmp_1 = new Matrix(4,4)
+    const tmp_2 = new Matrix(4,4)
+
+    const sub = new Matrix(4,4)
+    const mult = new Matrix(4,4)
+    const add = new Matrix(4,4)
+
+    const R = this.R.data
+    const M1 = this.mean1
+    const M2 = this.mean2
+
+    sub.data.set([ 1, 0, 0, -M1[0],
+                   0, 1, 0, -M1[1],
+                   0, 0, 1, -M1[2],
+                   0, 0, 0, 1 ])
+
+    mult.data.set([ R[0], R[1], R[2], 0,
+                    R[3], R[4], R[5], 0,
+                    R[6], R[7], R[8], 0,
+                    0, 0, 0, 1 ])
+
+    add.data.set([ 1, 0, 0, M2[0],
+                   0, 1, 0, M2[1],
+                   0, 0, 1, M2[2],
+                   0, 0, 0, 1 ])
+
+    transpose(tmp_1,sub)
+    multiplyABt(transformMat_,mult,tmp_1)
+    transpose(tmp_2,transformMat_)
+    multiplyABt(tmp_1,add,tmp_2)
+
+    transpose(transformMat_,tmp_1)
+    this.transformationMatrix.elements = transformMat_.data
+
   }
 
-  prepCoords (atoms: Structure|Float32Array, coords: Matrix, n: number) {
+  prepCoords (atoms: Structure|Float32Array, coords: Matrix, n: number, is4X4: boolean) {
     let i = 0
-    const n3 = n * 3
     const cd = coords.data
 
+    let c = 3
+    let d = n * 3
+
+    if (is4X4) {
+      d = n * 4
+      c = 4
+    }
     if (atoms instanceof Structure) {
       atoms.eachAtom(function (a) {
-        if (i < n3) {
+        if (i < d) {
           cd[ i + 0 ] = a.x
           cd[ i + 1 ] = a.y
           cd[ i + 2 ] = a.z
+          if (is4X4) cd[ i + 3 ] = 1
 
-          i += 3
+          i += c
         }
       })
     } else if (atoms instanceof Float32Array) {
-      cd.set(atoms.subarray(0, n3))
+      for (; i < d; i += c){
+        if (i < d) {
+          cd[ i ] = atoms[ i ]
+          cd[ i + 1 ] = atoms[ i + 1 ]
+          cd[ i + 2 ] = atoms[ i + 2 ]
+          if (is4X4) cd[ i + 3 ] = 1
+        }
+      }
     } else {
       Log.warn('prepCoords: input type unknown')
     }
@@ -128,37 +185,75 @@ class Superposition {
       return
     }
 
-    const coords = new Matrix(3, n)
-    const tmp = new Matrix(n, 3)
+    const coords = new Matrix(4, n)
+    const tCoords = new Matrix(n,4)
 
     // prep coords
 
-    this.prepCoords(atoms, coords, n)
+    this.prepCoords(atoms, coords, n, true)
+
+    // check for transformation matrix correctness
+
+    const transform = this.transformationMatrix
+    const det = transform.determinant()
+    if (!det){
+      return det
+    }
 
     // do transform
 
-    subRows(coords, this.mean1)
-    multiplyABt(tmp, this.R, coords)
-    transpose(coords, tmp)
-    addRows(coords, this.mean2)
+    const mult = new Matrix(4,4)
+    mult.data = transform.elements
+    multiply(tCoords,coords,mult)
 
     let i = 0
-    const cd = coords.data
-
+    const cd = tCoords.data
     if (atoms instanceof Structure) {
-      atoms.eachAtom(function (a) {
-        a.x = cd[ i + 0 ]
-        a.y = cd[ i + 1 ]
-        a.z = cd[ i + 2 ]
+        atoms.eachAtom(function (a) {
+          a.x = cd[ i ]
+          a.y = cd[ i + 1 ]
+          a.z = cd[ i + 2 ]
+          i += 4
+        })
 
-        i += 3
-      })
+        //update transformation matrices for each assembly
+
+        const invertTrasform = new Matrix4()
+        invertTrasform.getInverse(transform)
+
+        const biomolDict = atoms.biomolDict
+
+        for (let key in biomolDict) {
+
+          if (biomolDict.hasOwnProperty(key)) {
+            let assembly = biomolDict[key]
+
+            assembly.partList.forEach(function(part){
+
+              part.matrixList.forEach(function(mat){
+
+                mat.premultiply(transform)
+                mat.multiply(invertTrasform)
+
+              })
+            })
+          }
+        }
     } else if (atoms instanceof Float32Array) {
-      atoms.set(cd.subarray(0, n * 3))
+
+      const n4 = n * 4
+      for (; i < n4; i += 4){
+
+        atoms[ i ] = cd[ i ]
+        atoms[ i + 1 ] = cd[ i + 1 ]
+        atoms[ i + 2 ] = cd[ i + 2 ]
+
+      }
     } else {
       Log.warn('transform: input type unknown')
     }
+
+    return this.transformationMatrix
   }
 }
-
 export default Superposition

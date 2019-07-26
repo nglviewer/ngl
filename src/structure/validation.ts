@@ -14,16 +14,30 @@ import { guessElement } from '../structure/structure-utils'
 import AtomProxy from '../proxy/atom-proxy'
 import Structure from '../structure/structure'
 
+function getNamedItem(a: NamedNodeMap, name: string) {
+  const item = a.getNamedItem(name)
+  return item !== null ? item.value : ''
+}
+
 function getSele (a: NamedNodeMap, atomname?: string, useAltcode = false) {
-  const icode = a.getNamedItem('icode').value
-  const chain = a.getNamedItem('chain').value
-  const altcode = a.getNamedItem('altcode').value
-  let sele = a.getNamedItem('resnum').value
-  if (icode.trim()) sele += '^' + icode
-  if (chain.trim()) sele += ':' + chain
+  const icode = getNamedItem(a, 'icode').trim()
+  const chain = getNamedItem(a, 'chain').trim()
+  const altcode = getNamedItem(a, 'altcode')
+  let sele = getNamedItem(a, 'resnum')
+  if (icode) sele += '^' + icode
+  if (chain) sele += ':' + chain
   if (atomname) sele += '.' + atomname
   if (useAltcode && altcode.trim()) sele += '%' + altcode
-  sele += '/' + (parseInt(a.getNamedItem('model').value) - 1)
+  sele += '/' + (parseInt(getNamedItem(a, 'model')) - 1)
+  return sele
+}
+
+function getResSele (a: NamedNodeMap) {
+  const chain = getNamedItem(a, 'chain').trim()
+  const rescode = getNamedItem(a, 'rescode')
+  const resnum = getNamedItem(a, 'resnum')
+  let sele = `[${rescode}]${resnum}`
+  if (chain) sele += `:${chain}`
   return sele
 }
 
@@ -35,7 +49,7 @@ function setBitDict (dict: { [k: string]: number }, key: string, bit: number) {
   }
 }
 
-function hasAttrValue (attr: Attr, value: string) {
+function hasAttrValue (attr: Attr|null, value: string) {
   return attr !== null && attr.value === value
 }
 
@@ -58,7 +72,7 @@ function getProblemCount (clashDict: { [k: string]: { [k: string]: string } }, g
 
   const clashes = g.getElementsByTagName('clash')
   for (let j = 0, jl = clashes.length; j < jl; ++j) {
-    if (clashDict[ clashes[ j ].attributes.getNamedItem('cid').value ]) {
+    if (clashDict[ getNamedItem(clashes[ j ].attributes, 'cid') ]) {
       geoProblemCount += 1
       break
     }
@@ -97,6 +111,22 @@ function getProblemCount (clashDict: { [k: string]: { [k: string]: string } }, g
 class Validation {
   rsrzDict: { [k: string]: number } = {}
   rsccDict: { [k: string]: number } = {}
+  /**
+   * Random Coil Index (RCI) - evaluates the proximity of residue structural
+   * and dynamic properties to the properties of flexible random coil regions
+   * from NMR chemical shifts.
+   *
+   * Mark V. Berjanskii and David S. Wishart (2005)
+   * A Simple Method To Predict Protein Flexibility Using Secondary Chemical Shifts
+   * J. Am. Chem. Soc., 2005, 127 (43), pp 14970–14971
+   * http://pubs.acs.org/doi/abs/10.1021/ja054842f
+   *
+   * Mark V. Berjanskii and David S. Wishart (2008)
+   * Application of the random coil index to studying protein flexibility.
+   * J Biomol NMR. 2008 Jan;40(1):31-48. Epub 2007 Nov 6.
+   * http://www.springerlink.com/content/2966482w10306126/
+   */
+  rciDict: { [k: string]: number } = {}
   clashDict: { [k: string]: { [k: string]: string } } = {}
   clashArray: { [k: string]: string }[] = []
   geoDict: { [k: string]: number } = {}
@@ -104,7 +134,7 @@ class Validation {
   atomDict: { [k: string]: boolean|number } = {}
   clashSele = 'NONE'
 
-  constructor (readonly name: string, readonlypath: string) {}
+  constructor (readonly name: string, readonly path: string) {}
 
   get type () { return 'validation' }
 
@@ -113,11 +143,25 @@ class Validation {
 
     const rsrzDict = this.rsrzDict
     const rsccDict = this.rsccDict
+    const rciDict = this.rciDict
     const clashDict = this.clashDict
     const clashArray = this.clashArray
     const geoDict = this.geoDict
     const geoAtomDict = this.geoAtomDict
     const atomDict = this.atomDict
+
+    const entries = xml.getElementsByTagName('Entry')
+    if (entries.length === 1) {
+      const chemicalShiftLists = entries[0].getElementsByTagName('chemical_shift_list')
+      if (chemicalShiftLists.length === 1) {
+        const randomCoilIndices = chemicalShiftLists[0].getElementsByTagName('random_coil_index')
+        for (let j = 0, jl = randomCoilIndices.length; j < jl; ++j) {
+          const rcia = randomCoilIndices[ j ].attributes
+          const sele = getResSele(rcia)
+          rciDict[ sele ] = parseFloat(getNamedItem(rcia, 'value'))
+        }
+      }
+    }
 
     const groups = xml.getElementsByTagName('ModelledSubgroup')
 
@@ -132,10 +176,10 @@ class Validation {
 
       const sele = getSele(ga)
       if (ga.getNamedItem('rsrz') !== null) {
-        rsrzDict[ sele ] = parseFloat(ga.getNamedItem('rsrz').value)
+        rsrzDict[ sele ] = parseFloat(getNamedItem(ga, 'rsrz'))
       }
       if (ga.getNamedItem('rscc') !== null) {
-        rsccDict[ sele ] = parseFloat(ga.getNamedItem('rscc').value)
+        rsccDict[ sele ] = parseFloat(getNamedItem(ga, 'rscc'))
       }
       const seleAttr = xml.createAttribute('sele')
       seleAttr.value = sele
@@ -145,10 +189,10 @@ class Validation {
 
       for (let j = 0, jl = clashes.length; j < jl; ++j) {
         const ca = clashes[ j ].attributes
-        const atom = ca.getNamedItem('atom').value
+        const atom = getNamedItem(ca, 'atom')
 
         if (guessElement(atom) !== 'H') {
-          const cid = ca.getNamedItem('cid').value
+          const cid = getNamedItem(ca, 'cid')
           const atomSele = getSele(ga, atom, true)
           atomDict[ atomSele ] = true
 
@@ -177,8 +221,8 @@ class Validation {
       const g = groups[ i ]
       const ga = g.attributes
 
-      const sele = ga.getNamedItem('sele').value
-      const isPolymer = ga.getNamedItem('seq').value !== '.'
+      const sele = getNamedItem(ga, 'sele')
+      const isPolymer = getNamedItem(ga, 'seq') !== '.'
 
       if (isPolymer) {
         const geoProblemCount = getProblemCount(clashDict, g, ga)
@@ -196,21 +240,21 @@ class Validation {
 
           for (let j = 0, jl = clashes.length; j < jl; ++j) {
             const ca = clashes[ j ].attributes
-            if (clashDict[ ca.getNamedItem('cid').value ]) {
-              setBitDict(atomDict, ca.getNamedItem('atom').value, 1)
+            if (clashDict[ getNamedItem(ca, 'cid') ]) {
+              setBitDict(atomDict, getNamedItem(ca, 'atom'), 1)
             }
           }
 
           for (let j = 0, jl = mogBondOutliers.length; j < jl; ++j) {
             const mbo = mogBondOutliers[ j ].attributes
-            mbo.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
+            getNamedItem(mbo, 'atoms').split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 2)
             })
           }
 
           for (let j = 0, jl = mogAngleOutliers.length; j < jl; ++j) {
             const mao = mogAngleOutliers[ j ].attributes
-            mao.getNamedItem('atoms').value.split(',').forEach(function (atomname) {
+            getNamedItem(mao, 'atoms').split(',').forEach(function (atomname) {
               setBitDict(atomDict, atomname, 4)
             })
           }

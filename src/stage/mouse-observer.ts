@@ -58,7 +58,7 @@ function getMouseButtons (event: MouseEvent) {
   return 0
 }
 
-interface MouseSignals {
+export interface MouseSignals {
   moved: Signal  // on move: deltaX, deltaY
   scrolled: Signal  // on scroll: delta
   dragged: Signal  // on drag: deltaX, deltaY
@@ -68,7 +68,7 @@ interface MouseSignals {
   doubleClicked: Signal
 }
 
-interface MouseParams {
+export interface MouseParams {
   hoverTimeout?: number
   handleScroll?:boolean
   doubleClickSpeed?: number
@@ -170,16 +170,17 @@ class MouseObserver {
 
     this._listen()
 
-    document.addEventListener('mousewheel', this._onMousewheel)
-    document.addEventListener('wheel', this._onMousewheel)
-    document.addEventListener('MozMousePixelScroll', this._onMousewheel)
-    document.addEventListener('mousemove', this._onMousemove)
-    document.addEventListener('mousedown', this._onMousedown)
-    document.addEventListener('mouseup', this._onMouseup)
-    document.addEventListener('contextmenu', this._onContextmenu)
-    document.addEventListener('touchstart', this._onTouchstart)
-    document.addEventListener('touchend', this._onTouchend)
-    document.addEventListener('touchmove', this._onTouchmove)
+    const opt = { passive: false } // treat as 'passive' so preventDefault can be called
+    document.addEventListener('mousewheel', this._onMousewheel, opt)
+    document.addEventListener('wheel', this._onMousewheel, opt)
+    document.addEventListener('MozMousePixelScroll', this._onMousewheel, opt)
+    document.addEventListener('mousemove', this._onMousemove, opt)
+    document.addEventListener('mousedown', this._onMousedown, opt)
+    document.addEventListener('mouseup', this._onMouseup, opt)
+    document.addEventListener('contextmenu', this._onContextmenu, opt)
+    document.addEventListener('touchstart', this._onTouchstart, opt)
+    document.addEventListener('touchend', this._onTouchend, opt)
+    document.addEventListener('touchmove', this._onTouchmove, opt)
   }
 
   get key () {

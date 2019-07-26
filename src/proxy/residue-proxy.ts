@@ -24,6 +24,11 @@ import AtomMap from '../store/atom-map'
 import ResidueMap from '../store/residue-map'
 
 import AtomProxy from '../proxy/atom-proxy'
+import ResidueType, { RingData } from '../store/residue-type';
+import { ResidueBonds } from '../structure/structure-utils';
+import AtomType from '../store/atom-type';
+import ChainProxy from './chain-proxy';
+import Entity from '../structure/entity';
 
 /**
  * Residue proxy
@@ -55,7 +60,7 @@ class ResidueProxy {
    * Entity
    * @type {Entity}
    */
-  get entity () {
+  get entity (): Entity {
     return this.structure.entityList[ this.entityIndex ]
   }
   get entityIndex () {
@@ -65,7 +70,7 @@ class ResidueProxy {
    * Chain
    * @type {ChainProxy}
    */
-  get chain () {
+  get chain (): ChainProxy {
     return this.structure.getChainProxy(this.chainIndex)
   }
 
@@ -155,7 +160,7 @@ class ResidueProxy {
 
   //
 
-  get residueType () {
+  get residueType (): ResidueType {
     return this.residueMap.get(this.residueStore.residueTypeId[ this.index ])
   }
 
@@ -371,6 +376,14 @@ class ResidueProxy {
     return this.residueType.moleculeType === SaccharideType
   }
 
+  isStandardAminoacid () {
+    return this.residueType.isStandardAminoacid()
+  }
+
+  isStandardBase () {
+    return this.residueType.isStandardBase()
+  }
+
   /**
    * If residue is part of a helix
    * @return {Boolean} flag
@@ -395,7 +408,7 @@ class ResidueProxy {
     return SecStrucTurn.includes(this.sstruc) && this.isProtein()
   }
 
-  getAtomType (index: number) {
+  getAtomType (index: number): AtomType {
     return this.atomMap.get(this.atomStore.atomTypeId[ index ])
   }
 
@@ -492,11 +505,11 @@ class ResidueProxy {
     return undefined
   }
 
-  getBonds () {
+  getBonds (): ResidueBonds {
     return this.residueType.getBonds(this)
   }
 
-  getRings () {
+  getRings (): RingData|undefined {
     return this.residueType.getRings()
   }
 

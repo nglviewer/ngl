@@ -31,7 +31,7 @@ uniform float clipRadius;
     #include color_pars_fragment
     #include fog_pars_fragment
     #include bsdfs
-    #include lights_pars
+    #include lights_pars_begin
     #include lights_physical_pars_fragment
 #endif
 
@@ -42,7 +42,7 @@ void main(){
 
     #if defined( PICKING )
 
-        if( opacity < 0.7 )
+        if( opacity < 0.3 )
             discard;
         gl_FragColor = vec4( vPickingColor, objectId );
 
@@ -59,10 +59,11 @@ void main(){
         #include color_fragment
         #include roughnessmap_fragment
         #include metalnessmap_fragment
-        #include normal_fragment
+        #include normal_fragment_begin
 
         #include lights_physical_fragment
-        #include lights_template
+        #include lights_fragment_begin
+        #include lights_fragment_end
 
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveLight;
 

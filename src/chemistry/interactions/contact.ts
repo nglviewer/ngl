@@ -7,9 +7,11 @@ import { Color } from 'three'
 
 import { Debug, Log } from '../../globals'
 import { createParams } from '../../utils'
+import { TextBufferData } from '../../buffer/text-buffer'
 import Structure from '../../structure/structure'
 import AtomProxy from '../../proxy/atom-proxy'
 import SpatialHash from '../../geometry/spatial-hash'
+import { calculateCenterArray, calculateDirectionArray, uniformArray } from '../../math/array-utils'
 import ContactStore from '../../store/contact-store'
 import BitArray from '../../utils/bitarray'
 import Selection from '../../selection/selection'
@@ -205,6 +207,13 @@ export const ContactDataDefaultParams = {
 }
 export type ContactDataParams = typeof ContactDataDefaultParams
 
+export const ContactLabelDefaultParams = {
+  unit: '',
+  size: 2.0
+}
+
+export type ContactLabelParams = typeof ContactLabelDefaultParams
+
 const tmpColor = new Color()
 function contactColor (type: ContactType) {
   switch (type) {
@@ -231,7 +240,16 @@ function contactColor (type: ContactType) {
   }
 }
 
-export function getContactData (contacts: FrozenContacts, structure: Structure, params: ContactDataParams) {
+export interface ContactData {
+  position1: Float32Array,
+  position2: Float32Array,
+  color: Float32Array,
+  color2: Float32Array,
+  radius: Float32Array,
+  picking: ContactPicker
+}
+
+export function getContactData (contacts: FrozenContacts, structure: Structure, params: ContactDataParams): ContactData {
   const p = createParams(params, ContactDataDefaultParams)
   const types: ContactType[] = []
   if (p.hydrogenBond) types.push(ContactType.HydrogenBond)
@@ -256,9 +274,15 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
   const radius: number[] = []
   const picking: number[] = []
 
-  let filterSet: BitArray | undefined
+  let filterSet: BitArray | BitArray[] | undefined
   if (p.filterSele) {
-    filterSet = structure.getAtomSet(new Selection(p.filterSele))
+    if (Array.isArray(p.filterSele)) {
+      filterSet = p.filterSele.map(sele => {
+        return structure.getAtomSet(new Selection(sele))
+      })
+    } else {
+      filterSet = structure.getAtomSet(new Selection(p.filterSele))
+    }
   }
 
   contactSet.forEach(i => {
@@ -268,7 +292,12 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
     if (filterSet) {
       const idx1 = atomSets[index1[i]][0]
       const idx2 = atomSets[index2[i]][0]
-      if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2)) return
+
+      if (Array.isArray(filterSet)) {
+        if (!(filterSet[0].isSet(idx1) && filterSet[1].isSet(idx2) || (filterSet[1].isSet(idx1) && filterSet[0].isSet(idx2)))) return
+      } else {
+        if (!filterSet.isSet(idx1) && !filterSet.isSet(idx2)) return
+      }
     }
 
     const k = index1[i]
@@ -284,7 +313,39 @@ export function getContactData (contacts: FrozenContacts, structure: Structure, 
     position1: new Float32Array(position1),
     position2: new Float32Array(position2),
     color: new Float32Array(color),
+    color2: new Float32Array(color),
     radius: new Float32Array(radius),
     picking: new ContactPicker(picking, contacts, structure)
+  }
+}
+
+export function getLabelData (contactData: ContactData, params: ContactLabelParams): TextBufferData {
+
+  const position = calculateCenterArray(contactData.position1, contactData.position2)
+  const text: string[] = []
+
+  const direction = calculateDirectionArray(contactData.position1, contactData.position2)
+
+  const n = direction.length / 3
+  for (let i=0; i<n; i++) {
+    const j = 3 * i
+    const d = Math.sqrt(direction[j]**2 + direction[j+1]**2 + direction[j+2]**2)
+    switch (params.unit) {
+        case 'angstrom':
+          text[ i ] = d.toFixed(2) + ' ' + String.fromCharCode(0x212B)
+          break
+        case 'nm':
+          text[ i ] = (d / 10).toFixed(2) + ' nm'
+          break
+        default:
+          text[ i ] = d.toFixed(2)
+          break
+      }
+  }
+  return {
+    position,
+    size: uniformArray(position.length / 3, params.size),
+    color: contactData.color,
+    text
   }
 }

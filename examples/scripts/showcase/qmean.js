@@ -53,21 +53,21 @@ Promise.all([
 
   var schemeSelect = createSelect(
     [
-            [ qmeanScheme, 'qmean' ],
-            [ 'sstruc', 'secondary structure' ]
+      [ qmeanScheme, 'qmean' ],
+      [ 'sstruc', 'secondary structure' ]
     ],
-        null,
-        { top: '1em', left: '1em' }
-    )
+    null,
+    { top: '1em', left: '1em' }
+  )
   schemeSelect.onchange = function (e) {
     cartoon.setParameters({ colorScheme: e.target.value })
   }
 
   var centerButton = createElement(
-        'button',
-        { innerText: 'Center' },
-        { top: '3em', left: '1em' }
-    )
+    'button',
+    { innerText: 'Center' },
+    { top: '3em', left: '1em' }
+  )
   centerButton.onclick = function (e) {
     stage.autoView(1000)
   }

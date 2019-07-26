@@ -467,3 +467,26 @@ if (typeof window !== 'undefined') {
     })()
   }
 }
+
+if (Object.defineProperty !== undefined) {
+  // Missing in IE < 13
+  // MIT license
+  // Copyright (c) 2016 Financial Times
+  // https://github.com/Financial-Times/polyfill-service
+  if (Number.MAX_SAFE_INTEGER === undefined) {
+    Object.defineProperty(Number, 'MAX_SAFE_INTEGER', {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: Math.pow(2, 53) - 1
+    })
+  }
+  if (Number.MIN_SAFE_INTEGER === undefined) {
+    Object.defineProperty(Number, 'MIN_SAFE_INTEGER', {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: -(Math.pow(2, 53) - 1)
+    })
+  }
+}
