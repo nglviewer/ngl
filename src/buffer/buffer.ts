@@ -165,7 +165,7 @@ class Buffer {
     this.uniforms = UniformsUtils.merge([
       UniformsLib.common,
       {
-        fogColor: { value: null },
+        fogColor: { value: new Color(0x000000) },
         fogNear: { value: 0.0 },
         fogFar: { value: 0.0 },
         opacity: { value: this.parameters.opacity },
