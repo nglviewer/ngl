@@ -9,7 +9,7 @@ import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colorma
 import AtomProxy from '../proxy/atom-proxy'
 
 /**
- * Color by entiry index
+ * Color by entity index
  */
 class EntityindexColormaker extends Colormaker {
   entityindexScale: ColormakerScale
