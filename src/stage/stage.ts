@@ -920,6 +920,7 @@ class Stage {
   dispose () {
     this.tasks.dispose()
     this.viewer.dispose()
+    this.mouseObserver.dispose()
   }
 }
 
