@@ -615,8 +615,8 @@ class AtomProxy {
 
     const distSquared = x * x + y * y + z * z
 
-    // if( this.residue.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
-    if (distSquared < 64.0 && this.isCg()) return true
+    // if( this.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
+    if (distSquared < 48.0 && this.isCg()) return true
 
     if (isNaN(distSquared)) return false
 
