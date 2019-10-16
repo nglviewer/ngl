@@ -55487,6 +55487,8 @@ Viewer.prototype._initParams = function _initParams () {
         fogColor: new Color(0x000000),
         fogNear: 50,
         fogFar: 100,
+        fogMode: 'scene',
+        fogScale: 'relative',
         backgroundColor: new Color(0x000000),
         cameraType: 'perspective',
         cameraFov: 40,
@@ -55495,6 +55497,8 @@ Viewer.prototype._initParams = function _initParams () {
         clipNear: 0,
         clipFar: 100,
         clipDist: 10,
+        clipMode: 'scene',
+        clipScale: 'relative',
         lightColor: new Color(0xdddddd),
         lightIntensity: 1.0,
         ambientColor: new Color(0xdddddd),
@@ -55903,7 +55907,7 @@ Viewer.prototype.setLight = function setLight (color, intensity, ambientColor, a
         { p.ambientIntensity = ambientIntensity; }
     this.requestRender();
 };
-Viewer.prototype.setFog = function setFog (color, near, far) {
+Viewer.prototype.setFog = function setFog (color, near, far, fogMode, fogScale) {
     var p = this.parameters;
     if (color !== undefined)
         { p.fogColor.set(color); } // TODO
@@ -55911,6 +55915,10 @@ Viewer.prototype.setFog = function setFog (color, near, far) {
         { p.fogNear = near; }
     if (far !== undefined)
         { p.fogFar = far; }
+    if (fogMode !== undefined)
+        { p.fogMode = fogMode; }
+    if (fogScale !== undefined)
+        { p.fogScale = fogScale; }
     this.requestRender();
 };
 Viewer.prototype.setBackground = function setBackground (color) {
@@ -55960,7 +55968,7 @@ Viewer.prototype.setCamera = function setCamera (type, fov, eyeSep) {
     this.camera.updateProjectionMatrix();
     this.requestRender();
 };
-Viewer.prototype.setClip = function setClip (near, far, dist) {
+Viewer.prototype.setClip = function setClip (near, far, dist, clipMode, clipScale) {
     var p = this.parameters;
     if (near !== undefined)
         { p.clipNear = near; }
@@ -55968,6 +55976,10 @@ Viewer.prototype.setClip = function setClip (near, far, dist) {
         { p.clipFar = far; }
     if (dist !== undefined)
         { p.clipDist = dist; }
+    if (clipMode !== undefined)
+        { p.clipMode = clipMode; }
+    if (clipScale !== undefined)
+        { p.clipScale = clipScale; }
     this.requestRender();
 };
 Viewer.prototype.setSize = function setSize (width, height) {
@@ -56124,30 +56136,65 @@ Viewer.prototype.__updateClipping = function __updateClipping () {
     // cDist = distVector.copy( camera.position )
     //       .sub( controls.target ).length();
     this.cDist = this.distVector.copy(this.camera.position).length();
-    // console.log( "cDist", cDist )
     if (!this.cDist) {
         // recover from a broken (NaN) camera position
         this.camera.position.set(0, 0, p.cameraZ);
         this.cDist = Math.abs(p.cameraZ);
     }
-    this.bRadius = Math.max(10, this.boundingBoxLength * 0.5);
-    this.bRadius += this.boundingBox.getCenter(this.distVector).length();
-    // console.log( "bRadius", bRadius )
-    if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
-        // console.warn( "something wrong with bRadius" );
-        this.bRadius = 50;
+    if (p.clipScale !== 'absolute' || p.fogScale !== 'absolute') {
+        // Compute bbox radius if needed for relative clip/fog
+        this.bRadius = Math.max(10, this.boundingBoxLength * 0.5);
+        this.bRadius += this.boundingBox.getCenter(this.distVector).length();
+        // console.log( "bRadius", this.bRadius )
+        if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
+            // console.warn( "something wrong with bRadius" );
+            this.bRadius = 50;
+        }
     }
-    var nearFactor = (50 - p.clipNear) / 50;
-    var farFactor = -(50 - p.clipFar) / 50;
-    this.camera.near = this.cDist - (this.bRadius * nearFactor);
-    this.camera.far = this.cDist + (this.bRadius * farFactor);
+    if (p.clipMode == 'camera') {
+        // clip camera mode ignores clipScale; always absolute
+        this.camera.near = p.clipNear;
+        this.camera.far = p.clipFar;
+    }
+    else {
+        // scene mode
+        if (p.clipScale == 'absolute') {
+            // absolute scene mode: offset clip planes from scene center
+            // (note: positive clipNear means closer to the camera)
+            this.camera.near = this.cDist - p.clipNear;
+            this.camera.far = this.cDist + p.clipFar;
+        }
+        else {
+            // relative scene mode (default): convert percentages to Angstroms
+            var nearFactor = (50 - p.clipNear) / 50;
+            var farFactor = -(50 - p.clipFar) / 50;
+            this.camera.near = this.cDist - (this.bRadius * nearFactor);
+            this.camera.far = this.cDist + (this.bRadius * farFactor);
+        }
+    }
     // fog
-    var fogNearFactor = (50 - p.fogNear) / 50;
-    var fogFarFactor = -(50 - p.fogFar) / 50;
     var fog = this.scene.fog; // TODO
     fog.color.set(p.fogColor);
-    fog.near = this.cDist - (this.bRadius * fogNearFactor);
-    fog.far = this.cDist + (this.bRadius * fogFarFactor);
+    if (p.fogMode == 'camera') {
+        // fog camera mode ignores clipScale; always absolute
+        fog.near = p.fogNear;
+        fog.far = p.fogFar;
+    }
+    else {
+        // scene mode
+        if (p.fogScale == 'absolute') {
+            // absolute scene mode: offset fog planes from scene center
+            // (fogNear should typically be negative for this mode)
+            fog.near = this.cDist + p.fogNear;
+            fog.far = this.cDist + p.fogFar;
+        }
+        else {
+            var fogNearFactor = (50 - p.fogNear) / 50;
+            var fogFarFactor = -(50 - p.fogFar) / 50;
+            fog.near = this.cDist - (this.bRadius * fogNearFactor);
+            fog.far = this.cDist + (this.bRadius * fogFarFactor);
+        }
+    }
     if (this.camera.type === 'PerspectiveCamera') {
         this.camera.near = Math.max(0.1, p.clipDist, this.camera.near);
         this.camera.far = Math.max(1, this.camera.far);
@@ -60593,9 +60640,9 @@ var AA1 = {
     'PYL': 'O',
 };
 var AA3 = Object.keys(AA1);
-var RnaBases = ['A', 'C', 'T', 'G', 'U'];
-var DnaBases = ['DA', 'DC', 'DT', 'DG', 'DU'];
-var PurinBases = ['A', 'G', 'DA', 'DG'];
+var RnaBases = ['A', 'C', 'T', 'G', 'U', 'I'];
+var DnaBases = ['DA', 'DC', 'DT', 'DG', 'DU', 'DI'];
+var PurinBases = ['A', 'G', 'I', 'DA', 'DG', 'DI'];
 var Bases = RnaBases.concat(DnaBases);
 var WaterNames = [
     'SOL', 'WAT', 'HOH', 'H2O', 'W', 'DOD', 'D3O', 'TIP3', 'TIP4', 'SPC'
@@ -66539,6 +66586,21 @@ DoubleSidedBuffer.prototype.dispose = function dispose () {
     this.frontBuffer.dispose();
     this.backBuffer.dispose();
 };
+/**
+ * Customize JSON serialization to avoid circular references.
+ * Only export simple params which could be useful.
+ */
+DoubleSidedBuffer.prototype.toJSON = function toJSON () {
+        var this$1 = this;
+
+    var result = {};
+    for (var x in this$1) {
+        if (['side', 'size', 'visible', 'matrix', 'parameters'].includes(x)) {
+            result[x] = this$1[x];
+        }
+    }
+    return result;
+};
 
 Object.defineProperties( DoubleSidedBuffer.prototype, prototypeAccessors$c );
 
@@ -69602,8 +69664,8 @@ AtomProxy.prototype.connectedTo = function connectedTo (atom) {
     var y = taa.y[ti] - aaa.y[ai];
     var z = taa.z[ti] - aaa.z[ai];
     var distSquared = x * x + y * y + z * z;
-    // if( this.residue.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
-    if (distSquared < 64.0 && this.isCg())
+    // if( this.isCg() ) console.log( this.qualifiedName(), Math.sqrt( distSquared ), distSquared )
+    if (distSquared < 48.0 && this.isCg())
         { return true; }
     if (isNaN(distSquared))
         { return false; }
@@ -71721,6 +71783,9 @@ ResidueType.prototype.isRna = function isRna () {
     if (this.chemCompType) {
         return ChemCompRna.includes(this.chemCompType);
     }
+    else if (this.hetero === 1) {
+        return false;
+    }
     else {
         return (this.hasAtomWithName(['P', "O3'", 'O3*'], ["C4'", 'C4*'], ["O2'", 'O2*', "F2'", 'F2*']) ||
             (RnaBases.includes(this.resname) &&
@@ -71730,6 +71795,9 @@ ResidueType.prototype.isRna = function isRna () {
 ResidueType.prototype.isDna = function isDna () {
     if (this.chemCompType) {
         return ChemCompDna.includes(this.chemCompType);
+    }
+    else if (this.hetero === 1) {
+        return false;
     }
     else {
         return ((this.hasAtomWithName(['P', "O3'", 'O3*'], ["C3'", 'C3*']) &&
@@ -79111,8 +79179,12 @@ var StageDefaultParameters = {
     clipNear: 0,
     clipFar: 100,
     clipDist: 10,
+    clipMode: 'scene',
+    clipScale: 'relative',
     fogNear: 50,
     fogFar: 100,
+    fogMode: 'scene',
+    fogScale: 'relative',
     cameraFov: 40,
     cameraEyeSep: 0.3,
     cameraType: 'perspective',
@@ -79209,8 +79281,8 @@ Stage.prototype.setParameters = function setParameters (params) {
     if (p.mousePreset !== undefined)
         { this.mouseControls.preset(tp.mousePreset); }
     this.mouseObserver.setParameters({ hoverTimeout: tp.hoverTimeout });
-    viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist);
-    viewer.setFog(undefined, tp.fogNear, tp.fogFar);
+    viewer.setClip(tp.clipNear, tp.clipFar, tp.clipDist, tp.clipMode, tp.clipScale);
+    viewer.setFog(undefined, tp.fogNear, tp.fogFar, tp.fogMode, tp.fogScale);
     viewer.setCamera(tp.cameraType, tp.cameraFov, tp.cameraEyeSep);
     viewer.setSampling(tp.sampleLevel);
     viewer.setBackground(tp.backgroundColor);
@@ -79626,12 +79698,18 @@ Stage.prototype.setFocus = function setFocus (value) {
     var clipNear = clamp(value / 2, 0, 49.9);
     var clipFar = 100 - clipNear;
     var diffHalf = (clipFar - clipNear) / 2;
-    this.setParameters({
-        clipNear: clipNear,
-        clipFar: clipFar,
-        fogNear: pclamp(clipFar - diffHalf),
-        fogFar: pclamp(clipFar + diffHalf)
-    });
+    if (this.parameters.clipMode == 'scene') {
+        this.setParameters({
+            clipNear: clipNear,
+            clipFar: clipFar
+        });
+    }
+    if (this.parameters.fogMode == 'scene') {
+        this.setParameters({
+            fogNear: pclamp(clipFar - diffHalf),
+            fogFar: pclamp(clipFar + diffHalf)
+        });
+    }
 };
 Stage.prototype.getZoomForBox = function getZoomForBox (boundingBox) {
     var bbSize = boundingBox.getSize(tmpZoomVector);
@@ -80561,7 +80639,7 @@ ColormakerRegistry$1.add('element', ElementColormaker);
  * @private
  */
 /**
- * Color by entiry index
+ * Color by entity index
  */
 var EntityindexColormaker = (function (Colormaker$$1) {
     function EntityindexColormaker(params) {
@@ -100833,8 +100911,12 @@ var UIStageParameters = {
     clipNear: RangeParam(1, 100, 0),
     clipFar: RangeParam(1, 100, 0),
     clipDist: IntegerParam(200, 0),
+    clipMode: SelectParam('scene', 'camera'),
+    clipScale: SelectParam('relative', 'absolute'),
     fogNear: RangeParam(1, 100, 0),
     fogFar: RangeParam(1, 100, 0),
+    fogMode: SelectParam('scene', 'camera'),
+    fogScale: SelectParam('relative', 'absolute'),
     cameraType: SelectParam('perspective', 'orthographic', 'stereo'),
     cameraEyeSep: NumberParam(3, 1.0, 0.01),
     cameraFov: RangeParam(1, 120, 15),
@@ -100847,7 +100929,7 @@ var UIStageParameters = {
     mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
 };
 
-var version$1 = "2.0.0-dev.36";
+var version$1 = "2.0.0-dev.37";
 
 /**
  * @file Version

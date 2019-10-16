@@ -1,6 +1,6 @@
 {
   "name": "ngl",
-  "version": "2.0.0-dev.36",
+  "version": "2.0.0-dev.37",
   "description": "Scalable molecular graphics for the web",
   "main": "dist/ngl.js",
   "module": "dist/ngl.esm.js",
