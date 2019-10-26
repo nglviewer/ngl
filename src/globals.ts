@@ -75,8 +75,23 @@ export let MeasurementDefaultParams = {
   arcVisible: true,
   planeVisible: false
 }
+
+export let SelectionDefaultParams = {
+  color: 'white',
+  lineOpacity: 0.8,
+  linewidth: 5.0,
+  opacity: 0.6,
+
+  labelUnit: 'angstrom',
+  arcVisible: true,
+  planeVisible: false
+}
 export function setMeasurementDefaultParams (params = {}) {
   Object.assign(MeasurementDefaultParams, params)
+}
+
+export function setSelectionDefaultParams (params = {}) {
+  Object.assign(SelectionDefaultParams, params)
 }
 
 export let Debug = boolean(getQuery('debug'))

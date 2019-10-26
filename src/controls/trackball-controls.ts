@@ -13,6 +13,7 @@ import Viewer from '../viewer/viewer'
 import ViewerControls from './viewer-controls'
 import AtomProxy from '../proxy/atom-proxy';
 import Component from '../component/component';
+import StructureComponent from '../component/structure-component';
 
 const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
@@ -118,6 +119,45 @@ class TrackballControls {
     this.component.updateRepresentations({ 'position': true })
   }
 
+  private _translateAtom (panMatrix: Matrix4, atom: AtomProxy, x: number, y: number) {
+    let _tmpAtomVector = new Vector3();
+    let _tmpPanVector = new Vector3();
+    atom.positionToVector3(_tmpAtomVector)
+    _tmpAtomVector.add(this.viewer.translationGroup.position)
+    _tmpAtomVector.applyMatrix4(this.viewer.rotationGroup.matrix)
+
+    let scaleFactor = this.controls.getCanvasScaleFactor(_tmpAtomVector.z)
+    _tmpPanVector.set(x, y, 0)
+    _tmpPanVector.multiplyScalar(this.panSpeed * scaleFactor)
+    _tmpPanVector.applyMatrix4(panMatrix)
+
+
+    atom.positionAdd(_tmpPanVector)
+  }
+
+  private _translateComponent (comp: StructureComponent, x: number, y: number) {
+
+    let _tmpPanMatrix = new Matrix4();
+    _tmpPanMatrix.extractRotation(comp.transform)
+    _tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
+    _tmpPanMatrix.getInverse(_tmpPanMatrix)
+
+    for (var j = 0; j < comp.selectedAtomIndices.list.length; j++) {
+      let i = comp.selectedAtomIndices.list[j]
+      let atom = comp.structure.getAtomProxy(i)
+      this._translateAtom(_tmpPanMatrix, atom, x, y)
+    }
+
+    comp.updateRepresentations({'position': true})
+  }
+
+  translateAtoms (x: number, y: number) {
+    let comps = this.stage.structureComponents
+    for (var i = 0; i < comps.length; i++) {
+      this._translateComponent(comps[i], x, y)
+    }
+  }
+
   rotate (x: number, y: number) {
     const [ dx, dy ] = this._getRotateXY(x, y)
 
@@ -152,6 +192,51 @@ class TrackballControls {
     tmpRotateQuaternion.setFromRotationMatrix(tmpRotateXMatrix)
     this.component.quaternion.premultiply(tmpRotateQuaternion)
     this.component.updateMatrix()
+  }
+
+  _rotateAtoms (comp: StructureComponent, x:  number, y: number) {
+    // TODO
+    // Fix rotation
+    const [ dx, dy ] = this._getRotateXY(x, y)
+
+    let rot: Matrix4 = this.viewer.rotationGroup.matrix
+    let rotInv: Matrix4 = this.viewer.rotationGroup.matrix
+    rotInv.getInverse(rotInv)
+
+    tmpRotateMatrix.extractRotation(comp.transform)
+    tmpRotateMatrix.premultiply(rot)
+    tmpRotateMatrix.getInverse(tmpRotateMatrix)
+    tmpRotateVector.set(1, 0, 0)
+    tmpRotateVector.applyMatrix4(tmpRotateMatrix)
+    tmpRotateXMatrix.makeRotationAxis(tmpRotateVector, dy)
+    tmpRotateVector.set(0, 1, 0)
+    tmpRotateVector.applyMatrix4(tmpRotateMatrix)
+    tmpRotateYMatrix.makeRotationAxis(tmpRotateVector, dx)
+    tmpRotateXMatrix.multiply(tmpRotateYMatrix)
+    tmpRotateQuaternion.setFromRotationMatrix(tmpRotateXMatrix)
+
+    for (var j = 0; j < comp.selectedAtomIndices.list.length; j++) {
+      let i = comp.selectedAtomIndices.list[j]
+      let atom = comp.structure.getAtomProxy(i)
+      let _tmpAtomVector = new Vector3();
+      atom.positionToVector3(_tmpAtomVector)
+
+      _tmpAtomVector.add(this.viewer.translationGroup.position)
+      _tmpAtomVector.applyMatrix4(rot)
+      _tmpAtomVector.applyQuaternion(tmpRotateQuaternion)
+      _tmpAtomVector.applyMatrix4(rotInv)
+      _tmpAtomVector.sub(this.viewer.translationGroup.position)
+      atom.positionFromVector3(_tmpAtomVector)
+    }
+
+    comp.updateRepresentations({'position': true})
+  }
+
+  rotateAtoms (x: number, y: number) {
+    let comps = this.stage.structureComponents
+    for (var i = 0; i < comps.length; i++) {
+      this._rotateAtoms(comps[i], x, y)
+    }
   }
 }
 

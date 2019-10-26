@@ -81,7 +81,6 @@ Note that the [MouseControls](../class/src/controls/mouse-controls.js~MouseContr
 stage.signals.clicked.add(function (pickingProxy) {...});
 ```
 
-
 ### Hovered
 
 Basis usage:
@@ -151,6 +150,12 @@ The default controls are as follows:
 - `drag-ctrl-left` rotate hovered component
 - `clickPick-middle` auto view picked component element
 - `hoverPick` show tooltip for hovered component element
+- `clickPick-shift-left` de/select an atom
+- `doubleClick-shift-left` clear selected atoms
+- `drag-shift-left` move selected atoms
+
+
+Four presets are available: "default", "pymol", "coot", and "astexviewer". 
 
 
 ### Observer

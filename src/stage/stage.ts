@@ -914,6 +914,29 @@ class Stage {
     this.eachComponent((sc: StructureComponent) => sc.measureUpdate(), 'structure')
   }
 
+  selectedUpdate() {
+    this.eachComponent((sc: StructureComponent) => sc.selectedUpdate(), 'structure')
+  }
+
+  get selectedProxies() {
+    let proxies: AtomProxy[] = [];
+    this.eachComponent(function (sc: StructureComponent) {
+      sc.selectedAtomIndices.list.forEach(function (i) {
+        let ap = sc.structure.getAtomProxy(i)
+        proxies.push(ap)
+      })
+    }, "structure")
+    return proxies
+  }
+
+  get structureComponents() {
+    let comps: StructureComponent[] = [];
+    this.eachComponent(function (sc: StructureComponent) {
+      comps.push(sc)
+    }, "structure")
+    return comps
+  }
+
   /**
    * Cleanup when disposing of a stage object
    */

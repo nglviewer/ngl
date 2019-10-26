@@ -54,6 +54,13 @@ class BondProxy {
   }
 
   /**
+   * @type {[AtomProxy, AtomProxy]}
+   */
+  get atoms () {
+    return [this.atom1, this.atom2]
+  }
+
+  /**
    * @type {Integer}
    */
   get atomIndex1 () {

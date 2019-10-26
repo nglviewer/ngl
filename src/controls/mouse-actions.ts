@@ -177,6 +177,29 @@ class MouseActions {
   }
 
   /**
+   * Move picked component based on mouse coordinate changes
+   * @param {Stage} stage 
+   * @param {Number} dx - amount to move in x direction
+   * @param {Number} dy - amount to move in y direction
+   * @return {undefined}
+   */
+  static moveComponentDrag (stage: Stage, dx: number, dy: number) {
+    stage.trackballControls.translateAtoms(dx, dy)
+  }
+
+  /**
+   * Rotate picked component based on mouse coordinate changes.
+   * Doesn't work very well; not implemented in mouse presets.
+   * @param {Stage} stage
+   * @param {Number} dx - amount to move in x direction
+   * @param {Number} dy - amount to move in y direction
+   * @return {undefined}
+   */
+  static rotateSelectionDrag (stage: Stage, dx: number, dy: number) {
+    stage.trackballControls.rotateAtoms(dx, dy)
+  }
+
+  /**
    * Move picked element to the center of the screen
    * @param {Stage} stage - the stage
    * @param {PickingProxy} pickingProxy - the picking data object
@@ -217,6 +240,27 @@ class MouseActions {
       stage.measureClear()
     }
   }
+
+  /**
+   * Add pick
+   * @param {Stage} stage - the stage
+   * @param {PickingProxy} pickingProxy - the picking data object
+   * @return {undefined}
+   */
+  static selectPick (stage: Stage, pickingProxy: PickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+      const atoms = [pickingProxy.atom.index] || [pickingProxy.bond.atom1.index, pickingProxy.bond.atom2.index]
+      const sc = pickingProxy.component as StructureComponent
+      sc.selectedPickIndices(atoms)
+    }
+  }
+
+  static clearSelect (stage: Stage) {
+    stage.eachComponent(function (sc: StructureComponent) {
+      sc.selectedAtomIndices.clear()
+      sc.selectedUpdate()
+    }, "structure")
+  }
 }
 
 type MouseActionPreset = [ string, MouseActionCallback ][]
@@ -231,11 +275,14 @@ export const MouseActionPresets = {
     [ 'drag-right', MouseActions.panDrag ],
     [ 'drag-ctrl-left', MouseActions.panDrag ],
     [ 'drag-ctrl-right', MouseActions.zRotateDrag ],
+    [ 'drag-shift-right', MouseActions.moveComponentDrag ],
     [ 'drag-shift-left', MouseActions.zoomDrag ],
     [ 'drag-middle', MouseActions.zoomFocusDrag ],
 
     [ 'drag-ctrl-shift-right', MouseActions.panComponentDrag ],
     [ 'drag-ctrl-shift-left', MouseActions.rotateComponentDrag ],
+    [ 'clickPick-shift-left', MouseActions.selectPick ],
+    [ 'doubleClick-shift-left', MouseActions.clearSelect ],
 
     [ 'clickPick-right', MouseActions.measurePick ],
     [ 'clickPick-ctrl-left', MouseActions.measurePick ],
