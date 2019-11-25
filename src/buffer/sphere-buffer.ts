@@ -4,6 +4,8 @@
  * @private
  */
 
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only 
+import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
 import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './spheregeometry-buffer'
 import SphereImpostorBuffer from './sphereimpostor-buffer'

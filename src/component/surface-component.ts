@@ -8,7 +8,7 @@ import { ComponentRegistry } from '../globals'
 import Component, { ComponentParameters } from './component'
 import Stage from '../stage/stage'
 import Surface from '../surface/surface'
-import { Vector3, Box3 } from '../../node_modules/@types/three';
+import { Vector3, Box3 } from 'three';
 import RepresentationElement from './representation-element';
 
 export type SurfaceRepresentationType = 'surface'|'dot'

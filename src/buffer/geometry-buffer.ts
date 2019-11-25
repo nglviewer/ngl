@@ -4,7 +4,8 @@
  * @private
  */
 
-import {  Matrix4, Matrix3, BufferGeometry } from 'three'
+// @ts-ignore: unused import Vector3 required for declaration only
+ import {  Vector3, Matrix4, Matrix3, BufferGeometry } from 'three'
 
 import { getUintArray } from '../utils'
 import { serialBlockArray } from '../math/array-utils.js'

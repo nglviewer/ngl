@@ -3,7 +3,9 @@
  * @author Fred Ludlow <fred.ludlow@gmail.com>
  * @private
  */
-import { Color } from 'three'
+
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
+import { Color, Vector3, Matrix4 } from 'three'
 
 import Selection from '../selection/selection'
 import { Browser } from '../globals'

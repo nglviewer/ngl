@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Color } from 'three'
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
+import { Color, Matrix4, Vector3 } from 'three'
 
 import '../shader/Line.vert'
 import '../shader/Line.frag'

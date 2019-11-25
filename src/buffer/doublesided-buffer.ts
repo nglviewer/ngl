@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Group, BufferGeometry, Object3D, Mesh, LineSegments } from 'three'
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
+import { Group, BufferGeometry, Object3D, Mesh, LineSegments, Vector3, Matrix4 } from 'three'
 
 import Buffer, { BufferSide } from './buffer'
 import { Picker } from '../utils/picker'

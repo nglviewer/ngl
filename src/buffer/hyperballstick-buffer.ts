@@ -4,6 +4,8 @@
  * @private
  */
 
+// @ts-ignore: unused import required for declaration only
+import { Vector3, Matrix4 } from 'three'
 import { ExtensionFragDepth } from '../globals'
 import { calculateMinArray } from '../math/array-utils'
 import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'

@@ -9,6 +9,7 @@ import Registry from './utils/registry'
 import _ColormakerRegistry from './color/colormaker-registry'
 import _ParserRegistry from './parser/parser-registry'
 import _WorkerRegistry from './worker/worker-registry'
+import { MeasurementRepresentationParameters } from './representation/measurement-representation';
 
 /**
  * The browser name: "Opera", "Chrome", "Firefox", "Mobile Safari",
@@ -57,15 +58,15 @@ export const Log = {
   timeEnd: Function.prototype.bind.call(console.timeEnd, console)
 }
 
-export let MeasurementDefaultParams = {
+export let MeasurementDefaultParams: Partial<MeasurementRepresentationParameters> = {
   color: 'green',
-  labelColor: 'grey',
+  labelColor: 0x808080,
   labelAttachment: 'bottom-center',
   labelSize: 0.7,
   labelZOffset: 0.5,
   labelYOffset: 0.1,
   labelBorder: true,
-  labelBorderColor: 'lightgrey',
+  labelBorderColor: 0xd3d3d3,
   labelBorderWidth: 0.25,
   lineOpacity: 0.8,
   linewidth: 5.0,

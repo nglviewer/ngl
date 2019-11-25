@@ -151,7 +151,8 @@ export const StageDefaultParameters = {
 export type StageParameters = typeof StageDefaultParameters
 
 export interface StageLoadFileParams extends LoaderParameters {
-  defaultRepresentation: boolean
+  defaultRepresentation: boolean,
+  assembly: string
 }
 
 /**
@@ -464,7 +465,7 @@ class Stage {
 
       const component = this.addComponentFromObject(object, p)
       if (p.defaultRepresentation) {
-        this.defaultFileRepresentation(component)
+        this.defaultFileRepresentation(component as Component)
       }
       this.tasks.decrement()
 
@@ -479,7 +480,7 @@ class Stage {
     }
 
     const ext = defaults(p.ext, getFileInfo(path).ext)
-    let promise
+    let promise: Promise<any>
 
     if (ParserRegistry.isTrajectory(ext)) {
       promise = Promise.reject(
@@ -534,7 +535,7 @@ class Stage {
   /**
    * Create a component from the given object and add to the stage
    */
-  addComponentFromObject (object: Structure|Surface|Volume|Shape, params: Partial<ComponentParameters> = {}) {
+  addComponentFromObject (object: Structure|Surface|Volume|Shape, params: Partial<ComponentParameters> = {}): void|Component {
     const CompClass = ComponentRegistry.get(object.type)
 
     if (CompClass) {

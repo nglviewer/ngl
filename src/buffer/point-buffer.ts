@@ -4,7 +4,8 @@
  * @private
  */
 
-import { DataTexture } from 'three'
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
+import { DataTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/Point.vert'
 import '../shader/Point.frag'

@@ -22,15 +22,55 @@ import Structure from '../structure/structure'
 import StructureView from '../structure/structure-view'
 import { superpose } from '../align/align-utils'
 import Stage from '../stage/stage'
-import StructureRepresentation from '../representation/structure-representation'
+import StructureRepresentation, { StructureRepresentationParameters } from '../representation/structure-representation'
 import AtomProxy from '../proxy/atom-proxy'
 import { Vector3, Box3 } from 'three';
+import { AngleRepresentationParameters } from '../representation/angle-representation';
+import { AxesRepresentationParameters } from '../representation/axes-representation';
+import { BallAndStickRepresentationParameters } from '../representation/ballandstick-representation';
+import { CartoonRepresentationParameters } from '../representation/cartoon-representation';
+import { ContactRepresentationParameters } from '../representation/contact-representation';
+import { DihedralRepresentationParameters } from '../representation/dihedral-representation';
+import { DistanceRepresentationParameters } from '../representation/distance-representation';
+import { HyperballRepresentationParameters } from '../representation/hyperball-representation';
+import { LabelRepresentationParameters } from '../representation/label-representation';
+import { LineRepresentationParameters } from '../representation/line-representation';
+import { SurfaceRepresentationParameters } from '../representation/surface-representation';
+import { RibbonRepresentationParameters } from '../representation/ribbon-representation';
+import { RocketRepresentationParameters } from '../representation/rocket-representation';
+import { TraceRepresentationParameters } from '../representation/trace-representation';
+import { UnitcellRepresentationParameters } from '../representation/unitcell-representation';
 
 export type StructureRepresentationType = (
   'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
   'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
   'ribbon'|'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
 )
+
+interface StructureRepresentationParametersMap {
+  'angle':  AngleRepresentationParameters,
+  'axes' :  AxesRepresentationParameters,
+  'backbone': BallAndStickRepresentationParameters,
+  'ball+stick': BallAndStickRepresentationParameters,
+  'base': BallAndStickRepresentationParameters,
+  'cartoon': CartoonRepresentationParameters,
+  'contact': ContactRepresentationParameters,
+  'dihedral': DihedralRepresentationParameters,
+  'distance': DistanceRepresentationParameters,
+  'helixorient': StructureRepresentationParameters,
+  'hyperball': HyperballRepresentationParameters,
+  'label': LabelRepresentationParameters,
+  'licorice': BallAndStickRepresentationParameters,
+  'line': LineRepresentationParameters,
+  'surface': SurfaceRepresentationParameters,
+  'ribbon': RibbonRepresentationParameters,
+  'rocket': RocketRepresentationParameters,
+  'rope': CartoonRepresentationParameters,
+  'spacefill': BallAndStickRepresentationParameters,
+  'trace': TraceRepresentationParameters,
+  'tube': CartoonRepresentationParameters,
+  'unitcell': UnitcellRepresentationParameters
+}
 
 export const StructureComponentDefaultParameters = Object.assign({
   sele: '',
@@ -213,7 +253,11 @@ class StructureComponent extends Component {
     this.measureRepresentations.update(what)
   }
 
-  addRepresentation (type: StructureRepresentationType, params: { [k: string]: any } = {}, hidden = false) {
+  addRepresentation <K extends keyof StructureRepresentationParametersMap>(
+    type: K,
+    params: Partial<StructureRepresentationParametersMap[K]> = {},
+    hidden = false
+  ) {
     params.defaultAssembly = this.parameters.defaultAssembly
 
     const reprComp = this._addRepresentation(type, this.structureView, params, hidden)

@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Box3, Vector3, Color } from 'three'
+// @ts-ignore: unused import Matrix4 required for declaration only
+import { Box3, Vector3, Color, Matrix4 } from 'three'
 
 import { createParams, ensureFloat32Array, getUintArray } from '../utils'
 import {

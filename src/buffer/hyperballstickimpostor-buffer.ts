@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Matrix4 } from 'three'
+// @ts-ignore: unused import Vector3 required for declaration only
+import { Matrix4, Vector3 } from 'three'
 
 import '../shader/HyperballStickImpostor.vert'
 import '../shader/HyperballStickImpostor.frag'

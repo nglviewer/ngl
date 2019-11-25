@@ -16,6 +16,8 @@ import { Structure } from '../ngl';
 import StructureView from '../structure/structure-view';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import CylinderImpostorBuffer from '../buffer/cylinderimpostor-buffer';
+// @ts-ignore: unused import ContactPicker required for declaration only
+import { ContactPicker } from '../utils/picker';
 
 export interface ContactRepresentationParameters extends StructureRepresentationParameters {
   hydrogenBond: boolean

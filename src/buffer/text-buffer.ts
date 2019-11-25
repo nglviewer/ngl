@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Color, CanvasTexture } from 'three'
+// @ts-ignore: unused import Vector3, Matrix4 required for declaration only
+import { Color, CanvasTexture, Vector3, Matrix4 } from 'three'
 
 import '../shader/SDFFont.vert'
 import '../shader/SDFFont.frag'

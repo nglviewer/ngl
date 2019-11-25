@@ -11,12 +11,15 @@ import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffe
 import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
 import WideLineBuffer from '../buffer/wideline-buffer.js'
 import Viewer from '../viewer/viewer';
-import { Structure } from '../ngl';
+// @ts-ignore: unused import Volume required for declaration only
+import { Structure, Volume } from '../ngl';
 import AtomProxy from '../proxy/atom-proxy';
 import { AtomDataParams, BondDataParams, BondDataFields, AtomDataFields, BondData, AtomData } from '../structure/structure-data';
 import StructureView from '../structure/structure-view';
 import CylinderGeometryBuffer from '../buffer/cylindergeometry-buffer';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';
+// @ts-ignore: unused import Surface required for declaration only
+import Surface from '../surface/surface';
 
 export interface BallAndStickRepresentationParameters extends StructureRepresentationParameters {
   sphereDetail: number

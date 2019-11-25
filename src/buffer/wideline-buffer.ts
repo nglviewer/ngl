@@ -4,7 +4,8 @@
  * @private
  */
 
-import { Vector2, Matrix4 } from 'three'
+// @ts-ignore: unused import Vector3 required for declaration only
+import { Vector2, Vector3, Matrix4 } from 'three'
 
 import '../shader/WideLine.vert'
 import '../shader/WideLine.frag'
