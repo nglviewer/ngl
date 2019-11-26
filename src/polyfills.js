@@ -31,7 +31,7 @@ if (typeof window !== 'undefined') {
   })()
 }
 
-if (typeof window.HTMLCanvasElement !== 'undefined' && !window.HTMLCanvasElement.prototype.toBlob) {
+if (typeof window !== 'undefined' && typeof window.HTMLCanvasElement !== 'undefined' && !window.HTMLCanvasElement.prototype.toBlob) {
   // http://code.google.com/p/chromium/issues/detail?id=67587#57
   Object.defineProperty(window.HTMLCanvasElement.prototype, 'toBlob', {
 
