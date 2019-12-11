@@ -129,9 +129,9 @@ class Representation {
   protected openEnded: boolean
   protected disableImpostor: boolean
   protected disposed: boolean
-  
+
   private matrix: Matrix4
-  
+
   private quality: string
   visible: boolean
 
@@ -594,10 +594,10 @@ class Representation {
       // buffer param
       if (tp[ name ].buffer) {
         if (tp[ name ].buffer === true) {
-          bufferParams[ name as keyof BufferParameters ] = p[ name ]
+          (bufferParams[ name as keyof BufferParameters ] as any) = p[ name ]
         } else {
-          let key: (keyof BufferParameters) = tp[ name ].buffer
-          bufferParams[ key ] = p[ name ]
+          let key: (keyof BufferParameters) = tp[ name ].buffer;
+          (bufferParams[ key ] as any) = p[ name ]
         }
       }
 

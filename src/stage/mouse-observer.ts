@@ -227,7 +227,7 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousewheel (event: MouseWheelEvent) {
+  _onMousewheel (event: WheelEvent) {
     if (event.target !== this.domElement || !this.handleScroll) {
       return
     }
@@ -235,9 +235,9 @@ class MouseObserver {
     this._setKeys(event)
 
     var delta = 0
-    if (event.wheelDelta) {
+    if (event.deltaY) {
       // WebKit / Opera / Explorer 9
-      delta = event.wheelDelta / 40
+      delta = event.deltaY / 40
     } else if (event.detail) {
       // Firefox
       delta = -event.detail / 3

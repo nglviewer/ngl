@@ -32,7 +32,7 @@ function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: num
 
   const nv = verts.length / 3
   const nf = faces.length / 3
-  let norms
+  let norms: Float32Array | undefined = undefined
 
   if (inflate) {
     norms = new Float32Array(nv * 3)

@@ -7,7 +7,7 @@
 import Streamer from './streamer'
 
 interface FileReaderEventTarget extends EventTarget {
-    result:string
+    result:string | ArrayBuffer | null
 }
 
 interface FileReaderEvent extends ProgressEvent {

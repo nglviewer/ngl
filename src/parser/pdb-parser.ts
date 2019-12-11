@@ -236,7 +236,7 @@ class PdbParser extends StructureParser {
 
           if (firstModelOnly && modelIdx > 0) continue
 
-          let x, y, z, ls: string[], dd
+          let x, y, z, ls: string[], dd = 0
 
           if (isPqr) {
             ls = line.split(reWhitespace)
