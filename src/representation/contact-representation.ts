@@ -30,7 +30,7 @@ export interface ContactRepresentationParameters extends StructureRepresentation
   metalCoordination: boolean
   cationPi: boolean
   piStacking: boolean
-  filterSele: string
+  filterSele: string|[string, string]
   maxHydrophobicDist: number
   maxHbondDist: number
   maxHbondSulfurDist: number
@@ -66,7 +66,7 @@ class ContactRepresentation extends StructureRepresentation {
   protected metalCoordination: boolean
   protected cationPi: boolean
   protected piStacking: boolean
-  protected filterSele: string
+  protected filterSele: string|[string, string]
   protected maxHydrophobicDist: number
   protected maxHbondDist: number
   protected maxHbondSulfurDist: number

@@ -206,6 +206,7 @@ export const ContactDataDefaultParams = {
   filterSele: ''
 }
 export type ContactDataParams = typeof ContactDataDefaultParams
+  | { filterSele: string|[string, string] }
 
 export const ContactLabelDefaultParams = {
   unit: '',
