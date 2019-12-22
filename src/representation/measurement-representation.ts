@@ -261,6 +261,7 @@ abstract class MeasurementRepresentation extends StructureRepresentation {
 
     if (params && (params.labelColor || params.labelColor === 0x000000)) {
       what.labelColor = true
+      rebuild = true
     }
 
     super.setParameters(params, what, rebuild)
