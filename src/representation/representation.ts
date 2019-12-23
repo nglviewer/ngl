@@ -34,10 +34,10 @@ export interface RepresentationParameters {
   roughness: number,
   metalness: number,
   diffuse: Color,
-  diffuseInterior: Color,
-  useInteriorColor: Color,
+  diffuseInterior: boolean,
+  useInteriorColor: boolean,
   interiorColor: Color,
-  interiorDarkening: Color,
+  interiorDarkening: number,
   disablePicking: boolean,
   matrix: Matrix4
   quality: string,
@@ -77,10 +77,10 @@ export interface RepresentationParameters {
  * @property {Float} [roughness] - how rough the material is, between 0 and 1
  * @property {Float} [metalness] - how metallic the material is, between 0 and 1
  * @property {Color} [diffuse] - diffuse color for lighting
- * @property {Color} [diffuseInterior] - diffuse interior, i.e. ignore normal
- * @property {Color} [useInteriorColor] - use interior color
+ * @property {Boolean} [diffuseInterior] - diffuse interior, i.e. ignore normal
+ * @property {Boolean} [useInteriorColor] - use interior color
  * @property {Color} [interiorColor] - interior color
- * @property {Color} [interiorDarkening] - interior darkening: 0 no darking, 1 fully darkened
+ * @property {Float} [interiorDarkening] - interior darkening: 0 no darking, 1 fully darkened
  * @property {Boolean} [disablePicking] - disable picking
  */
 
