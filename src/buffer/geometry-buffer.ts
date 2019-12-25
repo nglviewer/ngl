@@ -152,7 +152,7 @@ abstract class GeometryBuffer extends MeshBuffer {
           position[ i3 ], position[ i3 + 1 ], position[ i3 + 2 ]
         )
         this.applyPositionTransform(matrix, i, i3)
-        applyMatrix4toVector3array(new Float32Array(matrix.elements),
+        applyMatrix4toVector3array(matrix.elements as unknown as Float32Array,
                                    transformedGeoPosition)
 
         meshPosition.set(transformedGeoPosition, k)
@@ -160,7 +160,7 @@ abstract class GeometryBuffer extends MeshBuffer {
         if (updateNormals && transformedGeoNormal) {
           transformedGeoNormal.set(geoNormal)
           normalMatrix.getNormalMatrix(matrix)
-          applyMatrix3toVector3array(new Float32Array(normalMatrix.elements),
+          applyMatrix3toVector3array(normalMatrix.elements as unknown as Float32Array,
                                      transformedGeoNormal)
 
           meshNormal.set(transformedGeoNormal, k)

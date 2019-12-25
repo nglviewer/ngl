@@ -255,7 +255,7 @@ class StructureComponent extends Component {
 
   addRepresentation <K extends keyof StructureRepresentationParametersMap>(
     type: K,
-    params: Partial<StructureRepresentationParametersMap[K]>|{defaultAssembly: any} = {},
+    params: Partial<StructureRepresentationParametersMap[K]>|{defaultAssembly: string} = {},
     hidden = false
   ) {
     params.defaultAssembly = this.parameters.defaultAssembly

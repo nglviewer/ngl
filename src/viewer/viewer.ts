@@ -1149,11 +1149,11 @@ export default class Viewer {
   }
 
   private __renderPickingGroup (camera: PerspectiveCamera|OrthographicCamera) {
-    this.renderer.setRenderTarget(this.pickingTarget || null!)
+    this.renderer.setRenderTarget(this.pickingTarget || null)
     this.renderer.clear()
     this.__setVisibility(false, true, false, false)
     this.renderer.render(this.scene, camera)
-    this.renderer.setRenderTarget(null!)
+    this.renderer.setRenderTarget(null)
     this.updateInfo()
 
     //  back to standard render target
