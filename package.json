@@ -64,7 +64,6 @@
     "@types/node": "^10.17.9",
     "@types/promise-polyfill": "^6.0.0",
     "@types/sprintf-js": "^1.1.0",
-    "@types/webgl2": "0.0.5",
     "babel-plugin-array-includes": "^2.0.3",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-es2015": "^6.24.1",
