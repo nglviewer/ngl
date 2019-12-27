@@ -9,6 +9,10 @@
 
 export function createProgram(gl: WebGLRenderingContext, shaders: WebGLShader[], attribs?: string[], locations?: number[]) {
   const program = gl.createProgram()
+  if (!program) {
+    console.log(`error creating WebGL program`)
+    return
+  }
   shaders.forEach(shader => gl.attachShader(program, shader))
   if (attribs) {
     attribs.forEach((attrib, i) => {
@@ -29,6 +33,10 @@ export function createProgram(gl: WebGLRenderingContext, shaders: WebGLShader[],
 
 export function loadShader(gl: WebGLRenderingContext, shaderSource: string, shaderType: number) {
   const shader = gl.createShader(shaderType)
+  if (!shader) {
+    console.log(`error creating WebGL shader ${shaderType}`)
+    return                      // can't create shader
+  }
   gl.shaderSource(shader, shaderSource)
   gl.compileShader(shader)
 
@@ -99,6 +107,10 @@ export function testTextureSupport (type: number) {
     console.log(`error creating webgl context for ${type}`)
     return false
   }
+  if (!(gl instanceof WebGLRenderingContext)) {
+    console.log(`Got unexpected type for WebGL rendering context`)
+    return false
+  }
 
   getExtension(gl, 'OES_texture_float')
   getExtension(gl, 'OES_texture_half_float')
@@ -111,6 +123,10 @@ export function testTextureSupport (type: number) {
 
   // setup program
   const program = createProgram(gl, [ vertShader, fragShader ])
+  if (!program) {
+    console.log(`error creating WebGL program`)
+    return false
+  }
   gl.useProgram(program);
 
   // look up where the vertex data needs to go.

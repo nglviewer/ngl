@@ -187,7 +187,7 @@ class LineRepresentation extends StructureRepresentation {
     let cPosition2 = new Float32Array(0)
     let cColor = new Float32Array(0)
     let cColor2 = new Float32Array(0)
-    let cOffset: number
+    let cOffset: number = 0
 
     let pickingArray = new Float32Array(0)
 

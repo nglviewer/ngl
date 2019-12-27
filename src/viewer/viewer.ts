@@ -7,7 +7,7 @@
 import { Signal } from 'signals'
 import {
   PerspectiveCamera, OrthographicCamera, StereoCamera,
-  Box3, Vector3, Matrix4, Color,
+  Vector2, Box3, Vector3, Matrix4, Color,
   WebGLRenderer, WebGLRenderTarget,
   NearestFilter, LinearFilter, AdditiveBlending,
   RGBAFormat, FloatType, /*HalfFloatType, */UnsignedByteType,
@@ -483,7 +483,8 @@ export default class Viewer {
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
     // when animations are started on page load
-    this.renderer.clearTarget(this.pickingTarget, true, true, true)
+    this.renderer.setRenderTarget(this.pickingTarget)
+    this.renderer.clear()
     this.renderer.setRenderTarget(null!)
 
     // ssaa textures
@@ -1148,9 +1149,11 @@ export default class Viewer {
   }
 
   private __renderPickingGroup (camera: PerspectiveCamera|OrthographicCamera) {
-    this.renderer.clearTarget(this.pickingTarget, true, true, true)
+    this.renderer.setRenderTarget(this.pickingTarget || null)
+    this.renderer.clear()
     this.__setVisibility(false, true, false, false)
-    this.renderer.render(this.scene, camera, this.pickingTarget)
+    this.renderer.render(this.scene, camera)
+    this.renderer.setRenderTarget(null)
     this.updateInfo()
 
     //  back to standard render target
@@ -1165,23 +1168,16 @@ export default class Viewer {
   }
 
   private __renderModelGroup (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
-    if (renderTarget) {
-      this.renderer.clearTarget(renderTarget, true, true, true)
-    } else {
-      this.renderer.clear()
-    }
-
+    this.renderer.setRenderTarget(renderTarget || null!)
+    this.renderer.clear()
     this.__setVisibility(false, false, true, false)
-    this.renderer.render(this.scene, camera, renderTarget)
-    if (renderTarget) {
-      this.renderer.clearTarget(renderTarget, false, true, false)
-    } else {
-      this.renderer.clearDepth()
-    }
+    this.renderer.render(this.scene, camera)
+    this.renderer.clear(false, true, true)
     this.updateInfo()
 
     this.__setVisibility(true, false, false, Debug)
-    this.renderer.render(this.scene, camera, renderTarget)
+    this.renderer.render(this.scene, camera)
+    this.renderer.setRenderTarget(null!) // set back to default canvas
     this.updateInfo()
   }
 
@@ -1226,16 +1222,21 @@ export default class Viewer {
       this.compositeUniforms.scale.value = sampleWeight
 
       this.__renderModelGroup(camera, this.sampleTarget)
-      this.renderer.render(
-        this.compositeScene, this.compositeCamera, this.holdTarget, (i === 0)
-      )
+      this.renderer.setRenderTarget(this.holdTarget)
+      if (i === 0)  {
+        this.renderer.clear()
+      }
+
+      this.renderer.render(this.compositeScene, this.compositeCamera)
     }
 
     this.compositeUniforms.scale.value = 1.0
     this.compositeUniforms.tForeground.value = this.holdTarget.texture
 
     camera.clearViewOffset()
-    this.renderer.render(this.compositeScene, this.compositeCamera, null!, true)
+    this.renderer.setRenderTarget(null!)
+    this.renderer.clear()
+    this.renderer.render(this.compositeScene, this.compositeCamera)
   }
 
   private __renderStereo (picking = false) {
@@ -1243,7 +1244,8 @@ export default class Viewer {
     stereoCamera.update(this.perspectiveCamera);
 
     const renderer = this.renderer
-    const size = renderer.getSize()
+    let size = new Vector2()
+    renderer.getSize(size)
 
     renderer.setScissorTest(true)
 

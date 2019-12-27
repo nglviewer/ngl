@@ -16,7 +16,7 @@ function gzipDecompress (data: ArrayBuffer|Uint8Array) {
   }
 
   try {
-    decompressedData = ungzip(data)
+    decompressedData = ungzip(data as Uint8Array)
   } catch (e) {
     decompressedData = data  // assume it is already uncompressed
   }

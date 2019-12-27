@@ -136,7 +136,7 @@ PLYLoader.prototype = {
     }
 
     var lines = headerText.split('\n')
-    var currentElement, lineType, lineValues
+    var currentElement: PLYElement|undefined, lineType, lineValues
 
     function makePlyElementProperty (propertValues: string[], propertyNameMapping: {[k: string]: string}) {
       var property = {

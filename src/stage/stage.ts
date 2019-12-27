@@ -600,7 +600,7 @@ class Stage {
    */
   toggleFullscreen (element: HTMLElement) {
     if (!document.fullscreenEnabled && !document.mozFullScreenEnabled &&
-        !document.webkitFullscreenEnabled && !document.msFullscreenEnabled
+        !(document as any).webkitFullscreenEnabled && !document.msFullscreenEnabled
     ) {
       Log.log('fullscreen mode (currently) not possible')
       return
@@ -614,7 +614,7 @@ class Stage {
 
     function getFullscreenElement () {
       return document.fullscreenElement || document.mozFullScreenElement ||
-              document.webkitFullscreenElement || document.msFullscreenElement
+        (document as any).webkitFullscreenElement || document.msFullscreenElement
     }
 
     function resizeElement () {
@@ -647,8 +647,8 @@ class Stage {
         element.msRequestFullscreen()
       } else if (element.mozRequestFullScreen) {
         element.mozRequestFullScreen()
-      } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen()
+      } else if ((element as any).webkitRequestFullscreen) {
+        (element as any).webkitRequestFullscreen()
       }
 
       document.addEventListener('fullscreenchange', resizeElement)
@@ -668,8 +668,8 @@ class Stage {
         document.msExitFullscreen()
       } else if (document.mozCancelFullScreen) {
         document.mozCancelFullScreen()
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen()
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen()
       }
     }
   }

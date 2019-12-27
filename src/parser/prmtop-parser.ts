@@ -66,7 +66,7 @@ class PrmtopParser extends StructureParser {
     let radii: Float32Array
     let bAtomIndex1: Uint32Array
     let bAtomIndex2: Uint32Array
-    let bBondOrder: Uint8Array
+    let bBondOrder: Uint8Array = new Uint8Array(0)
     let residueLabels: string[]
     let residuePointers: Uint32Array
 

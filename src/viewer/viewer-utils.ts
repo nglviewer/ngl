@@ -321,12 +321,13 @@ const projectionMatrixInverse = new Matrix4()
 const projectionMatrixTranspose = new Matrix4()
 
 export function updateMaterialUniforms (group: Object3D, camera: Camera, renderer: WebGLRenderer, cDist: number, bRadius: number) {
-  const {width, height} = renderer.getSize()
-  const canvasHeight = height
+  let size = new Vector2()
+  renderer.getSize(size)
+  const canvasHeight = size.height
   const pixelRatio = renderer.getPixelRatio()
   const ortho = camera.type === 'OrthographicCamera'
 
-  resolution.set(width, height)
+  resolution.set(size.width, size.height)
   projectionMatrixInverse.getInverse(camera.projectionMatrix)
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
