@@ -545,7 +545,7 @@ export default class Viewer {
 
     const bbGeometry = new BufferGeometry()
     bbGeometry.setIndex(new BufferAttribute(indices, 1))
-    bbGeometry.addAttribute('position', new BufferAttribute(positions, 3))
+    bbGeometry.setAttribute('position', new BufferAttribute(positions, 3))
     const bbMaterial = new ShaderMaterial({
       uniforms: { 'uColor': { value: new Color('skyblue') } },
       vertexShader: getShader('BasicLine.vert'),

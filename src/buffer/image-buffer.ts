@@ -109,7 +109,7 @@ class ImageBuffer extends Buffer {
       'mapSize': { value: new Vector2(width, height) }
     })
 
-    this.geometry.addAttribute('uv', new BufferAttribute(quadUvs, 2))
+    this.geometry.setAttribute('uv', new BufferAttribute(quadUvs, 2))
   }
 
   getDefines (type: BufferTypes) {
