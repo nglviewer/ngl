@@ -227,23 +227,34 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousewheel (event: WheelEvent) {
+  _onMousewheel(event: WheelEvent & { wheelDelta?: number, wheelDeltaY?: number }) {
     if (event.target !== this.domElement || !this.handleScroll) {
       return
     }
     event.preventDefault()
     this._setKeys(event)
 
-    var delta = 0
-    if (event.deltaY) {
-      // WebKit / Opera / Explorer 9
-      delta = event.deltaY / 40
-    } else if (event.detail) {
-      // Firefox
-      delta = -event.detail / 3
+    let delta = 0
+    if ('deltaY' in event && 'deltaMode' in event) {
+      // all modern browsers, using WheelEvent; deltaY + down (toward user)
+      if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL)
+        // everything except Firefox: normally 100 per wheel click
+        delta = -event.deltaY * (2.5 / 100.0)
+      else if (event.deltaMode === WheelEvent.DOM_DELTA_LINE)
+        // Firefox in line mode, normally 3 per wheel click
+        delta = -event.deltaY * (2.5 / 3.0)
+      else                      // page mode: 1 per wheel click
+        delta = -event.deltaY * 2.5
+    } else if ('deltaY' in event && !('detail' in event))  {
+      // Old Firefox or IE 11: deltaY but no deltaMode; treat as pixels
+      delta = -event.deltaY * (2.5 / 100.0)
+    } else if (event.wheelDelta !== undefined) {
+      delta = -event.wheelDelta * (2.5 / 100)
+    } else if (event.wheelDeltaY !== undefined) {
+      delta = -event.wheelDeltaY * (2.5 / 100)
     } else {
-      // Firefox or IE 11
-      delta = -event.deltaY / (event.deltaMode ? 0.33 : 30)
+      // Old Firefox, MouseWheelEvent
+      delta = -event.detail / 3
     }
     this.signals.scrolled.dispatch(delta)
 
