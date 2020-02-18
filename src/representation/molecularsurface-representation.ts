@@ -274,9 +274,13 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
         })
       )
 
-      const doubleSidedBuffer = new DoubleSidedBuffer(surfaceBuffer)
-
-      bufferList.push(doubleSidedBuffer)
+      if (this.getBufferParams().side == 'double') {
+        const doubleSidedBuffer = new DoubleSidedBuffer(surfaceBuffer)
+        bufferList.push(doubleSidedBuffer)
+      }
+      else {
+        bufferList.push(surfaceBuffer)
+      }
     }
 
     return { bufferList, info } as StructureRepresentationData
