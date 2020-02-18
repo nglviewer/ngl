@@ -60,7 +60,7 @@
     "science"
   ],
   "devDependencies": {
-    "@types/jest": "^23.3.1",
+    "@types/jest": "^23.3.14",
     "@types/node": "^10.17.9",
     "@types/promise-polyfill": "^6.0.0",
     "@types/sprintf-js": "^1.1.0",

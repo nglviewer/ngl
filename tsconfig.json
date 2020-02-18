@@ -7,6 +7,7 @@
         "sourceMap": false,
         "noUnusedLocals": true,
         "strictNullChecks": true,
+        "allowSyntheticDefaultImports": true,
         "lib": [ "es6", "dom", "es2016" ],
         "outDir": "build/js/src",
         "allowJs": false,
