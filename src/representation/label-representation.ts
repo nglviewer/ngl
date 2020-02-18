@@ -6,7 +6,7 @@
 
 import { RepresentationRegistry, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import LabelFactory from '../utils/label-factory'
+import LabelFactory, { LabelType } from '../utils/label-factory'
 import RadiusFactory from '../utils/radius-factory'
 import StructureRepresentation, { StructureRepresentationData } from './structure-representation'
 import TextBuffer, { TextBufferData } from '../buffer/text-buffer'
@@ -62,7 +62,7 @@ export interface TextDataField {
  * @property {Boolean} fixedSize - show text with a fixed pixel size
  */
 export interface LabelRepresentationParameters extends RepresentationParameters {
-  labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+  labelType: LabelType
   labelText: string
   labelFormat: string
   labelGrouping: 'atom'|'residue'
@@ -86,8 +86,8 @@ export interface LabelRepresentationParameters extends RepresentationParameters 
  * Label representation
  */
 class LabelRepresentation extends StructureRepresentation {
-  
-  protected labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
+
+  protected labelType: LabelType
   protected labelText: string
   protected labelFormat: string
   protected labelGrouping: 'atom'|'residue'
@@ -106,7 +106,7 @@ class LabelRepresentation extends StructureRepresentation {
   protected backgroundMargin: number
   protected backgroundOpacity: number
   protected fixedSize: boolean
-  
+
   /**
    * Create Label representation object
    * @param {Structure} structure - the structure to be represented
@@ -257,7 +257,7 @@ class LabelRepresentation extends StructureRepresentation {
     const p = this.getAtomParams(what)
     const labelFactory = new LabelFactory(this.labelType, this.labelText, this.labelFormat)
     let position: Float32Array, size: Float32Array, color: Float32Array, text: string[],
-      positionN: number[], sizeN: number[], colorN: number[] 
+      positionN: number[], sizeN: number[], colorN: number[]
     if (this.labelGrouping === 'atom') {
       const atomData = sview.getAtomData(p)
       position = atomData.position as Float32Array

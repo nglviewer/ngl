@@ -35,17 +35,17 @@ import { DistanceRepresentationParameters } from '../representation/distance-rep
 import { HyperballRepresentationParameters } from '../representation/hyperball-representation';
 import { LabelRepresentationParameters } from '../representation/label-representation';
 import { LineRepresentationParameters } from '../representation/line-representation';
+import { PointRepresentationParameters } from '../representation/point-representation';
 import { SurfaceRepresentationParameters } from '../representation/surface-representation';
 import { RibbonRepresentationParameters } from '../representation/ribbon-representation';
 import { RocketRepresentationParameters } from '../representation/rocket-representation';
 import { TraceRepresentationParameters } from '../representation/trace-representation';
 import { UnitcellRepresentationParameters } from '../representation/unitcell-representation';
+import { SliceRepresentationParameters } from '../representation/slice-representation'
+import { MolecularSurfaceRepresentationParameters } from '../representation/molecularsurface-representation'
+import { DotRepresentationParameters } from '../representation/dot-representation'
 
-export type StructureRepresentationType = (
-  'angle'|'axes'|'backbone'|'ball+stick'|'base'|'cartoon'|'contact'|'dihedral'|
-  'distance'|'helixorient'|'hyperball'|'label'|'licorice'|'line'|'surface'|
-  'ribbon'|'rocket'|'rope'|'spacefill'|'trace'|'tube'|'unitcell'
-)
+export type StructureRepresentationType = keyof StructureRepresentationParametersMap
 
 interface StructureRepresentationParametersMap {
   'angle':  AngleRepresentationParameters,
@@ -57,19 +57,24 @@ interface StructureRepresentationParametersMap {
   'contact': ContactRepresentationParameters,
   'dihedral': DihedralRepresentationParameters,
   'distance': DistanceRepresentationParameters,
+  'dot': DotRepresentationParameters,
   'helixorient': StructureRepresentationParameters,
   'hyperball': HyperballRepresentationParameters,
   'label': LabelRepresentationParameters,
   'licorice': BallAndStickRepresentationParameters,
   'line': LineRepresentationParameters,
-  'surface': SurfaceRepresentationParameters,
+  'molecularsurface': MolecularSurfaceRepresentationParameters,
+  'point': PointRepresentationParameters,
   'ribbon': RibbonRepresentationParameters,
   'rocket': RocketRepresentationParameters,
   'rope': CartoonRepresentationParameters,
+  'slice': SliceRepresentationParameters,
   'spacefill': BallAndStickRepresentationParameters,
+  'surface': SurfaceRepresentationParameters,
   'trace': TraceRepresentationParameters,
   'tube': CartoonRepresentationParameters,
-  'unitcell': UnitcellRepresentationParameters
+  'unitcell': UnitcellRepresentationParameters,
+  'validation': StructureRepresentationParameters
 }
 
 export const StructureComponentDefaultParameters = Object.assign({
