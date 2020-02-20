@@ -6,6 +6,12 @@ import commonjs from 'rollup-plugin-commonjs';
 var path = require('path');
 var pkg = require('./package.json');
 var external = Object.keys(pkg.dependencies);
+var globals = {}
+if (process.env.NGL_EXTERNAL_THREEJS) {
+  external.push('three')
+  globals.three = 'three'
+  console.log(`Note: not bundling three.js into NGL due to env var`)
+}
 
 function glsl () {
   return {
@@ -72,14 +78,16 @@ export default {
       file: "build/js/ngl.dev.js",
       format: 'umd',
       name: 'NGL',
-      sourcemap: true
+      sourcemap: true,
+      globals: globals
     },
     {
       file: "build/js/ngl.esm.js",
       format: 'es',
       name: 'NGL',
-      sourcemap: true
-    }
+      sourcemap: true,
+      globals: globals
+    },
   ],
-  external: external
+  external: external,
 };
