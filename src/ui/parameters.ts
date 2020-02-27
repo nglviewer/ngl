@@ -50,8 +50,6 @@ export const UIStageParameters: { [k in keyof StageParameters]: ParamType } = {
   clipScale: SelectParam('relative', 'absolute'),
   fogNear: RangeParam(1, 100, 0),
   fogFar: RangeParam(1, 100, 0),
-  fogMode: SelectParam('scene', 'camera'),
-  fogScale: SelectParam('relative', 'absolute'),
   cameraType: SelectParam('perspective', 'orthographic', 'stereo'),
   cameraEyeSep: NumberParam(3, 1.0, 0.01),
   cameraFov: RangeParam(1, 120, 15),

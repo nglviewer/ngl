@@ -8,8 +8,6 @@ stage.setParameters({
   clipScale: 'absolute',
   clipNear: 0.01,
   clipFar: 100000,
-  fogMode: 'camera',
-  fogScale: 'absolute',
   fogNear: 0.01,
   fogFar: 100000
 })
@@ -42,8 +40,6 @@ function updateDiv () {
 
   data.push(['Clipping mode', sp.clipMode])
   data.push(['Clipping scale', sp.clipScale])
-  data.push(['Fog mode', sp.fogMode])
-  data.push(['Fog scale', sp.fogScale])
 
   var pnames = [
     'clipNear', 'clipFar', 'clipDist', 'fogNear', 'fogFar']

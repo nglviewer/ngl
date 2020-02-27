@@ -139,8 +139,6 @@ export interface ViewerParameters {
   fogColor: Color
   fogNear: number
   fogFar: number
-  fogMode: string               // "scene" or "camera"
-  fogScale: string              // "relative" or "absolute"
 
   backgroundColor: Color
 
@@ -301,8 +299,6 @@ export default class Viewer {
       fogColor: new Color(0x000000),
       fogNear: 50,
       fogFar: 100,
-      fogMode: 'scene',
-      fogScale: 'relative',
 
       backgroundColor: new Color(0x000000),
 
@@ -786,15 +782,12 @@ export default class Viewer {
     this.requestRender()
   }
 
-  setFog (color?: Color|number|string, near?: number, far?: number,
-          fogMode?: string, fogScale?: string) {
+  setFog (color?: Color|number|string, near?: number, far?: number) {
     const p = this.parameters
 
     if (color !== undefined) p.fogColor.set(color as string)  // TODO
     if (near !== undefined) p.fogNear = near
     if (far !== undefined) p.fogFar = far
-    if (fogMode !== undefined) p.fogMode = fogMode
-    if (fogScale !== undefined) p.fogScale = fogScale
 
     this.requestRender()
   }
@@ -1033,74 +1026,83 @@ export default class Viewer {
     this.orthographicCamera.zoom = this.height / height
   }
 
+  /**
+   * Convert an absolute clip value to a relative one using bRadius.
+   *
+   * 0.0 -> 50.0
+   * bRadius -> 0.0
+   */
+  absoluteToRelative (d: number) :number {
+    return 50 * (1 - d / this.bRadius)
+  }
+
+  /**
+   * Convert a relative clip value to an absolute one using bRadius
+   *
+   * 0.0 -> bRadius
+   * 50.0 -> 0.0
+   */
+  relativeToAbsolute (d: number) : number {
+    return this.bRadius * (1 - d / 50)
+  }
+
+  /**
+   * Intepret clipMode, clipScale and set the camera and fog clipping.
+   * Also ensures bRadius and cDist are valid
+   */
   private __updateClipping () {
     const p = this.parameters
 
-    const debugClipping = false
+    // bRadius must always be updated for material-based clipping
+    // and for focus calculations
+    this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
 
-    // clipping
+    // FL: Removed below, but leaving commented as I don't understand intention
+    // this.bRadius += this.boundingBox.getCenter(this.distVector).length()
 
-    // cDist = distVector.copy( camera.position )
-    //           .sub( controls.target ).length();
+    if (!isFinite(this.bRadius)) {
+      this.bRadius = 50
+    }
+
     this.cDist = this.distVector.copy(this.camera.position).length()
-    if (debugClipping)
-      console.log( "cDist", this.cDist )
     if (!this.cDist) {
       // recover from a broken (NaN) camera position
       this.camera.position.set(0, 0, p.cameraZ)
       this.cDist = Math.abs(p.cameraZ)
     }
 
-    if (p.clipScale !== 'absolute' || p.fogScale !== 'absolute') {
-      // Compute bbox radius if needed for relative clip/fog
-      this.bRadius = Math.max(10, this.boundingBoxLength * 0.5)
-      this.bRadius += this.boundingBox.getCenter(this.distVector).length()
-      // console.log( "bRadius", this.bRadius )
-      if (this.bRadius === Infinity || this.bRadius === -Infinity || isNaN(this.bRadius)) {
-        // console.warn( "something wrong with bRadius" );
-        this.bRadius = 50
-      }
-    }
+    // fog
+    const fog = this.scene.fog as Fog
+    fog.color.set(p.fogColor)
 
-    if (p.clipMode == 'camera') {
-      // clip camera mode ignores clipScale; always absolute
+    if (p.clipMode === 'camera') {
+      // Always interpret clipScale as absolute for clipMode camera
+
       this.camera.near = p.clipNear
       this.camera.far = p.clipFar
-    }
-    else {
+      fog.near = p.fogNear
+      fog.far = p.fogFar
+
+    } else {
       // scene mode
-      if (p.clipScale == 'absolute') {
-        // absolute scene mode: offset clip planes from scene center
-        // (note: positive clipNear means closer to the camera)
+
+      if (p.clipScale === 'absolute') {
+        // absolute scene mode; offset clip planes from scene center
+        // (note: positive values move near plane towards camera and rear plane away)
+
         this.camera.near = this.cDist - p.clipNear
         this.camera.far = this.cDist + p.clipFar
+        fog.near = this.cDist - p.fogNear
+        fog.far = this.cDist + p.fogFar
+
       } else {
-        // relative scene mode (default): convert percentages to Angstroms
+        // relative scene mode (default): convert pecentages to Angstroms
+
         const nearFactor = (50 - p.clipNear) / 50
         const farFactor = -(50 - p.clipFar) / 50
         this.camera.near = this.cDist - (this.bRadius * nearFactor)
         this.camera.far = this.cDist + (this.bRadius * farFactor)
-      }
-    }
 
-    // fog
-
-    const fog = this.scene.fog as any  // TODO
-    fog.color.set(p.fogColor)
-
-    if (p.fogMode == 'camera') {
-      // fog camera mode ignores clipScale; always absolute
-      fog.near = p.fogNear
-      fog.far = p.fogFar
-    }
-    else {
-      // scene mode
-      if (p.fogScale == 'absolute') {
-        // absolute scene mode: offset fog planes from scene center
-        // (fogNear should typically be negative for this mode)
-        fog.near = this.cDist + p.fogNear
-        fog.far = this.cDist + p.fogFar
-      } else {
         const fogNearFactor = (50 - p.fogNear) / 50
         const fogFarFactor = -(50 - p.fogFar) / 50
         fog.near = this.cDist - (this.bRadius * fogNearFactor)
@@ -1109,14 +1111,18 @@ export default class Viewer {
     }
 
     if (this.camera.type === 'PerspectiveCamera') {
+
       this.camera.near = Math.max(0.1, p.clipDist, this.camera.near)
       this.camera.far = Math.max(1, this.camera.far)
       fog.near = Math.max(0.1, fog.near)
       fog.far = Math.max(1, fog.far)
+
     } else if (this.camera.type === 'OrthographicCamera') {
+
       if (p.clipDist > 0) {
         this.camera.near = Math.max(p.clipDist, this.camera.near)
       }
+
     }
   }
 
