@@ -10,6 +10,7 @@ import { getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
 import { BufferParameters, BufferData } from './buffer'
+import {Log} from "../globals";
 
 const quadIndices = new Uint16Array([
   0, 1, 2,
@@ -198,7 +199,9 @@ class RibbonBuffer extends MeshBuffer {
   }
 
   makeIndex () {
-    const meshIndex = this.geometry.getIndex().array as Uint32Array|Uint16Array
+    const index = this.geometry.getIndex()
+    if (!index) { Log.error('Index is null'); return; }
+    const meshIndex = index.array as Uint32Array|Uint16Array
     const n = meshIndex.length / 4 / 3
 
     for (let v = 0; v < n; ++v) {

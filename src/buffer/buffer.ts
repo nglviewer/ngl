@@ -251,7 +251,9 @@ class Buffer {
     this.geometry.setIndex(
       new BufferAttribute(index, 1)
     )
-    this.geometry.getIndex().setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+    const nindex = this.geometry.getIndex();
+    if (!nindex) { Log.error('Index is null'); return; }
+    nindex.setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
   }
 
   makeMaterial () {
@@ -441,6 +443,7 @@ class Buffer {
       )
     } else {
       const index = this.wireframeGeometry.getIndex()
+      if (!index) { Log.error('Index is null'); return; }
       index.set(this.wireframeIndex)
       index.needsUpdate = this.wireframeIndexCount > 0
       index.updateRange.count = this.wireframeIndexCount
@@ -713,6 +716,7 @@ class Buffer {
 
       if (name === 'index') {
         const index = geometry.getIndex()
+        if (!index) { Log.error('Index is null'); continue; }
         geometry.setDrawRange(0, Infinity)
 
         if (length > index.array.length) {
