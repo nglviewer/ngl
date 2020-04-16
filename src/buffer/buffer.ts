@@ -586,7 +586,7 @@ class Buffer {
         buf = getTypedArray('float32', arraySize)
       }
 
-      this.geometry.addAttribute(
+      this.geometry.setAttribute(
         name,
         new BufferAttribute(buf, itemSize[ a.type ]).setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
       )
@@ -733,7 +733,7 @@ class Buffer {
         const attribute = attributes[ name ]
 
         if (length > attribute.array.length) {
-          geometry.addAttribute(
+          geometry.setAttribute(
             name,
             new BufferAttribute(array, attribute.itemSize)
               .setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
