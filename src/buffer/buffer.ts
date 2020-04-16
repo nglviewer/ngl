@@ -251,7 +251,7 @@ class Buffer {
     this.geometry.setIndex(
       new BufferAttribute(index, 1)
     )
-    this.geometry.getIndex().setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+    this.geometry.getIndex().setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
   }
 
   makeMaterial () {
@@ -322,7 +322,7 @@ class Buffer {
     wireframeGeometry.attributes = geometry.attributes
     if (wireframeIndex) {
       wireframeGeometry.setIndex(
-        new BufferAttribute(wireframeIndex, 1).setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(wireframeIndex, 1).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
       )
       wireframeGeometry.setDrawRange(0, this.wireframeIndexCount)
     }
@@ -437,7 +437,7 @@ class Buffer {
     if (this.wireframeGeometry.index &&
         this.wireframeIndex.length > this.wireframeGeometry.index.array.length) {
       this.wireframeGeometry.setIndex(
-        new BufferAttribute(this.wireframeIndex, 1).setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(this.wireframeIndex, 1).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
       )
     } else {
       const index = this.wireframeGeometry.getIndex()
@@ -588,7 +588,7 @@ class Buffer {
 
       this.geometry.setAttribute(
         name,
-        new BufferAttribute(buf, itemSize[ a.type ]).setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(buf, itemSize[ a.type ]).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
       )
     }
   }
@@ -718,7 +718,7 @@ class Buffer {
         if (length > index.array.length) {
           geometry.setIndex(
             new BufferAttribute(array, 1)
-              .setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+              .setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
           )
         } else {
           index.set(array)
@@ -736,7 +736,7 @@ class Buffer {
           geometry.setAttribute(
             name,
             new BufferAttribute(array, attribute.itemSize)
-              .setUsage(this.dynamic ? WebGL2RenderingContext.DYNAMIC_DRAW : 0)
+              .setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
           )
         } else {
           attributes[ name ].set(array)
