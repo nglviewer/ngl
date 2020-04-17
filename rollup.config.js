@@ -2,16 +2,23 @@ import buble from 'rollup-plugin-buble';
 import json from 'rollup-plugin-json';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
+import internal from 'rollup-plugin-internal';
 
 var path = require('path');
 var pkg = require('./package.json');
-var external = Object.keys(pkg.dependencies);
-var globals = {}
-if (process.env.NGL_EXTERNAL_THREEJS) {
-  external.push('three')
-  globals.three = 'three'
-  console.log(`Note: not bundling three.js into NGL due to env var`)
-}
+
+// When building UMD or ES6 module, mark dependencies as external
+var moduleExternals = Object.keys(pkg.dependencies);
+var moduleGlobals = {three: 'three'}; // UMD form complains if this isn't specified as a global
+
+// For the bundled build, include three (remove it from the externals list)
+var bundleExternals = moduleExternals.slice().splice(moduleExternals.indexOf('three'),1)
+
+// if (process.env.NGL_EXTERNAL_THREEJS) {
+//   external.push('three')
+//   globals.three = 'three'
+//   console.log(`Note: not bundling three.js into NGL due to env var`)
+// }
 
 function glsl () {
   return {
@@ -54,7 +61,7 @@ function text () {
   };
 }
 
-export default {
+const moduleConfig = {
   input: 'build/js/src/ngl.js',
   plugins: [
     resolve({
@@ -75,19 +82,90 @@ export default {
   ],
   output: [
     {
-      file: "build/js/ngl.dev.js",
+      file: "build/js/ngl.umd.js",
       format: 'umd',
       name: 'NGL',
       sourcemap: true,
-      globals: globals
+      globals: moduleGlobals // three.js
     },
     {
       file: "build/js/ngl.esm.js",
       format: 'es',
       name: 'NGL',
-      sourcemap: true,
-      globals: globals
-    },
+      sourcemap: true
+      //globals: globals
+    }
   ],
-  external: external,
-};
+  external: moduleExternals
+}
+
+const bundleConfig = {
+  input: 'build/js/src/ngl.js',
+  plugins: [
+    resolve({
+      jsnext: true,
+      main: true
+    }),
+    commonjs({
+      namedExports: {
+        'node_modules/chroma-js/chroma.js': [ 'scale' ],
+        'node_modules/signals/dist/signals.js': [ 'Signal' ],
+        'node_modules/sprintf-js/src/sprintf.js': [ 'sprintf' ]
+      }
+    }),
+    glsl(),
+    text(),
+    json(),
+    buble(),
+    internal(['three'])
+  ],
+  output: {
+    file: "build/js/ngl/ngl.dev.js",
+    format: 'umd',
+    name: 'NGL',
+    sourcemap: true
+  },
+  external: bundleExternals
+}
+
+export default [
+  moduleConfig, bundleConfig
+]
+
+// export default {
+//   input: 'build/js/src/ngl.js',
+//   plugins: [
+//     resolve({
+//       jsnext: true,
+//       main: true
+//     }),
+//     commonjs({
+//       namedExports: {
+//         'node_modules/chroma-js/chroma.js': [ 'scale' ],
+//         'node_modules/signals/dist/signals.js': [ 'Signal' ],
+//         'node_modules/sprintf-js/src/sprintf.js': [ 'sprintf' ]
+//       }
+//     }),
+//     glsl(),
+//     text(),
+//     json(),
+//     buble()
+//   ],
+//   output: [
+//     {
+//       file: "build/js/ngl.dev.js",
+//       format: 'umd',
+//       name: 'NGL',
+//       sourcemap: true,
+//       globals: globals
+//     },
+//     {
+//       file: "build/js/ngl.esm.js",
+//       format: 'es',
+//       name: 'NGL',
+//       sourcemap: true
+//       //globals: globals
+//     },
+//   ],
+//   external: external,
+// };
