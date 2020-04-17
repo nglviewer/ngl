@@ -10,7 +10,7 @@
     "lint-src": "standard \"src/**/*.js\"",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
-    "ts": "tsc && cpy \"src/**/*.{vert,frag,glsl}\" build/js/src/ && cpy \"lib/*.js\" build/js/lib/ && cpy \"package.json\" build/js/ && cpy \"src/polyfills.js\" build/js/src/",
+    "ts": "tsc && cpy --parents \"src/**/*.{vert,frag,glsl}\" build/js/ && cpy \"lib/*.js\" build/js/lib/ && cpy \"package.json\" build/js/ && cpy \"src/polyfills.js\" build/js/src/",
     "dts": "tsc -d --declarationDir \"declarations\" --emitDeclarationOnly --skipLibCheck",
     "prebuild": "npm run lint",
     "build": "npm run ts && rollup -c",
@@ -93,7 +93,7 @@
     "standard": "^11.0.1",
     "three": "^0.111.0",
     "ts-jest": "^25.2.1",
-    "typedoc": "^0.11.1",
+    "typedoc": "^0.16.10",
     "typescript": "^3.7.3",
     "uglify-js": "^3.4.6"
   },
