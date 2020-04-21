@@ -31,6 +31,7 @@ import { BallAndStickRepresentationParameters } from '../representation/ballands
 import { CartoonRepresentationParameters } from '../representation/cartoon-representation';
 import { ContactRepresentationParameters } from '../representation/contact-representation';
 import { DihedralRepresentationParameters } from '../representation/dihedral-representation';
+import { DihedralHistogramRepresentationParameters } from '../representation/dihedral-histogram-representation';
 import { DistanceRepresentationParameters } from '../representation/distance-representation';
 import { HyperballRepresentationParameters } from '../representation/hyperball-representation';
 import { LabelRepresentationParameters } from '../representation/label-representation';
@@ -56,6 +57,7 @@ interface StructureRepresentationParametersMap {
   'cartoon': CartoonRepresentationParameters,
   'contact': ContactRepresentationParameters,
   'dihedral': DihedralRepresentationParameters,
+  'dihedral-histogram': DihedralHistogramRepresentationParameters,
   'distance': DistanceRepresentationParameters,
   'dot': DotRepresentationParameters,
   'helixorient': StructureRepresentationParameters,
