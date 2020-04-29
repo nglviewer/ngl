@@ -48,6 +48,7 @@ interface HistogramInputData extends Partial<HistogramColorParameters> {
 
 interface HistogramData extends HistogramInputData {
   atomPositions: Float32Array
+  histogram360Scaled: number[]
 }
 
 interface WideLineData {
@@ -95,7 +96,7 @@ function createColorArray(color: ColorDefinition, arrayLength: number) {
  * atomQuad - Quadruplet of selection strings or atom indices
  * histogram360 - List of values, representing histogram from 0 to 360 degrees.
  * @property {Boolean} histogramBinBorderVisible - Display the lines that separate circular histogram bins
- * @property {Boolean} areaBasedScaling - Should sector-based histogram bins'
+ * @property {Boolean} scaleBinToSectorArea - Should sector-based histogram bins'
  * area be proportional to the bins' value
  */
 
@@ -103,7 +104,7 @@ export interface DihedralHistogramRepresentationParameters extends StructureRepr
   histogramsData: HistogramInputData[]
 
   histogramBinBorderVisible: boolean
-  areaBasedScaling: boolean
+  scaleBinToSectorArea: boolean
 }
 
 /**
@@ -143,7 +144,7 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
   protected opaqueMiddleDiscColor: ColorDefinition
   protected opaqueMiddleDiscOpacity: number
 
-  protected areaBasedScaling: boolean
+  protected scaleBinToSectorArea: boolean
 
   constructor(structure: Structure, viewer: Viewer, params: DihedralHistogramRepresentationParameters) {
     super(structure, viewer, params)
@@ -156,6 +157,11 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
       },
       histogramBinBorderVisible: {
         type: 'boolean', default: true
+      },
+      scaleBinToSectorArea: {
+        type: 'boolean',
+        rebuild: true,
+        default: false
       }
     }, this.parameters)
 
@@ -192,7 +198,7 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
       bondArrowWidth: 2,
       bondArrowOpacity: 1.0,
 
-      areaBasedScaling: false,
+      scaleBinToSectorArea: false,
     }
     const parameters = createUpdatedObject(defaultParameters, p)
     Object.assign(this, parameters)
@@ -204,6 +210,8 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
 
     p.side = defaults(p.side, 'double')
     p.opacity = defaults(p.opacity, 0.5)
+    p.radiusType = defaults(p.radiusType, 'size')
+    p.radiusSize = defaults(p.radiusSize, 0.15)
 
     super.init(p)
   }
@@ -242,9 +250,8 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
   createData(sview: StructureView) {
     if (!sview.atomCount || !this.histogramsData.length) return
     this.histogramsData.forEach(x => x.atomPositions = parseNestedAtoms(sview, [x.atomQuad]))
-    if (this.areaBasedScaling) {
-      this.histogramsData.forEach(x => x.histogram360 = x.histogram360.map( y => Math.sqrt(y)))
-    }
+    const scaleData = this.scaleBinToSectorArea ? function (y: number) { return Math.sqrt(y) } : function (y: number) { return y }
+    this.histogramsData.forEach(x => x.histogram360Scaled = x.histogram360.map(scaleData))
     function Float32Concat(arrays: Float32Array[]) {
       const lengths = arrays.map(x => x.length)
       const result = new Float32Array(arraySum(lengths))
@@ -369,7 +376,7 @@ class DihedralHistogramRepresentation extends StructureRepresentation {
  */
 function calculateDihedralHistogram(histogramData: HistogramData) {
   const positionOfDihedralAtoms = histogramData.atomPositions
-  const histogram = histogramData.histogram360
+  const histogram = histogramData.histogram360Scaled;
   const totalSectorTrianglesInOpaqueMiddleDisc = histogram.length <= 180 ? 360 : histogram.length * 2
   const frontAndBack = 2
 
