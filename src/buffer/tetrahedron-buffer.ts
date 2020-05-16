@@ -4,13 +4,7 @@
  * @private
  */
 
-import { TetrahedronBufferGeometry, Vector3, Matrix4, BufferGeometry } from 'three'
-declare module 'three' {
-  export class TetrahedronBufferGeometry extends BufferGeometry {
-    constructor(radius: number, detail: number);
-  }
-}
-
+import { TetrahedronBufferGeometry, Vector3, Matrix4 } from 'three'
 import { BufferRegistry } from '../globals'
 import GeometryBuffer from './geometry-buffer'
 import { BufferData, BufferParameters } from './buffer'

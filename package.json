@@ -19,7 +19,7 @@
     "preversion": "npm test",
     "version": "npm run build-min && git add -A dist",
     "postversion": "git push && git push --tags",
-    "prepublish": "npm test",
+    "prepare": "npm test",
     "devpublish": "npm publish --tag next",
     "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/",
     "watch": "rollup -c -w",
@@ -94,13 +94,14 @@
     "sprintf-js": "git+https://github.com/alexei/sprintf.js.git#36b04b33975e597b03737c3ed0a2a49ec1b2e8c4",
     "standard": "^11.0.1",
     "ts-jest": "^25.2.1",
-    "typedoc": "^0.16.10",
-    "typescript": "^3.7.3",
+    "typedoc": "^0.16.11",
+    "typescript": "^3.8.3",
     "uglify-js": "^3.4.6"
   },
   "dependencies": {
-    "three": "^0.111.0",
     "@types/chroma-js": "^1.3.5",
-    "@types/signals": "1.0.1"
+    "@types/signals": "1.0.1",
+    "three": "^0.111.0",
+    "update": "^0.7.4"
   }
 }

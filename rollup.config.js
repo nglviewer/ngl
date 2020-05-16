@@ -120,7 +120,7 @@ const bundleConfig = {
     internal(['three'])
   ],
   output: {
-    file: "build/js/ngl/ngl.dev.js",
+    file: "build/js/ngl.dev.js",
     format: 'umd',
     name: 'NGL',
     sourcemap: true
