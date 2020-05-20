@@ -1048,7 +1048,7 @@ export const SaccharideNames = [
 
 export const ProteinBackboneAtoms = [
   'CA', 'C', 'N', 'O',
-  'O1', 'O2', 'OC1', 'OC2', 'OX1', 'OXT',
+  'O1', 'O2', 'OC1', 'OC2', 'OX1', 'OXT', 'OT1', 'OT2',
   'H', 'H1', 'H2', 'H3', 'HA', 'HN',
   'BB'
 ]
@@ -1065,7 +1065,7 @@ export const ResidueTypeAtoms: { [k: number]: { [k: string]: string|string[] } }
 ResidueTypeAtoms[ ProteinBackboneType ] = {
   trace: 'CA',
   direction1: 'C',
-  direction2: [ 'O', 'OC1', 'O1', 'OX1', 'OXT' ],
+  direction2: [ 'O', 'OC1', 'O1', 'OX1', 'OXT', 'OT1', 'OT2' ],
   backboneStart: 'N',
   backboneEnd: 'C'
 }
