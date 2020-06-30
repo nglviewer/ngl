@@ -195,7 +195,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       if (this.useWorker) {
         info.molsurf.getSurfaceWorker(p as MolecularSurfaceParameters, onSurfaceFinish)
       } else {
-        onSurfaceFinish(info.molsurf.getSurface(p as {name: string, type: string} & MolecularSurfaceRepresentationParameters))
+        onSurfaceFinish(info.molsurf.getSurface(p as {name: string, type: 'av'|'edt' } & MolecularSurfaceRepresentationParameters))
       }
     } else {
       callback(i)

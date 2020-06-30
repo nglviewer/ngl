@@ -2,7 +2,7 @@
   "name": "ngl",
   "version": "2.0.0-dev.37",
   "description": "Scalable molecular graphics for the web",
-  "main": "dist/ngl.js",
+  "main": "dist/ngl.umd.js",
   "module": "dist/ngl.esm.js",
   "types": "declarations/ngl.d.ts",
   "scripts": {
@@ -19,14 +19,15 @@
     "preversion": "npm test",
     "version": "npm run build-min && git add -A dist",
     "postversion": "git push && git push --tags",
-    "prepublish": "npm test",
+    "prepare": "npm test",
     "devpublish": "npm publish --tag next",
     "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh prerelease",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
-    "build-min": "npm run build && uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cp build/js/ngl.esm.js dist/ngl.esm.js"
+    "min": "uglifyjs build/js/ngl.dev.js -cm > dist/ngl.js && cpy build/js/ngl.esm.js dist && cpy build/js/ngl.umd.js dist",
+    "build-min": "npm run build && npm run min"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -83,6 +84,7 @@
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-buble": "^0.19.2",
     "rollup-plugin-commonjs": "^9.1.4",
+    "rollup-plugin-internal": "^1.0.4",
     "rollup-plugin-json": "^3.0.0",
     "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-watch": "^4.3.1",
@@ -91,14 +93,15 @@
     "source-map-support": "^0.5.6",
     "sprintf-js": "git+https://github.com/alexei/sprintf.js.git#36b04b33975e597b03737c3ed0a2a49ec1b2e8c4",
     "standard": "^11.0.1",
-    "three": "^0.111.0",
     "ts-jest": "^25.2.1",
-    "typedoc": "^0.16.10",
-    "typescript": "^3.7.3",
+    "typedoc": "^0.16.11",
+    "typescript": "^3.8.3",
     "uglify-js": "^3.4.6"
   },
   "dependencies": {
     "@types/chroma-js": "^1.3.5",
-    "@types/signals": "1.0.1"
+    "@types/signals": "1.0.1",
+    "three": "^0.111.0",
+    "update": "^0.7.4"
   }
 }

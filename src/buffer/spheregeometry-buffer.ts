@@ -4,13 +4,7 @@
  * @private
  */
 
-import { IcosahedronBufferGeometry, Vector3, Matrix4, BufferGeometry } from 'three'
-declare module 'three' {
-  export class IcosahedronBufferGeometry extends BufferGeometry {
-    constructor(radius: number, detail: number);
-  }
-}
-
+import { IcosahedronBufferGeometry, Vector3, Matrix4 } from 'three'
 import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer'
 import { SphereBufferData } from './sphere-buffer'
