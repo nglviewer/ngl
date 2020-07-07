@@ -614,7 +614,7 @@ export default class Viewer {
 
     const mesh = buffer.getMesh()
     if (instance) {
-      mesh.applyMatrix(instance.matrix)
+      mesh.applyMatrix4(instance.matrix)
     }
     setUserData(mesh)
     buffer.group.add(mesh)
@@ -672,11 +672,11 @@ export default class Viewer {
     const boundingBox = this.boundingBox
 
     function updateGeometry (geometry: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
-      if (!geometry.boundingBox) {
+      if (geometry.boundingBox == null) {
         geometry.computeBoundingBox()
       }
 
-      const geoBoundingBox = geometry.boundingBox.clone()
+      const geoBoundingBox = (geometry.boundingBox as Box3).clone()
 
       if (matrix) {
         geoBoundingBox.applyMatrix4(matrix)

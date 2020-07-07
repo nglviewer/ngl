@@ -6,7 +6,9 @@
 
 import {
   Color, Vector3, Matrix4,
-  FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
+  FrontSide, BackSide, DoubleSide, 
+  // VertexColors,
+  NoBlending,
   BufferGeometry, BufferAttribute,
   UniformsUtils, UniformsLib, Uniform,
   Group, LineSegments, Points, Mesh, Object3D,
@@ -270,7 +272,7 @@ class Buffer {
       fog: true,
       side: side
     })
-    m.vertexColors = VertexColors
+    m.vertexColors = true
     m.extensions.derivatives = this.parameters.flatShaded
     m.extensions.fragDepth = this.isImpostor
 
@@ -285,7 +287,7 @@ class Buffer {
       fog: true,
       side: side
     })
-    wm.vertexColors = VertexColors
+    wm.vertexColors = true
 
     const pm = new ShaderMaterial({
       uniforms: this.pickingUniforms,
@@ -299,7 +301,7 @@ class Buffer {
       side: side,
       blending: NoBlending
     })
-    pm.vertexColors = VertexColors
+    pm.vertexColors = true
     pm.extensions.fragDepth = this.isImpostor
 
     ;(m as any).clipNear = this.parameters.clipNear

@@ -55,7 +55,7 @@ function getGeo (params: Partial<CylinderGeometryBufferParameters> = {}) {
     1,  // heightSegments,
     openEnded  // openEnded
   )
-  geo.applyMatrix(matrix)
+  geo.applyMatrix4(matrix)
 
   return geo
 }

@@ -25,7 +25,7 @@ function getGeo (params: Partial<ConeBufferParameters> = {}) {
     1,  // heightSegments
     defaults(params.openEnded, false)  // openEnded
   )
-  geo.applyMatrix(new Matrix4().makeRotationX(-Math.PI / 2))
+  geo.applyMatrix4(new Matrix4().makeRotationX(-Math.PI / 2))
 
   return geo
 }
