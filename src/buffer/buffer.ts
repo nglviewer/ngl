@@ -273,7 +273,7 @@ class Buffer {
       side: side
     })
     m.vertexColors = true
-    m.extensions.derivatives = this.parameters.flatShaded
+    m.extensions.derivatives = true
     m.extensions.fragDepth = this.isImpostor
 
     const wm = new ShaderMaterial({
@@ -677,10 +677,6 @@ class Buffer {
 
       if (this.dynamic && name === 'wireframe' && value === true) {
         this.updateWireframeIndex()
-      }
-
-      if (name === 'flatShaded') {
-        this.material.extensions.derivatives = this.parameters.flatShaded || this.isText
       }
 
       if (name === 'forceTransparent') {
