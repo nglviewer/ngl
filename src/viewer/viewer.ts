@@ -573,6 +573,16 @@ export default class Viewer {
     }
   }
 
+  /** Distance from origin (lookAt point) */
+  get cameraDistance(): number {
+    return Math.abs(this.camera.position.z)
+  }
+
+  /** Set distance from origin (lookAt point); along the -z axis */
+  set cameraDistance(d: number) {
+    this.camera.position.z = -d
+  }
+
   add (buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
@@ -1022,7 +1032,7 @@ export default class Viewer {
 
   updateZoom () {
     const fov = degToRad(this.perspectiveCamera.fov)
-    const height = 2 * Math.tan(fov / 2) * -this.camera.position.z
+    const height = 2 * Math.tan(fov / 2) * -this.cameraDistance // fix for camera rig
     this.orthographicCamera.zoom = this.height / height
   }
 
@@ -1064,10 +1074,11 @@ export default class Viewer {
       this.bRadius = 50
     }
 
-    this.cDist = this.distVector.copy(this.camera.position).length()
+    this.camera.getWorldPosition(this.distVector)
+    this.cDist = this.distVector.length()
     if (!this.cDist) {
       // recover from a broken (NaN) camera position
-      this.camera.position.set(0, 0, p.cameraZ)
+      this.cameraDistance = Math.abs(p.cameraZ)
       this.cDist = Math.abs(p.cameraZ)
     }
 

@@ -94,10 +94,10 @@ class ViewerControls {
     if (camera instanceof OrthographicCamera) {
       return 1 / camera.zoom
     } else {
-      z = -z
-      z += camera.position.z
+      z = Math.abs(z)
+      z += this.getCameraDistance()
       const fov = degToRad(camera.fov)
-      const unitHeight = -2.0 * z * Math.tan(fov / 2)
+      const unitHeight = 2.0 * z * Math.tan(fov / 2)
       return unitHeight / this.viewer.height
     }
   }
@@ -111,7 +111,7 @@ class ViewerControls {
     const m = ensureMatrix4(optionalTarget)
 
     m.copy(this.viewer.rotationGroup.matrix)
-    const z = -this.viewer.camera.position.z
+    const z = this.getCameraDistance()
     m.scale(tmpScaleVector.set(z, z, z))
     m.setPosition(this.viewer.translationGroup.position)
 
@@ -129,7 +129,7 @@ class ViewerControls {
     const v = this.viewer
     v.rotationGroup.setRotationFromQuaternion(tmpQ)
     v.translationGroup.position.copy(tmpP)
-    v.camera.position.z = -tmpS.z
+    v.cameraDistance = tmpS.z
     v.updateZoom()
     this.changed()
   }
@@ -157,12 +157,19 @@ class ViewerControls {
   }
 
   /**
-   * zoom scene
+   * "zoom" scene by moving camera closer to origin
    * @param  {Number} delta - zoom change
    * @return {undefined}
    */
   zoom (delta: number) {
-    this.distance(this.viewer.camera.position.z * (1 - delta))
+    this.distance(this.getCameraDistance() * (1 - delta))
+  }
+
+  /**
+   * get camera distance
+   */
+  getCameraDistance(): number {
+    return this.viewer.cameraDistance
   }
 
   /**
@@ -170,8 +177,10 @@ class ViewerControls {
    * @param  {Number} z - distance
    * @return {undefined}
    */
-  distance (z: number) {
-    this.viewer.camera.position.z = Math.min(-1, z)
+  distance (distance: number) {
+    // Math.abs because distance used to be "z", normally negative.
+    // Math.max to prevent us from getting _too_ close.
+    this.viewer.cameraDistance = Math.max(Math.abs(distance), 0.2)
     this.viewer.updateZoom()
     this.changed()
   }
