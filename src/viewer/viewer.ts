@@ -1291,21 +1291,23 @@ export default class Viewer {
 
     this.rendering = true
 
-    this.__updateClipping()
-    this.__updateCamera()
-    this.__updateLights()
-    this.updateInfo(true)
+    try {
+      this.__updateClipping()
+      this.__updateCamera()
+      this.__updateLights()
+      this.updateInfo(true)
 
-    // render
-    if (this.parameters.cameraType === 'stereo') {
-      this.__renderStereo(picking)
-    } else {
-      this.__render(picking, this.camera)
+      // render
+      if (this.parameters.cameraType === 'stereo') {
+        this.__renderStereo(picking)
+      } else {
+        this.__render(picking, this.camera)
+      }
+      this.lastRenderedPicking = picking
+    } finally {
+      this.rendering = false
+      this.renderPending = false
     }
-    this.lastRenderedPicking = picking
-
-    this.rendering = false
-    this.renderPending = false
     this.signals.rendered.dispatch()
 
     // Log.timeEnd('Viewer.render')
