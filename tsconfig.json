@@ -4,7 +4,7 @@
         "alwaysStrict": true,
         "noImplicitAny": true,
         "noImplicitThis": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "noUnusedLocals": true,
         "strictNullChecks": true,
         "allowSyntheticDefaultImports": true,
@@ -14,7 +14,7 @@
         "moduleResolution": "node",
         "typeRoots": [
             "./types/",
-            "./node_modules/@types",
+            "./node_modules/@types"
         ]
     },
     "include": [ "src/**/*", "lib/**/*" ]
