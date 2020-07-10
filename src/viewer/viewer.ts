@@ -592,6 +592,8 @@ export default class Viewer {
       this.addBuffer(buffer)
     }
 
+    buffer.group.name = 'meshGroup'
+    buffer.wireframeGroup.name = 'wireframeGroup'
     if (buffer.parameters.background) {
       this.backgroundGroup.add(buffer.group)
       this.backgroundGroup.add(buffer.wireframeGroup)
