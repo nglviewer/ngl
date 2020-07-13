@@ -277,8 +277,12 @@ void main(){
         #include roughnessmap_fragment
         #include metalnessmap_fragment
 
-        // don't use #include normal_fragment_begin
+        // @fredludlow: Previous comment from @arose says don't use normal_fragment_begin
+        // though not clear why, but sticking with it. The r118 version of this chunk also
+        // defines geometryNormal, so adding that here
+        // #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
+        vec3 geometryNormal = normal;
 
         #include lights_physical_fragment
         #include lights_fragment_begin
