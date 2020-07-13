@@ -26,7 +26,7 @@ const mat4 D = mat4(
     0.0, 0.0, 0.0, -1.0
 );
 
-mat4 transpose( in mat4 inMatrix ) {
+mat4 transposeM( in mat4 inMatrix ) {
     vec4 i0 = inMatrix[0];
     vec4 i1 = inMatrix[1];
     vec4 i2 = inMatrix[2];
@@ -91,7 +91,7 @@ void ComputePointSizeAndPositionInClipCoordSphere(){
         position.x, position.y, position.z, 1.0
     );
 
-    mat4 R = transpose( projectionMatrix * modelViewMatrix * T );
+    mat4 R = transposeM( projectionMatrix * modelViewMatrix * T );
     float A = dot( R[ 3 ], D * R[ 3 ] );
     float B = -2.0 * dot( R[ 0 ], D * R[ 3 ] );
     float C = dot( R[ 0 ], D * R[ 0 ] );
