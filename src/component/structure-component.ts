@@ -436,7 +436,8 @@ class StructureComponent extends Component {
     this.spacefillRepresentation.setSelection(
       pickData.length ? ( '@' + pickData.join(',') ) : 'none'
     )
-    this.spacefillRepresentation.setParameters({ radiusData })
+    if (pickData.length)
+      this.spacefillRepresentation.setParameters({ radiusData })
   }
 
   measureData () {
