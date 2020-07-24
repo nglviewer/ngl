@@ -153,15 +153,21 @@ class PickingProxy {
    * The atom of a picked bond that is closest to the mouse
    * @type {AtomProxy}
    */
-  get closestBondAtom () {
+  get closestBondAtom (): AtomProxy|undefined {
     if (this.type !== 'bond' || !this.bond) return undefined
 
     const bond = this.bond
     const controls = this.controls
     const cp = this.canvasPosition
 
-    const acp1 = controls.getPositionOnCanvas(bond.atom1 as any)  // TODO
-    const acp2 = controls.getPositionOnCanvas(bond.atom2 as any)  // TODO
+    const v1 = bond.atom1.positionToVector3()
+    const v2 = bond.atom2.positionToVector3()
+
+    v1.applyMatrix4(this.component.matrix)
+    v2.applyMatrix4(this.component.matrix)
+
+    const acp1 = controls.getPositionOnCanvas(v1)
+    const acp2 = controls.getPositionOnCanvas(v2)
 
     return closer(cp as any, acp1, acp2) ? bond.atom1 : bond.atom2
   }
@@ -170,12 +176,14 @@ class PickingProxy {
    * Close-by atom
    * @type {AtomProxy}
    */
-  get closeAtom () {
+  get closeAtom (): AtomProxy|undefined {
     const cp = this.canvasPosition
-    const ca = this.closestBondAtom!
+    const ca = this.closestBondAtom
     if (!ca) return undefined
 
-    const acp = this.controls.getPositionOnCanvas(ca as any)  // TODO
+    const v = ca.positionToVector3().applyMatrix4(this.component.matrix)
+
+    const acp = this.controls.getPositionOnCanvas(v)
 
     ca.positionToVector3(tmpVec)
     if (this.instance) tmpVec.applyMatrix4(this.instance.matrix)

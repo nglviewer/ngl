@@ -323,7 +323,7 @@ class ContactRepresentation extends StructureRepresentation {
       }
       bufferList.push(new TextBuffer(
         getLabelData(contactData, labelParams),
-        {fixedSize: this.labelFixedSize}
+        this.getBufferParams({fixedSize: this.labelFixedSize})
       ))
     }
 

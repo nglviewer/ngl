@@ -663,7 +663,7 @@ class AtomProxy {
    * @param  {Vector3} [v] - target vector
    * @return {Vector3} target vector
    */
-  positionToVector3 (v: Vector3) {
+  positionToVector3 (v?: Vector3) {
     if (v === undefined) v = new Vector3()
 
     v.x = this.x
