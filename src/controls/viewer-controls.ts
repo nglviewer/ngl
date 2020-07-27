@@ -220,7 +220,7 @@ class ViewerControls {
    * @return {undefined}
    */
   applyMatrix (matrix: Matrix4|number[]) {
-    this.viewer.rotationGroup.applyMatrix(ensureMatrix4(matrix))
+    this.viewer.rotationGroup.applyMatrix4(ensureMatrix4(matrix))
     this.changed()
   }
 }

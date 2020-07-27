@@ -6,7 +6,9 @@
 
 import {
   Color, Vector3, Matrix4,
-  FrontSide, BackSide, DoubleSide, VertexColors, NoBlending,
+  FrontSide, BackSide, DoubleSide, 
+  // VertexColors,
+  NoBlending,
   BufferGeometry, BufferAttribute,
   UniformsUtils, UniformsLib, Uniform,
   Group, LineSegments, Points, Mesh, Object3D,
@@ -251,7 +253,9 @@ class Buffer {
     this.geometry.setIndex(
       new BufferAttribute(index, 1)
     )
-    this.geometry.getIndex().setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+    const nindex = this.geometry.getIndex();
+    if (!nindex) { Log.error('Index is null'); return; }
+    nindex.setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
   }
 
   makeMaterial () {
@@ -268,8 +272,8 @@ class Buffer {
       fog: true,
       side: side
     })
-    m.vertexColors = VertexColors
-    m.extensions.derivatives = this.parameters.flatShaded
+    m.vertexColors = true
+    m.extensions.derivatives = true
     m.extensions.fragDepth = this.isImpostor
 
     const wm = new ShaderMaterial({
@@ -283,7 +287,7 @@ class Buffer {
       fog: true,
       side: side
     })
-    wm.vertexColors = VertexColors
+    wm.vertexColors = true
 
     const pm = new ShaderMaterial({
       uniforms: this.pickingUniforms,
@@ -297,7 +301,7 @@ class Buffer {
       side: side,
       blending: NoBlending
     })
-    pm.vertexColors = VertexColors
+    pm.vertexColors = true
     pm.extensions.fragDepth = this.isImpostor
 
     ;(m as any).clipNear = this.parameters.clipNear
@@ -441,6 +445,7 @@ class Buffer {
       )
     } else {
       const index = this.wireframeGeometry.getIndex()
+      if (!index) { Log.error('Index is null'); return; }
       index.set(this.wireframeIndex)
       index.needsUpdate = this.wireframeIndexCount > 0
       index.updateRange.count = this.wireframeIndexCount
@@ -674,10 +679,6 @@ class Buffer {
         this.updateWireframeIndex()
       }
 
-      if (name === 'flatShaded') {
-        this.material.extensions.derivatives = this.parameters.flatShaded || this.isText
-      }
-
       if (name === 'forceTransparent') {
         propertyData.transparent = this.transparent
       }
@@ -713,6 +714,7 @@ class Buffer {
 
       if (name === 'index') {
         const index = geometry.getIndex()
+        if (!index) { Log.error('Index is null'); continue; }
         geometry.setDrawRange(0, Infinity)
 
         if (length > index.array.length) {

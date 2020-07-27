@@ -427,29 +427,48 @@ export default class Viewer {
     // console.log(gl.getContextAttributes().antialias)
     // console.log(gl.getParameter(gl.SAMPLES))
 
-    setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'))
-    this.renderer.extensions.get('OES_element_index_uint')
+    // For WebGL1, extensions must be explicitly enabled. 
+    // The following are builtin to WebGL2 (and don't appear as 
+    // extensions)
+    // EXT_frag_depth, OES_element_index_uint, OES_texture_float 
+    // OES_texture_half_float
 
-    setSupportsReadPixelsFloat(
-      (this.renderer.extensions.get('OES_texture_float') &&
-        this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
-      (this.renderer.extensions.get('OES_texture_float') &&
-        testTextureSupport(gl.FLOAT))
-    )
+    // The WEBGL_color_buffer_float extension is replaced by
+    // EXT_color_buffer_float
+
+    // If not webgl2 context, explicitly check for these
+    if (!this.renderer.capabilities.isWebGL2) {
+      setExtensionFragDepth(this.renderer.capabilities.isWebGL2)
+      this.renderer.extensions.get('OES_element_index_uint')
+      
+      setSupportsReadPixelsFloat(
+        (this.renderer.extensions.get('OES_texture_float') &&
+          this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
+        (this.renderer.extensions.get('OES_texture_float') &&
+          testTextureSupport(gl.FLOAT))
+      )
+      // picking texture
+
+      this.renderer.extensions.get('OES_texture_float')
+
+      this.supportsHalfFloat = (
+        this.renderer.extensions.get('OES_texture_half_float') &&
+        testTextureSupport(0x8D61)
+      )
+
+    } else {
+      setExtensionFragDepth(true)
+      setSupportsReadPixelsFloat(
+        this.renderer.extensions.get('EXT_color_buffer_float')
+      )
+      this.supportsHalfFloat = true
+    }
 
     this.wrapper.appendChild(this.renderer.domElement)
 
     const dprWidth = width * dpr
     const dprHeight = height * dpr
 
-    // picking texture
-
-    this.renderer.extensions.get('OES_texture_float')
-    this.supportsHalfFloat = (
-      this.renderer.extensions.get('OES_texture_half_float') &&
-      testTextureSupport(0x8D61)
-    )
-    this.renderer.extensions.get('WEBGL_color_buffer_float')
 
     if (Debug) {
       console.log(JSON.stringify({
@@ -614,7 +633,7 @@ export default class Viewer {
 
     const mesh = buffer.getMesh()
     if (instance) {
-      mesh.applyMatrix(instance.matrix)
+      mesh.applyMatrix4(instance.matrix)
     }
     setUserData(mesh)
     buffer.group.add(mesh)
@@ -672,11 +691,11 @@ export default class Viewer {
     const boundingBox = this.boundingBox
 
     function updateGeometry (geometry: BufferGeometry, matrix?: Matrix4, instanceMatrix?: Matrix4) {
-      if (!geometry.boundingBox) {
+      if (geometry.boundingBox == null) {
         geometry.computeBoundingBox()
       }
 
-      const geoBoundingBox = geometry.boundingBox.clone()
+      const geoBoundingBox = (geometry.boundingBox as Box3).clone()
 
       if (matrix) {
         geoBoundingBox.applyMatrix4(matrix)

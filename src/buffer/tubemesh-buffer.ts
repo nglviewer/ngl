@@ -11,6 +11,7 @@ import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
 import { BufferDefaultParameters, BufferData } from './buffer'
+import {Log} from "../globals";
 
 const vTangent = new Vector3()
 const vMeshNormal = new Vector3()
@@ -283,7 +284,9 @@ class TubeMeshBuffer extends MeshBuffer {
   }
 
   makeIndex () {
-    const meshIndex = this.geometry.getIndex().array as Uint32Array|Uint16Array
+    const index = this.geometry.getIndex()
+    if (!index) { Log.error('Index is null'); return; }
+    const meshIndex = index.array as Uint32Array|Uint16Array
 
     const n = this.size2
     const n1 = n - 1

@@ -43,6 +43,7 @@ export function setSupportsReadPixelsFloat (value: boolean) {
 
 /**
  * Flag indicating support for the `EXT_frag_depth` WebGL extension
+ * (Always present in WebGL2)
  */
 export let ExtensionFragDepth = false
 export function setExtensionFragDepth (value: boolean) {
