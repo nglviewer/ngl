@@ -193,6 +193,7 @@ export {
 } from './constants'
 import MouseActions from './controls/mouse-actions'
 import KeyActions from './controls/key-actions'
+import PickingProxy from './controls/picking-proxy'
 
 //
 
@@ -265,5 +266,6 @@ export {
   Volume,
 
   MouseActions,
-  KeyActions
+  KeyActions,
+  PickingProxy
 }

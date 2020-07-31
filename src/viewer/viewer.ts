@@ -592,6 +592,16 @@ export default class Viewer {
     }
   }
 
+  /** Distance from origin (lookAt point) */
+  get cameraDistance(): number {
+    return Math.abs(this.camera.position.z)
+  }
+
+  /** Set distance from origin (lookAt point); along the -z axis */
+  set cameraDistance(d: number) {
+    this.camera.position.z = -d
+  }
+
   add (buffer: Buffer, instanceList?: BufferInstance[]) {
     // Log.time( "Viewer.add" );
 
@@ -601,6 +611,8 @@ export default class Viewer {
       this.addBuffer(buffer)
     }
 
+    buffer.group.name = 'meshGroup'
+    buffer.wireframeGroup.name = 'wireframeGroup'
     if (buffer.parameters.background) {
       this.backgroundGroup.add(buffer.group)
       this.backgroundGroup.add(buffer.wireframeGroup)
@@ -1041,7 +1053,7 @@ export default class Viewer {
 
   updateZoom () {
     const fov = degToRad(this.perspectiveCamera.fov)
-    const height = 2 * Math.tan(fov / 2) * -this.camera.position.z
+    const height = 2 * Math.tan(fov / 2) * -this.cameraDistance // fix for camera rig
     this.orthographicCamera.zoom = this.height / height
   }
 
@@ -1083,10 +1095,11 @@ export default class Viewer {
       this.bRadius = 50
     }
 
-    this.cDist = this.distVector.copy(this.camera.position).length()
+    this.camera.getWorldPosition(this.distVector)
+    this.cDist = this.distVector.length()
     if (!this.cDist) {
       // recover from a broken (NaN) camera position
-      this.camera.position.set(0, 0, p.cameraZ)
+      this.cameraDistance = Math.abs(p.cameraZ)
       this.cDist = Math.abs(p.cameraZ)
     }
 
@@ -1129,19 +1142,20 @@ export default class Viewer {
       }
     }
 
-    if (this.camera.type === 'PerspectiveCamera') {
+    if (p.clipMode !== 'camera') {
 
-      this.camera.near = Math.max(0.1, p.clipDist, this.camera.near)
-      this.camera.far = Math.max(1, this.camera.far)
-      fog.near = Math.max(0.1, fog.near)
-      fog.far = Math.max(1, fog.far)
+      if (this.camera.type === 'PerspectiveCamera') {
 
-    } else if (this.camera.type === 'OrthographicCamera') {
+        this.camera.near = Math.max(0.1, p.clipDist, this.camera.near)
+        this.camera.far = Math.max(1, this.camera.far)
+        fog.near = Math.max(0.1, fog.near)
+        fog.far = Math.max(1, fog.far)
+      } else if (this.camera.type === 'OrthographicCamera') {
 
-      if (p.clipDist > 0) {
-        this.camera.near = Math.max(p.clipDist, this.camera.near)
+        if (p.clipDist > 0) {
+          this.camera.near = Math.max(p.clipDist, this.camera.near)
+        }
       }
-
     }
   }
 
@@ -1309,21 +1323,23 @@ export default class Viewer {
 
     this.rendering = true
 
-    this.__updateClipping()
-    this.__updateCamera()
-    this.__updateLights()
-    this.updateInfo(true)
+    try {
+      this.__updateClipping()
+      this.__updateCamera()
+      this.__updateLights()
+      this.updateInfo(true)
 
-    // render
-    if (this.parameters.cameraType === 'stereo') {
-      this.__renderStereo(picking)
-    } else {
-      this.__render(picking, this.camera)
+      // render
+      if (this.parameters.cameraType === 'stereo') {
+        this.__renderStereo(picking)
+      } else {
+        this.__render(picking, this.camera)
+      }
+      this.lastRenderedPicking = picking
+    } finally {
+      this.rendering = false
+      this.renderPending = false
     }
-    this.lastRenderedPicking = picking
-
-    this.rendering = false
-    this.renderPending = false
     this.signals.rendered.dispatch()
 
     // Log.timeEnd('Viewer.render')
