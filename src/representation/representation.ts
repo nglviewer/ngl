@@ -130,7 +130,7 @@ class Representation {
   protected disableImpostor: boolean
   protected disposed: boolean
 
-  private matrix: Matrix4
+  protected matrix: Matrix4
 
   private quality: string
   visible: boolean
