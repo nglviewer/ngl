@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import ChainProxy from '../proxy/chain-proxy'
 import ModelProxy from '../proxy/model-proxy'
@@ -41,6 +41,7 @@ class ChainidColormaker extends Colormaker {
     })
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     const chainidDict = this.chainidDictPerModel[ a.modelIndex ]
     return this.scalePerModel[ a.modelIndex ](chainidDict[ a.chainid ])

@@ -6,7 +6,7 @@
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Colormaker, { ColormakerParameters } from './colormaker'
+import Colormaker, { ColormakerParameters, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 // from Jmol http://jmol.sourceforge.net/jscolors/ (or 0xFFFFFF)
@@ -144,6 +144,8 @@ class ElementColormaker extends Colormaker {
     super(params)
   }
 
+
+  @manageColor
   atomColor (a: AtomProxy) {
     const element = a.element
 

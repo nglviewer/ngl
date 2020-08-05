@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker'
+import Colormaker, { manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 import {
@@ -16,6 +16,7 @@ import {
  * Color by entity type
  */
 class EntitytypeColormaker extends Colormaker {
+  @manageColor
   atomColor (a: AtomProxy) {
     const e = a.entity
     const et = e ? e.entityType : undefined

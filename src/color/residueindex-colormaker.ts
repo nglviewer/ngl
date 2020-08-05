@@ -6,7 +6,7 @@
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import ChainProxy from '../proxy/chain-proxy'
 
@@ -30,6 +30,7 @@ class ResidueindexColormaker extends Colormaker {
     })
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     return this.scalePerChain[ a.chainIndex ](a.residueIndex)
   }

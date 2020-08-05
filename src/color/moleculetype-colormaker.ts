@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker'
+import Colormaker, { manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 import {
@@ -16,6 +16,7 @@ import {
  * Color by molecule type
  */
 class MoleculetypeColormaker extends Colormaker {
+  @manageColor
   atomColor (a: AtomProxy) {
     switch (a.residueType.moleculeType) {
       case WaterType:

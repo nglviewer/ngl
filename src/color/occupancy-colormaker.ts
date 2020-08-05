@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { ColormakerParameters, ColormakerScale } from './colormaker'
+import Colormaker, { ColormakerParameters, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 /**
@@ -28,6 +28,7 @@ class OccupancyColormaker extends Colormaker {
     this.occupancyScale = this.getScale()
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     return this.occupancyScale(a.occupancy)
   }

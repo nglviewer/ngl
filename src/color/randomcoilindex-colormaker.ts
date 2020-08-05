@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 /**
@@ -29,6 +29,7 @@ class RandomcoilindexColormaker extends Colormaker {
 
   }
 
+  @manageColor
   atomColor (atom: AtomProxy) {
     let sele = `[${atom.resname}]${atom.resno}`
     if (atom.chainname) sele += ':' + atom.chainname

@@ -8,7 +8,7 @@
 import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import SpatialHash from '../geometry/spatial-hash'
 
@@ -270,6 +270,7 @@ class ElectrostaticColormaker extends Colormaker {
     this.hash = new SpatialHash(params.structure.atomStore, bbox)
   }
 
+  @manageColor
   positionColor (v: Vector3) {
 
     const charges = this.charges

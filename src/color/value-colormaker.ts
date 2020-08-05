@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { VolumeColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { VolumeColormakerParams, ColormakerScale, manageColor } from './colormaker'
 
 /**
  * Color by volume value
@@ -23,6 +23,7 @@ class ValueColormaker extends Colormaker {
    * @param  {Integer} index - volume cell index
    * @return {Integer} hex cell color
    */
+  @manageColor
   volumeColor (index: number) {
     return this.valueScale((this.parameters.volume! as any).data[ index ])  // TODO
   }

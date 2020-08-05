@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker'
+import Colormaker, { manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 // protein colors from Jmol http://jmol.sourceforge.net/jscolors/
@@ -60,6 +60,7 @@ const DefaultResidueColor = 0xFF00FF
  * Color by residue name
  */
 class ResnameColormaker extends Colormaker {
+  @manageColor
   atomColor (a: AtomProxy) {
     return ResidueColors[ a.resname ] || DefaultResidueColor
   }

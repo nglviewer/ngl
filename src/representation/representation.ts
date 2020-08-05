@@ -31,6 +31,7 @@ export interface RepresentationParameters {
   colorValue: number,
   colorDomain: number[],
   colorMode: ColorMode,
+  colorSpace: 'sRGB' | 'linear',
   roughness: number,
   metalness: number,
   diffuse: Color,
@@ -374,7 +375,8 @@ class Representation {
       reverse: this.colorReverse,
       value: this.colorValue,
       domain: this.colorDomain,
-      mode: this.colorMode
+      mode: this.colorMode,
+      colorSpace: this.colorSpace,
 
     }, p)
   }

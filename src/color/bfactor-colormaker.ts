@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import Selection from '../selection/selection'
 
@@ -52,6 +52,7 @@ class BfactorColormaker extends Colormaker {
     this.bfactorScale = this.getScale()
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     return this.bfactorScale(a.bfactor)
   }

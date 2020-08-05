@@ -16,9 +16,9 @@ import {
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, SpotLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments
+  LineSegments,
+  LinearEncoding, sRGBEncoding, TextureEncoding
 } from 'three'
-
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
 import '../shader/Quad.vert'
@@ -159,6 +159,9 @@ export interface ViewerParameters {
   ambientIntensity: number
 
   sampleLevel: number
+
+  rendererEncoding: TextureEncoding // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
+  colorEncoding: TextureEncoding // default is three.sRGBEncoding; set to three.LinearEncoding for a linear workflow
 }
 
 export interface BufferInstance {
@@ -318,7 +321,10 @@ export default class Viewer {
       ambientColor: new Color(0xdddddd),
       ambientIntensity: 0.2,
 
-      sampleLevel: 0
+      sampleLevel: 0,
+
+      rendererEncoding: LinearEncoding,
+      colorEncoding: sRGBEncoding
     }
   }
 
@@ -422,15 +428,16 @@ export default class Viewer {
     this.renderer.setSize(width, height)
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
+    this.renderer.outputEncoding = this.parameters.rendererEncoding
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
     // console.log(gl.getParameter(gl.SAMPLES))
 
-    // For WebGL1, extensions must be explicitly enabled. 
-    // The following are builtin to WebGL2 (and don't appear as 
+    // For WebGL1, extensions must be explicitly enabled.
+    // The following are builtin to WebGL2 (and don't appear as
     // extensions)
-    // EXT_frag_depth, OES_element_index_uint, OES_texture_float 
+    // EXT_frag_depth, OES_element_index_uint, OES_texture_float
     // OES_texture_half_float
 
     // The WEBGL_color_buffer_float extension is replaced by
@@ -440,7 +447,7 @@ export default class Viewer {
     if (!this.renderer.capabilities.isWebGL2) {
       setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'))
       this.renderer.extensions.get('OES_element_index_uint')
-      
+
       setSupportsReadPixelsFloat(
         (this.renderer.extensions.get('OES_texture_float') &&
           this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
@@ -494,6 +501,7 @@ export default class Viewer {
       }
     )
     this.pickingTarget.texture.generateMipmaps = false
+    this.pickingTarget.texture.encoding = this.parameters.rendererEncoding
 
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
@@ -512,6 +520,7 @@ export default class Viewer {
         format: RGBAFormat
       }
     )
+    this.sampleTarget.texture.encoding = this.parameters.rendererEncoding
 
     this.holdTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
@@ -526,6 +535,7 @@ export default class Viewer {
         // )
       }
     )
+    this.holdTarget.texture.encoding = this.parameters.rendererEncoding
 
     this.compositeUniforms = {
       'tForeground': new Uniform(this.sampleTarget.texture),
@@ -842,6 +852,14 @@ export default class Viewer {
     }
 
     this.requestRender()
+  }
+
+  setOutputEncoding (encoding: TextureEncoding) {
+    this.parameters.rendererEncoding = encoding
+    this.renderer.outputEncoding = encoding
+    this.pickingTarget.texture.encoding = encoding
+    this.sampleTarget.texture.encoding = encoding
+    this.holdTarget.texture.encoding = encoding
   }
 
   setCamera (type: CameraType, fov?: number, eyeSep?: number) {
@@ -1192,11 +1210,9 @@ export default class Viewer {
     this.renderer.clear()
     this.__setVisibility(false, true, false, false)
     this.renderer.render(this.scene, camera)
+    //  back to standard render target
     this.renderer.setRenderTarget(null)
     this.updateInfo()
-
-    //  back to standard render target
-    this.renderer.setRenderTarget(null!)  // TODO
 
     // if (Debug) {
     //   this.__setVisibility(false, true, false, true);
@@ -1207,7 +1223,7 @@ export default class Viewer {
   }
 
   private __renderModelGroup (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
-    this.renderer.setRenderTarget(renderTarget || null!)
+    this.renderer.setRenderTarget(renderTarget || null)
     this.renderer.clear()
     this.__setVisibility(false, false, true, false)
     this.renderer.render(this.scene, camera)
@@ -1216,7 +1232,7 @@ export default class Viewer {
 
     this.__setVisibility(true, false, false, Debug)
     this.renderer.render(this.scene, camera)
-    this.renderer.setRenderTarget(null!) // set back to default canvas
+    this.renderer.setRenderTarget(null) // set back to default canvas
     this.updateInfo()
   }
 

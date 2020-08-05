@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams } from './colormaker'
+import Colormaker, { StuctureColormakerParams, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import { countSetBits } from '../math/math-utils'
 
@@ -26,6 +26,7 @@ class GeoqualityColormaker extends Colormaker {
     }
   }
 
+  @manageColor
   atomColor (atom: AtomProxy) {
     let sele = atom.resno + ''
     if (atom.inscode) sele += '^' + atom.inscode
