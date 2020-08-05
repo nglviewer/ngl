@@ -298,8 +298,8 @@ class IgnorePicker extends Picker {
 export interface MeshData {
   name: string|undefined
   serial: number
-  index: Uint16Array|Uint32Array
-  normal: Float32Array|number[]
+  index: Uint32Array|Uint16Array|number[]
+  normal?: Float32Array|number[]
   position: Float32Array|number[]
   color: Float32Array|number[]
 }

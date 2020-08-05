@@ -1,6 +1,7 @@
 @text
 [+]   This compound is identified as **WATER STRUCTURE OF A HYDROPHOBIC PROTEIN AT ATOMIC RESOLUTIO PENTAGON RINGS OF WATER MOLECULES IN CRYSTALS OF CRAMBIN**
-[+]   This is a crystal structure at 1.50 A resolution.
+[+]   This structure was solved by X-RAY DIFFRACTION.
+[+]   This structure was solved at 1.50 &Aring; resolution.
 [+]   1 chain(s) is/are present [1 unique chain(s)]
 [+]   A total of 46 residues are present.
 [+]   Protein mainchain and sidechains are present.
@@ -10,7 +11,7 @@
 
 
 
-PREKIN version 6.57, Linux, dated: 130508  NOGUI
+PREKIN version 6.57, macOSX, dated: 141223  NOGUI
 reduce: version 3.3 06/02/2016, Copyright 1997-2016, J. Michael Word
 @kinemage 1
 @onewidth
@@ -728,8 +729,1281 @@ reduce: version 3.3 06/02/2016, Copyright 1997-2016, J. Michael Word
 { sg  cys A   4  B4.72}P 9.837, 8.018, 8.904 { sg  cys A  32  B5.33}L 8.048, 8.987, 8.881
 { sg  cys A   3  B7.01}P 15.885, 12.426, 10.016 { sg  cys A  40  B7.30}L 17.199, 10.929, 10.237
 
-@caption probe.2.16.160404, run Fri Jun 16 01:06:29 2017
- command: /home/rlab/Desktop/MolProbities/MolProbity161108_4.3.1/build/probe/exe/probe -sepworse -4H -quiet -noticks -nogroup -dotmaster -mc -het -self ogt10 /home/rlab/Desktop/MolProbities/MolProbity161108_4.3.1/public_html/data/nua7ksucdhfm7scqgdukh1bil5/coordinates/1crnFH.pdb
+@pdbfile {1crnFH.pdb} 
+@subgroup {ribbon}
+@colorset {alph_} red 
+@colorset {beta_} lime 
+@colorset {coil_} white 
+@colorset {nucl_} white 
+@colorset {  S1} yellowtint
+@colorset {edge_} deadblack 
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R1 thr  A 1    S1}P blue 16.835, 12.727, 4.416
+{R0 thr  A 1    S1}L blue 16.722, 13.803, 4.673
+{R1 thr  A 1    S1}P blue 16.589, 13.746, 4.750
+{R1 thr  A 1    S1}L blue 16.835, 12.727, 4.416
+{R1 thr  A 1    S1}P blue 17.081, 11.709, 4.081
+{R0 thr  A 1    S1}L blue 17.212, 11.765, 4.003
+{R1 thr  A 1    S1}P blue 16.835, 12.727, 4.416
+{R1 thr  A 1    S1}L blue 17.081, 11.709, 4.081
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 thr  A 1    S1}P deadblack  width6  16.967, 12.784, 4.338
+{R1 thr  A 1    S1}L deadblack  width6  16.835, 12.727, 4.416
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 thr  A 1    S1}P blue width4  16.967, 12.784, 4.338
+{R1 thr  A 1    S1}L blue width4  16.835, 12.727, 4.416
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R1 thr  A 1    S1}P blue 16.589, 13.746, 4.750
+{R1 thr  A 1    S1}L blue 17.081, 11.709, 4.081
+{R2 thr  A 1    S1}P blue 16.240, 13.592, 4.968
+{R2 thr  A 1    S1}L blue 16.750, 11.563, 4.307
+{R3 thr  A 1    S1}P blue 15.750, 13.367, 5.305
+{R3 thr  A 1    S1}L blue 16.311, 11.361, 4.665
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R1 thr  A 1    S1}P U  deadblack 16.835, 12.727, 4.416
+{R0 thr  A 1    S1}L U  deadblack 16.722, 13.803, 4.673
+{R1 thr  A 1    S1}L U  deadblack 16.589, 13.746, 4.750
+{R1 thr  A 1    S1}P U  deadblack 16.835, 12.727, 4.416
+{R0 thr  A 1    S1}L U  deadblack 17.212, 11.765, 4.003
+{R1 thr  A 1    S1}L U  deadblack 17.081, 11.709, 4.081
+{R1 thr  A 1    S1}P U  deadblack 16.589, 13.746, 4.750
+{R2 thr  A 1    S1}L U  deadblack 16.240, 13.592, 4.968
+{R1 thr  A 1    S1}P U  deadblack 17.081, 11.709, 4.081
+{R2 thr  A 1    S1}L U  deadblack 16.750, 11.563, 4.307
+{R2 thr  A 1    S1}P U  deadblack 16.240, 13.592, 4.968
+{R3 thr  A 1    S1}L U  deadblack 15.750, 13.367, 5.305
+{R2 thr  A 1    S1}P U  deadblack 16.750, 11.563, 4.307
+{R3 thr  A 1    S1}L U  deadblack 16.311, 11.361, 4.665
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 thr  A   1    S1}P blue 15.750, 13.367, 5.305
+{R3 thr  A   1    S1}L blue 16.311, 11.361, 4.665
+{R0 thr  A 2    S1}P blue 15.196, 13.099, 5.740
+{R0 thr  A 2    S1}L blue 15.854, 11.137, 5.140
+{R1 thr  A 2    S1}P blue 14.640, 12.810, 6.250
+{R1 thr  A 2    S1}L blue 15.452, 10.916, 5.717
+{R2 thr  A 2    S1}P blue 14.104, 12.510, 6.815
+{R2 thr  A 2    S1}L blue 15.096, 10.694, 6.371
+{R3 thr  A 2    S1}P blue 13.595, 12.205, 7.412
+{R3 thr  A 2    S1}L blue 14.758, 10.462, 7.078
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 thr  A   1    S1}P U  deadblack 15.750, 13.367, 5.305
+{R0 thr  A 2    S1}L U  deadblack 15.196, 13.099, 5.740
+{R3 thr  A   1    S1}P U  deadblack 16.311, 11.361, 4.665
+{R0 thr  A 2    S1}L U  deadblack 15.854, 11.137, 5.140
+{R0 thr  A 2    S1}P U  deadblack 15.196, 13.099, 5.740
+{R1 thr  A 2    S1}L U  deadblack 14.640, 12.810, 6.250
+{R0 thr  A 2    S1}P U  deadblack 15.854, 11.137, 5.140
+{R1 thr  A 2    S1}L U  deadblack 15.452, 10.916, 5.717
+{R1 thr  A 2    S1}P U  deadblack 14.640, 12.810, 6.250
+{R2 thr  A 2    S1}L U  deadblack 14.104, 12.510, 6.815
+{R1 thr  A 2    S1}P U  deadblack 15.452, 10.916, 5.717
+{R2 thr  A 2    S1}L U  deadblack 15.096, 10.694, 6.371
+{R2 thr  A 2    S1}P U  deadblack 14.104, 12.510, 6.815
+{R3 thr  A 2    S1}L U  deadblack 13.595, 12.205, 7.412
+{R2 thr  A 2    S1}P U  deadblack 15.096, 10.694, 6.371
+{R3 thr  A 2    S1}L U  deadblack 14.758, 10.462, 7.078
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 thr  A   2    S1}P blue 13.595, 12.205, 7.412
+{R3 thr  A   2    S1}L blue 14.758, 10.462, 7.078
+{R0 cys  A 3    S1}P blue 13.121, 11.901, 8.021
+{R0 cys  A 3    S1}L blue 14.411, 10.208, 7.814
+{R1 cys  A 3    S1}P blue 12.684, 11.603, 8.623
+{R1 cys  A 3    S1}L blue 14.033, 9.928, 8.558
+{R2 cys  A 3    S1}P blue 12.265, 11.308, 9.220
+{R2 cys  A 3    S1}L blue 13.627, 9.637, 9.299
+{R3 cys  A 3    S1}P blue 11.837, 11.013, 9.816
+{R3 cys  A 3    S1}L blue 13.201, 9.360, 10.035
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 thr  A   2    S1}P U  deadblack 13.595, 12.205, 7.412
+{R0 cys  A 3    S1}L U  deadblack 13.121, 11.901, 8.021
+{R3 thr  A   2    S1}P U  deadblack 14.758, 10.462, 7.078
+{R0 cys  A 3    S1}L U  deadblack 14.411, 10.208, 7.814
+{R0 cys  A 3    S1}P U  deadblack 13.121, 11.901, 8.021
+{R1 cys  A 3    S1}L U  deadblack 12.684, 11.603, 8.623
+{R0 cys  A 3    S1}P U  deadblack 14.411, 10.208, 7.814
+{R1 cys  A 3    S1}L U  deadblack 14.033, 9.928, 8.558
+{R1 cys  A 3    S1}P U  deadblack 12.684, 11.603, 8.623
+{R2 cys  A 3    S1}L U  deadblack 12.265, 11.308, 9.220
+{R1 cys  A 3    S1}P U  deadblack 14.033, 9.928, 8.558
+{R2 cys  A 3    S1}L U  deadblack 13.627, 9.637, 9.299
+{R2 cys  A 3    S1}P U  deadblack 12.265, 11.308, 9.220
+{R3 cys  A 3    S1}L U  deadblack 11.837, 11.013, 9.816
+{R2 cys  A 3    S1}P U  deadblack 13.627, 9.637, 9.299
+{R3 cys  A 3    S1}L U  deadblack 13.201, 9.360, 10.035
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 cys  A   3    S1}P blue 11.837, 11.013, 9.816
+{R3 cys  A   3    S1}L blue 13.201, 9.360, 10.035
+{R0 cys  A 4    S1}P blue 11.374, 10.714, 10.417
+{R0 cys  A 4    S1}L blue 12.765, 9.118, 10.758
+{R1 cys  A 4    S1}P blue 10.863, 10.404, 11.023
+{R1 cys  A 4    S1}L blue 12.325, 8.927, 11.467
+{R1 WING-P cys  A 4    S1}P blue 10.132, 11.143, 10.801
+{R1 WING-Q cys  A 4    S1}L blue 13.056, 8.188, 11.689
+{R3 cys  A 4    S1} blue 10.651, 9.152, 12.509
+{R3 cys  A 4    S1} blue 10.651, 9.152, 12.509
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 cys  A   3    S1}P U  deadblack 11.837, 11.013, 9.816
+{R0 cys  A 4    S1}L U  deadblack 11.374, 10.714, 10.417
+{R3 cys  A   3    S1}P U  deadblack 13.201, 9.360, 10.035
+{R0 cys  A 4    S1}L U  deadblack 12.765, 9.118, 10.758
+{R0 cys  A 4    S1}P U  deadblack 11.374, 10.714, 10.417
+{R1 cys  A 4    S1}L U  deadblack 10.863, 10.404, 11.023
+{R0 cys  A 4    S1}P U  deadblack 12.765, 9.118, 10.758
+{R1 cys  A 4    S1}L U  deadblack 12.325, 8.927, 11.467
+{b3R1 cys  A 4    S1}P U  deadblack 10.863, 10.404, 11.023
+{b3R1 cys  A 4    S1}L U  deadblack 10.132, 11.143, 10.801
+{m0R3 cys  A 4    S1}L U  deadblack 10.651, 9.152, 12.509
+{b4R1 cys  A 4    S1}P U  deadblack 12.325, 8.927, 11.467
+{b4R1 cys  A 4    S1}L U  deadblack 13.056, 8.188, 11.689
+{m0R3 cys  A 4    S1}L U  deadblack 10.651, 9.152, 12.509
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 pro  A   5 }P deadblack  width6  10.651, 9.152, 12.509
+{R0 pro  A   5 }L deadblack  width6  10.234, 8.846, 13.097
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 pro  A   5 }P blue width4  10.651, 9.152, 12.509
+{R0 pro  A   5 }L blue width4  10.234, 8.846, 13.097
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 pro  A   5 }P deadblack  width6  9.881, 8.478, 13.639
+{R0 pro  A   5 }L deadblack  width6  10.234, 8.846, 13.097
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 pro  A   5 }P blue width4  9.881, 8.478, 13.639
+{R0 pro  A   5 }L blue width4  10.234, 8.846, 13.097
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 pro  A   5 }P deadblack  width6  9.592, 8.038, 14.105
+{R1 pro  A   5 }L deadblack  width6  9.881, 8.478, 13.639
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 pro  A   5 }P blue width4  9.592, 8.038, 14.105
+{R1 pro  A   5 }L blue width4  9.881, 8.478, 13.639
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 pro  A   5 }P deadblack  width6  9.361, 7.516, 14.462
+{R2 pro  A   5 }L deadblack  width6  9.592, 8.038, 14.105
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 pro  A   5 }P blue width4  9.361, 7.516, 14.462
+{R2 pro  A   5 }L blue width4  9.592, 8.038, 14.105
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 ser  A   6 }P deadblack  width6  9.361, 7.516, 14.462
+{R0 ser  A   6 }L deadblack  width6  9.180, 6.901, 14.677
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 ser  A   6 }P blue width4  9.361, 7.516, 14.462
+{R0 ser  A   6 }L blue width4  9.180, 6.901, 14.677
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 ser  A   6 }P deadblack  width6  9.040, 6.191, 14.727
+{R0 ser  A   6 }L deadblack  width6  9.180, 6.901, 14.677
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 ser  A   6 }P blue width4  9.040, 6.191, 14.727
+{R0 ser  A   6 }L blue width4  9.180, 6.901, 14.677
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 ser  A   6 }P deadblack  width6  8.909, 5.411, 14.634
+{R1 ser  A   6 }L deadblack  width6  9.040, 6.191, 14.727
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 ser  A   6 }P blue width4  8.909, 5.411, 14.634
+{R1 ser  A   6 }L blue width4  9.040, 6.191, 14.727
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 ser  A   6 }P deadblack  width6  8.753, 4.593, 14.433
+{R2 ser  A   6 }L deadblack  width6  8.909, 5.411, 14.634
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 ser  A   6 }P blue width4  8.753, 4.593, 14.433
+{R2 ser  A   6 }L blue width4  8.909, 5.411, 14.634
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R1 ile  A   7 }P blue 8.228, 2.985, 13.834
+{R0 ile  A   7 }L blue 8.516, 4.108, 13.264
+{R1 ile  A   7 }P blue 8.260, 3.286, 12.936
+{R1 ile  A   7 }L blue 8.228, 2.985, 13.834
+{R1 ile  A   7 }P blue 8.196, 2.683, 14.732
+{R0 ile  A   7 }L blue 8.555, 3.432, 15.047
+{R1 ile  A   7 }P blue 8.228, 2.985, 13.834
+{R1 ile  A   7 }L blue 8.196, 2.683, 14.732
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 ile  A   7 }P deadblack  width6  8.753, 4.593, 14.433
+{R0 ile  A   7 }L deadblack  width6  8.535, 3.770, 14.155
+{R0 ile  A   7 }P deadblack  width6  8.535, 3.770, 14.155
+{R1 ile  A   7 }L deadblack  width6  8.228, 2.985, 13.834
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 ile  A   7 }P blue width4  8.753, 4.593, 14.433
+{R0 ile  A   7 }L blue width4  8.535, 3.770, 14.155
+{R0 ile  A   7 }P blue width4  8.535, 3.770, 14.155
+{R1 ile  A   7 }L blue width4  8.228, 2.985, 13.834
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R1 ile  A   7 }P blue 8.260, 3.286, 12.936
+{R1 ile  A   7 }L blue 8.196, 2.683, 14.732
+{R2 ile  A   7 }P blue 7.902, 2.541, 12.583
+{R2 ile  A   7 }L blue 7.756, 2.106, 14.409
+{R3 ile  A   7 }P blue 7.432, 1.993, 12.236
+{R3 ile  A   7 }L blue 7.254, 1.775, 14.094
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R1 ile  A   7 }P U  deadblack 8.228, 2.985, 13.834
+{R0 ile  A   7 }L U  deadblack 8.516, 4.108, 13.264
+{R1 ile  A   7 }L U  deadblack 8.260, 3.286, 12.936
+{R1 ile  A   7 }P U  deadblack 8.228, 2.985, 13.834
+{R0 ile  A   7 }L U  deadblack 8.555, 3.432, 15.047
+{R1 ile  A   7 }L U  deadblack 8.196, 2.683, 14.732
+{R1 ile  A   7 }P U  deadblack 8.260, 3.286, 12.936
+{R2 ile  A   7 }L U  deadblack 7.902, 2.541, 12.583
+{R1 ile  A   7 }P U  deadblack 8.196, 2.683, 14.732
+{R2 ile  A   7 }L U  deadblack 7.756, 2.106, 14.409
+{R2 ile  A   7 }P U  deadblack 7.902, 2.541, 12.583
+{R3 ile  A   7 }L U  deadblack 7.432, 1.993, 12.236
+{R2 ile  A   7 }P U  deadblack 7.756, 2.106, 14.409
+{R3 ile  A   7 }L U  deadblack 7.254, 1.775, 14.094
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ile  A   7 }P sky 7.432, 1.993, 12.236
+{R3 ile  A   7 }L sky 7.254, 1.775, 14.094
+{R0 val  A   8 }P sky 6.842, 1.762, 11.928
+{R0 val  A   8 }L sky 6.707, 1.764, 13.804
+{R1 val  A   8 }P sky 6.149, 1.931, 11.680
+{R1 val  A   8 }L sky 6.149, 2.111, 13.550
+{R2 val  A   8 }P sky 5.470, 2.424, 11.463
+{R2 val  A   8 }L sky 5.669, 2.719, 13.304
+{R3 val  A   8 }P sky 4.953, 3.123, 11.233
+{R3 val  A   8 }L sky 5.368, 3.456, 13.034
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ile  A   7 }P U  deadblack 7.432, 1.993, 12.236
+{R0 val  A   8 }L U  deadblack 6.842, 1.762, 11.928
+{R3 ile  A   7 }P U  deadblack 7.254, 1.775, 14.094
+{R0 val  A   8 }L U  deadblack 6.707, 1.764, 13.804
+{R0 val  A   8 }P U  deadblack 6.842, 1.762, 11.928
+{R1 val  A   8 }L U  deadblack 6.149, 1.931, 11.680
+{R0 val  A   8 }P U  deadblack 6.707, 1.764, 13.804
+{R1 val  A   8 }L U  deadblack 6.149, 2.111, 13.550
+{R1 val  A   8 }P U  deadblack 6.149, 1.931, 11.680
+{R2 val  A   8 }L U  deadblack 5.470, 2.424, 11.463
+{R1 val  A   8 }P U  deadblack 6.149, 2.111, 13.550
+{R2 val  A   8 }L U  deadblack 5.669, 2.719, 13.304
+{R2 val  A   8 }P U  deadblack 5.470, 2.424, 11.463
+{R3 val  A   8 }L U  deadblack 4.953, 3.123, 11.233
+{R2 val  A   8 }P U  deadblack 5.669, 2.719, 13.304
+{R3 val  A   8 }L U  deadblack 5.368, 3.456, 13.034
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 val  A   8 }P sky 4.953, 3.123, 11.233
+{R3 val  A   8 }L sky 5.368, 3.456, 13.034
+{R0 ala  A   9 }P sky 4.741, 3.915, 10.949
+{R0 ala  A   9 }L sky 5.350, 4.188, 12.706
+{R1 ala  A   9 }P sky 4.933, 4.683, 10.581
+{R1 ala  A   9 }L sky 5.676, 4.797, 12.295
+{R2 ala  A   9 }P sky 5.436, 5.319, 10.138
+{R2 ala  A   9 }L sky 6.241, 5.213, 11.820
+{R3 ala  A   9 }P sky 6.109, 5.713, 9.644
+{R3 ala  A   9 }L sky 6.901, 5.378, 11.308
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 val  A   8 }P U  deadblack 4.953, 3.123, 11.233
+{R0 ala  A   9 }L U  deadblack 4.741, 3.915, 10.949
+{R3 val  A   8 }P U  deadblack 5.368, 3.456, 13.034
+{R0 ala  A   9 }L U  deadblack 5.350, 4.188, 12.706
+{R0 ala  A   9 }P U  deadblack 4.741, 3.915, 10.949
+{R1 ala  A   9 }L U  deadblack 4.933, 4.683, 10.581
+{R0 ala  A   9 }P U  deadblack 5.350, 4.188, 12.706
+{R1 ala  A   9 }L U  deadblack 5.676, 4.797, 12.295
+{R1 ala  A   9 }P U  deadblack 4.933, 4.683, 10.581
+{R2 ala  A   9 }L U  deadblack 5.436, 5.319, 10.138
+{R1 ala  A   9 }P U  deadblack 5.676, 4.797, 12.295
+{R2 ala  A   9 }L U  deadblack 6.241, 5.213, 11.820
+{R2 ala  A   9 }P U  deadblack 5.436, 5.319, 10.138
+{R3 ala  A   9 }L U  deadblack 6.109, 5.713, 9.644
+{R2 ala  A   9 }P U  deadblack 6.241, 5.213, 11.820
+{R3 ala  A   9 }L U  deadblack 6.901, 5.378, 11.308
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ala  A   9 }P sky 6.109, 5.713, 9.644
+{R3 ala  A   9 }L sky 6.901, 5.378, 11.308
+{R0 arg  A  10 }P sky 6.813, 5.756, 9.120
+{R0 arg  A  10 }L sky 7.510, 5.238, 10.789
+{R1 arg  A  10 }P sky 7.417, 5.386, 8.588
+{R1 arg  A  10 }L sky 7.941, 4.768, 10.286
+{R2 arg  A  10 }P sky 7.834, 4.717, 8.075
+{R2 arg  A  10 }L sky 8.147, 4.090, 9.819
+{R3 arg  A  10 }P sky 7.989, 3.912, 7.606
+{R3 arg  A  10 }L sky 8.095, 3.356, 9.400
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ala  A   9 }P U  deadblack 6.109, 5.713, 9.644
+{R0 arg  A  10 }L U  deadblack 6.813, 5.756, 9.120
+{R3 ala  A   9 }P U  deadblack 6.901, 5.378, 11.308
+{R0 arg  A  10 }L U  deadblack 7.510, 5.238, 10.789
+{R0 arg  A  10 }P U  deadblack 6.813, 5.756, 9.120
+{R1 arg  A  10 }L U  deadblack 7.417, 5.386, 8.588
+{R0 arg  A  10 }P U  deadblack 7.510, 5.238, 10.789
+{R1 arg  A  10 }L U  deadblack 7.941, 4.768, 10.286
+{R1 arg  A  10 }P U  deadblack 7.417, 5.386, 8.588
+{R2 arg  A  10 }L U  deadblack 7.834, 4.717, 8.075
+{R1 arg  A  10 }P U  deadblack 7.941, 4.768, 10.286
+{R2 arg  A  10 }L U  deadblack 8.147, 4.090, 9.819
+{R2 arg  A  10 }P U  deadblack 7.834, 4.717, 8.075
+{R3 arg  A  10 }L U  deadblack 7.989, 3.912, 7.606
+{R2 arg  A  10 }P U  deadblack 8.147, 4.090, 9.819
+{R3 arg  A  10 }L U  deadblack 8.095, 3.356, 9.400
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 arg  A  10 }P sky 7.989, 3.912, 7.606
+{R3 arg  A  10 }L sky 8.095, 3.356, 9.400
+{R0 ser  A  11 }P sky 7.805, 3.131, 7.208
+{R0 ser  A  11 }L sky 7.756, 2.720, 9.045
+{R1 ser  A  11 }P sky 7.247, 2.518, 6.897
+{R1 ser  A  11 }L sky 7.130, 2.312, 8.762
+{R2 ser  A  11 }P sky 6.439, 2.143, 6.655
+{R2 ser  A  11 }L sky 6.340, 2.163, 8.529
+{R3 ser  A  11 }P sky 5.547, 2.061, 6.453
+{R3 ser  A  11 }L sky 5.542, 2.279, 8.320
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 arg  A  10 }P U  deadblack 7.989, 3.912, 7.606
+{R0 ser  A  11 }L U  deadblack 7.805, 3.131, 7.208
+{R3 arg  A  10 }P U  deadblack 8.095, 3.356, 9.400
+{R0 ser  A  11 }L U  deadblack 7.756, 2.720, 9.045
+{R0 ser  A  11 }P U  deadblack 7.805, 3.131, 7.208
+{R1 ser  A  11 }L U  deadblack 7.247, 2.518, 6.897
+{R0 ser  A  11 }P U  deadblack 7.756, 2.720, 9.045
+{R1 ser  A  11 }L U  deadblack 7.130, 2.312, 8.762
+{R1 ser  A  11 }P U  deadblack 7.247, 2.518, 6.897
+{R2 ser  A  11 }L U  deadblack 6.439, 2.143, 6.655
+{R1 ser  A  11 }P U  deadblack 7.130, 2.312, 8.762
+{R2 ser  A  11 }L U  deadblack 6.340, 2.163, 8.529
+{R2 ser  A  11 }P U  deadblack 6.439, 2.143, 6.655
+{R3 ser  A  11 }L U  deadblack 5.547, 2.061, 6.453
+{R2 ser  A  11 }P U  deadblack 6.340, 2.163, 8.529
+{R3 ser  A  11 }L U  deadblack 5.542, 2.279, 8.320
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ser  A  11 }P sky 5.547, 2.061, 6.453
+{R3 ser  A  11 }L sky 5.542, 2.279, 8.320
+{R0 asn  A  12 }P sky 4.737, 2.325, 6.264
+{R0 asn  A  12 }L sky 4.889, 2.666, 8.105
+{R1 asn  A  12 }P sky 4.150, 2.951, 6.061
+{R1 asn  A  12 }L sky 4.508, 3.304, 7.861
+{R2 asn  A  12 }P sky 3.831, 3.797, 5.822
+{R2 asn  A  12 }L sky 4.405, 4.066, 7.572
+{R3 asn  A  12 }P sky 3.804, 4.686, 5.527
+{R3 asn  A  12 }L sky 4.563, 4.799, 7.227
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ser  A  11 }P U  deadblack 5.547, 2.061, 6.453
+{R0 asn  A  12 }L U  deadblack 4.737, 2.325, 6.264
+{R3 ser  A  11 }P U  deadblack 5.542, 2.279, 8.320
+{R0 asn  A  12 }L U  deadblack 4.889, 2.666, 8.105
+{R0 asn  A  12 }P U  deadblack 4.737, 2.325, 6.264
+{R1 asn  A  12 }L U  deadblack 4.150, 2.951, 6.061
+{R0 asn  A  12 }P U  deadblack 4.889, 2.666, 8.105
+{R1 asn  A  12 }L U  deadblack 4.508, 3.304, 7.861
+{R1 asn  A  12 }P U  deadblack 4.150, 2.951, 6.061
+{R2 asn  A  12 }L U  deadblack 3.831, 3.797, 5.822
+{R1 asn  A  12 }P U  deadblack 4.508, 3.304, 7.861
+{R2 asn  A  12 }L U  deadblack 4.405, 4.066, 7.572
+{R2 asn  A  12 }P U  deadblack 3.831, 3.797, 5.822
+{R3 asn  A  12 }L U  deadblack 3.804, 4.686, 5.527
+{R2 asn  A  12 }P U  deadblack 4.405, 4.066, 7.572
+{R3 asn  A  12 }L U  deadblack 4.563, 4.799, 7.227
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 asn  A  12 }P cyan 3.804, 4.686, 5.527
+{R3 asn  A  12 }L cyan 4.563, 4.799, 7.227
+{R0 phe  A  13 }P cyan 4.090, 5.440, 5.156
+{R0 phe  A  13 }L cyan 4.959, 5.349, 6.814
+{R1 phe  A  13 }P cyan 4.679, 5.911, 4.696
+{R1 phe  A  13 }L cyan 5.552, 5.597, 6.329
+{R2 phe  A  13 }P cyan 5.429, 6.075, 4.171
+{R2 phe  A  13 }L cyan 6.213, 5.555, 5.796
+{R3 phe  A  13 }P cyan 6.164, 5.940, 3.611
+{R3 phe  A  13 }L cyan 6.790, 5.271, 5.245
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 asn  A  12 }P U  deadblack 3.804, 4.686, 5.527
+{R0 phe  A  13 }L U  deadblack 4.090, 5.440, 5.156
+{R3 asn  A  12 }P U  deadblack 4.563, 4.799, 7.227
+{R0 phe  A  13 }L U  deadblack 4.959, 5.349, 6.814
+{R0 phe  A  13 }P U  deadblack 4.090, 5.440, 5.156
+{R1 phe  A  13 }L U  deadblack 4.679, 5.911, 4.696
+{R0 phe  A  13 }P U  deadblack 4.959, 5.349, 6.814
+{R1 phe  A  13 }L U  deadblack 5.552, 5.597, 6.329
+{R1 phe  A  13 }P U  deadblack 4.679, 5.911, 4.696
+{R2 phe  A  13 }L U  deadblack 5.429, 6.075, 4.171
+{R1 phe  A  13 }P U  deadblack 5.552, 5.597, 6.329
+{R2 phe  A  13 }L U  deadblack 6.213, 5.555, 5.796
+{R2 phe  A  13 }P U  deadblack 5.429, 6.075, 4.171
+{R3 phe  A  13 }L U  deadblack 6.164, 5.940, 3.611
+{R2 phe  A  13 }P U  deadblack 6.213, 5.555, 5.796
+{R3 phe  A  13 }L U  deadblack 6.790, 5.271, 5.245
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 phe  A  13 }P cyan 6.164, 5.940, 3.611
+{R3 phe  A  13 }L cyan 6.790, 5.271, 5.245
+{R0 asn  A  14 }P cyan 6.709, 5.514, 3.046
+{R0 asn  A  14 }L cyan 7.131, 4.790, 4.709
+{R1 asn  A  14 }P cyan 6.926, 4.832, 2.505
+{R1 asn  A  14 }L cyan 7.124, 4.174, 4.214
+{R2 asn  A  14 }P cyan 6.816, 4.043, 2.013
+{R2 asn  A  14 }L cyan 6.807, 3.541, 3.777
+{R3 asn  A  14 }P cyan 6.419, 3.324, 1.592
+{R3 asn  A  14 }L cyan 6.259, 3.024, 3.409
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 phe  A  13 }P U  deadblack 6.164, 5.940, 3.611
+{R0 asn  A  14 }L U  deadblack 6.709, 5.514, 3.046
+{R3 phe  A  13 }P U  deadblack 6.790, 5.271, 5.245
+{R0 asn  A  14 }L U  deadblack 7.131, 4.790, 4.709
+{R0 asn  A  14 }P U  deadblack 6.709, 5.514, 3.046
+{R1 asn  A  14 }L U  deadblack 6.926, 4.832, 2.505
+{R0 asn  A  14 }P U  deadblack 7.131, 4.790, 4.709
+{R1 asn  A  14 }L U  deadblack 7.124, 4.174, 4.214
+{R1 asn  A  14 }P U  deadblack 6.926, 4.832, 2.505
+{R2 asn  A  14 }L U  deadblack 6.816, 4.043, 2.013
+{R1 asn  A  14 }P U  deadblack 7.124, 4.174, 4.214
+{R2 asn  A  14 }L U  deadblack 6.807, 3.541, 3.777
+{R2 asn  A  14 }P U  deadblack 6.816, 4.043, 2.013
+{R3 asn  A  14 }L U  deadblack 6.419, 3.324, 1.592
+{R2 asn  A  14 }P U  deadblack 6.807, 3.541, 3.777
+{R3 asn  A  14 }L U  deadblack 6.259, 3.024, 3.409
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 asn  A  14 }P cyan 6.419, 3.324, 1.592
+{R3 asn  A  14 }L cyan 6.259, 3.024, 3.409
+{R0 val  A  15 }P cyan 5.774, 2.852, 1.263
+{R0 val  A  15 }L cyan 5.558, 2.756, 3.124
+{R1 val  A  15 }P cyan 4.940, 2.762, 1.038
+{R1 val  A  15 }L cyan 4.787, 2.832, 2.922
+{R2 val  A  15 }P cyan 4.057, 3.023, 0.884
+{R2 val  A  15 }L cyan 4.060, 3.200, 2.768
+{R3 val  A  15 }P cyan 3.285, 3.562, 0.756
+{R3 val  A  15 }L cyan 3.497, 3.770, 2.615
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 asn  A  14 }P U  deadblack 6.419, 3.324, 1.592
+{R0 val  A  15 }L U  deadblack 5.774, 2.852, 1.263
+{R3 asn  A  14 }P U  deadblack 6.259, 3.024, 3.409
+{R0 val  A  15 }L U  deadblack 5.558, 2.756, 3.124
+{R0 val  A  15 }P U  deadblack 5.774, 2.852, 1.263
+{R1 val  A  15 }L U  deadblack 4.940, 2.762, 1.038
+{R0 val  A  15 }P U  deadblack 5.558, 2.756, 3.124
+{R1 val  A  15 }L U  deadblack 4.787, 2.832, 2.922
+{R1 val  A  15 }P U  deadblack 4.940, 2.762, 1.038
+{R2 val  A  15 }L U  deadblack 4.057, 3.023, 0.884
+{R1 val  A  15 }P U  deadblack 4.787, 2.832, 2.922
+{R2 val  A  15 }L U  deadblack 4.060, 3.200, 2.768
+{R2 val  A  15 }P U  deadblack 4.057, 3.023, 0.884
+{R3 val  A  15 }L U  deadblack 3.285, 3.562, 0.756
+{R2 val  A  15 }P U  deadblack 4.060, 3.200, 2.768
+{R3 val  A  15 }L U  deadblack 3.497, 3.770, 2.615
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 val  A  15 }P cyan 3.285, 3.562, 0.756
+{R3 val  A  15 }L cyan 3.497, 3.770, 2.615
+{R0 cys  A  16 }P cyan 2.785, 4.306, 0.609
+{R0 cys  A  16 }L cyan 3.217, 4.453, 2.416
+{R1 cys  A  16 }P cyan 2.670, 5.169, 0.405
+{R1 cys  A  16 }L cyan 3.297, 5.157, 2.134
+{R2 cys  A  16 }P cyan 2.876, 6.017, 0.131
+{R2 cys  A  16 }L cyan 3.635, 5.786, 1.771
+{R3 cys  A  16 }P cyan 3.293, 6.704, -0.220
+{R3 cys  A  16 }L cyan 4.087, 6.242, 1.339
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 val  A  15 }P U  deadblack 3.285, 3.562, 0.756
+{R0 cys  A  16 }L U  deadblack 2.785, 4.306, 0.609
+{R3 val  A  15 }P U  deadblack 3.497, 3.770, 2.615
+{R0 cys  A  16 }L U  deadblack 3.217, 4.453, 2.416
+{R0 cys  A  16 }P U  deadblack 2.785, 4.306, 0.609
+{R1 cys  A  16 }L U  deadblack 2.670, 5.169, 0.405
+{R0 cys  A  16 }P U  deadblack 3.217, 4.453, 2.416
+{R1 cys  A  16 }L U  deadblack 3.297, 5.157, 2.134
+{R1 cys  A  16 }P U  deadblack 2.670, 5.169, 0.405
+{R2 cys  A  16 }L U  deadblack 2.876, 6.017, 0.131
+{R1 cys  A  16 }P U  deadblack 3.297, 5.157, 2.134
+{R2 cys  A  16 }L U  deadblack 3.635, 5.786, 1.771
+{R2 cys  A  16 }P U  deadblack 2.876, 6.017, 0.131
+{R3 cys  A  16 }L U  deadblack 3.293, 6.704, -0.220
+{R2 cys  A  16 }P U  deadblack 3.635, 5.786, 1.771
+{R3 cys  A  16 }L U  deadblack 4.087, 6.242, 1.339
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 cys  A  16 }P sea 3.293, 6.704, -0.220
+{R3 cys  A  16 }L sea 4.087, 6.242, 1.339
+{R0 arg  A  17 }P sea 3.808, 7.084, -0.656
+{R0 arg  A  17 }L sea 4.508, 6.428, 0.848
+{R1 arg  A  17 }P sea 4.320, 7.054, -1.179
+{R1 arg  A  17 }L sea 4.779, 6.282, 0.310
+{R2 arg  A  17 }P sea 4.758, 6.690, -1.771
+{R2 arg  A  17 }L sea 4.878, 5.888, -0.269
+{R3 arg  A  17 }P sea 5.060, 6.112, -2.408
+{R3 arg  A  17 }L sea 4.812, 5.367, -0.881
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 cys  A  16 }P U  deadblack 3.293, 6.704, -0.220
+{R0 arg  A  17 }L U  deadblack 3.808, 7.084, -0.656
+{R3 cys  A  16 }P U  deadblack 4.087, 6.242, 1.339
+{R0 arg  A  17 }L U  deadblack 4.508, 6.428, 0.848
+{R0 arg  A  17 }P U  deadblack 3.808, 7.084, -0.656
+{R1 arg  A  17 }L U  deadblack 4.320, 7.054, -1.179
+{R0 arg  A  17 }P U  deadblack 4.508, 6.428, 0.848
+{R1 arg  A  17 }L U  deadblack 4.779, 6.282, 0.310
+{R1 arg  A  17 }P U  deadblack 4.320, 7.054, -1.179
+{R2 arg  A  17 }L U  deadblack 4.758, 6.690, -1.771
+{R1 arg  A  17 }P U  deadblack 4.779, 6.282, 0.310
+{R2 arg  A  17 }L U  deadblack 4.878, 5.888, -0.269
+{R2 arg  A  17 }P U  deadblack 4.758, 6.690, -1.771
+{R3 arg  A  17 }L U  deadblack 5.060, 6.112, -2.408
+{R2 arg  A  17 }P U  deadblack 4.878, 5.888, -0.269
+{R3 arg  A  17 }L U  deadblack 4.812, 5.367, -0.881
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 arg  A  17 }P sea 5.060, 6.112, -2.408
+{R3 arg  A  17 }L sea 4.812, 5.367, -0.881
+{R0 leu  A  18 }P sea 5.163, 5.439, -3.067
+{R0 leu  A  18 }L sea 4.585, 4.839, -1.518
+{R1 leu  A  18 }P sea 5.032, 4.789, -3.725
+{R1 leu  A  18 }L sea 4.219, 4.410, -2.170
+{R2 leu  A  18 }P sea 4.738, 4.262, -4.357
+{R2 leu  A  18 }L sea 3.806, 4.129, -2.805
+{R3 leu  A  18 }P sea 4.382, 3.957, -4.941
+{R3 leu  A  18 }L sea 3.451, 4.034, -3.390
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 arg  A  17 }P U  deadblack 5.060, 6.112, -2.408
+{R0 leu  A  18 }L U  deadblack 5.163, 5.439, -3.067
+{R3 arg  A  17 }P U  deadblack 4.812, 5.367, -0.881
+{R0 leu  A  18 }L U  deadblack 4.585, 4.839, -1.518
+{R0 leu  A  18 }P U  deadblack 5.163, 5.439, -3.067
+{R1 leu  A  18 }L U  deadblack 5.032, 4.789, -3.725
+{R0 leu  A  18 }P U  deadblack 4.585, 4.839, -1.518
+{R1 leu  A  18 }L U  deadblack 4.219, 4.410, -2.170
+{R1 leu  A  18 }P U  deadblack 5.032, 4.789, -3.725
+{R2 leu  A  18 }L U  deadblack 4.738, 4.262, -4.357
+{R1 leu  A  18 }P U  deadblack 4.219, 4.410, -2.170
+{R2 leu  A  18 }L U  deadblack 3.806, 4.129, -2.805
+{R2 leu  A  18 }P U  deadblack 4.738, 4.262, -4.357
+{R3 leu  A  18 }L U  deadblack 4.382, 3.957, -4.941
+{R2 leu  A  18 }P U  deadblack 3.806, 4.129, -2.805
+{R3 leu  A  18 }L U  deadblack 3.451, 4.034, -3.390
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 leu  A  18 }P sea 4.382, 3.957, -4.941
+{R3 leu  A  18 }L sea 3.451, 4.034, -3.390
+{R0 pro  A  19 }P sea 4.062, 3.973, -5.452
+{R0 pro  A  19 }L sea 3.263, 4.159, -3.888
+{R1 pro  A  19 }P sea 3.859, 4.373, -5.866
+{R1 pro  A  19 }L sea 3.314, 4.521, -4.272
+{R2 pro  A  19 }P sea 3.778, 5.070, -6.166
+{R2 pro  A  19 }L sea 3.535, 5.062, -4.543
+{R3 pro  A  19 } sea 3.814, 5.822, -5.519
+{R3 pro  A  19 } sea 3.814, 5.822, -5.519
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 leu  A  18 }P U  deadblack 4.382, 3.957, -4.941
+{R0 pro  A  19 }L U  deadblack 4.062, 3.973, -5.452
+{R3 leu  A  18 }P U  deadblack 3.451, 4.034, -3.390
+{R0 pro  A  19 }L U  deadblack 3.263, 4.159, -3.888
+{R0 pro  A  19 }P U  deadblack 4.062, 3.973, -5.452
+{R1 pro  A  19 }L U  deadblack 3.859, 4.373, -5.866
+{R0 pro  A  19 }P U  deadblack 3.263, 4.159, -3.888
+{R1 pro  A  19 }L U  deadblack 3.314, 4.521, -4.272
+{R1 pro  A  19 }P U  deadblack 3.859, 4.373, -5.866
+{R2 pro  A  19 }L U  deadblack 3.778, 5.070, -6.166
+{R1 pro  A  19 }P U  deadblack 3.314, 4.521, -4.272
+{R2 pro  A  19 }L U  deadblack 3.535, 5.062, -4.543
+{b3R2 pro  A  19 }P U  deadblack 3.778, 5.070, -6.166
+{m0R3 pro  A  19 }L U  deadblack 3.814, 5.822, -5.519
+{b4R2 pro  A  19 }P U  deadblack 3.535, 5.062, -4.543
+{m0R3 pro  A  19 }L U  deadblack 3.814, 5.822, -5.519
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 gly  A  20 }P deadblack  width6  3.814, 5.822, -5.519
+{R0 gly  A  20 }L deadblack  width6  4.000, 6.616, -5.559
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 gly  A  20 }P sea width4  3.814, 5.822, -5.519
+{R0 gly  A  20 }L sea width4  4.000, 6.616, -5.559
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 gly  A  20 }P deadblack  width6  4.167, 7.367, -5.474
+{R0 gly  A  20 }L deadblack  width6  4.000, 6.616, -5.559
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 gly  A  20 }P sea width4  4.167, 7.367, -5.474
+{R0 gly  A  20 }L sea width4  4.000, 6.616, -5.559
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 gly  A  20 }P deadblack  width6  4.311, 8.072, -5.282
+{R1 gly  A  20 }L deadblack  width6  4.167, 7.367, -5.474
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 gly  A  20 }P sea width4  4.311, 8.072, -5.282
+{R1 gly  A  20 }L sea width4  4.167, 7.367, -5.474
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 gly  A  20 }P deadblack  width6  4.436, 8.746, -5.009
+{R2 gly  A  20 }L deadblack  width6  4.311, 8.072, -5.282
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 gly  A  20 }P sea width4  4.436, 8.746, -5.009
+{R2 gly  A  20 }L sea width4  4.311, 8.072, -5.282
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 thr  A  21 }P deadblack  width6  4.436, 8.746, -5.009
+{R0 thr  A  21 }L deadblack  width6  4.550, 9.407, -4.679
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 thr  A  21 }P sea width4  4.436, 8.746, -5.009
+{R0 thr  A  21 }L sea width4  4.550, 9.407, -4.679
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 thr  A  21 }P deadblack  width6  4.661, 10.065, -4.313
+{R0 thr  A  21 }L deadblack  width6  4.550, 9.407, -4.679
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 thr  A  21 }P sea width4  4.661, 10.065, -4.313
+{R0 thr  A  21 }L sea width4  4.550, 9.407, -4.679
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 thr  A  21 }P deadblack  width6  4.796, 10.702, -3.917
+{R1 thr  A  21 }L deadblack  width6  4.661, 10.065, -4.313
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 thr  A  21 }P sea width4  4.796, 10.702, -3.917
+{R1 thr  A  21 }L sea width4  4.661, 10.065, -4.313
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 thr  A  21 }P deadblack  width6  4.983, 11.296, -3.494
+{R2 thr  A  21 }L deadblack  width6  4.796, 10.702, -3.917
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 thr  A  21 }P sea width4  4.983, 11.296, -3.494
+{R2 thr  A  21 }L sea width4  4.796, 10.702, -3.917
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 pro  A  22 }P deadblack  width6  4.983, 11.296, -3.494
+{R0 pro  A  22 }L deadblack  width6  5.253, 11.825, -3.047
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 pro  A  22 }P green width4  4.983, 11.296, -3.494
+{R0 pro  A  22 }L green width4  5.253, 11.825, -3.047
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 pro  A  22 }P deadblack  width6  5.622, 12.274, -2.576
+{R0 pro  A  22 }L deadblack  width6  5.253, 11.825, -3.047
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 pro  A  22 }P green width4  5.622, 12.274, -2.576
+{R0 pro  A  22 }L green width4  5.253, 11.825, -3.047
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 pro  A  22 }P deadblack  width6  6.064, 12.663, -2.073
+{R1 pro  A  22 }L deadblack  width6  5.622, 12.274, -2.576
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 pro  A  22 }P green width4  6.064, 12.663, -2.073
+{R1 pro  A  22 }L green width4  5.622, 12.274, -2.576
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 pro  A  22 }P deadblack  width6  6.538, 13.019, -1.527
+{R2 pro  A  22 }L deadblack  width6  6.064, 12.663, -2.073
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 pro  A  22 }P green width4  6.538, 13.019, -1.527
+{R2 pro  A  22 }L green width4  6.064, 12.663, -2.073
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R1 glu  A  23 }P green 7.420, 13.741, -0.276
+{R0 glu  A  23 }L green 6.286, 13.297, -0.512
+{R1 glu  A  23 }P green 6.774, 13.542, 0.274
+{R1 glu  A  23 }L green 7.420, 13.741, -0.276
+{R1 glu  A  23 }P green 8.066, 13.940, -0.825
+{R0 glu  A  23 }L green 7.724, 13.444, -1.342
+{R1 glu  A  23 }P green 7.420, 13.741, -0.276
+{R1 glu  A  23 }L green 8.066, 13.940, -0.825
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 glu  A  23 }P deadblack  width6  6.538, 13.019, -1.527
+{R0 glu  A  23 }L deadblack  width6  7.005, 13.371, -0.927
+{R0 glu  A  23 }P deadblack  width6  7.005, 13.371, -0.927
+{R1 glu  A  23 }L deadblack  width6  7.420, 13.741, -0.276
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 glu  A  23 }P green width4  6.538, 13.019, -1.527
+{R0 glu  A  23 }L green width4  7.005, 13.371, -0.927
+{R0 glu  A  23 }P green width4  7.005, 13.371, -0.927
+{R1 glu  A  23 }L green width4  7.420, 13.741, -0.276
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R1 glu  A  23 }P green 6.774, 13.542, 0.274
+{R1 glu  A  23 }L green 8.066, 13.940, -0.825
+{R2 glu  A  23 }P green 7.167, 13.851, 1.030
+{R2 glu  A  23 }L green 8.255, 14.422, -0.281
+{R3 glu  A  23 }P green 7.367, 14.234, 1.697
+{R3 glu  A  23 }L green 8.233, 14.880, 0.221
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R1 glu  A  23 }P U  deadblack 7.420, 13.741, -0.276
+{R0 glu  A  23 }L U  deadblack 6.286, 13.297, -0.512
+{R1 glu  A  23 }L U  deadblack 6.774, 13.542, 0.274
+{R1 glu  A  23 }P U  deadblack 7.420, 13.741, -0.276
+{R0 glu  A  23 }L U  deadblack 7.724, 13.444, -1.342
+{R1 glu  A  23 }L U  deadblack 8.066, 13.940, -0.825
+{R1 glu  A  23 }P U  deadblack 6.774, 13.542, 0.274
+{R2 glu  A  23 }L U  deadblack 7.167, 13.851, 1.030
+{R1 glu  A  23 }P U  deadblack 8.066, 13.940, -0.825
+{R2 glu  A  23 }L U  deadblack 8.255, 14.422, -0.281
+{R2 glu  A  23 }P U  deadblack 7.167, 13.851, 1.030
+{R3 glu  A  23 }L U  deadblack 7.367, 14.234, 1.697
+{R2 glu  A  23 }P U  deadblack 8.255, 14.422, -0.281
+{R3 glu  A  23 }L U  deadblack 8.233, 14.880, 0.221
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 glu  A  23 }P green 7.367, 14.234, 1.697
+{R3 glu  A  23 }L green 8.233, 14.880, 0.221
+{R0 ala  A  24 }P green 7.278, 14.702, 2.213
+{R0 ala  A  24 }L green 7.944, 15.307, 0.611
+{R1 ala  A  24 }P green 6.837, 15.241, 2.538
+{R1 ala  A  24 }L green 7.361, 15.682, 0.839
+{R2 ala  A  24 }P green 6.133, 15.735, 2.701
+{R2 ala  A  24 }L green 6.584, 15.940, 0.938
+{R3 ala  A  24 }P green 5.292, 16.040, 2.750
+{R3 ala  A  24 }L green 5.742, 16.002, 0.960
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 glu  A  23 }P U  deadblack 7.367, 14.234, 1.697
+{R0 ala  A  24 }L U  deadblack 7.278, 14.702, 2.213
+{R3 glu  A  23 }P U  deadblack 8.233, 14.880, 0.221
+{R0 ala  A  24 }L U  deadblack 7.944, 15.307, 0.611
+{R0 ala  A  24 }P U  deadblack 7.278, 14.702, 2.213
+{R1 ala  A  24 }L U  deadblack 6.837, 15.241, 2.538
+{R0 ala  A  24 }P U  deadblack 7.944, 15.307, 0.611
+{R1 ala  A  24 }L U  deadblack 7.361, 15.682, 0.839
+{R1 ala  A  24 }P U  deadblack 6.837, 15.241, 2.538
+{R2 ala  A  24 }L U  deadblack 6.133, 15.735, 2.701
+{R1 ala  A  24 }P U  deadblack 7.361, 15.682, 0.839
+{R2 ala  A  24 }L U  deadblack 6.584, 15.940, 0.938
+{R2 ala  A  24 }P U  deadblack 6.133, 15.735, 2.701
+{R3 ala  A  24 }L U  deadblack 5.292, 16.040, 2.750
+{R2 ala  A  24 }P U  deadblack 6.584, 15.940, 0.938
+{R3 ala  A  24 }L U  deadblack 5.742, 16.002, 0.960
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ala  A  24 }P green 5.292, 16.040, 2.750
+{R3 ala  A  24 }L green 5.742, 16.002, 0.960
+{R0 ile  A  25 }P green 4.439, 16.015, 2.734
+{R0 ile  A  25 }L green 4.966, 15.791, 0.959
+{R1 ile  A  25 }P green 3.689, 15.569, 2.702
+{R1 ile  A  25 }L green 4.367, 15.268, 0.983
+{R2 ile  A  25 }P green 3.121, 14.814, 2.705
+{R2 ile  A  25 }L green 3.984, 14.542, 1.070
+{R3 ile  A  25 }P green 2.803, 13.914, 2.796
+{R3 ile  A  25 }L green 3.837, 13.763, 1.254
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ala  A  24 }P U  deadblack 5.292, 16.040, 2.750
+{R0 ile  A  25 }L U  deadblack 4.439, 16.015, 2.734
+{R3 ala  A  24 }P U  deadblack 5.742, 16.002, 0.960
+{R0 ile  A  25 }L U  deadblack 4.966, 15.791, 0.959
+{R0 ile  A  25 }P U  deadblack 4.439, 16.015, 2.734
+{R1 ile  A  25 }L U  deadblack 3.689, 15.569, 2.702
+{R0 ile  A  25 }P U  deadblack 4.966, 15.791, 0.959
+{R1 ile  A  25 }L U  deadblack 4.367, 15.268, 0.983
+{R1 ile  A  25 }P U  deadblack 3.689, 15.569, 2.702
+{R2 ile  A  25 }L U  deadblack 3.121, 14.814, 2.705
+{R1 ile  A  25 }P U  deadblack 4.367, 15.268, 0.983
+{R2 ile  A  25 }L U  deadblack 3.984, 14.542, 1.070
+{R2 ile  A  25 }P U  deadblack 3.121, 14.814, 2.705
+{R3 ile  A  25 }L U  deadblack 2.803, 13.914, 2.796
+{R2 ile  A  25 }P U  deadblack 3.984, 14.542, 1.070
+{R3 ile  A  25 }L U  deadblack 3.837, 13.763, 1.254
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ile  A  25 }P lime 2.803, 13.914, 2.796
+{R3 ile  A  25 }L lime 3.837, 13.763, 1.254
+{R0 cys  A  26 }P lime 2.806, 13.034, 3.027
+{R0 cys  A  26 }L lime 3.945, 13.079, 1.567
+{R1 cys  A  26 }P lime 3.157, 12.317, 3.435
+{R1 cys  A  26 }L lime 4.301, 12.614, 2.031
+{R2 cys  A  26 }P lime 3.732, 11.831, 3.988
+{R2 cys  A  26 }L lime 4.793, 12.398, 2.610
+{R3 cys  A  26 }P lime 4.365, 11.623, 4.638
+{R3 cys  A  26 }L lime 5.280, 12.438, 3.259
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ile  A  25 }P U  deadblack 2.803, 13.914, 2.796
+{R0 cys  A  26 }L U  deadblack 2.806, 13.034, 3.027
+{R3 ile  A  25 }P U  deadblack 3.837, 13.763, 1.254
+{R0 cys  A  26 }L U  deadblack 3.945, 13.079, 1.567
+{R0 cys  A  26 }P U  deadblack 2.806, 13.034, 3.027
+{R1 cys  A  26 }L U  deadblack 3.157, 12.317, 3.435
+{R0 cys  A  26 }P U  deadblack 3.945, 13.079, 1.567
+{R1 cys  A  26 }L U  deadblack 4.301, 12.614, 2.031
+{R1 cys  A  26 }P U  deadblack 3.157, 12.317, 3.435
+{R2 cys  A  26 }L U  deadblack 3.732, 11.831, 3.988
+{R1 cys  A  26 }P U  deadblack 4.301, 12.614, 2.031
+{R2 cys  A  26 }L U  deadblack 4.793, 12.398, 2.610
+{R2 cys  A  26 }P U  deadblack 3.732, 11.831, 3.988
+{R3 cys  A  26 }L U  deadblack 4.365, 11.623, 4.638
+{R2 cys  A  26 }P U  deadblack 4.793, 12.398, 2.610
+{R3 cys  A  26 }L U  deadblack 5.280, 12.438, 3.259
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 cys  A  26 }P lime 4.365, 11.623, 4.638
+{R3 cys  A  26 }L lime 5.280, 12.438, 3.259
+{R0 ala  A  27 }P lime 4.890, 11.743, 5.338
+{R0 ala  A  27 }L lime 5.623, 12.742, 3.929
+{R1 ala  A  27 }P lime 5.170, 12.202, 6.039
+{R1 ala  A  27 }L lime 5.711, 13.290, 4.575
+{R2 ala  A  27 }P lime 5.173, 12.871, 6.686
+{R2 ala  A  27 }L lime 5.544, 13.954, 5.152
+{R3 ala  A  27 }P lime 4.897, 13.588, 7.224
+{R3 ala  A  27 }L lime 5.152, 14.579, 5.621
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 cys  A  26 }P U  deadblack 4.365, 11.623, 4.638
+{R0 ala  A  27 }L U  deadblack 4.890, 11.743, 5.338
+{R3 cys  A  26 }P U  deadblack 5.280, 12.438, 3.259
+{R0 ala  A  27 }L U  deadblack 5.623, 12.742, 3.929
+{R0 ala  A  27 }P U  deadblack 4.890, 11.743, 5.338
+{R1 ala  A  27 }L U  deadblack 5.170, 12.202, 6.039
+{R0 ala  A  27 }P U  deadblack 5.623, 12.742, 3.929
+{R1 ala  A  27 }L U  deadblack 5.711, 13.290, 4.575
+{R1 ala  A  27 }P U  deadblack 5.170, 12.202, 6.039
+{R2 ala  A  27 }L U  deadblack 5.173, 12.871, 6.686
+{R1 ala  A  27 }P U  deadblack 5.711, 13.290, 4.575
+{R2 ala  A  27 }L U  deadblack 5.544, 13.954, 5.152
+{R2 ala  A  27 }P U  deadblack 5.173, 12.871, 6.686
+{R3 ala  A  27 }L U  deadblack 4.897, 13.588, 7.224
+{R2 ala  A  27 }P U  deadblack 5.544, 13.954, 5.152
+{R3 ala  A  27 }L U  deadblack 5.152, 14.579, 5.621
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 ala  A  27 }P lime 4.897, 13.588, 7.224
+{R3 ala  A  27 }L lime 5.152, 14.579, 5.621
+{R0 thr  A  28 }P lime 4.337, 14.188, 7.599
+{R0 thr  A  28 }L lime 4.565, 15.013, 5.938
+{R1 thr  A  28 }P lime 3.516, 14.533, 7.775
+{R1 thr  A  28 }L lime 3.827, 15.134, 6.082
+{R2 thr  A  28 }P lime 2.564, 14.594, 7.800
+{R2 thr  A  28 }L lime 3.041, 14.956, 6.104
+{R3 thr  A  28 }P lime 1.637, 14.365, 7.742
+{R3 thr  A  28 }L lime 2.327, 14.527, 6.076
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ala  A  27 }P U  deadblack 4.897, 13.588, 7.224
+{R0 thr  A  28 }L U  deadblack 4.337, 14.188, 7.599
+{R3 ala  A  27 }P U  deadblack 5.152, 14.579, 5.621
+{R0 thr  A  28 }L U  deadblack 4.565, 15.013, 5.938
+{R0 thr  A  28 }P U  deadblack 4.337, 14.188, 7.599
+{R1 thr  A  28 }L U  deadblack 3.516, 14.533, 7.775
+{R0 thr  A  28 }P U  deadblack 4.565, 15.013, 5.938
+{R1 thr  A  28 }L U  deadblack 3.827, 15.134, 6.082
+{R1 thr  A  28 }P U  deadblack 3.516, 14.533, 7.775
+{R2 thr  A  28 }L U  deadblack 2.564, 14.594, 7.800
+{R1 thr  A  28 }P U  deadblack 3.827, 15.134, 6.082
+{R2 thr  A  28 }L U  deadblack 3.041, 14.956, 6.104
+{R2 thr  A  28 }P U  deadblack 2.564, 14.594, 7.800
+{R3 thr  A  28 }L U  deadblack 1.637, 14.365, 7.742
+{R2 thr  A  28 }P U  deadblack 3.041, 14.956, 6.104
+{R3 thr  A  28 }L U  deadblack 2.327, 14.527, 6.076
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 thr  A  28 }P lime 1.637, 14.365, 7.742
+{R3 thr  A  28 }L lime 2.327, 14.527, 6.076
+{R0 tyr  A  29 }P lime 0.891, 13.844, 7.669
+{R0 tyr  A  29 }L lime 1.801, 13.895, 6.069
+{R1 tyr  A  29 }P lime 0.452, 13.053, 7.642
+{R1 tyr  A  29 }L lime 1.554, 13.120, 6.146
+{R2 tyr  A  29 }P lime 0.317, 12.132, 7.701
+{R2 tyr  A  29 }L lime 1.554, 12.320, 6.322
+{R3 tyr  A  29 }P lime 0.455, 11.248, 7.878
+{R3 tyr  A  29 }L lime 1.742, 11.623, 6.604
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 thr  A  28 }P U  deadblack 1.637, 14.365, 7.742
+{R0 tyr  A  29 }L U  deadblack 0.891, 13.844, 7.669
+{R3 thr  A  28 }P U  deadblack 2.327, 14.527, 6.076
+{R0 tyr  A  29 }L U  deadblack 1.801, 13.895, 6.069
+{R0 tyr  A  29 }P U  deadblack 0.891, 13.844, 7.669
+{R1 tyr  A  29 }L U  deadblack 0.452, 13.053, 7.642
+{R0 tyr  A  29 }P U  deadblack 1.801, 13.895, 6.069
+{R1 tyr  A  29 }L U  deadblack 1.554, 13.120, 6.146
+{R1 tyr  A  29 }P U  deadblack 0.452, 13.053, 7.642
+{R2 tyr  A  29 }L U  deadblack 0.317, 12.132, 7.701
+{R1 tyr  A  29 }P U  deadblack 1.554, 13.120, 6.146
+{R2 tyr  A  29 }L U  deadblack 1.554, 12.320, 6.322
+{R2 tyr  A  29 }P U  deadblack 0.317, 12.132, 7.701
+{R3 tyr  A  29 }L U  deadblack 0.455, 11.248, 7.878
+{R2 tyr  A  29 }P U  deadblack 1.554, 12.320, 6.322
+{R3 tyr  A  29 }L U  deadblack 1.742, 11.623, 6.604
+@ribbonlist  {ribbon} color= {alph_}    master= {ribbon} nobutton
+{R3 tyr  A  29 }P lime 0.455, 11.248, 7.878
+{R3 tyr  A  29 }L lime 1.742, 11.623, 6.604
+{R0 thr  A  30 }P lime 0.833, 10.566, 8.206
+{R0 thr  A  30 }L lime 2.059, 11.160, 7.001
+{R1 thr  A  30 }P lime 1.415, 10.214, 8.698
+{R1 thr  A  30 }L lime 2.450, 11.019, 7.505
+{R2 thr  A  30 }P lime 2.143, 10.158, 9.286
+{R2 thr  A  30 }L lime 2.895, 11.119, 8.059
+{R3 thr  A  30 } lime 3.168, 10.830, 9.238
+{R3 thr  A  30 } lime 3.168, 10.830, 9.238
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 tyr  A  29 }P U  deadblack 0.455, 11.248, 7.878
+{R0 thr  A  30 }L U  deadblack 0.833, 10.566, 8.206
+{R3 tyr  A  29 }P U  deadblack 1.742, 11.623, 6.604
+{R0 thr  A  30 }L U  deadblack 2.059, 11.160, 7.001
+{R0 thr  A  30 }P U  deadblack 0.833, 10.566, 8.206
+{R1 thr  A  30 }L U  deadblack 1.415, 10.214, 8.698
+{R0 thr  A  30 }P U  deadblack 2.059, 11.160, 7.001
+{R1 thr  A  30 }L U  deadblack 2.450, 11.019, 7.505
+{R1 thr  A  30 }P U  deadblack 1.415, 10.214, 8.698
+{R2 thr  A  30 }L U  deadblack 2.143, 10.158, 9.286
+{R1 thr  A  30 }P U  deadblack 2.450, 11.019, 7.505
+{R2 thr  A  30 }L U  deadblack 2.895, 11.119, 8.059
+{b3R2 thr  A  30 }P U  deadblack 2.143, 10.158, 9.286
+{m0R3 thr  A  30 }L U  deadblack 3.168, 10.830, 9.238
+{b4R2 thr  A  30 }P U  deadblack 2.895, 11.119, 8.059
+{m0R3 thr  A  30 }L U  deadblack 3.168, 10.830, 9.238
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 gly  A  31 }P deadblack  width6  3.168, 10.830, 9.238
+{R0 gly  A  31 }L deadblack  width6  3.840, 11.093, 9.719
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 gly  A  31 }P yellow width4  3.168, 10.830, 9.238
+{R0 gly  A  31 }L yellow width4  3.840, 11.093, 9.719
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 gly  A  31 }P deadblack  width6  4.507, 11.348, 10.053
+{R0 gly  A  31 }L deadblack  width6  3.840, 11.093, 9.719
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 gly  A  31 }P yellow width4  4.507, 11.348, 10.053
+{R0 gly  A  31 }L yellow width4  3.840, 11.093, 9.719
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 gly  A  31 }P deadblack  width6  5.165, 11.589, 10.238
+{R1 gly  A  31 }L deadblack  width6  4.507, 11.348, 10.053
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 gly  A  31 }P yellow width4  5.165, 11.589, 10.238
+{R1 gly  A  31 }L yellow width4  4.507, 11.348, 10.053
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 gly  A  31 }P deadblack  width6  5.822, 11.827, 10.292
+{R2 gly  A  31 }L deadblack  width6  5.165, 11.589, 10.238
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 gly  A  31 }P yellow width4  5.822, 11.827, 10.292
+{R2 gly  A  31 }L yellow width4  5.165, 11.589, 10.238
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R1 cys  A 32    S1}P yellow 7.154, 12.346, 10.066
+{R0 cys  A 32    S1}L yellow 6.988, 12.142, 10.964
+{R1 cys  A 32    S1}P yellow 7.765, 12.376, 10.712
+{R1 cys  A 32    S1}L yellow 7.154, 12.346, 10.066
+{R1 cys  A 32    S1}P yellow 6.544, 12.315, 9.420
+{R0 cys  A 32    S1}L yellow 5.980, 12.009, 9.494
+{R1 cys  A 32    S1}P yellow 7.154, 12.346, 10.066
+{R1 cys  A 32    S1}L yellow 6.544, 12.315, 9.420
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 cys  A 32    S1}P deadblack  width6  5.822, 11.827, 10.292
+{R0 cys  A 32    S1}L deadblack  width6  6.484, 12.075, 10.229
+{R0 cys  A 32    S1}P deadblack  width6  6.484, 12.075, 10.229
+{R1 cys  A 32    S1}L deadblack  width6  7.154, 12.346, 10.066
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 cys  A 32    S1}P yellow width4  5.822, 11.827, 10.292
+{R0 cys  A 32    S1}L yellow width4  6.484, 12.075, 10.229
+{R0 cys  A 32    S1}P yellow width4  6.484, 12.075, 10.229
+{R1 cys  A 32    S1}L yellow width4  7.154, 12.346, 10.066
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R1 cys  A 32    S1}P yellow 7.765, 12.376, 10.712
+{R1 cys  A 32    S1}L yellow 6.544, 12.315, 9.420
+{R2 cys  A 32    S1}P yellow 8.522, 12.544, 10.346
+{R2 cys  A 32    S1}L yellow 7.128, 12.750, 9.291
+{R3 cys  A 32    S1}P yellow 9.236, 12.699, 9.903
+{R3 cys  A 32    S1}L yellow 7.730, 13.275, 9.106
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R1 cys  A 32    S1}P U  deadblack 7.154, 12.346, 10.066
+{R0 cys  A 32    S1}L U  deadblack 6.988, 12.142, 10.964
+{R1 cys  A 32    S1}L U  deadblack 7.765, 12.376, 10.712
+{R1 cys  A 32    S1}P U  deadblack 7.154, 12.346, 10.066
+{R0 cys  A 32    S1}L U  deadblack 5.980, 12.009, 9.494
+{R1 cys  A 32    S1}L U  deadblack 6.544, 12.315, 9.420
+{R1 cys  A 32    S1}P U  deadblack 7.765, 12.376, 10.712
+{R2 cys  A 32    S1}L U  deadblack 8.522, 12.544, 10.346
+{R1 cys  A 32    S1}P U  deadblack 6.544, 12.315, 9.420
+{R2 cys  A 32    S1}L U  deadblack 7.128, 12.750, 9.291
+{R2 cys  A 32    S1}P U  deadblack 8.522, 12.544, 10.346
+{R3 cys  A 32    S1}L U  deadblack 9.236, 12.699, 9.903
+{R2 cys  A 32    S1}P U  deadblack 7.128, 12.750, 9.291
+{R3 cys  A 32    S1}L U  deadblack 7.730, 13.275, 9.106
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 cys  A  32    S1}P yellow 9.236, 12.699, 9.903
+{R3 cys  A  32    S1}L yellow 7.730, 13.275, 9.106
+{R0 ile  A 33    S1}P yellow 9.886, 12.893, 9.417
+{R0 ile  A 33    S1}L yellow 8.351, 13.854, 8.864
+{R1 ile  A 33    S1}P yellow 10.458, 13.166, 8.918
+{R1 ile  A 33    S1}L yellow 8.991, 14.453, 8.570
+{R2 ile  A 33    S1}P yellow 10.982, 13.505, 8.426
+{R2 ile  A 33    S1}L yellow 9.647, 15.046, 8.246
+{R3 ile  A 33    S1}P yellow 11.499, 13.883, 7.955
+{R3 ile  A 33    S1}L yellow 10.314, 15.608, 7.922
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 cys  A  32    S1}P U  deadblack 9.236, 12.699, 9.903
+{R0 ile  A 33    S1}L U  deadblack 9.886, 12.893, 9.417
+{R3 cys  A  32    S1}P U  deadblack 7.730, 13.275, 9.106
+{R0 ile  A 33    S1}L U  deadblack 8.351, 13.854, 8.864
+{R0 ile  A 33    S1}P U  deadblack 9.886, 12.893, 9.417
+{R1 ile  A 33    S1}L U  deadblack 10.458, 13.166, 8.918
+{R0 ile  A 33    S1}P U  deadblack 8.351, 13.854, 8.864
+{R1 ile  A 33    S1}L U  deadblack 8.991, 14.453, 8.570
+{R1 ile  A 33    S1}P U  deadblack 10.458, 13.166, 8.918
+{R2 ile  A 33    S1}L U  deadblack 10.982, 13.505, 8.426
+{R1 ile  A 33    S1}P U  deadblack 8.991, 14.453, 8.570
+{R2 ile  A 33    S1}L U  deadblack 9.647, 15.046, 8.246
+{R2 ile  A 33    S1}P U  deadblack 10.982, 13.505, 8.426
+{R3 ile  A 33    S1}L U  deadblack 11.499, 13.883, 7.955
+{R2 ile  A 33    S1}P U  deadblack 9.647, 15.046, 8.246
+{R3 ile  A 33    S1}L U  deadblack 10.314, 15.608, 7.922
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 ile  A  33    S1}P yellow 11.499, 13.883, 7.955
+{R3 ile  A  33    S1}L yellow 10.314, 15.608, 7.922
+{R0 ile  A 34    S1}P yellow 12.048, 14.273, 7.521
+{R0 ile  A 34    S1}L yellow 10.990, 16.116, 7.624
+{R1 ile  A 34    S1}P yellow 12.660, 14.655, 7.136
+{R1 ile  A 34    S1}L yellow 11.672, 16.552, 7.375
+{R2 ile  A 34    S1}P yellow 13.321, 15.027, 6.794
+{R2 ile  A 34    S1}L yellow 12.371, 16.932, 7.172
+{R3 ile  A 34    S1}P yellow 14.005, 15.394, 6.487
+{R3 ile  A 34    S1}L yellow 13.099, 17.280, 7.006
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ile  A  33    S1}P U  deadblack 11.499, 13.883, 7.955
+{R0 ile  A 34    S1}L U  deadblack 12.048, 14.273, 7.521
+{R3 ile  A  33    S1}P U  deadblack 10.314, 15.608, 7.922
+{R0 ile  A 34    S1}L U  deadblack 10.990, 16.116, 7.624
+{R0 ile  A 34    S1}P U  deadblack 12.048, 14.273, 7.521
+{R1 ile  A 34    S1}L U  deadblack 12.660, 14.655, 7.136
+{R0 ile  A 34    S1}P U  deadblack 10.990, 16.116, 7.624
+{R1 ile  A 34    S1}L U  deadblack 11.672, 16.552, 7.375
+{R1 ile  A 34    S1}P U  deadblack 12.660, 14.655, 7.136
+{R2 ile  A 34    S1}L U  deadblack 13.321, 15.027, 6.794
+{R1 ile  A 34    S1}P U  deadblack 11.672, 16.552, 7.375
+{R2 ile  A 34    S1}L U  deadblack 12.371, 16.932, 7.172
+{R2 ile  A 34    S1}P U  deadblack 13.321, 15.027, 6.794
+{R3 ile  A 34    S1}L U  deadblack 14.005, 15.394, 6.487
+{R2 ile  A 34    S1}P U  deadblack 12.371, 16.932, 7.172
+{R3 ile  A 34    S1}L U  deadblack 13.099, 17.280, 7.006
+@ribbonlist  {ribbon} color= {  S1}   master= {ribbon} nobutton
+{R3 ile  A  34    S1}P yellow 14.005, 15.394, 6.487
+{R3 ile  A  34    S1}L yellow 13.099, 17.280, 7.006
+{R0 ile  A 35    S1}P yellow 14.688, 15.761, 6.207
+{R0 ile  A 35    S1}L yellow 13.866, 17.619, 6.868
+{R1 ile  A 35    S1}P yellow 15.352, 16.127, 5.945
+{R1 ile  A 35    S1}L yellow 14.679, 17.961, 6.751
+{R1 WING-P ile  A 35    S1}P yellow 15.689, 15.210, 5.543
+{R1 WING-Q ile  A 35    S1}L yellow 14.343, 18.878, 7.153
+{R3 ile  A 35    S1} yellow 16.503, 17.663, 6.033
+{R3 ile  A 35    S1} yellow 16.503, 17.663, 6.033
+@vectorlist  {ribbon} color= {edge_}    master= {ribbon} nobutton
+{R3 ile  A  34    S1}P U  deadblack 14.005, 15.394, 6.487
+{R0 ile  A 35    S1}L U  deadblack 14.688, 15.761, 6.207
+{R3 ile  A  34    S1}P U  deadblack 13.099, 17.280, 7.006
+{R0 ile  A 35    S1}L U  deadblack 13.866, 17.619, 6.868
+{R0 ile  A 35    S1}P U  deadblack 14.688, 15.761, 6.207
+{R1 ile  A 35    S1}L U  deadblack 15.352, 16.127, 5.945
+{R0 ile  A 35    S1}P U  deadblack 13.866, 17.619, 6.868
+{R1 ile  A 35    S1}L U  deadblack 14.679, 17.961, 6.751
+{b3R1 ile  A 35    S1}P U  deadblack 15.352, 16.127, 5.945
+{b3R1 ile  A 35    S1}L U  deadblack 15.689, 15.210, 5.543
+{m0R3 ile  A 35    S1}L U  deadblack 16.503, 17.663, 6.033
+{b4R1 ile  A 35    S1}P U  deadblack 14.679, 17.961, 6.751
+{b4R1 ile  A 35    S1}L U  deadblack 14.343, 18.878, 7.153
+{m0R3 ile  A 35    S1}L U  deadblack 16.503, 17.663, 6.033
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 pro  A  36 }P deadblack  width6  16.503, 17.663, 6.033
+{R0 pro  A  36 }L deadblack  width6  17.236, 17.868, 5.912
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 pro  A  36 }P gold width4  16.503, 17.663, 6.033
+{R0 pro  A  36 }L gold width4  17.236, 17.868, 5.912
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 pro  A  36 }P deadblack  width6  17.950, 17.968, 5.820
+{R0 pro  A  36 }L deadblack  width6  17.236, 17.868, 5.912
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 pro  A  36 }P gold width4  17.950, 17.968, 5.820
+{R0 pro  A  36 }L gold width4  17.236, 17.868, 5.912
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 pro  A  36 }P deadblack  width6  18.635, 17.947, 5.770
+{R1 pro  A  36 }L deadblack  width6  17.950, 17.968, 5.820
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 pro  A  36 }P gold width4  18.635, 17.947, 5.770
+{R1 pro  A  36 }L gold width4  17.950, 17.968, 5.820
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 pro  A  36 }P deadblack  width6  19.277, 17.791, 5.775
+{R2 pro  A  36 }L deadblack  width6  18.635, 17.947, 5.770
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 pro  A  36 }P gold width4  19.277, 17.791, 5.775
+{R2 pro  A  36 }L gold width4  18.635, 17.947, 5.770
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 gly  A  37 }P deadblack  width6  19.277, 17.791, 5.775
+{R0 gly  A  37 }L deadblack  width6  19.865, 17.487, 5.851
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 gly  A  37 }P gold width4  19.277, 17.791, 5.775
+{R0 gly  A  37 }L gold width4  19.865, 17.487, 5.851
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 gly  A  37 }P deadblack  width6  20.388, 17.034, 6.009
+{R0 gly  A  37 }L deadblack  width6  19.865, 17.487, 5.851
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 gly  A  37 }P gold width4  20.388, 17.034, 6.009
+{R0 gly  A  37 }L gold width4  19.865, 17.487, 5.851
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 gly  A  37 }P deadblack  width6  20.837, 16.473, 6.245
+{R1 gly  A  37 }L deadblack  width6  20.388, 17.034, 6.009
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 gly  A  37 }P gold width4  20.837, 16.473, 6.245
+{R1 gly  A  37 }L gold width4  20.388, 17.034, 6.009
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 gly  A  37 }P deadblack  width6  21.208, 15.856, 6.556
+{R2 gly  A  37 }L deadblack  width6  20.837, 16.473, 6.245
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 gly  A  37 }P gold width4  21.208, 15.856, 6.556
+{R2 gly  A  37 }L gold width4  20.837, 16.473, 6.245
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 ala  A  38 }P deadblack  width6  21.208, 15.856, 6.556
+{R0 ala  A  38 }L deadblack  width6  21.494, 15.236, 6.934
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 ala  A  38 }P gold width4  21.208, 15.856, 6.556
+{R0 ala  A  38 }L gold width4  21.494, 15.236, 6.934
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 ala  A  38 }P deadblack  width6  21.689, 14.657, 7.376
+{R0 ala  A  38 }L deadblack  width6  21.494, 15.236, 6.934
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 ala  A  38 }P gold width4  21.689, 14.657, 7.376
+{R0 ala  A  38 }L gold width4  21.494, 15.236, 6.934
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 ala  A  38 }P deadblack  width6  21.785, 14.140, 7.872
+{R1 ala  A  38 }L deadblack  width6  21.689, 14.657, 7.376
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 ala  A  38 }P gold width4  21.785, 14.140, 7.872
+{R1 ala  A  38 }L gold width4  21.689, 14.657, 7.376
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 ala  A  38 }P deadblack  width6  21.773, 13.696, 8.415
+{R2 ala  A  38 }L deadblack  width6  21.785, 14.140, 7.872
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 ala  A  38 }P gold width4  21.773, 13.696, 8.415
+{R2 ala  A  38 }L gold width4  21.785, 14.140, 7.872
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 thr  A  39 }P deadblack  width6  21.773, 13.696, 8.415
+{R0 thr  A  39 }L deadblack  width6  21.644, 13.337, 8.996
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 thr  A  39 }P gold width4  21.773, 13.696, 8.415
+{R0 thr  A  39 }L gold width4  21.644, 13.337, 8.996
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 thr  A  39 }P deadblack  width6  21.397, 13.072, 9.608
+{R0 thr  A  39 }L deadblack  width6  21.644, 13.337, 8.996
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 thr  A  39 }P gold width4  21.397, 13.072, 9.608
+{R0 thr  A  39 }L gold width4  21.644, 13.337, 8.996
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 thr  A  39 }P deadblack  width6  21.052, 12.892, 10.242
+{R1 thr  A  39 }L deadblack  width6  21.397, 13.072, 9.608
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 thr  A  39 }P gold width4  21.052, 12.892, 10.242
+{R1 thr  A  39 }L gold width4  21.397, 13.072, 9.608
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 thr  A  39 }P deadblack  width6  20.637, 12.782, 10.888
+{R2 thr  A  39 }L deadblack  width6  21.052, 12.892, 10.242
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 thr  A  39 }P gold width4  20.637, 12.782, 10.888
+{R2 thr  A  39 }L gold width4  21.052, 12.892, 10.242
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 cys  A  40 }P deadblack  width6  20.637, 12.782, 10.888
+{R0 cys  A  40 }L deadblack  width6  20.179, 12.732, 11.536
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 cys  A  40 }P orange width4  20.637, 12.782, 10.888
+{R0 cys  A  40 }L orange width4  20.179, 12.732, 11.536
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 cys  A  40 }P deadblack  width6  19.705, 12.723, 12.181
+{R0 cys  A  40 }L deadblack  width6  20.179, 12.732, 11.536
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 cys  A  40 }P orange width4  19.705, 12.723, 12.181
+{R0 cys  A  40 }L orange width4  20.179, 12.732, 11.536
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 cys  A  40 }P deadblack  width6  19.241, 12.735, 12.832
+{R1 cys  A  40 }L deadblack  width6  19.705, 12.723, 12.181
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 cys  A  40 }P orange width4  19.241, 12.735, 12.832
+{R1 cys  A  40 }L orange width4  19.705, 12.723, 12.181
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 cys  A  40 }P deadblack  width6  18.815, 12.739, 13.500
+{R2 cys  A  40 }L deadblack  width6  19.241, 12.735, 12.832
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 cys  A  40 }P orange width4  18.815, 12.739, 13.500
+{R2 cys  A  40 }L orange width4  19.241, 12.735, 12.832
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 pro  A  41 }P deadblack  width6  18.815, 12.739, 13.500
+{R0 pro  A  41 }L deadblack  width6  18.451, 12.711, 14.198
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 pro  A  41 }P orange width4  18.815, 12.739, 13.500
+{R0 pro  A  41 }L orange width4  18.451, 12.711, 14.198
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 pro  A  41 }P deadblack  width6  18.163, 12.630, 14.933
+{R0 pro  A  41 }L deadblack  width6  18.451, 12.711, 14.198
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 pro  A  41 }P orange width4  18.163, 12.630, 14.933
+{R0 pro  A  41 }L orange width4  18.451, 12.711, 14.198
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 pro  A  41 }P deadblack  width6  17.917, 12.495, 15.694
+{R1 pro  A  41 }L deadblack  width6  18.163, 12.630, 14.933
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 pro  A  41 }P orange width4  17.917, 12.495, 15.694
+{R1 pro  A  41 }L orange width4  18.163, 12.630, 14.933
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 pro  A  41 }P deadblack  width6  17.662, 12.313, 16.468
+{R2 pro  A  41 }L deadblack  width6  17.917, 12.495, 15.694
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 pro  A  41 }P orange width4  17.662, 12.313, 16.468
+{R2 pro  A  41 }L orange width4  17.917, 12.495, 15.694
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 gly  A  42 }P deadblack  width6  17.662, 12.313, 16.468
+{R0 gly  A  42 }L deadblack  width6  17.353, 12.087, 17.240
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 gly  A  42 }P orange width4  17.662, 12.313, 16.468
+{R0 gly  A  42 }L orange width4  17.353, 12.087, 17.240
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 gly  A  42 }P deadblack  width6  16.949, 11.830, 17.983
+{R0 gly  A  42 }L deadblack  width6  17.353, 12.087, 17.240
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 gly  A  42 }P orange width4  16.949, 11.830, 17.983
+{R0 gly  A  42 }L orange width4  17.353, 12.087, 17.240
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 gly  A  42 }P deadblack  width6  16.452, 11.581, 18.616
+{R1 gly  A  42 }L deadblack  width6  16.949, 11.830, 17.983
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 gly  A  42 }P orange width4  16.452, 11.581, 18.616
+{R1 gly  A  42 }L orange width4  16.949, 11.830, 17.983
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 gly  A  42 }P deadblack  width6  15.872, 11.386, 19.048
+{R2 gly  A  42 }L deadblack  width6  16.452, 11.581, 18.616
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 gly  A  42 }P orange width4  15.872, 11.386, 19.048
+{R2 gly  A  42 }L orange width4  16.452, 11.581, 18.616
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 asp  A  43 }P deadblack  width6  15.872, 11.386, 19.048
+{R0 asp  A  43 }L deadblack  width6  15.218, 11.291, 19.185
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 asp  A  43 }P orange width4  15.872, 11.386, 19.048
+{R0 asp  A  43 }L orange width4  15.218, 11.291, 19.185
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 asp  A  43 }P deadblack  width6  14.517, 11.318, 18.970
+{R0 asp  A  43 }L deadblack  width6  15.218, 11.291, 19.185
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 asp  A  43 }P orange width4  14.517, 11.318, 18.970
+{R0 asp  A  43 }L orange width4  15.218, 11.291, 19.185
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 asp  A  43 }P deadblack  width6  13.854, 11.395, 18.488
+{R1 asp  A  43 }L deadblack  width6  14.517, 11.318, 18.970
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 asp  A  43 }P orange width4  13.854, 11.395, 18.488
+{R1 asp  A  43 }L orange width4  14.517, 11.318, 18.970
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 asp  A  43 }P deadblack  width6  13.330, 11.427, 17.858
+{R2 asp  A  43 }L deadblack  width6  13.854, 11.395, 18.488
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 asp  A  43 }P orange width4  13.330, 11.427, 17.858
+{R2 asp  A  43 }L orange width4  13.854, 11.395, 18.488
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 tyr  A  44 }P deadblack  width6  13.330, 11.427, 17.858
+{R0 tyr  A  44 }L deadblack  width6  13.047, 11.318, 17.200
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 tyr  A  44 }P orange width4  13.330, 11.427, 17.858
+{R0 tyr  A  44 }L orange width4  13.047, 11.318, 17.200
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 tyr  A  44 }P deadblack  width6  13.068, 10.997, 16.612
+{R0 tyr  A  44 }L deadblack  width6  13.047, 11.318, 17.200
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 tyr  A  44 }P orange width4  13.068, 10.997, 16.612
+{R0 tyr  A  44 }L orange width4  13.047, 11.318, 17.200
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 tyr  A  44 }P deadblack  width6  13.314, 10.500, 16.104
+{R1 tyr  A  44 }L deadblack  width6  13.068, 10.997, 16.612
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 tyr  A  44 }P orange width4  13.314, 10.500, 16.104
+{R1 tyr  A  44 }L orange width4  13.068, 10.997, 16.612
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 tyr  A  44 }P deadblack  width6  13.665, 9.887, 15.663
+{R2 tyr  A  44 }L deadblack  width6  13.314, 10.500, 16.104
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 tyr  A  44 }P orange width4  13.665, 9.887, 15.663
+{R2 tyr  A  44 }L orange width4  13.314, 10.500, 16.104
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 ala  A  45 }P deadblack  width6  13.665, 9.887, 15.663
+{R0 ala  A  45 }L deadblack  width6  14.003, 9.217, 15.278
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 ala  A  45 }P red width4  13.665, 9.887, 15.663
+{R0 ala  A  45 }L red width4  14.003, 9.217, 15.278
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 ala  A  45 }P deadblack  width6  14.233, 8.546, 14.936
+{R0 ala  A  45 }L deadblack  width6  14.003, 9.217, 15.278
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 ala  A  45 }P red width4  14.233, 8.546, 14.936
+{R0 ala  A  45 }L red width4  14.003, 9.217, 15.278
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 ala  A  45 }P deadblack  width6  14.348, 7.902, 14.625
+{R1 ala  A  45 }L deadblack  width6  14.233, 8.546, 14.936
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 ala  A  45 }P red width4  14.348, 7.902, 14.625
+{R1 ala  A  45 }L red width4  14.233, 8.546, 14.936
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 ala  A  45 }P deadblack  width6  14.364, 7.308, 14.333
+{R2 ala  A  45 }L deadblack  width6  14.348, 7.902, 14.625
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 ala  A  45 }P red width4  14.364, 7.308, 14.333
+{R2 ala  A  45 }L red width4  14.348, 7.902, 14.625
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R0 asn  A  46 }P deadblack  width6  14.364, 7.308, 14.333
+{R0 asn  A  46 }L deadblack  width6  14.296, 6.787, 14.048
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R0 asn  A  46 }P red width4  14.364, 7.308, 14.333
+{R0 asn  A  46 }L red width4  14.296, 6.787, 14.048
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R1 asn  A  46 }P deadblack  width6  14.162, 6.358, 13.763
+{R0 asn  A  46 }L deadblack  width6  14.296, 6.787, 14.048
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R1 asn  A  46 }P red width4  14.162, 6.358, 13.763
+{R0 asn  A  46 }L red width4  14.296, 6.787, 14.048
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R2 asn  A  46 }P deadblack  width6  13.993, 6.019, 13.493
+{R1 asn  A  46 }L deadblack  width6  14.162, 6.358, 13.763
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R2 asn  A  46 }P red width4  13.993, 6.019, 13.493
+{R1 asn  A  46 }L red width4  14.162, 6.358, 13.763
+@vectorlist  {ribbon} color= {coil_}  rear  master= {ribbon} nobutton
+{R3 asn  A  46 }P deadblack  width6  13.512, 5.395, 12.878
+{R2 asn  A  46 }L deadblack  width6  13.993, 6.019, 13.493
+@vectorlist  {ribbon} color= {coil_}  fore  master= {ribbon} nobutton
+{R3 asn  A  46 }P red width4  13.512, 5.395, 12.878
+{R2 asn  A  46 }L red width4  13.993, 6.019, 13.493
+
+@caption probe.2.16.160404, run Tue Mar 20 12:29:46 2018
+ command: /Users/vbchen/Sites/molprobity4/molprobity/build/probe/exe/probe -sepworse -4H -quiet -noticks -nogroup -dotmaster -mc -het -self ogt10 /Users/vbchen/Sites/molprobity4/molprobity/public_html/data/4ccfb77e091768355b1ba25ec4ba33ff/coordinates/1crnFH.pdb
 @subgroup dominant {self dots}
 @master {vdw contact}
 @master {small overlap}
@@ -11672,3 +12946,4 @@ reduce: version 3.3 06/02/2016, Copyright 1997-2016, J. Michael Word
 @master {vdw contact} off
 @master {small overlap} off
 @master {H-bonds} off
+@master {ribbon} off
