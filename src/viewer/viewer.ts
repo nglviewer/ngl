@@ -1236,7 +1236,7 @@ export default class Viewer {
     this.updateInfo()
   }
 
-  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera) {
+  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     // based on the Supersample Anti-Aliasing Render Pass
     // contributed to three.js by bhouston / http://clara.io/
     //
@@ -1289,12 +1289,12 @@ export default class Viewer {
     this.compositeUniforms.tForeground.value = this.holdTarget.texture
 
     camera.clearViewOffset()
-    this.renderer.setRenderTarget(null!)
+    this.renderer.setRenderTarget(renderTarget || null)
     this.renderer.clear()
     this.renderer.render(this.compositeScene, this.compositeCamera)
   }
 
-  private __renderStereo (picking = false) {
+  private __renderStereo (picking = false, _renderTarget?: WebGLRenderTarget) {
     const stereoCamera = this.stereoCamera
     stereoCamera.update(this.perspectiveCamera);
 
@@ -1318,18 +1318,18 @@ export default class Viewer {
     renderer.setViewport(0, 0, size.width, size.height)
   }
 
-  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera) {
+  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     if (picking) {
       if (!this.lastRenderedPicking) this.__renderPickingGroup(camera)
     } else if (this.sampleLevel > 0 && this.parameters.cameraType !== 'stereo') {
       // TODO super sample broken for stereo camera
-      this.__renderSuperSample(camera)
+      this.__renderSuperSample(camera, renderTarget)
     } else {
-      this.__renderModelGroup(camera)
+      this.__renderModelGroup(camera, renderTarget)
     }
   }
 
-  render (picking = false) {
+  render (picking = false, renderTarget?: WebGLRenderTarget) {
     if (this.rendering) {
       Log.warn("'tried to call 'render' from within 'render'")
       return
@@ -1347,9 +1347,9 @@ export default class Viewer {
 
       // render
       if (this.parameters.cameraType === 'stereo') {
-        this.__renderStereo(picking)
+        this.__renderStereo(picking, renderTarget)
       } else {
-        this.__render(picking, this.camera)
+        this.__render(picking, this.camera, renderTarget)
       }
       this.lastRenderedPicking = picking
     } finally {
