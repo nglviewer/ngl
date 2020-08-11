@@ -260,6 +260,15 @@ class StructureComponent extends Component {
     this.measureRepresentations.update(what)
   }
 
+  /**
+   * Overrides {@link Component.updateRepresentationMatrices} 
+   * to also update matrix for measureRepresentations 
+   */
+  updateRepresentationMatrices () {
+    super.updateRepresentationMatrices()
+    this.measureRepresentations.setParameters({ matrix: this.matrix })
+  }
+
   addRepresentation <K extends keyof StructureRepresentationParametersMap>(
     type: K,
     params: Partial<StructureRepresentationParametersMap[K]>|{defaultAssembly: string} = {},

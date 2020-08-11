@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3 } from 'three'
+import { Matrix4, Vector3, Box3 } from 'three'
 
 import { defaults } from '../utils'
 import Representation, { RepresentationParameters } from './representation.js'
@@ -70,6 +70,7 @@ class SurfaceRepresentation extends Representation {
   protected background: boolean
   protected opaqueBack: boolean
   protected boxSize: number
+  protected inverseMatrix: Matrix4
   protected colorVolume: Volume
   protected contour: boolean
   protected useWorker: boolean
@@ -146,8 +147,11 @@ class SurfaceRepresentation extends Representation {
     this.__box = new Box3()
 
     this._position = new Vector3()
+    this.inverseMatrix = new Matrix4()
+
     this.setBox = function setBox () {
       this._position.copy(viewer.translationGroup.position).negate()
+      this._position.applyMatrix4(this.inverseMatrix)
       if (!this._position.equals(this.boxCenter)) {
         this.setParameters({ 'boxCenter': this._position })
       }
@@ -179,6 +183,8 @@ class SurfaceRepresentation extends Representation {
     this.wrap = defaults(p.wrap, false)
 
     super.init(p)
+
+    this.inverseMatrix.getInverse(this.matrix)
 
     this.build()
   }
@@ -356,6 +362,10 @@ class SurfaceRepresentation extends Representation {
     }
 
     super.setParameters(params, what, rebuild)
+
+    if (params.matrix) {
+      this.inverseMatrix.getInverse(params.matrix)
+    }
 
     if (this.volume) {
       this.volume.getBox(this.boxCenter, this.boxSize, this.box)

@@ -189,12 +189,20 @@ abstract class Component {
 
     this.matrix.premultiply(this.transform)
 
-    this.reprList.forEach(repr => {
-      repr.setParameters({ matrix: this.matrix })
-    })
+    this.updateRepresentationMatrices()
+
     this.stage.viewer.updateBoundingBox()
 
     this.signals.matrixChanged.dispatch(this.matrix)
+  }
+
+  /**
+   * Propogates our matrix to each representation
+   */
+  updateRepresentationMatrices () {
+    this.reprList.forEach(repr => {
+      repr.setParameters({ matrix: this.matrix })
+    })
   }
 
   /**
