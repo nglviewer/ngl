@@ -7,7 +7,7 @@
 import { Color } from 'three'
 
 import RepresentationElement from './representation-element'
-import Collection from './collection.js'
+import Collection from './collection'
 
 class RepresentationCollection extends Collection<RepresentationElement> {
   setParameters (params: any) {

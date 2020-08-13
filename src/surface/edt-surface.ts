@@ -4,11 +4,11 @@
  * @private
  */
 
-import { VolumeSurface } from './volume.js'
+import { VolumeSurface } from './volume'
 import { iGrid, makeGrid } from '../geometry/grid'
-import { computeBoundingBox } from '../math/vector-utils.js'
-import { getRadiusDict, getSurfaceGrid } from './surface-utils.js'
-import { TypedArray } from '../types.js';
+import { computeBoundingBox } from '../math/vector-utils'
+import { getRadiusDict, getSurfaceGrid } from './surface-utils'
+import { TypedArray } from '../types';
 
 interface EDTSurface {
   getVolume: (type: string, probeRadius: number, scaleFactor: number, cutoff: number, setAtomID: boolean) => {

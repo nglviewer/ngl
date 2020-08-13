@@ -6,10 +6,10 @@
 
 import { Debug, Log, RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import Helixorient from '../geometry/helixorient.js'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import SphereBuffer, { SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import VectorBuffer from '../buffer/vector-buffer.js'
+import Helixorient from '../geometry/helixorient'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import SphereBuffer, { SphereBufferParameters } from '../buffer/sphere-buffer'
+import VectorBuffer from '../buffer/vector-buffer'
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';
 import StructureView from '../structure/structure-view';

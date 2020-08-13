@@ -7,7 +7,7 @@
 import Structure from './structure'
 import {
     UnknownEntity, PolymerEntity, NonPolymerEntity, MacrolideEntity, WaterEntity
-} from './structure-constants.js'
+} from './structure-constants'
 import ChainProxy from '../proxy/chain-proxy'
 
 function entityTypeFromString (string: string) {

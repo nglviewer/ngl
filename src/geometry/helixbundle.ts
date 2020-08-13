@@ -7,10 +7,10 @@
 import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
-import { AtomPicker } from '../utils/picker.js'
-import RadiusFactory, { RadiusParams } from '../utils/radius-factory.js'
-import Helixorient, { HelixPosition } from './helixorient.js'
-import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils.js'
+import { AtomPicker } from '../utils/picker'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory'
+import Helixorient, { HelixPosition } from './helixorient'
+import { calculateMeanVector3, projectPointOnVector } from '../math/vector-utils'
 import Polymer from '../proxy/polymer'
 import { ColormakerParameters } from '../color/colormaker';
 

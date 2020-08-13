@@ -11,7 +11,7 @@ import {
     ProteinType, RnaType, DnaType, WaterType, IonType, SaccharideType,
     CgProteinBackboneType, CgRnaBackboneType, CgDnaBackboneType,
     AA1
-} from '../structure/structure-constants.js'
+} from '../structure/structure-constants'
 
 import Structure from '../structure/structure'
 import Selection from '../selection/selection'

@@ -7,12 +7,12 @@
 import { degToRad } from '../math/math-utils'
 import {
   m4new, m4multiply, m4makeTranslation, m4makeScale, m4makeRotationY
-} from '../math/matrix-utils.js'
+} from '../math/matrix-utils'
 import {
   v3addScalar, v3subScalar, v3divideScalar, v3multiplyScalar,
   v3floor, v3ceil, v3sub, v3negate,
   v3cross, v3fromArray, normalizeVector3array
-} from '../math/vector-utils.js'
+} from '../math/vector-utils'
 
 function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: number, inflate: boolean) {
   // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular

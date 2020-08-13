@@ -6,12 +6,12 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import MolecularSurface, { MolecularSurfaceParameters } from '../surface/molecular-surface.js'
-import SurfaceBuffer from '../buffer/surface-buffer.js'
-import ContourBuffer from '../buffer/contour-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import MolecularSurface, { MolecularSurfaceParameters } from '../surface/molecular-surface'
+import SurfaceBuffer from '../buffer/surface-buffer'
+import ContourBuffer from '../buffer/contour-buffer'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
-import Selection from '../selection/selection.js'
+import Selection from '../selection/selection'
 import Viewer from '../viewer/viewer';
 // @ts-ignore: unused import Volume required for declaration only
 import { Structure, Vector3, Volume } from '../ngl';

@@ -6,8 +6,8 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
+import CylinderBuffer from '../buffer/cylinder-buffer'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';

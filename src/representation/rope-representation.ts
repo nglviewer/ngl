@@ -6,9 +6,9 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import CartoonRepresentation, { CartoonRepresentationParameters } from './cartoon-representation.js'
-import Helixorient from '../geometry/helixorient.js'
-import Spline from '../geometry/spline.js'
+import CartoonRepresentation, { CartoonRepresentationParameters } from './cartoon-representation'
+import Helixorient from '../geometry/helixorient'
+import Spline from '../geometry/spline'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import Polymer from '../proxy/polymer';

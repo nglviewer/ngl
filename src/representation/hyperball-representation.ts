@@ -6,10 +6,10 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import { calculateCenterArray } from '../math/array-utils.js'
-import LicoriceRepresentation from './licorice-representation.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import HyperballStickBuffer, { HyperballStickBufferData } from '../buffer/hyperballstick-buffer.js'
+import { calculateCenterArray } from '../math/array-utils'
+import LicoriceRepresentation from './licorice-representation'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
+import HyperballStickBuffer, { HyperballStickBufferData } from '../buffer/hyperballstick-buffer'
 import { BallAndStickRepresentationParameters } from './ballandstick-representation';
 // @ts-ignore: unused import Volume required for declaration only
 import { Structure, Volume } from '../ngl';

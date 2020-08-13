@@ -6,7 +6,7 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from './ballandstick-representation.js'
+import BallAndStickRepresentation, { BallAndStickRepresentationParameters } from './ballandstick-representation'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import AtomProxy from '../proxy/atom-proxy';

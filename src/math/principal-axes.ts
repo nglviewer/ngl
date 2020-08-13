@@ -8,7 +8,7 @@ import { Vector3, Matrix4, Quaternion } from 'three'
 
 import {
     Matrix, meanRows, subRows, transpose, multiplyABt, svd
-} from './matrix-utils.js'
+} from './matrix-utils'
 import { projectPointOnVector } from './vector-utils'
 import Structure from '../structure/structure'
 import AtomProxy from '../proxy/atom-proxy'

@@ -6,8 +6,8 @@
 
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';

@@ -4,7 +4,7 @@
  * @private
  */
 
-import { MouseActionPresets, MouseActionCallback } from './mouse-actions.js'
+import { MouseActionPresets, MouseActionCallback } from './mouse-actions'
 import Stage from '../stage/stage'
 import MouseObserver from '../stage/mouse-observer'
 

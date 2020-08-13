@@ -8,7 +8,7 @@ import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import { SlicePicker } from '../utils/picker.js'
+import { SlicePicker } from '../utils/picker'
 import { Volume } from '../ngl';
 import { SliceRepresentationParameters } from '../representation/slice-representation';
 

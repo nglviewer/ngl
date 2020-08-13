@@ -6,9 +6,9 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import Spline, { SplineParameters } from '../geometry/spline.js'
-import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
-import RibbonBuffer from '../buffer/ribbon-buffer.js'
+import Spline, { SplineParameters } from '../geometry/spline'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
+import RibbonBuffer from '../buffer/ribbon-buffer'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import AtomProxy from '../proxy/atom-proxy';

@@ -6,11 +6,11 @@
 
 import { ExtensionFragDepth } from '../globals'
 import { defaults } from '../utils'
-import Representation, { RepresentationParameters } from './representation.js'
-import Volume from '../surface/volume.js'
-import FilteredVolume from '../surface/filtered-volume.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import PointBuffer from '../buffer/point-buffer.js'
+import Representation, { RepresentationParameters } from './representation'
+import Volume from '../surface/volume'
+import FilteredVolume from '../surface/filtered-volume'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
+import PointBuffer from '../buffer/point-buffer'
 import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
 import SphereGeometryBuffer from '../buffer/spheregeometry-buffer';

@@ -7,9 +7,9 @@
 import { Vector3 } from 'three'
 
 import { ColormakerRegistry } from '../globals'
-import { AtomPicker } from '../utils/picker.js'
-import RadiusFactory, { RadiusParams } from '../utils/radius-factory.js'
-import { copyArray } from '../math/array-utils.js'
+import { AtomPicker } from '../utils/picker'
+import RadiusFactory, { RadiusParams } from '../utils/radius-factory'
+import { copyArray } from '../math/array-utils'
 import { spline } from '../math/math-utils'
 import Polymer from '../proxy/polymer';
 import AtomProxy from '../proxy/atom-proxy';

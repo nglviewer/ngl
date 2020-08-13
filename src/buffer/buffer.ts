@@ -18,7 +18,7 @@ import {
 import { Log } from '../globals'
 import { createParams, getTypedArray, getUintArray } from '../utils'
 import { NumberArray } from '../types'
-import { getShader, ShaderDefines } from '../shader/shader-utils.js'
+import { getShader, ShaderDefines } from '../shader/shader-utils'
 import { serialArray } from '../math/array-utils'
 import { Picker } from '../utils/picker'
 

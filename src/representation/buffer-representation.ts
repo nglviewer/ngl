@@ -4,8 +4,8 @@
  * @private
  */
 
-import Representation, { RepresentationParameters } from './representation.js'
-import Viewer from '../viewer/viewer.js';
+import Representation, { RepresentationParameters } from './representation'
+import Viewer from '../viewer/viewer';
 
 /**
  * Representation for showing buffer objects. Good for efficiently showing

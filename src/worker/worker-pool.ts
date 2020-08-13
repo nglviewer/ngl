@@ -4,7 +4,7 @@
  * @private
  */
 
-import Worker from './worker.js'
+import Worker from './worker'
 
 class WorkerPool {
   maxCount: number

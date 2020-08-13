@@ -5,7 +5,7 @@
  */
 
 import { defaults } from '../utils'
-import Volume from './volume.js'
+import Volume from './volume'
 import { Box3, Matrix4, Matrix3, Vector3 } from 'three';
 
 class FilteredVolume {

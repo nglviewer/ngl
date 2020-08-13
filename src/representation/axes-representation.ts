@@ -8,11 +8,11 @@ import { Color, Vector3 } from 'three'
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import { AxesPicker } from '../utils/picker.js'
-import { uniformArray, uniformArray3 } from '../math/array-utils.js'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
+import { AxesPicker } from '../utils/picker'
+import { uniformArray, uniformArray3 } from '../math/array-utils'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer'
 import StructureView from '../structure/structure-view';
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';

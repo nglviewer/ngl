@@ -13,7 +13,7 @@ import Kdtree from '../geometry/kdtree'
 import { getSymmetryOperations } from '../symmetry/symmetry-utils'
 import Assembly from '../symmetry/assembly'
 import Structure from '../structure/structure'
-import StructureBuilder from '../structure/structure-builder.js'
+import StructureBuilder from '../structure/structure-builder'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 

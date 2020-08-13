@@ -4,7 +4,7 @@
 
 import { sprintf } from 'sprintf-js'
 
-import Writer from './writer.js'
+import Writer from './writer'
 import Structure from '../structure/structure'
 import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
