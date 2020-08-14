@@ -9,7 +9,7 @@ import Parser, { ParserParameters } from './parser'
 import Streamer from '../streamer/streamer';
 
 class TextParser extends Parser {
-  constructor (streamer: Streamer, params: ParserParameters) {
+  constructor (streamer: Streamer, params?: Partial<ParserParameters>) {
     super(streamer, params)
 
     this.text = {

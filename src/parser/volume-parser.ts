@@ -16,7 +16,7 @@ export interface VolumeParserParameters extends ParserParameters {
 }
 
 class VolumeParser extends Parser {
-  constructor (streamer: Streamer, params: Partial<VolumeParserParameters>) {
+  constructor (streamer: Streamer, params?: Partial<VolumeParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

@@ -54,7 +54,7 @@ This project would not be possible without many fine open-source projects. Espec
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
 * [ESDoc](https://esdoc.org/) - for documentation
-* [Mocha](https://mochajs.org/) and [Chai](http://chaijs.com/) - for unit testing
+* [Jest](https://jest.io/) and [ts-jest](https://github.com/kulshekhar/ts-jest) - for unit testing
 * [Chroma.js](https://github.com/gka/chroma.js) - for color handling
 * [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - for color picking
 * [Virtual DOM List](https://github.com/sergi/virtual-list)

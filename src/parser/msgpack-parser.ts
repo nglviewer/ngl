@@ -11,7 +11,7 @@ import { decodeMsgpack } from '../../lib/mmtf.es6'
 import Streamer from '../streamer/streamer';
 
 class MsgpackParser extends Parser {
-  constructor (streamer: Streamer, params: ParserParameters) {
+  constructor (streamer: Streamer, params?: Partial<ParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

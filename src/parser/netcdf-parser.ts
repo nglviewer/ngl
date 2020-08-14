@@ -10,7 +10,7 @@ import NetcdfReader from '../utils/netcdf-reader'
 import Streamer from '../streamer/streamer';
 
 class NetcdfParser extends Parser {
-  constructor (streamer: Streamer, params: Partial<ParserParameters>) {
+  constructor (streamer: Streamer, params?: Partial<ParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

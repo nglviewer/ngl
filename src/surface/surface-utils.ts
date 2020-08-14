@@ -13,6 +13,7 @@ import {
   v3floor, v3ceil, v3sub, v3negate,
   v3cross, v3fromArray, normalizeVector3array
 } from '../math/vector-utils'
+import { NumberArray } from '../types'
 
 function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: number, inflate: boolean) {
   // based on D. Xu, Y. Zhang (2009) Generating Triangulated Macromolecular
@@ -223,7 +224,7 @@ function laplacianSmooth (verts: Float32Array, faces: Float32Array, numiter: num
 }
 Object.assign(laplacianSmooth, {__deps: [ computeVertexNormals ]})
 
-function computeVertexNormals (position: Float32Array, index: Float32Array, normal?: Float32Array) {
+function computeVertexNormals (position: Float32Array, index?: NumberArray, normal?: Float32Array) {
   var i, il
 
   if (normal === undefined) {

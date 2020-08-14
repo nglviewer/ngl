@@ -21,7 +21,7 @@ class XmlParser extends Parser {
     path: string
     data: any
   }
-  constructor (streamer: Streamer, params: XmlParserParameters) {
+  constructor (streamer: Streamer, params?: Partial<XmlParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

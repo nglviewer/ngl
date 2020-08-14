@@ -41,7 +41,7 @@ class Kdtree {
   maxDepth = 0
   currentNode = 0
 
-  constructor(readonly points: Float32Array, readonly metric: (a: NumberArray, b: NumberArray) => number) {
+  constructor(readonly points: NumberArray, readonly metric: (a: NumberArray, b: NumberArray) => number) {
     const n = points.length / 3
 
     const indices = new Uint32Array(n)

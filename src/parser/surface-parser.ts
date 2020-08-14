@@ -9,7 +9,7 @@ import Surface from '../surface/surface'
 import Streamer from '../streamer/streamer';
 
 class SurfaceParser extends Parser {
-  constructor (streamer: Streamer, params:Partial<ParserParameters>) {
+  constructor (streamer: Streamer, params?:Partial<ParserParameters>) {
     super(streamer, params)
 
     this.loader = this.getLoader()

@@ -10,7 +10,7 @@ import Validation from '../structure/validation'
 import Streamer from '../streamer/streamer';
 
 class ValidationParser extends XmlParser {
-  constructor (streamer: Streamer, params: XmlParserParameters) {
+  constructor (streamer: Streamer, params?: Partial<XmlParserParameters>) {
     const p = params || {}
 
     super(streamer, p)
