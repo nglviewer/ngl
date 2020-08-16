@@ -1053,7 +1053,7 @@ export default class Viewer {
 
   updateZoom () {
     const fov = degToRad(this.perspectiveCamera.fov)
-    const height = 2 * Math.tan(fov / 2) * -this.cameraDistance // fix for camera rig
+    const height = 2 * Math.tan(fov / 2) * this.cameraDistance
     this.orthographicCamera.zoom = this.height / height
   }
 
