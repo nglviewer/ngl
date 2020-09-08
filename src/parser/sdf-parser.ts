@@ -8,7 +8,7 @@ import { Debug, Log, ParserRegistry } from '../globals'
 import { assignResidueTypeBonds } from '../structure/structure-utils'
 import StructureParser from './structure-parser'
 
-const reItem = /> <(.+)>/
+const reItem = /> +<(.+)>/
 
 class SdfParser extends StructureParser {
   get type () { return 'sdf' }
