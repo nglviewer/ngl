@@ -397,9 +397,11 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
     // Normals currently disabled in contour mode for performance (unused)
     noNormals = _noNormals || contour
 
-    if (!noNormals && !normalCache) {
-      normalCache = new Float32Array(n * 3)
+    if (!noNormals) {
       normalFactor = isolevel > 0 ? -1.0 : 1.0
+      if (!normalCache) {
+        normalCache = new Float32Array(n * 3)
+      }  
     }
 
     var vIndexLength = n * 3
