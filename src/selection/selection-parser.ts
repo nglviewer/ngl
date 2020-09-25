@@ -268,6 +268,24 @@ function parseSele (string: string) {
       continue
     }
 
+    if (cu === 'APOLARH') {
+      pushRule({
+        operator: 'AND',
+        negate: false,
+        rules: [
+          { element: 'H' },
+          {
+            negate: true,
+            operator: undefined,
+            rules: [
+              { keyword: kwd.POLARH }
+            ]
+          }
+        ]
+      })
+      continue
+    }
+
     if (cu === 'LIGAND') {
       pushRule({
         operator: 'AND',
