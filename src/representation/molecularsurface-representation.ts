@@ -181,6 +181,10 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
         sview = sview.getView(
           new Selection(sview.getAtomSetWithinSelection(asWithin, 3).toSeleString())
         )
+        if (sview.atomCount === 0) {
+          callback(i)
+          return
+        }
       }
 
       info.sele = sview.selection.string
@@ -206,7 +210,9 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     if (this.__forceNewMolsurf || this.__sele !== this.selection.string ||
           this.__surfaceParams !== JSON.stringify(this.getSurfaceParams())) {
       this.__infoList.forEach((info: MolecularSurfaceInfo) => {
-        info.molsurf!.dispose()
+        if (info && info.molsurf) {
+          info.molsurf.dispose()
+        }
       })
       this.__infoList.length = 0
     }
@@ -242,6 +248,11 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
     const info = this.__infoList[ i ]
     const surface = info.surface
 
+    if (!surface) {
+      // Surface creation bailed (no surface generated for this sview)
+      return
+    }
+
     const surfaceData = {
       position: surface!.getPosition(),
       color: surface!.getColor(this.getColorParams()),
@@ -250,7 +261,7 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
     const bufferList = []
 
-    if (surface!.contour) {
+    if (surface.contour) {
       const contourBuffer = new ContourBuffer(
         surfaceData,
         this.getBufferParams({
@@ -261,8 +272,8 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
       bufferList.push(contourBuffer)
     } else {
       Object.assign(surfaceData, {
-        normal: surface!.getNormal(),
-        picking: surface!.getPicking(sview.getStructure())
+        normal: surface.getNormal(),
+        picking: surface.getPicking(sview.getStructure())
       })
 
       const surfaceBuffer = new SurfaceBuffer(
@@ -361,7 +372,9 @@ class MolecularSurfaceRepresentation extends StructureRepresentation {
 
   dispose () {
     this.__infoList.forEach((info: MolecularSurfaceInfo) => {
-      info.molsurf!.dispose()
+      if (info && info.molsurf) {
+        info.molsurf.dispose()
+      }
     })
     this.__infoList.length = 0
 
