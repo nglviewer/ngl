@@ -25,6 +25,7 @@ import fs from 'fs'
   const parsedFile = csvParser._parse()
   console.log("parsedFile", parsedFile)
 
+//just coppied resname colormaker
   const ResidueColors: { [k: string]: number } = {
     'ALA': 0x8CFF8C,
     'ARG': 0x00007C,
