@@ -39,6 +39,7 @@ export interface iAVHash {
 
 
 function makeAVHash (atomsX: Float32Array, atomsY: Float32Array, atomsZ: Float32Array, atomsR: Float32Array, min: Float32Array, max: Float32Array, maxDistance: number): iAVHash {
+  maxDistance = Math.max(0.1, maxDistance) // Avoid maxDistance of zero, see #802
   var nAtoms = atomsX.length
 
   var minX = min[ 0 ]
