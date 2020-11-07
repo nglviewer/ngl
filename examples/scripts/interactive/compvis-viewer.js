@@ -1,6 +1,6 @@
 Promise.all([
   stage.loadFile('rcsb://6qgb.pdb'),
-  NGL.autoLoad('data://6qgb.csv', {
+  NGL.autoLoad('data://mutcompute/6qgb.csv', {
     ext: 'csv',
     delimiter: ' ',
     comment: '#',
