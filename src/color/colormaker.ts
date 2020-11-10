@@ -25,7 +25,7 @@ export const ScaleDefaultParameters = {
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false,
-  colorSpace: 'linear' as ColorSpace // XXX sRGB should be default for compatibility
+  colorSpace: 'linear' as ColorSpace // TODO: hook up to Viewer colorEncoding
 }
 export type ScaleParameters = typeof ScaleDefaultParameters
 

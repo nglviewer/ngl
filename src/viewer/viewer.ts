@@ -323,8 +323,10 @@ export default class Viewer {
 
       sampleLevel: 0,
 
-      rendererEncoding: LinearEncoding,
-      colorEncoding: sRGBEncoding
+      // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
+      rendererEncoding: sRGBEncoding,
+      // Linear converts colors to linear for a linear workflow. Use sRGB for traditional workflow.
+      colorEncoding: LinearEncoding
     }
   }
 
