@@ -13,18 +13,13 @@ function addElement (el) {
 	stage.viewer.container.appendChild(el)
 }
 
-function getGradientColor (startColor, endColor, percent) {
-	// strip the leading # if it's there
-	startColor = startColor.replace(/^\s*#|\s*$/g, '')
-	endColor = endColor.replace(/^\s*#|\s*$/g, '')
-
-	// convert 3 char codes --> 6, e.g. `E0F` --> `EE00FF`
-	if (startColor.length === 3) {
-		startColor = startColor.replace(/(.)/g, '$1$1')
-	}
-
-	if (endColor.length === 3) {
-		endColor = endColor.replace(/(.)/g, '$1$1')
+function getGradientColor (startColor, endColor, thirdColor, percent) {
+	
+	// switch for second gradient i.e white to red for heat map
+	if (percent >= 1) {
+		percent -= 1;
+		startColor = endColor;
+		endColor = thirdColor;
 	}
 
 	// get colors
@@ -45,11 +40,7 @@ function getGradientColor (startColor, endColor, percent) {
 	diffGreen = ((diffGreen * percent) + startGreen).toString(16).split('.')[0]
 	diffBlue = ((diffBlue * percent) + startBlue).toString(16).split('.')[0]
 	
-	/**
-	 * ensure 2 digits by color
-	 * TODO: check if necessary
-	 */
-
+	// ensure 2 digits by color (necessary)
 	if (diffRed.length === 1) diffRed = '0' + diffRed
 	if (diffGreen.length === 1) diffGreen = '0' + diffGreen
 	if (diffBlue.length === 1) diffBlue = '0' + diffBlue
@@ -62,7 +53,7 @@ function makeGradientArray() {
 
 	gradientArray = []
 	for (var count = 0; count < 101; count++) {
-		var newColor = getGradientColor("#FF0000", "#0000FF", (0.01 * count));
+		var newColor = getGradientColor("FF0000", "FFFFFF", "0000FF", (0.02 * count));
 		var numColor = parseInt(Number(newColor), 10)
 		gradientArray.push(numColor)
 	}
