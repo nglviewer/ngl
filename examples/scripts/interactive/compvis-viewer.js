@@ -107,7 +107,7 @@ Promise.all([
   var gradientArray = makeGradientArray()
   //console.log('g', gradientArray)
 
-  var schemeId = NGL.ColormakerRegistry.addScheme(function (params) {
+  var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
     this.atomColor = function (atom) {
       for (var i = 0; i <= csv.length; i++) {
 
@@ -138,11 +138,36 @@ Promise.all([
         // }
        }
      }
-	})
+  })
+
+  var customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
+    this.atomColor = function (atom) {
+      for (var i = 0; i <= csv.length; i++) {
+
+        const wtProb = parseFloat(csv[i][csvWtProbCol])
+        // console.log('wt', wtProb)
+        const resNum = parseFloat(csv[i][csvResNumCol])
+
+        if (atom.resno === resNum) {
+          if (wtProb < 0.01) {
+            return 0xFF0080// hot pink
+          } else if (parseFloat(csv[i][7] < 0.05)) {
+            return 0xFF0000 // red
+          } else if (wtProb < 0.10) {
+            return 0xFFA500 //orange
+          } else if (wtProb < 0.25) {
+            return 0xFFFF00 // yellow
+          } else {
+            return 0xFFFFFF // white
+          }
+        } 
+       }
+     }
+  })
+  
 	
 	// remove default hoverPick mouse action
   stage.mouseControls.remove('hoverPick')
-
   // listen to `hovered` signal to move tooltip around and change its text
   stage.signals.hovered.add(function (pickingProxy) {
 		
@@ -168,6 +193,21 @@ Promise.all([
       tooltip.style.display = 'none'
     }
   })
+
+  var cartoon = protein.addRepresentation('cartoon', { color: heatMap })
+
+  var schemeSelect = createSelect(
+    [
+      [heatMap, 'heat map'],
+      [customPercent, 'custom percent']
+    ],
+    null,
+    { top: '6em', left: '1em' }
+  )
+  schemeSelect.onchange = function (e) {
+    cartoon.setParameters({ colorScheme: e.target.value })
+  }
+  addElement(schemeSelect)
 
   // works but needs fine tuning with 
   var polymerSelect = createSelect([
@@ -200,6 +240,6 @@ Promise.all([
 
   //stage.autoView()
 
-  protein.addRepresentation('cartoon', { color: schemeId })
+  
   protein.autoView()
 })
