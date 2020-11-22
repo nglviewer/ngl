@@ -13,6 +13,17 @@ function addElement (el) {
   stage.viewer.container.appendChild(el)
 }
 
+function createSelect (options, properties, style) {
+  var select = createElement('select', properties, style)
+  options.forEach(function (d) {
+    select.add(createElement('option', {
+      value: d[0], text: d[1]
+    }))
+  })
+  return select
+}
+
+
 
 var tooltip = document.createElement('div')
   Object.assign(tooltip.style, {
@@ -86,7 +97,8 @@ Promise.all([
 	var csv = ol[1].data
 	
 	const csvResNumCol = 3
-	const csvWtProbCol = 6
+  const csvWtProbCol = 6
+  const firstResNum = parseInt(csv[0][csvResNumCol])
 	//const csvPrAaCol = 5
 	//const csvPrProbCol = 7
   // console.log('PROTEIN:', protein)
@@ -109,21 +121,21 @@ Promise.all([
         if (atom.resno === resNum) {
           return gradientArray[normWtProb]
         }
-  //         if (wtProb < 0.01) {
-  //           return 0xFF0080// hot pink
-  //         } else if (parseFloat(csv[i][7] < 0.05)) {
-  //           return 0xFF0000 // red
-  //         } else if (wtProb < 0.10) {
-  //           return 0xFFA500 //orange
-  //         } else if (wtProb < 0.25) {
-  //           return 0xFFFF00 // yellow
-  //         } else {
-  //           return 0xFFFFFF // white
-  //         }
-  //       } else {
-  //         // TODO what do we do here? We need to know what the implications of else
-  //         continue
-  //       }
+          // if (wtProb < 0.01) {
+          //   return 0xFF0080// hot pink
+          // } else if (parseFloat(csv[i][7] < 0.05)) {
+          //   return 0xFF0000 // red
+          // } else if (wtProb < 0.10) {
+          //   return 0xFFA500 //orange
+          // } else if (wtProb < 0.25) {
+          //   return 0xFFFF00 // yellow
+          // } else {
+          //   return 0xFFFFFF // white
+          // }
+        // } else {
+        // // TODO what do we do here? We need to know what the implications of else
+        //   continue
+        // }
        }
      }
 	})
@@ -138,16 +150,16 @@ Promise.all([
 			var atom = pickingProxy.atom || pickingProxy.closestBondAtom
 			var mp = pickingProxy.mouse.position
 			var csv = ol[1].data
-			console.log(atom.resno)
+			// console.log(atom.resno) -- logs for every haver
 			const csvWtProbCol = 6
 			const csvPrAaCol = 5
 			const csvPrProbCol = 7
 			tooltip.innerHTML = `
         RESNO: ${atom.resno}<br/>
         WT AA: ${atom.resname}<br/>
-        WT%: ${csv[atom.resno - 9][csvWtProbCol]}<br/>
-        PRED AA: ${csv[atom.resno - 9][csvPrAaCol]}<br/>
-        PRED%: ${csv[atom.resno - 9][csvPrProbCol]}<br/>`
+        WT%: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
+        PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
+        PRED%: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
       
       tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
       tooltip.style.left = mp.x + 3 + 'px'
@@ -157,10 +169,28 @@ Promise.all([
     }
   })
 
+  // works but needs fine tuning with 
+  var polymerSelect = createSelect([
+    ['cartoon', 'cartoon'],
+    ['ball+stick', 'ball+stick'],
+    ['licorice', 'licorice'],
+  ], {
+    onchange: function (e) {
+      stage.getRepresentationsByName('polymer').dispose()
+      stage.eachComponent(function (o) {
+        o.addRepresentation(e.target.value, {
+          sele: 'polymer',
+          name: 'polymer'
+        })
+      })
+    }
+  }, { top: '36px', left: '12px' })
+  addElement(polymerSelect)
+
   var centerButton = createElement(
     'button',
     { innerText: 'Center' },
-    { top: '3em', left: '1em' }
+    { top: '1em', left: '1em' }
   )
   centerButton.onclick = function (e) {
     stage.autoView(1000)
@@ -168,7 +198,7 @@ Promise.all([
 
   addElement(centerButton)
 
-  stage.autoView()
+  //stage.autoView()
 
   protein.addRepresentation('cartoon', { color: schemeId })
   protein.autoView()
