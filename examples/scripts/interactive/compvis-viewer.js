@@ -23,8 +23,6 @@ function createSelect (options, properties, style) {
   return select
 }
 
-
-
 var tooltip = document.createElement('div')
   Object.assign(tooltip.style, {
     display: 'none',
@@ -121,21 +119,6 @@ Promise.all([
         if (atom.resno === resNum) {
           return gradientArray[normWtProb]
         }
-          // if (wtProb < 0.01) {
-          //   return 0xFF0080// hot pink
-          // } else if (parseFloat(csv[i][7] < 0.05)) {
-          //   return 0xFF0000 // red
-          // } else if (wtProb < 0.10) {
-          //   return 0xFFA500 //orange
-          // } else if (wtProb < 0.25) {
-          //   return 0xFFFF00 // yellow
-          // } else {
-          //   return 0xFFFFFF // white
-          // }
-        // } else {
-        // // TODO what do we do here? We need to know what the implications of else
-        //   continue
-        // }
        }
      }
   })
@@ -194,7 +177,7 @@ Promise.all([
     }
   })
 
-  var cartoon = protein.addRepresentation('cartoon', { color: heatMap })
+  
 
   var schemeSelect = createSelect(
     [
@@ -202,7 +185,7 @@ Promise.all([
       [customPercent, 'custom percent']
     ],
     null,
-    { top: '6em', left: '1em' }
+    { top: '5em', left: '1em' }
   )
   schemeSelect.onchange = function (e) {
     cartoon.setParameters({ colorScheme: e.target.value })
@@ -224,7 +207,7 @@ Promise.all([
         })
       })
     }
-  }, { top: '36px', left: '12px' })
+  }, { top: '3em', left: '1em' })
   addElement(polymerSelect)
 
   var centerButton = createElement(
@@ -240,6 +223,6 @@ Promise.all([
 
   //stage.autoView()
 
-  
+  var cartoon = protein.addRepresentation('cartoon', { color: heatMap })
   protein.autoView()
 })
