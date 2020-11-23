@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>NGL - embedded</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+</head>
+<body>
+  <script src="../build/js/ngl.dev.js"></script>
+  <script>
+    // Datasources
+    NGL.DatasourceRegistry.add("data", new NGL.StaticDatasource("../data/"))
+
+    var stage = document.addEventListener("DOMContentLoaded", function () {
+      stage = new NGL.Stage("viewport");
+      stage.handleResize()
+    Promise.all([
+            stage.loadFile("rcsb://2isk"),
+            NGL.autoLoad("data://2ISK.csv", {
+              ext: 'csv',
+              delimiter: ' ',
+              comment: '#',
+              columnNames: true
+            })
+      ]).then(function (ol) {
+        var protein = ol[0]
+        var csv = ol[1].data
+        csvWtProbCol = 6
+        csvResNumCol = 3
+
+        var schemeId = NGL.ColormakerRegistry.addScheme(function (params) {
+        this.atomColor = function (atom) {
+          for (var i = 0; i <= csv.length; i++) {
+            const wtProb = parseFloat(csv[i][csvWtProbCol])
+            const resNum = parseFloat(csv[i][csvResNumCol])
+            const normWtProb = (wtProb * 100).toFixed(0)
+            if (atom.resno === resNum) {
+              if (wtProb < 0.01) {
+                return 0xFF0080
+              } else if (parseFloat(csv[i][7] < 0.05)) {
+                return 0xFF0000
+              } else if (wtProb < 0.10) {
+                return 0xFFA500
+              } else if (wtProb < 0.25) {
+                return 0xFFFF00 
+              } else {
+                return 0xFFFFFF 
+              }
+            }
+            } 
+           }
+         })
+      protein.addRepresentation("cartoon", { color: schemeId })
+      stage.autoView()
+        })
+      });
+  </script>
+  <div id="viewport" style="widows: 1000px; height:1000px;"></div>
+</body>
+</html>
