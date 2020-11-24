@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>NGL - embedded</title>
+  <title>NGL - compvis</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 </head>
@@ -22,7 +22,7 @@
 
       function createElement (name, properties, style) {
         var el = document.createElement(name)
-        Object.assign(el, properties)
+      Object.assign(el, properties)
         Object.assign(el.style, style)
         return el
     }
@@ -104,8 +104,8 @@
     }
 
     Promise.all([
-      stage.loadFile('data://mutcompute/2ISK.pdb'),
-      NGL.autoLoad('data://mutcompute/2ISK.csv', {
+      stage.loadFile('data://mutcompute/6ij6.pdb'),
+      NGL.autoLoad('data://mutcompute/6ij6.csv', {
         ext: 'csv',
         delimiter: ' ',
         comment: '#',
@@ -116,8 +116,8 @@
       var protein = ol[0]
     	var csv = ol[1].data
     
-    	const csvResNumCol = 3
-      const csvWtProbCol = 6
+    	const csvResNumCol = 4
+      const csvWtProbCol = 7
       const firstResNum = parseInt(csv[0][csvResNumCol])
     	//const csvPrAaCol = 5
     	//const csvPrProbCol = 7
@@ -181,9 +181,9 @@
     			var mp = pickingProxy.mouse.position
     			var csv = ol[1].data
     			// console.log(atom.resno) -- logs for every haver
-    			const csvWtProbCol = 6
+    			const csvWtProbCol = 7
     			const csvPrAaCol = 5
-    			const csvPrProbCol = 7
+    			const csvPrProbCol = 8
     			tooltip.innerHTML = `
             RESNO: ${atom.resno}<br/>
             WT AA: ${atom.resname}<br/>
