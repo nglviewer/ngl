@@ -82,8 +82,8 @@ function makeGradientArray () {
 }
 
 Promise.all([
-  stage.loadFile('data://mutcompute/2ISK.pdb'),
-  NGL.autoLoad('data://mutcompute/2ISK.csv', {
+  stage.loadFile('data://mutcompute/6ij6.pdb'),
+  NGL.autoLoad('data://mutcompute/6ij6.csv', {
     ext: 'csv',
     delimiter: ' ',
     comment: '#',
@@ -94,8 +94,9 @@ Promise.all([
   var protein = ol[0]
 	var csv = ol[1].data
 	
-	const csvResNumCol = 3
-  const csvWtProbCol = 6
+	const csvResNumCol = 4
+  const csvWtProbCol = 7
+  const csvPrProbCol = 8
   const firstResNum = parseInt(csv[0][csvResNumCol])
 	//const csvPrAaCol = 5
 	//const csvPrProbCol = 7
@@ -127,14 +128,18 @@ Promise.all([
     this.atomColor = function (atom) {
       for (var i = 0; i <= csv.length; i++) {
 
+        const predProb = parseFloat(csv[i][csvPrProbCol])
         const wtProb = parseFloat(csv[i][csvWtProbCol])
         // console.log('wt', wtProb)
         const resNum = parseFloat(csv[i][csvResNumCol])
 
         if (atom.resno === resNum) {
-          if (wtProb < 0.01) {
+          if (wtProb < 0.01 && predProb > 0.7) {
             return 0xFF0080// hot pink
-          } else if (parseFloat(csv[i][7] < 0.05)) {
+          } else if (wtProb < 0.01 ) {
+            return 0xCC00FF // hot pink
+          }
+          else if (parseFloat(csv[i][7] < 0.05)) {
             return 0xFF0000 // red
           } else if (wtProb < 0.10) {
             return 0xFFA500 //orange
@@ -159,15 +164,15 @@ Promise.all([
 			var mp = pickingProxy.mouse.position
 			var csv = ol[1].data
 			// console.log(atom.resno) -- logs for every haver
-			const csvWtProbCol = 6
+			const csvWtProbCol = 7
 			const csvPrAaCol = 5
-			const csvPrProbCol = 7
+			const csvPrProbCol = 8
 			tooltip.innerHTML = `
         RESNO: ${atom.resno}<br/>
         WT AA: ${atom.resname}<br/>
-        WT%: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
+        WT PROB: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
         PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
-        PRED%: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
+        PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
       
       tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
       tooltip.style.left = mp.x + 3 + 'px'
