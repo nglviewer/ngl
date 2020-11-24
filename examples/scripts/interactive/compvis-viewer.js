@@ -165,7 +165,7 @@ Promise.all([
 			var csv = ol[1].data
 			// console.log(atom.resno) -- logs for every haver
 			const csvWtProbCol = 7
-			const csvPrAaCol = 5
+			const csvPrAaCol = 6
 			const csvPrProbCol = 8
 			tooltip.innerHTML = `
         RESNO: ${atom.resno}<br/>

@@ -119,10 +119,6 @@
     	const csvResNumCol = 4
       const csvWtProbCol = 7
       const firstResNum = parseInt(csv[0][csvResNumCol])
-    	//const csvPrAaCol = 5
-    	//const csvPrProbCol = 7
-      // console.log('PROTEIN:', protein)
-      // console.log('csv', csv.length, csv[0])
     
       var gradientArray = makeGradientArray()
       //console.log('g', gradientArray)
@@ -182,7 +178,7 @@
     			var csv = ol[1].data
     			// console.log(atom.resno) -- logs for every haver
     			const csvWtProbCol = 7
-    			const csvPrAaCol = 5
+    			const csvPrAaCol = 6
     			const csvPrProbCol = 8
     			tooltip.innerHTML = `
             RESNO: ${atom.resno}<br/>
