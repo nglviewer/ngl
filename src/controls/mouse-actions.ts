@@ -198,9 +198,10 @@ class MouseActions {
     const sp = stage.getParameters() as any
     if (sp.tooltip && pickingProxy) {
       const mp = pickingProxy.mouse.position
+      const rect = pickingProxy.mouse.domElement.getBoundingClientRect()
       tt.innerText = pickingProxy.getLabel()
-      tt.style.bottom = (window.innerHeight - mp.y + 3) + 'px'
-      tt.style.left = (mp.x + 3) + 'px'
+      tt.style.bottom = (rect.bottom - mp.y + 3) + 'px'
+      tt.style.left = (mp.x - rect.left + 3) + 'px'
       tt.style.display = 'block'
     } else {
       tt.style.display = 'none'
