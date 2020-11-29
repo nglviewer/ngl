@@ -211,6 +211,10 @@ export function v3forEach (array: Float32Array, fn: (i: Float32Array, j: Float32
 }
 (v3forEach as any).__deps = [ v3new, v3fromArray, v3toArray ]
 
+export function v3length2 (a: Float32Array) {
+  return a[0] * a[0] + a[1] * a[1] + a[2] * a[2]
+}
+
 export function v3length (a: Float32Array) {
   return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2])
 }
@@ -239,9 +243,16 @@ export function v3multiplyScalar (out: Float32Array, a: Float32Array, s: number)
 }
 
 export function v3normalize (out: Float32Array, a: Float32Array) {
-  v3multiplyScalar(out, a, 1 / v3length(a))
+  const length2 = v3length2(a)
+  if (length2 == 0) {
+    out[0] = a[0]
+    out[1] = a[1]
+    out[2] = a[2]
+  } else {
+    v3multiplyScalar(out, a, 1 / Math.sqrt(length2))
+  }
 }
-(v3normalize as any).__deps = [ v3multiplyScalar, v3length ]
+(v3normalize as any).__deps = [ v3multiplyScalar, v3length2 ]
 
 export function v3subScalar (out: Float32Array, a: Float32Array, s: number) {
   out[0] = a[0] - s
