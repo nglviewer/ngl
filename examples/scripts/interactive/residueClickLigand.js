@@ -252,7 +252,7 @@ function setChainOptions () {
 
 stage.signals.clicked.add(function (pickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-      console.log(pickingProxy.closestBondAtom || pickingProxy.atom.resno)
+      console.log(pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
   })
 
@@ -265,11 +265,22 @@ function setResidueOptions (chain) {
         if (rp.resno !== undefined) sele += rp.resno
         if (rp.inscode) sele += '^' + rp.inscode
         if (rp.chain) sele += ':' + rp.chainname
+        // console.log('sele', sele)
         var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
         options.push([sele, name])
       }, new NGL.Selection('polymer and :' + chain))
     }
+
+    // REFACTOR FOR CLICKING
+    // stage.signals.clicked.add(function (pickingProxy) {
+    //     var sele = ''
+    //     rp = pickingProxy.atom
+    //     if (rp.resno !== undefined) sele += rp.resno
+    //     if (rp.inscode) sele += '^' + rp.inscode
+    //     if (rp.chain) sele += ':' + rp.chainname
+
     options.forEach(function (d) {
+        // console.log('d', d)
       residueSelect.add(createElement('option', {
         value: d[0], text: d[1]
       }))
@@ -309,8 +320,8 @@ function showFull () {
   ligandSelect.value = ''
 
   backboneRepr.setParameters({ radiusScale: 2 })
-  backboneRepr.setVisibility(true)
-  spacefillRepr.setVisibility(true)
+  backboneRepr.setVisibility(false)
+  spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
@@ -389,13 +400,32 @@ var chainSelect = createSelect([], {
 }, { top: getTopPosition(20), left: '12px', width: '130px' })
 addElement(chainSelect)
 
+// onclick residue select and show ligand
+timesClicked = 0
+var residueClick = stage.signals.clicked.add(function (pickingProxy) {
+    timesClicked ++
+    var sele = ''
+    if (pickingProxy.atom.resno !== undefined) sele += pickingProxy.atom.resno
+    if (pickingProxy.atom.chainname) sele += ':' + pickingProxy.atom.chainname
+    if (!sele) {
+      showFull()
+    } else if (timesClicked % 2 === 0) {
+      showFull()
+    } else {
+      showLigand(sele)
+    }
+})
+
+
 var residueSelect = createSelect([], {
   onchange: function (e) {
     ligandSelect.value = ''
     var sele = e.target.value
+    //console.log('e', e.target.value)
     if (!sele) {
       showFull()
     } else {
+      console.log(sele)
       showLigand(sele)
     }
   }
