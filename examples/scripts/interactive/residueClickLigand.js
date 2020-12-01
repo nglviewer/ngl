@@ -102,11 +102,7 @@ stage.signals.hovered.add(function (pickingProxy) {
   }
 })
 
-stage.signals.clicked.add(function (pickingProxy) {
-  if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-    console.log(pickingProxy.atom || pickingProxy.closestBondAtom)
-  }
-})
+
 
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
@@ -156,6 +152,7 @@ function loadStructure (input) {
     })
     ballStickRepr = o.addRepresentation('ball+stick', {
         visible: false,
+        // removes water ions
         sele: 'polymer',
         name: 'polymer'
     })
@@ -253,25 +250,33 @@ function setChainOptions () {
   })
 }
 
-function setResidueOptions (chain) {
-  residueSelect.innerHTML = ''
-  var options = [['', 'select residue']]
-  if (chain) {
-    struc.structure.eachResidue(function (rp) {
-      var sele = ''
-      if (rp.resno !== undefined) sele += rp.resno
-      if (rp.inscode) sele += '^' + rp.inscode
-      if (rp.chain) sele += ':' + rp.chainname
-      var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-      options.push([sele, name])
-    }, new NGL.Selection('polymer and :' + chain))
-  }
-  options.forEach(function (d) {
-    residueSelect.add(createElement('option', {
-      value: d[0], text: d[1]
-    }))
+stage.signals.clicked.add(function (pickingProxy) {
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+      console.log(pickingProxy.closestBondAtom || pickingProxy.atom.resno)
+    }
   })
-}
+
+function setResidueOptions (chain) {
+    residueSelect.innerHTML = ''
+    var options = [['', 'select residue']]
+    if (chain) {
+      struc.structure.eachResidue(function (rp) {
+        var sele = ''
+        if (rp.resno !== undefined) sele += rp.resno
+        if (rp.inscode) sele += '^' + rp.inscode
+        if (rp.chain) sele += ':' + rp.chainname
+        var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
+        options.push([sele, name])
+      }, new NGL.Selection('polymer and :' + chain))
+    }
+    options.forEach(function (d) {
+      residueSelect.add(createElement('option', {
+        value: d[0], text: d[1]
+      }))
+    })
+  }
+
+
 
 var loadStructureButton = createFileButton('load structure', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
