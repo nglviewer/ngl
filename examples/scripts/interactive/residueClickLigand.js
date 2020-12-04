@@ -270,15 +270,6 @@ function setResidueOptions (chain) {
         options.push([sele, name])
       }, new NGL.Selection('polymer and :' + chain))
     }
-
-    // REFACTOR FOR CLICKING
-    // stage.signals.clicked.add(function (pickingProxy) {
-    //     var sele = ''
-    //     rp = pickingProxy.atom
-    //     if (rp.resno !== undefined) sele += rp.resno
-    //     if (rp.inscode) sele += '^' + rp.inscode
-    //     if (rp.chain) sele += ':' + rp.chainname
-
     options.forEach(function (d) {
         // console.log('d', d)
       residueSelect.add(createElement('option', {
@@ -405,8 +396,10 @@ timesClicked = 0
 var residueClick = stage.signals.clicked.add(function (pickingProxy) {
     timesClicked ++
     var sele = ''
-    if (pickingProxy.atom.resno !== undefined) sele += pickingProxy.atom.resno
-    if (pickingProxy.atom.chainname) sele += ':' + pickingProxy.atom.chainname
+    if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
+     sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
+    }
+    //if (pickingProxy.atom.chainname) sele += ':' + pickingProxy.atom.chainname
     if (!sele) {
       showFull()
     } else if (timesClicked % 2 === 0) {
