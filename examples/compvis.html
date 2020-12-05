@@ -187,8 +187,10 @@
             PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
             PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
 
-          tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
-          tooltip.style.left = mp.x + 3 + 'px'
+          // Display pinned to bottom right
+          tooltip.style.bottom = 3 + 'px'
+          tooltip.style.left = window.innerWidth - 220 + 'px'
+          console.log('W', window.innerWidth)
           tooltip.style.display = 'block'
         } else {
           tooltip.style.display = 'none'
