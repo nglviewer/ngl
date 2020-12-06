@@ -124,6 +124,7 @@ function loadStructure (input) {
   clipRadiusRange.value = 100
   pocketOpacityRange.value = 0
   cartoonCheckbox.checked = false
+  ballStickCheckbox.checked = false
   //backboneCheckbox.checked = false
   waterIonCheckbox.checked = false
   hydrophobicCheckbox.checked = false
@@ -252,7 +253,7 @@ function setChainOptions () {
 
 stage.signals.clicked.add(function (pickingProxy) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-      console.log(pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
+      console.log(pickingProxy.closestBondAtom || pickingProxy.atom)
     }
   })
 
@@ -394,12 +395,16 @@ addElement(chainSelect)
 // onclick residue select and show ligand
 timesClicked = 0
 var residueClick = stage.signals.clicked.add(function (pickingProxy) {
+  if (ballStickCheckbox.checked === false) {
     timesClicked ++
+    ligandSelect.value = ''
     var sele = ''
     if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
      sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
     }
-    //if (pickingProxy.atom.chainname) sele += ':' + pickingProxy.atom.chainname
+    if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
+      sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
+    }
     if (!sele) {
       showFull()
     } else if (timesClicked % 2 === 0) {
@@ -407,6 +412,7 @@ var residueClick = stage.signals.clicked.add(function (pickingProxy) {
     } else {
       showLigand(sele)
     }
+  }  
 })
 
 
