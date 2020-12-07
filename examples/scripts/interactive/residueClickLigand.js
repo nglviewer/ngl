@@ -109,7 +109,7 @@ var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, backboneRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
+var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
 
 var struc
 var neighborSele
@@ -126,6 +126,7 @@ function loadStructure (input) {
   cartoonCheckbox.checked = false
   ballStickCheckbox.checked = false
   //backboneCheckbox.checked = false
+  // hydrogenCheckbox.checked = true
   waterIonCheckbox.checked = false
   hydrophobicCheckbox.checked = false
   hydrogenBondCheckbox.checked = true
@@ -140,8 +141,8 @@ function loadStructure (input) {
   return stage.loadFile(input).then(function (o) {
     struc = o
     setLigandOptions()
-    setChainOptions()
-    setResidueOptions()
+    // setChainOptions()
+    // setResidueOptions()
     o.autoView()
     cartoonRepr = o.addRepresentation('cartoon', {
       visible: true
@@ -236,48 +237,48 @@ function setLigandOptions () {
   })
 }
 
-function setChainOptions () {
-  chainSelect.innerHTML = ''
-  var options = [['', 'select chain']]
-  struc.structure.eachChain(function (cp) {
-    var name = cp.chainname
-    if (cp.entity && cp.entity.description) name += ' (' + cp.entity.description + ')'
-    options.push([cp.chainname, name])
-  }, new NGL.Selection('polymer'))
-  options.forEach(function (d) {
-    chainSelect.add(createElement('option', {
-      value: d[0], text: d[1]
-    }))
-  })
-}
+// function setChainOptions () {
+//   chainSelect.innerHTML = ''
+//   var options = [['', 'select chain']]
+//   struc.structure.eachChain(function (cp) {
+//     var name = cp.chainname
+//     if (cp.entity && cp.entity.description) name += ' (' + cp.entity.description + ')'
+//     options.push([cp.chainname, name])
+//   }, new NGL.Selection('polymer'))
+//   options.forEach(function (d) {
+//     chainSelect.add(createElement('option', {
+//       value: d[0], text: d[1]
+//     }))
+//   })
+// }
 
-stage.signals.clicked.add(function (pickingProxy) {
-    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-      console.log(pickingProxy.closestBondAtom || pickingProxy.atom)
-    }
-  })
+// stage.signals.clicked.add(function (pickingProxy) {
+//     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+//       console.log(pickingProxy.closestBondAtom || pickingProxy.atom)
+//     }
+//   })
 
-function setResidueOptions (chain) {
-    residueSelect.innerHTML = ''
-    var options = [['', 'select residue']]
-    if (chain) {
-      struc.structure.eachResidue(function (rp) {
-        var sele = ''
-        if (rp.resno !== undefined) sele += rp.resno
-        if (rp.inscode) sele += '^' + rp.inscode
-        if (rp.chain) sele += ':' + rp.chainname
-        // console.log('sele', sele)
-        var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-        options.push([sele, name])
-      }, new NGL.Selection('polymer and :' + chain))
-    }
-    options.forEach(function (d) {
-        // console.log('d', d)
-      residueSelect.add(createElement('option', {
-        value: d[0], text: d[1]
-      }))
-    })
-  }
+// function setResidueOptions (chain) {
+//     residueSelect.innerHTML = ''
+//     var options = [['', 'select residue']]
+//     if (chain) {
+//       struc.structure.eachResidue(function (rp) {
+//         var sele = ''
+//         if (rp.resno !== undefined) sele += rp.resno
+//         if (rp.inscode) sele += '^' + rp.inscode
+//         if (rp.chain) sele += ':' + rp.chainname
+//         // console.log('sele', sele)
+//         var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
+//         options.push([sele, name])
+//       }, new NGL.Selection('polymer and :' + chain))
+//     }
+//     options.forEach(function (d) {
+//         // console.log('d', d)
+//       residueSelect.add(createElement('option', {
+//         value: d[0], text: d[1]
+//       }))
+//     })
+// }
 
 
 
@@ -311,8 +312,8 @@ addElement(loadPdbidInput)
 function showFull () {
   ligandSelect.value = ''
 
-  backboneRepr.setParameters({ radiusScale: 2 })
-  backboneRepr.setVisibility(false)
+  // backboneRepr.setParameters({ radiusScale: 2 })
+  // backboneRepr.setVisibility(false)
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
@@ -321,7 +322,7 @@ function showFull () {
   pocketRepr.setVisibility(false)
   labelRepr.setVisibility(false)
 
-  struc.autoView(2000)
+  struc.autoView()
 }
 
 var fullButton = createElement('input', {
@@ -337,7 +338,7 @@ function showLigand (sele) {
   var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 5)
   var withinGroup = s.getAtomSetWithinGroup(withinSele)
   var expandedSele = withinGroup.toSeleString()
-  // neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
+  neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
   var sview = s.getView(new NGL.Selection(sele))
@@ -345,8 +346,8 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  backboneRepr.setParameters({ radiusScale: 0.2 })
-  //backboneRepr.setVisibility(backboneCheckbox.checked)
+  // backboneRepr.setParameters({ radiusScale: 0.2 })
+  // backboneRepr.setVisibility(backboneCheckbox.checked)
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
@@ -372,7 +373,7 @@ function showLigand (sele) {
 
 var ligandSelect = createSelect([], {
   onchange: function (e) {
-    residueSelect.value = ''
+    // residueSelect.value = ''
     var sele = e.target.value
     if (!sele) {
       showFull()
@@ -383,14 +384,14 @@ var ligandSelect = createSelect([], {
 }, { top: getTopPosition(30), left: '12px', width: '130px' })
 addElement(ligandSelect)
 
-var chainSelect = createSelect([], {
-  onchange: function (e) {
-    ligandSelect.value = ''
-    residueSelect.value = ''
-    setResidueOptions(e.target.value)
-  }
-}, { top: getTopPosition(20), left: '12px', width: '130px' })
-addElement(chainSelect)
+// var chainSelect = createSelect([], {
+//   onchange: function (e) {
+//     ligandSelect.value = ''
+//     residueSelect.value = ''
+//     setResidueOptions(e.target.value)
+//   }
+// }, { top: getTopPosition(20), left: '12px', width: '130px' })
+// addElement(chainSelect)
 
 // onclick residue select and show ligand
 timesClicked = 0
@@ -416,20 +417,20 @@ var residueClick = stage.signals.clicked.add(function (pickingProxy) {
 })
 
 
-var residueSelect = createSelect([], {
-  onchange: function (e) {
-    ligandSelect.value = ''
-    var sele = e.target.value
-    //console.log('e', e.target.value)
-    if (!sele) {
-      showFull()
-    } else {
-      console.log(sele)
-      showLigand(sele)
-    }
-  }
-}, { top: getTopPosition(20), left: '12px', width: '130px' })
-addElement(residueSelect)
+// var residueSelect = createSelect([], {
+//   onchange: function (e) {
+//     ligandSelect.value = ''
+//     var sele = e.target.value
+//     //console.log('e', e.target.value)
+//     if (!sele) {
+//       showFull()
+//     } else {
+//       console.log(sele)
+//       showLigand(sele)
+//     }
+//   }
+// }, { top: getTopPosition(20), left: '12px', width: '130px' })
+// addElement(residueSelect)
 
 addElement(createElement('span', {
   innerText: 'pocket near clipping'
@@ -523,6 +524,22 @@ addElement(waterIonCheckbox)
 addElement(createElement('span', {
   innerText: 'water ion'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
+
+// var hydrogenCheckbox = createElement('input', {
+//   type: 'checkbox',
+//   checked: true,
+//   onchange: function (e) {
+//     if (e.target.checked) {
+//       struc.setSelection('*')
+//     } else {
+//       struc.setSelection('not _H')
+//     }
+//   }
+// }, { top: getTopPosition(20), left: '12px' })
+// addElement(hydrogenCheckbox)
+// addElement(createElement('span', {
+//   innerText: 'hydrogen'
+// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var sidechainAttachedCheckbox = createElement('input', {
   type: 'checkbox',
