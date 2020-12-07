@@ -400,10 +400,13 @@ var residueClick = stage.signals.clicked.add(function (pickingProxy) {
     timesClicked ++
     ligandSelect.value = ''
     var sele = ''
-    if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
+    if (pickingProxy === undefined) {
+      showFull()
+    }
+    else if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
      sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
     }
-    if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
+    else if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
       sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
     if (!sele) {
