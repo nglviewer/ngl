@@ -23,19 +23,31 @@ function createSelect (options, properties, style) {
   return select
 }
 
-var tooltip = document.createElement('div')
-  Object.assign(tooltip.style, {
-    display: 'none',
-    position: 'fixed',
-    zIndex: 10,
-    pointerEvents: 'none',
-    backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
-    color: 'lightgrey',
-    padding: '8px',
-    fontFamily: 'sans-serif'
-  })
-document.body.appendChild(tooltip)
+function createFileButton (label, properties, style) {
+  var input = createElement('input', Object.assign({
+    type: 'file'
+  }, properties), { display: 'none' })
+  addElement(input)
+  var button = createElement('input', {
+    value: label,
+    type: 'button',
+    onclick: function () { input.click() }
+  }, style)
+  return button
+}
 
+var tooltip = document.createElement('div')
+Object.assign(tooltip.style, {
+  display: 'none',
+  position: 'fixed',
+  zIndex: 10,
+  pointerEvents: 'none',
+  backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
+  color: 'lightgrey',
+  padding: '8px',
+  fontFamily: 'sans-serif'
+})
+document.body.appendChild(tooltip)
 
 function getGradientColor (startColor, endColor, thirdColor, percent) {
   // switch for second gradient i.e white to red for heat map
@@ -92,24 +104,18 @@ Promise.all([
 
 ]).then(function (ol) {
   var protein = ol[0]
-	var csv = ol[1].data
-	
-	const csvResNumCol = 4
+  var csv = ol[1].data
+
+  const csvResNumCol = 4
   const csvWtProbCol = 7
   const csvPrProbCol = 8
   const firstResNum = parseInt(csv[0][csvResNumCol])
-	//const csvPrAaCol = 5
-	//const csvPrProbCol = 7
-  // console.log('PROTEIN:', protein)
-  // console.log('csv', csv.length, csv[0])
-
+  
   var gradientArray = makeGradientArray()
-  //console.log('g', gradientArray)
 
   var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
     this.atomColor = function (atom) {
       for (var i = 0; i <= csv.length; i++) {
-
         const wtProb = parseFloat(csv[i][csvWtProbCol])
         // console.log('wt', wtProb)
         const resNum = parseFloat(csv[i][csvResNumCol])
@@ -120,14 +126,13 @@ Promise.all([
         if (atom.resno === resNum) {
           return gradientArray[normWtProb]
         }
-       }
-     }
+      }
+    }
   })
 
   var customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
     this.atomColor = function (atom) {
       for (var i = 0; i <= csv.length; i++) {
-
         const predProb = parseFloat(csv[i][csvPrProbCol])
         const wtProb = parseFloat(csv[i][csvWtProbCol])
         // console.log('wt', wtProb)
@@ -136,44 +141,41 @@ Promise.all([
         if (atom.resno === resNum) {
           if (wtProb < 0.01 && predProb > 0.7) {
             return 0xFF0080// hot pink
-          } else if (wtProb < 0.01 ) {
+          } else if (wtProb < 0.01) {
             return 0xCC00FF // hot pink
-          }
-          else if (parseFloat(csv[i][7] < 0.05)) {
+          } else if (parseFloat(csv[i][7] < 0.05)) {
             return 0xFF0000 // red
           } else if (wtProb < 0.10) {
-            return 0xFFA500 //orange
+            return 0xFFA500 // orange
           } else if (wtProb < 0.25) {
             return 0xFFFF00 // yellow
           } else {
             return 0xFFFFFF // white
           }
-        } 
-       }
-     }
+        }
+      }
+    }
   })
-  
-	
-	// remove default hoverPick mouse action
+
+  // remove default hoverPick mouse action
   stage.mouseControls.remove('hoverPick')
   // listen to `hovered` signal to move tooltip around and change its text
   stage.signals.hovered.add(function (pickingProxy) {
-		
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-			var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-			var mp = pickingProxy.mouse.position
-			var csv = ol[1].data
-			// console.log(atom.resno) -- logs for every haver
-			const csvWtProbCol = 7
-			const csvPrAaCol = 6
-			const csvPrProbCol = 8
-			tooltip.innerHTML = `
+      var atom = pickingProxy.atom || pickingProxy.closestBondAtom
+      var mp = pickingProxy.mouse.position
+      var csv = ol[1].data
+      // console.log(atom.resno) -- logs for every haver
+      const csvWtProbCol = 7
+      const csvPrAaCol = 6
+      const csvPrProbCol = 8
+      tooltip.innerHTML = `
         RESNO: ${atom.resno}<br/>
         WT AA: ${atom.resname}<br/>
         WT PROB: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
         PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
         PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
-      
+
       tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
       tooltip.style.left = mp.x + 3 + 'px'
       tooltip.style.display = 'block'
@@ -182,51 +184,50 @@ Promise.all([
     }
   })
 
+  // changes between heatmap and custom
+  // var schemeSelect = createSelect(
+  //   [
+  //     [heatMap, 'heat map'],
+  //     [customPercent, 'custom percent']
+  //   ],
+  //   null,
+  //   { top: '5em', left: '1em' }
+  // )
+  // schemeSelect.onchange = function (e) {
+  //   cartoon.setParameters({ colorScheme: e.target.value })
+  // }
+  // addElement(schemeSelect)
+
+  // works but needs fine tuning with
+  // var polymerSelect = createSelect([
+  //   ['cartoon', 'cartoon'],
+  //   ['ball+stick', 'ball+stick'],
+  //   ['licorice', 'licorice']
+  // ], {
+  //   onchange: function (e) {
+  //     stage.getRepresentationsByName('polymer').dispose()
+  //     stage.eachComponent(function (o) {
+  //       o.addRepresentation(e.target.value, {
+  //         sele: 'polymer',
+  //         name: 'polymer'
+  //       })
+  //     })
+  //   }
+  // }, { top: '3em', left: '1em' })
+  // addElement(polymerSelect)
+
+  // var centerButton = createElement(
+  //   'button',
+  //   { innerText: 'Center' },
+  //   { top: '1em', left: '1em' }
+  // )
+  // centerButton.onclick = function (e) {
+  //   stage.autoView(1000)
+  // }
+
+  // addElement(centerButton)
+
   
-
-  var schemeSelect = createSelect(
-    [
-      [heatMap, 'heat map'],
-      [customPercent, 'custom percent']
-    ],
-    null,
-    { top: '5em', left: '1em' }
-  )
-  schemeSelect.onchange = function (e) {
-    cartoon.setParameters({ colorScheme: e.target.value })
-  }
-  addElement(schemeSelect)
-
-  // works but needs fine tuning with 
-  var polymerSelect = createSelect([
-    ['cartoon', 'cartoon'],
-    ['ball+stick', 'ball+stick'],
-    ['licorice', 'licorice'],
-  ], {
-    onchange: function (e) {
-      stage.getRepresentationsByName('polymer').dispose()
-      stage.eachComponent(function (o) {
-        o.addRepresentation(e.target.value, {
-          sele: 'polymer',
-          name: 'polymer'
-        })
-      })
-    }
-  }, { top: '3em', left: '1em' })
-  addElement(polymerSelect)
-
-  var centerButton = createElement(
-    'button',
-    { innerText: 'Center' },
-    { top: '1em', left: '1em' }
-  )
-  centerButton.onclick = function (e) {
-    stage.autoView(1000)
-  }
-
-  addElement(centerButton)
-
-  //stage.autoView()
 
   var cartoon = protein.addRepresentation('cartoon', { color: heatMap })
   protein.autoView()
