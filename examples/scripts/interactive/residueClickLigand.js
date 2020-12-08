@@ -44,63 +44,63 @@ function getTopPosition (increment) {
 }
 
 // create tooltip element and add to document body
-var tooltip = document.createElement('div')
-Object.assign(tooltip.style, {
-  display: 'none',
-  position: 'fixed',
-  zIndex: 10,
-  pointerEvents: 'none',
-  backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
-  color: 'lightgrey',
-  padding: '8px',
-  fontFamily: 'sans-serif'
-})
-document.body.appendChild(tooltip)
+// var tooltip = document.createElement('div')
+// Object.assign(tooltip.style, {
+//   display: 'none',
+//   position: 'fixed',
+//   zIndex: 10,
+//   pointerEvents: 'none',
+//   backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
+//   color: 'lightgrey',
+//   padding: '8px',
+//   fontFamily: 'sans-serif'
+// })
+// document.body.appendChild(tooltip)
 
-// remove default hoverPick mouse action
-stage.mouseControls.remove('hoverPick')
+// // remove default hoverPick mouse action
+// stage.mouseControls.remove('hoverPick')
 
-// listen to `hovered` signal to move tooltip around and change its text
-stage.signals.hovered.add(function (pickingProxy) {
-  if (pickingProxy) {
-    if (pickingProxy.atom || pickingProxy.bond) {
-      var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-      var vm = atom.structure.data['@valenceModel']
-      if (vm && vm.idealValence) {
-        tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
-          <hr/>
-          Atom: ${atom.qualifiedName()}<br/>
-          ideal valence: ${vm.idealValence[atom.index]}<br/>
-          ideal geometry: ${vm.idealGeometry[atom.index]}<br/>
-          implicit charge: ${vm.implicitCharge[atom.index]}<br/>
-          formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
-          aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
-          `
-      } else if (vm && vm.charge) {
-        tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
-          <hr/>
-          Atom: ${atom.qualifiedName()}<br/>
-          vm charge: ${vm.charge[atom.index]}<br/>
-          vm implicitH: ${vm.implicitH[atom.index]}<br/>
-          vm totalH: ${vm.totalH[atom.index]}<br/>
-          vm geom: ${vm.idealGeometry[atom.index]}</br>
-          formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
-          aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
-          `
-      } else {
-        tooltip.innerHTML = `${pickingProxy.getLabel()}`
-      }
-    } else {
-      tooltip.innerHTML = `${pickingProxy.getLabel()}`
-    }
-    var mp = pickingProxy.mouse.position
-    tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
-    tooltip.style.left = mp.x + 3 + 'px'
-    tooltip.style.display = 'block'
-  } else {
-    tooltip.style.display = 'none'
-  }
-})
+// // listen to `hovered` signal to move tooltip around and change its text
+// stage.signals.hovered.add(function (pickingProxy) {
+//   if (pickingProxy) {
+//     if (pickingProxy.atom || pickingProxy.bond) {
+//       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
+//       var vm = atom.structure.data['@valenceModel']
+//       if (vm && vm.idealValence) {
+//         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
+//           <hr/>
+//           Atom: ${atom.qualifiedName()}<br/>
+//           ideal valence: ${vm.idealValence[atom.index]}<br/>
+//           ideal geometry: ${vm.idealGeometry[atom.index]}<br/>
+//           implicit charge: ${vm.implicitCharge[atom.index]}<br/>
+//           formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
+//           aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
+//           `
+//       } else if (vm && vm.charge) {
+//         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
+//           <hr/>
+//           Atom: ${atom.qualifiedName()}<br/>
+//           vm charge: ${vm.charge[atom.index]}<br/>
+//           vm implicitH: ${vm.implicitH[atom.index]}<br/>
+//           vm totalH: ${vm.totalH[atom.index]}<br/>
+//           vm geom: ${vm.idealGeometry[atom.index]}</br>
+//           formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
+//           aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
+//           `
+//       } else {
+//         tooltip.innerHTML = `${pickingProxy.getLabel()}`
+//       }
+//     } else {
+//       tooltip.innerHTML = `${pickingProxy.getLabel()}`
+//     }
+//     var mp = pickingProxy.mouse.position
+//     tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
+//     tooltip.style.left = mp.x + 3 + 'px'
+//     tooltip.style.display = 'block'
+//   } else {
+//     tooltip.style.display = 'none'
+//   }
+// })
 
 
 
@@ -237,51 +237,6 @@ function setLigandOptions () {
   })
 }
 
-// function setChainOptions () {
-//   chainSelect.innerHTML = ''
-//   var options = [['', 'select chain']]
-//   struc.structure.eachChain(function (cp) {
-//     var name = cp.chainname
-//     if (cp.entity && cp.entity.description) name += ' (' + cp.entity.description + ')'
-//     options.push([cp.chainname, name])
-//   }, new NGL.Selection('polymer'))
-//   options.forEach(function (d) {
-//     chainSelect.add(createElement('option', {
-//       value: d[0], text: d[1]
-//     }))
-//   })
-// }
-
-// stage.signals.clicked.add(function (pickingProxy) {
-//     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-//       console.log(pickingProxy.closestBondAtom || pickingProxy.atom)
-//     }
-//   })
-
-// function setResidueOptions (chain) {
-//     residueSelect.innerHTML = ''
-//     var options = [['', 'select residue']]
-//     if (chain) {
-//       struc.structure.eachResidue(function (rp) {
-//         var sele = ''
-//         if (rp.resno !== undefined) sele += rp.resno
-//         if (rp.inscode) sele += '^' + rp.inscode
-//         if (rp.chain) sele += ':' + rp.chainname
-//         // console.log('sele', sele)
-//         var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-//         options.push([sele, name])
-//       }, new NGL.Selection('polymer and :' + chain))
-//     }
-//     options.forEach(function (d) {
-//         // console.log('d', d)
-//       residueSelect.add(createElement('option', {
-//         value: d[0], text: d[1]
-//       }))
-//     })
-// }
-
-
-
 var loadStructureButton = createFileButton('load structure', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
   onchange: function (e) {
@@ -312,8 +267,6 @@ addElement(loadPdbidInput)
 function showFull () {
   ligandSelect.value = ''
 
-  // backboneRepr.setParameters({ radiusScale: 2 })
-  // backboneRepr.setVisibility(false)
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
@@ -322,7 +275,10 @@ function showFull () {
   pocketRepr.setVisibility(false)
   labelRepr.setVisibility(false)
 
-  struc.autoView()
+  // var zoom = stage.getZoomForBox()
+  // console.log('z', zoom)
+
+  struc.autoView(2000)
 }
 
 var fullButton = createElement('input', {
@@ -346,8 +302,6 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  // backboneRepr.setParameters({ radiusScale: 0.2 })
-  // backboneRepr.setVisibility(backboneCheckbox.checked)
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
@@ -371,6 +325,32 @@ function showLigand (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
+function showRegion (sele) {
+  var s = struc.structure
+  ligandSele.value = ''
+
+  var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 5)
+  var withinGroup = s.getAtomSetWithinGroup(withinSele)
+  var expandedSele = withinGroup.toSeleString()
+  neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
+  neighborSele = expandedSele
+
+  var sview = s.getView(new NGL.Selection(sele))
+  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
+  var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
+  var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
+
+  spacefillRepr.setVisibility(false)
+
+  ligandRepr.setVisibility(false)
+  neighborRepr.setVisibility(false)
+  contactRepr.setVisibility(false)
+  pocketRepr.setVisibility(false)
+  labelRepr.setVisibility(false)
+
+  struc.autoView(expandedSele, 2000)
+}
+
 var ligandSelect = createSelect([], {
   onchange: function (e) {
     // residueSelect.value = ''
@@ -384,56 +364,32 @@ var ligandSelect = createSelect([], {
 }, { top: getTopPosition(30), left: '12px', width: '130px' })
 addElement(ligandSelect)
 
-// var chainSelect = createSelect([], {
-//   onchange: function (e) {
-//     ligandSelect.value = ''
-//     residueSelect.value = ''
-//     setResidueOptions(e.target.value)
-//   }
-// }, { top: getTopPosition(20), left: '12px', width: '130px' })
-// addElement(chainSelect)
 
 // onclick residue select and show ligand
 timesClicked = 0
 var residueClick = stage.signals.clicked.add(function (pickingProxy) {
-  if (ballStickCheckbox.checked === false) {
-    timesClicked ++
-    ligandSelect.value = ''
-    var sele = ''
-    if (pickingProxy === undefined) {
-      showFull()
+  if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
+      timesClicked ++
+      ligandSelect.value = ''
+      var sele = ''
+      if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
+      sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
     }
-    else if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
-     sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
-    }
-    else if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
+      if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
       sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
     if (!sele) {
       showFull()
-    } else if (timesClicked % 2 === 0) {
-      showFull()
-    } else {
+    } 
+    if (timesClicked % 2 === 0) {
+      showRegion(sele)
+    } 
+    else {
       showLigand(sele)
     }
   }  
 })
 
-
-// var residueSelect = createSelect([], {
-//   onchange: function (e) {
-//     ligandSelect.value = ''
-//     var sele = e.target.value
-//     //console.log('e', e.target.value)
-//     if (!sele) {
-//       showFull()
-//     } else {
-//       console.log(sele)
-//       showLigand(sele)
-//     }
-//   }
-// }, { top: getTopPosition(20), left: '12px', width: '130px' })
-// addElement(residueSelect)
 
 addElement(createElement('span', {
   innerText: 'pocket near clipping'
@@ -491,17 +447,6 @@ addElement(createElement('span', {
   innerText: 'cartoon'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-// var backboneCheckbox = createElement('input', {
-//   type: 'checkbox',
-//   checked: false,
-//   onchange: function (e) {
-//     backboneRepr.setVisibility(e.target.checked)
-//   }
-// }, { top: getTopPosition(20), left: '12px' })
-// addElement(backboneCheckbox)
-// addElement(createElement('span', {
-//   innerText: 'backbone'
-// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var ballStickCheckbox = createElement('input', {
     type: 'checkbox',
@@ -528,21 +473,6 @@ addElement(createElement('span', {
   innerText: 'water ion'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-// var hydrogenCheckbox = createElement('input', {
-//   type: 'checkbox',
-//   checked: true,
-//   onchange: function (e) {
-//     if (e.target.checked) {
-//       struc.setSelection('*')
-//     } else {
-//       struc.setSelection('not _H')
-//     }
-//   }
-// }, { top: getTopPosition(20), left: '12px' })
-// addElement(hydrogenCheckbox)
-// addElement(createElement('span', {
-//   innerText: 'hydrogen'
-// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var sidechainAttachedCheckbox = createElement('input', {
   type: 'checkbox',
