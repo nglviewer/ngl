@@ -43,66 +43,87 @@ function getTopPosition (increment) {
   return topPosition + 'px'
 }
 
-// create tooltip element and add to document body
-// var tooltip = document.createElement('div')
-// Object.assign(tooltip.style, {
-//   display: 'none',
-//   position: 'fixed',
-//   zIndex: 10,
-//   pointerEvents: 'none',
-//   backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
-//   color: 'lightgrey',
-//   padding: '8px',
-//   fontFamily: 'sans-serif'
-// })
-// document.body.appendChild(tooltip)
+var tooltip = document.createElement('div')
+Object.assign(tooltip.style, {
+  display: 'none',
+  position: 'fixed',
+  zIndex: 10,
+  pointerEvents: 'none',
+  backgroundColor: 'rgba( 0, 0, 0, 0.6 )',
+  color: 'lightgrey',
+  padding: '8px',
+  fontFamily: 'sans-serif'
+})
+document.body.appendChild(tooltip)
 
-// // remove default hoverPick mouse action
-// stage.mouseControls.remove('hoverPick')
+// remove default hoverPick mouse action
+stage.mouseControls.remove('hoverPick')
+// listen to `hovered` signal to move tooltip around and change its text
+stage.signals.hovered.add(function (pickingProxy) {
+  if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+    var atom = pickingProxy.atom || pickingProxy.closestBondAtom
+    var mp = pickingProxy.mouse.position
+    // var csv = ol[1].data
+    // console.log(atom.resno) -- logs for every haver
+    
+    const firstResNum = parseInt(csv[0][csvResNumCol])
+    tooltip.innerHTML = `
+      RESNO: ${atom.resno}<br/>
+      WT AA: ${atom.resname}<br/>
+      WT PROB: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
+      PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
+      PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
+    tooltip.style.bottom = 3 + 'px'
+    tooltip.style.left = window.innerWidth - 220 + 'px'
+    tooltip.style.display = 'block'
+  } else {
+    tooltip.style.display = 'none'
+  }
+})
 
-// // listen to `hovered` signal to move tooltip around and change its text
-// stage.signals.hovered.add(function (pickingProxy) {
-//   if (pickingProxy) {
-//     if (pickingProxy.atom || pickingProxy.bond) {
-//       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-//       var vm = atom.structure.data['@valenceModel']
-//       if (vm && vm.idealValence) {
-//         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
-//           <hr/>
-//           Atom: ${atom.qualifiedName()}<br/>
-//           ideal valence: ${vm.idealValence[atom.index]}<br/>
-//           ideal geometry: ${vm.idealGeometry[atom.index]}<br/>
-//           implicit charge: ${vm.implicitCharge[atom.index]}<br/>
-//           formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
-//           aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
-//           `
-//       } else if (vm && vm.charge) {
-//         tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
-//           <hr/>
-//           Atom: ${atom.qualifiedName()}<br/>
-//           vm charge: ${vm.charge[atom.index]}<br/>
-//           vm implicitH: ${vm.implicitH[atom.index]}<br/>
-//           vm totalH: ${vm.totalH[atom.index]}<br/>
-//           vm geom: ${vm.idealGeometry[atom.index]}</br>
-//           formal charge: ${atom.formalCharge === null ? '?' : atom.formalCharge}<br/>
-//           aromatic: ${atom.aromatic ? 'true' : 'false'}<br/>
-//           `
-//       } else {
-//         tooltip.innerHTML = `${pickingProxy.getLabel()}`
-//       }
-//     } else {
-//       tooltip.innerHTML = `${pickingProxy.getLabel()}`
-//     }
-//     var mp = pickingProxy.mouse.position
-//     tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
-//     tooltip.style.left = mp.x + 3 + 'px'
-//     tooltip.style.display = 'block'
-//   } else {
-//     tooltip.style.display = 'none'
-//   }
-// })
+function getGradientColor (startColor, endColor, thirdColor, percent) {
+  // switch for second gradient i.e white to red for heat map
+  if (percent >= 1) {
+    percent -= 1
+    startColor = endColor
+    endColor = thirdColor
+  }
 
+  // get colors
+  var startRed = parseInt(startColor.substr(0, 2), 16)
+  var startGreen = parseInt(startColor.substr(2, 2), 16)
+  var startBlue = parseInt(startColor.substr(4, 2), 16)
 
+  var endRed = parseInt(endColor.substr(0, 2), 16)
+  var endGreen = parseInt(endColor.substr(2, 2), 16)
+  var endBlue = parseInt(endColor.substr(4, 2), 16)
+
+  // calculate new color
+  var diffRed = endRed - startRed
+  var diffGreen = endGreen - startGreen
+  var diffBlue = endBlue - startBlue
+
+  diffRed = ((diffRed * percent) + startRed).toString(16).split('.')[0]
+  diffGreen = ((diffGreen * percent) + startGreen).toString(16).split('.')[0]
+  diffBlue = ((diffBlue * percent) + startBlue).toString(16).split('.')[0]
+
+  // ensure 2 digits by color (necessary)
+  if (diffRed.length === 1) diffRed = '0' + diffRed
+  if (diffGreen.length === 1) diffGreen = '0' + diffGreen
+  if (diffBlue.length === 1) diffBlue = '0' + diffBlue
+
+  return '0x' + diffRed + diffGreen + diffBlue
+}
+
+function makeGradientArray () {
+  var gradientArray = []
+  for (var count = 0; count < 101; count++) {
+    var newColor = getGradientColor('FF0000', 'FFFFFF', '0000FF', (0.02 * count))
+    var numColor = parseInt(Number(newColor), 10)
+    gradientArray.push(numColor)
+  }
+  return gradientArray
+}
 
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
@@ -112,10 +133,16 @@ var pocketRadiusClipFactor = 1
 var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
 
 var struc
+var csv
 var neighborSele
 var sidechainAttached = false
 
-function loadStructure (input) {
+const csvResNumCol = 4
+const csvWtProbCol = 7
+const csvPrAaCol = 6
+const csvPrProbCol = 8
+
+function loadStructure (proteinFile, csvFile) {
   struc = undefined
   stage.setFocus(0)
   stage.removeAllComponents()
@@ -125,8 +152,6 @@ function loadStructure (input) {
   pocketOpacityRange.value = 0
   cartoonCheckbox.checked = false
   ballStickCheckbox.checked = false
-  //backboneCheckbox.checked = false
-  // hydrogenCheckbox.checked = true
   waterIonCheckbox.checked = false
   hydrophobicCheckbox.checked = false
   hydrogenBondCheckbox.checked = true
@@ -138,57 +163,98 @@ function loadStructure (input) {
   saltBridgeCheckbox.checked = true
   cationPiCheckbox.checked = true
   piStackingCheckbox.checked = true
-  return stage.loadFile(input).then(function (o) {
-    struc = o
+  return Promise.all([
+    stage.loadFile(proteinFile),
+    NGL.autoLoad(csvFile, {
+      ext: 'csv',
+      delimiter: ' ',
+      comment: '#',
+      columnNames: true
+    })
+  ]).then(function (ol) {
+    struc = ol[0]
+    csv = ol[1].data
+    // console.log('struc', struc)
+    // console.log('csv', csv)
+
+  //  stage.loadFile(input).then(function (o) {
+  //   struc = o
     setLigandOptions()
-    // setChainOptions()
-    // setResidueOptions()
-    o.autoView()
-    cartoonRepr = o.addRepresentation('cartoon', {
+
+
+  // const csvResNumCol = 4
+  // const csvWtProbCol = 7
+  // const csvPrProbCol = 8
+  
+  
+  var gradientArray = makeGradientArray()
+
+  var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+    this.atomColor = function (atom) {
+      for (var i = 0; i <= csv.length; i++) {
+        const wtProb = parseFloat(csv[i][csvWtProbCol])
+        // console.log('wt', wtProb)
+        const resNum = parseFloat(csv[i][csvResNumCol])
+
+        const normWtProb = (wtProb * 100).toFixed(0)
+        // console.log('n', normWtProb)
+
+        if (atom.resno === resNum) {
+          return gradientArray[normWtProb]
+        }
+      }
+    }
+  })
+
+
+
+    struc.autoView()
+    cartoonRepr = struc.addRepresentation('cartoon', {
+      color: heatMap,
       visible: true
     })
-    backboneRepr = o.addRepresentation('backbone', {
+    backboneRepr = struc.addRepresentation('backbone', {
       visible: false,
       colorValue: 'lightgrey',
       radiusScale: 2
     })
-    ballStickRepr = o.addRepresentation('ball+stick', {
+    ballStickRepr = struc.addRepresentation('ball+stick', {
         visible: false,
         // removes water ions
         sele: 'polymer',
         name: 'polymer'
     })
-    waterIonRepr = o.addRepresentation('ball+stick', {
+    waterIonRepr = struc.addRepresentation('ball+stick', {
         name: 'waterIon',
         visible: waterIonCheckbox.checked,
         sele: 'water or ion',
         scale: 0.25
       })
-    spacefillRepr = o.addRepresentation('spacefill', {
+    spacefillRepr = struc.addRepresentation('spacefill', {
       sele: ligandSele,
       visible: true
     })
-    neighborRepr = o.addRepresentation('ball+stick', {
+    neighborRepr = struc.addRepresentation('ball+stick', {
       sele: 'none',
       aspectRatio: 1.1,
       colorValue: 'lightgrey',
       multipleBond: 'symmetric'
     })
-    ligandRepr = o.addRepresentation('ball+stick', {
+    ligandRepr = struc.addRepresentation('ball+stick', {
       multipleBond: 'symmetric',
       colorValue: 'grey',
       sele: 'none',
       aspectRatio: 1.2,
       radiusScale: 2.5
     })
-    contactRepr = o.addRepresentation('contact', {
+    contactRepr = struc.addRepresentation('contact', {
       sele: 'none',
       radiusSize: 0.07,
       weakHydrogenBond: false,
       waterHydrogenBond: false,
       backboneHydrogenBond: true
     })
-    pocketRepr = o.addRepresentation('surface', {
+    pocketRepr = struc.addRepresentation('surface', {
       sele: 'none',
       lazy: true,
       visibility: true,
@@ -199,7 +265,7 @@ function loadStructure (input) {
       roughness: 1.0,
       surfaceType: 'av'
     })
-    labelRepr = o.addRepresentation('label', {
+    labelRepr = struc.addRepresentation('label', {
       sele: 'none',
       color: '#333333',
       yOffset: 0.2,
@@ -216,6 +282,7 @@ function loadStructure (input) {
     })
   })
 }
+
 
 function setLigandOptions () {
   ligandSelect.innerHTML = ''
@@ -236,6 +303,8 @@ function setLigandOptions () {
     }))
   })
 }
+
+
 
 var loadStructureButton = createFileButton('load structure', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
@@ -325,6 +394,8 @@ function showLigand (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
+
+
 function showRegion (sele) {
   var s = struc.structure
   ligandSele.value = ''
@@ -350,6 +421,7 @@ function showRegion (sele) {
 
   struc.autoView(expandedSele, 2000)
 }
+
 
 var ligandSelect = createSelect([], {
   onchange: function (e) {
@@ -383,6 +455,7 @@ var residueClick = stage.signals.clicked.add(function (pickingProxy) {
     } 
     if (timesClicked % 2 === 0) {
       showRegion(sele)
+      timesClicked = 0
     } 
     else {
       showLigand(sele)
@@ -621,4 +694,6 @@ addElement(createElement('span', {
   innerText: 'pi-stacking'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-loadStructure('rcsb://6ij6')
+
+
+loadStructure('data://mutcompute/6ij6.pdb', 'data://mutcompute/6ij6.csv')
