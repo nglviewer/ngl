@@ -60,11 +60,10 @@ document.body.appendChild(tooltip)
 stage.mouseControls.remove('hoverPick')
 // listen to `hovered` signal to move tooltip around and change its text
 stage.signals.hovered.add(function (pickingProxy) {
+  if (cartoonCheckbox.checked === true || ballStickCheckbox.checked === true || customCheckbox.checked === true) {
   if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
     var atom = pickingProxy.atom || pickingProxy.closestBondAtom
     var mp = pickingProxy.mouse.position
-    // var csv = ol[1].data
-    // console.log(atom.resno) -- logs for every haver
     
     const firstResNum = parseInt(csv[0][csvResNumCol])
     tooltip.innerHTML = `
@@ -74,11 +73,12 @@ stage.signals.hovered.add(function (pickingProxy) {
       PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
       PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
     tooltip.style.bottom = 3 + 'px'
-    tooltip.style.left = window.innerWidth - 220 + 'px'
+    tooltip.style.left = stage.viewer.width - 200 + 'px'
     tooltip.style.display = 'block'
   } else {
     tooltip.style.display = 'none'
   }
+}
 })
 
 function getGradientColor (startColor, endColor, thirdColor, percent) {
@@ -125,12 +125,16 @@ function makeGradientArray () {
   return gradientArray
 }
 
+var gradientArray = makeGradientArray()
+
+
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
 var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
+var heatmap, customPercent
 
 var struc
 var csv
@@ -150,7 +154,8 @@ function loadStructure (proteinFile, csvFile) {
   clipNearRange.value = 0
   clipRadiusRange.value = 100
   pocketOpacityRange.value = 0
-  cartoonCheckbox.checked = false
+  cartoonCheckbox.checked = true
+  customCheckbox.checked = false
   ballStickCheckbox.checked = false
   waterIonCheckbox.checked = false
   hydrophobicCheckbox.checked = false
@@ -174,22 +179,12 @@ function loadStructure (proteinFile, csvFile) {
   ]).then(function (ol) {
     struc = ol[0]
     csv = ol[1].data
-    // console.log('struc', struc)
-    // console.log('csv', csv)
 
-  //  stage.loadFile(input).then(function (o) {
-  //   struc = o
     setLigandOptions()
-
-
-  // const csvResNumCol = 4
-  // const csvWtProbCol = 7
-  // const csvPrProbCol = 8
   
-  
-  var gradientArray = makeGradientArray()
+  // var gradientArray = makeGradientArray()
 
-  var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+  heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
     this.atomColor = function (atom) {
       for (var i = 0; i <= csv.length; i++) {
         const wtProb = parseFloat(csv[i][csvWtProbCol])
@@ -206,12 +201,41 @@ function loadStructure (proteinFile, csvFile) {
     }
   })
 
+  customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
+    this.atomColor = function (atom) {
+      for (var i = 0; i <= csv.length; i++) {
+        const predProb = parseFloat(csv[i][csvPrProbCol])
+        const wtProb = parseFloat(csv[i][csvWtProbCol])
+        // console.log('wt', wtProb)
+        const resNum = parseFloat(csv[i][csvResNumCol])
 
+        if (atom.resno === resNum) {
+          if (wtProb < 0.01 && predProb > 0.7) {
+            return 0xFF0080// hot pink
+          } else if (wtProb < 0.01) {
+            return 0xCC00FF // hot pink
+          } else if (parseFloat(csv[i][7] < 0.05)) {
+            return 0xFF0000 // red
+          } else if (wtProb < 0.10) {
+            return 0xFFA500 // orange
+          } else if (wtProb < 0.25) {
+            return 0xFFFF00 // yellow
+          } else {
+            return 0xFFFFFF // white
+          }
+        }
+      }
+    }
+  })
 
     struc.autoView()
     cartoonRepr = struc.addRepresentation('cartoon', {
       color: heatMap,
       visible: true
+    })
+    customRepr = struc.addRepresentation('cartoon', {
+      color: customPercent,
+      visible: false
     })
     backboneRepr = struc.addRepresentation('backbone', {
       visible: false,
@@ -316,14 +340,27 @@ var loadStructureButton = createFileButton('load structure', {
 }, { top: getTopPosition(), left: '12px' })
 addElement(loadStructureButton)
 
-var loadPdbidText = createElement('span', {
-  innerText: 'load pdb id'
-}, { top: getTopPosition(20), left: '12px', color: 'grey' })
-addElement(loadPdbidText)
+// var schemeSelect = createSelect(
+//   [
+//     [heatMap, 'heat map'],
+//     [customPercent, 'custom percent']
+//   ],
+//   null,
+//   { top: getTopPosition(20), left: '12px' }
+// )
+// schemeSelect.onchange = function (e) {
+//   cartoonRepr.setParameters({ color: e.target.value })
+// }
+// addElement(schemeSelect)
+
+// var loadPdbidText = createElement('span', {
+//   innerText: 'load pdb id'
+// }, { top: getTopPosition(20), left: '12px', color: 'grey' })
+// addElement(loadPdbidText)
 
 var loadPdbidInput = createElement('input', {
   type: 'text',
-  title: 'press enter to load pdbid',
+  placeholder: 'Enter pdbID',
   onkeypress: function (e) {
     if (e.keyCode === 13) {
       e.preventDefault()
@@ -517,7 +554,19 @@ var cartoonCheckbox = createElement('input', {
 }, { top: getTopPosition(30), left: '12px' })
 addElement(cartoonCheckbox)
 addElement(createElement('span', {
-  innerText: 'cartoon'
+  innerText: 'Heat Map'
+}, { top: getTopPosition(), left: '32px', color: 'grey' }))
+
+var customCheckbox = createElement('input', {
+  type: 'checkbox',
+  checked: false,
+  onchange: function (e) {
+    customRepr.setVisibility(e.target.checked)
+  }
+}, { top: getTopPosition(20), left: '12px' })
+addElement(customCheckbox)
+addElement(createElement('span', {
+  innerText: 'Custom'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 
