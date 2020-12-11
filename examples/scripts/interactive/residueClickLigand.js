@@ -169,7 +169,7 @@ function loadStructure (proteinFile, csvFile) {
   cationPiCheckbox.checked = true
   piStackingCheckbox.checked = true
   return Promise.all([
-    stage.loadFile(proteinFile),
+    stage.loadFile(proteinFile, { defaultRepresentation: true }),
     NGL.autoLoad(csvFile, {
       ext: 'csv',
       delimiter: ' ',
@@ -340,31 +340,14 @@ var loadStructureButton = createFileButton('load structure', {
 }, { top: getTopPosition(), left: '12px' })
 addElement(loadStructureButton)
 
-// var schemeSelect = createSelect(
-//   [
-//     [heatMap, 'heat map'],
-//     [customPercent, 'custom percent']
-//   ],
-//   null,
-//   { top: getTopPosition(20), left: '12px' }
-// )
-// schemeSelect.onchange = function (e) {
-//   cartoonRepr.setParameters({ color: e.target.value })
-// }
-// addElement(schemeSelect)
-
-// var loadPdbidText = createElement('span', {
-//   innerText: 'load pdb id'
-// }, { top: getTopPosition(20), left: '12px', color: 'grey' })
-// addElement(loadPdbidText)
-
 var loadPdbidInput = createElement('input', {
   type: 'text',
   placeholder: 'Enter pdbID',
   onkeypress: function (e) {
     if (e.keyCode === 13) {
+      inputValue = e.target.value.toLowerCase()
       e.preventDefault()
-      loadStructure('rcsb://' + e.target.value)
+      loadStructure('rcsb://' + inputValue, 'data://mutcompute/' + inputValue + '.csv')
     }
   }
 }, { top: getTopPosition(20), left: '12px', width: '120px' })
@@ -380,9 +363,6 @@ function showFull () {
   contactRepr.setVisibility(false)
   pocketRepr.setVisibility(false)
   labelRepr.setVisibility(false)
-
-  // var zoom = stage.getZoomForBox()
-  // console.log('z', zoom)
 
   struc.autoView(2000)
 }
