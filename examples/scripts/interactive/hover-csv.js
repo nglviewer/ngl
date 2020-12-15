@@ -14,8 +14,8 @@ document.body.appendChild(tooltip)
 
 // load a structure file
 Promise.all([
-  stage.loadFile('data://mutcompute/6qgb.pdb', { defaultRepresentation: true }),
-  NGL.autoLoad('data://mutcompute/6qgb.csv', {
+  stage.loadFile('data://mutcompute/6ij6.pdb', { defaultRepresentation: true }),
+  NGL.autoLoad('data://mutcompute/6ij6.csv', {
     ext: 'csv',
     delimiter: ' ',
     comment: '#',
@@ -23,27 +23,37 @@ Promise.all([
   })
 
 ]).then(function (ol) {
-// remove default hoverPick mouse action
-  stage.mouseControls.remove('hoverPick')
+  var csv = ol[1].data
+  //console.log('csv', csv.length)
 
-  // listen to `hovered` signal to move tooltip around and change its text
-  stage.signals.hovered.add(function (pickingProxy) {
-    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-      var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-      var mp = pickingProxy.mouse.position
-      var csv = ol[1].data
-      tooltip.innerHTML = `${pickingProxy.getLabel()}<br/>
-        <hr/>
-        Atom: ${atom.qualifiedName()}<br/>
-        WT%: ${csv[atom.resno][7]}<br/>
-        PRED AA: ${csv[atom.resno][6]}<br/>
-        PRED%: ${csv[atom.resno][8]}<br/>`
-      
-      tooltip.style.bottom = window.innerHeight - mp.y + 3 + 'px'
-      tooltip.style.left = mp.x + 3 + 'px'
-      tooltip.style.display = 'block'
-    } else {
-      tooltip.style.display = 'none'
-    }
-  })
+  var csvResNumCol = 4
+  var csvWtProbCol = 7
+  var csvPrAaCol = 6
+  var csvPrProbCol = 8
+  const firstResNum = parseInt(csv[0][csvResNumCol])
+
+  // remove default hoverPick mouse action
+stage.mouseControls.remove('hoverPick')
+// listen to `hovered` signal to move tooltip around and change its text
+stage.signals.hovered.add(function (pickingProxy) {
+  if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+    var atom = pickingProxy.atom || pickingProxy.closestBondAtom
+    // var mp = pickingProxy.mouse.position
+    // console.log('pick', pickingProxy.atom.resno)
+    var index = atom.resno - firstResNum
+    if (index < csv.length) {
+    tooltip.innerHTML = `
+      RESNO: ${atom.resno}<br/>
+      WT AA: ${atom.resname}<br/>
+      WT PROB: ${csv[index][csvWtProbCol]}<br/>
+      PRED AA: ${csv[index][csvPrAaCol]}<br/>
+      PRED PROB: ${csv[index][csvPrProbCol]}<br/>`
+    tooltip.style.bottom = 3 + 'px'
+    tooltip.style.left = stage.viewer.width - 200 + 'px'
+    tooltip.style.display = 'block'
+  } else {
+    tooltip.style.display = 'none'
+  }
+}
+})
 })
