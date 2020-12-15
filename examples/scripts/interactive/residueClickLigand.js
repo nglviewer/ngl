@@ -291,22 +291,22 @@ function loadStructure (proteinFile, csvFile) {
       clipNear: 0,
       opaqueBack: false,
       opacity: 0.0,
-      color: 'hydrophobicity',
+      color: heatMap,
       roughness: 1.0,
       surfaceType: 'av'
     })
     labelRepr = struc.addRepresentation('label', {
       sele: 'none',
-      color: '#333333',
+      color: '#111111',
       yOffset: 0.2,
       zOffset: 2.0,
       attachment: 'bottom-center',
       showBorder: true,
       borderColor: 'lightgrey',
-      borderWidth: 0.25,
+      borderWidth: 0.5,
       disablePicking: true,
       radiusType: 'size',
-      radiusSize: 0.8,
+      radiusSize: 1.5,
       labelType: 'residue',
       labelGrouping: 'residue'
     })
