@@ -63,21 +63,23 @@ stage.signals.hovered.add(function (pickingProxy) {
   if (cartoonCheckbox.checked === true || ballStickCheckbox.checked === true || customCheckbox.checked === true) {
   if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
     var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-    var mp = pickingProxy.mouse.position
-    
-    const firstResNum = parseInt(csv[0][csvResNumCol])
+    // var mp = pickingProxy.mouse.position
+    // console.log('pick', pickingProxy.atom.resno)
+    var index = atom.resno - firstResNum
+    if (index < csv.length) {
     tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
-      WT PROB: ${csv[atom.resno - firstResNum][csvWtProbCol]}<br/>
-      PRED AA: ${csv[atom.resno - firstResNum][csvPrAaCol]}<br/>
-      PRED PROB: ${csv[atom.resno - firstResNum][csvPrProbCol]}<br/>`
+      WT PROB: ${csv[index][csvWtProbCol]}<br/>
+      PRED AA: ${csv[index][csvPrAaCol]}<br/>
+      PRED PROB: ${csv[index][csvPrProbCol]}<br/>`
     tooltip.style.bottom = 3 + 'px'
     tooltip.style.left = stage.viewer.width - 200 + 'px'
     tooltip.style.display = 'block'
   } else {
     tooltip.style.display = 'none'
   }
+}
 }
 })
 
@@ -146,6 +148,8 @@ const csvWtProbCol = 7
 const csvPrAaCol = 6
 const csvPrProbCol = 8
 
+var firstResNum
+
 function loadStructure (proteinFile, csvFile) {
   struc = undefined
   stage.setFocus(0)
@@ -180,9 +184,11 @@ function loadStructure (proteinFile, csvFile) {
     struc = ol[0]
     csv = ol[1].data
 
+
     setLigandOptions()
   
   // var gradientArray = makeGradientArray()
+  firstResNum = parseInt(csv[0][csvResNumCol])
 
   heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
     this.atomColor = function (atom) {
@@ -305,6 +311,14 @@ function loadStructure (proteinFile, csvFile) {
       labelGrouping: 'residue'
     })
   })
+  .catch(failure)
+}
+
+function failure (error) {
+  console.error(error)
+  if (window.confirm('Sorry, this data does not exist. Please run your desired protein on mutcompute.com first. Would you like to be redirected to mutcompute.com?')) {
+    window.location.href = 'https://mutcompute.com';
+  }
 }
 
 
@@ -330,15 +344,15 @@ function setLigandOptions () {
 
 
 
-var loadStructureButton = createFileButton('load structure', {
-  accept: '.pdb,.cif,.ent,.gz,.mol2',
-  onchange: function (e) {
-    if (e.target.files[0]) {
-      loadStructure(e.target.files[0])
-    }
-  }
-}, { top: getTopPosition(), left: '12px' })
-addElement(loadStructureButton)
+// var loadStructureButton = createFileButton('Load ML CSV', {
+//   accept: '.csv',
+//   onchange: function (e) {
+//     if (e.target.files[0]) {
+//       loadStructure(e.target.files[0])
+//     }
+//   }
+// }, { top: getTopPosition(), left: '12px' })
+// addElement(loadStructureButton)
 
 var loadPdbidInput = createElement('input', {
   type: 'text',
@@ -346,8 +360,10 @@ var loadPdbidInput = createElement('input', {
   onkeypress: function (e) {
     if (e.keyCode === 13) {
       inputValue = e.target.value.toLowerCase()
+      proteinInput = 'rcsb://' + inputValue
+      csvInput = 'data://mutcompute/' + inputValue + '.csv'
       e.preventDefault()
-      loadStructure('rcsb://' + inputValue, 'data://mutcompute/' + inputValue + '.csv')
+      loadStructure(proteinInput, csvInput)
     }
   }
 }, { top: getTopPosition(20), left: '12px', width: '120px' })
@@ -423,10 +439,10 @@ function showRegion (sele) {
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
-  var sview = s.getView(new NGL.Selection(sele))
-  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
-  var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
-  var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
+  // var sview = s.getView(new NGL.Selection(sele))
+  // pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
+  // var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
+  // var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
   spacefillRepr.setVisibility(false)
 
@@ -457,6 +473,10 @@ addElement(ligandSelect)
 // onclick residue select and show ligand
 timesClicked = 0
 var residueClick = stage.signals.clicked.add(function (pickingProxy) {
+  if (pickingProxy === undefined) { 
+    showFull()
+    timesClicked ++
+  }
   if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
       timesClicked ++
       ligandSelect.value = ''
@@ -467,7 +487,7 @@ var residueClick = stage.signals.clicked.add(function (pickingProxy) {
       if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
       sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
-    if (!sele) {
+    if (!sele ) {
       showFull()
     } 
     if (timesClicked % 2 === 0) {
