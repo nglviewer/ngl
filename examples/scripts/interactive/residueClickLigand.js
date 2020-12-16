@@ -393,14 +393,14 @@ addElement(fullButton)
 function showLigand (sele) {
   var s = struc.structure
 
-  var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 5)
+  var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 9)
   var withinGroup = s.getAtomSetWithinGroup(withinSele)
   var expandedSele = withinGroup.toSeleString()
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
   var sview = s.getView(new NGL.Selection(sele))
-  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
+  pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 10
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
