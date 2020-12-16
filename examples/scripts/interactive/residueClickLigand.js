@@ -23,18 +23,18 @@ function createSelect (options, properties, style) {
   return select
 }
 
-function createFileButton (label, properties, style) {
-  var input = createElement('input', Object.assign({
-    type: 'file'
-  }, properties), { display: 'none' })
-  addElement(input)
-  var button = createElement('input', {
-    value: label,
-    type: 'button',
-    onclick: function () { input.click() }
-  }, style)
-  return button
-}
+// function createFileButton (label, properties, style) {
+//   var input = createElement('input', Object.assign({
+//     type: 'file'
+//   }, properties), { display: 'none' })
+//   addElement(input)
+//   var button = createElement('input', {
+//     value: label,
+//     type: 'button',
+//     onclick: function () { input.click() }
+//   }, style)
+//   return button
+// }
 
 var topPosition = 12
 
@@ -61,26 +61,26 @@ stage.mouseControls.remove('hoverPick')
 // listen to `hovered` signal to move tooltip around and change its text
 stage.signals.hovered.add(function (pickingProxy) {
   if (cartoonCheckbox.checked === true || ballStickCheckbox.checked === true || customCheckbox.checked === true) {
-  if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
-    var atom = pickingProxy.atom || pickingProxy.closestBondAtom
-    // var mp = pickingProxy.mouse.position
-    // console.log('pick', pickingProxy.atom.resno)
-    var index = atom.resno - firstResNum
-    if (index < csv.length) {
-    tooltip.innerHTML = `
+    if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
+      var atom = pickingProxy.atom || pickingProxy.closestBondAtom
+      // var mp = pickingProxy.mouse.position
+      // console.log('pick', pickingProxy.atom.resno)
+      var index = atom.resno - firstResNum
+      if (index < csv.length) {
+        tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
       WT PROB: ${csv[index][csvWtProbCol]}<br/>
       PRED AA: ${csv[index][csvPrAaCol]}<br/>
       PRED PROB: ${csv[index][csvPrProbCol]}<br/>`
-    tooltip.style.bottom = 3 + 'px'
-    tooltip.style.left = stage.viewer.width - 200 + 'px'
-    tooltip.style.display = 'block'
-  } else {
-    tooltip.style.display = 'none'
+        tooltip.style.bottom = 3 + 'px'
+        tooltip.style.left = stage.viewer.width - 200 + 'px'
+        tooltip.style.display = 'block'
+      } else {
+        tooltip.style.display = 'none'
+      }
+    }
   }
-}
-}
 })
 
 function getGradientColor (startColor, endColor, thirdColor, percent) {
@@ -129,14 +129,14 @@ function makeGradientArray () {
 
 var gradientArray = makeGradientArray()
 
-
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr
-var heatmap, customPercent
+var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr, ballStickRepr, waterIonRepr
+
+var heatMap, customPercent
 
 var struc
 var csv
@@ -184,55 +184,54 @@ function loadStructure (proteinFile, csvFile) {
     struc = ol[0]
     csv = ol[1].data
 
-
     setLigandOptions()
-  
-  // var gradientArray = makeGradientArray()
-  firstResNum = parseInt(csv[0][csvResNumCol])
 
-  heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
-    this.atomColor = function (atom) {
-      for (var i = 0; i <= csv.length; i++) {
-        const wtProb = parseFloat(csv[i][csvWtProbCol])
-        // console.log('wt', wtProb)
-        const resNum = parseFloat(csv[i][csvResNumCol])
+    // var gradientArray = makeGradientArray()
+    firstResNum = parseInt(csv[0][csvResNumCol])
 
-        const normWtProb = (wtProb * 100).toFixed(0)
-        // console.log('n', normWtProb)
+    heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+      this.atomColor = function (atom) {
+        for (var i = 0; i <= csv.length; i++) {
+          const wtProb = parseFloat(csv[i][csvWtProbCol])
+          // console.log('wt', wtProb)
+          const resNum = parseFloat(csv[i][csvResNumCol])
 
-        if (atom.resno === resNum) {
-          return gradientArray[normWtProb]
-        }
-      }
-    }
-  })
+          const normWtProb = (wtProb * 100).toFixed(0)
+          // console.log('n', normWtProb)
 
-  customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
-    this.atomColor = function (atom) {
-      for (var i = 0; i <= csv.length; i++) {
-        const predProb = parseFloat(csv[i][csvPrProbCol])
-        const wtProb = parseFloat(csv[i][csvWtProbCol])
-        // console.log('wt', wtProb)
-        const resNum = parseFloat(csv[i][csvResNumCol])
-
-        if (atom.resno === resNum) {
-          if (wtProb < 0.01 && predProb > 0.7) {
-            return 0xFF0080// hot pink
-          } else if (wtProb < 0.01) {
-            return 0xCC00FF // hot pink
-          } else if (parseFloat(csv[i][7] < 0.05)) {
-            return 0xFF0000 // red
-          } else if (wtProb < 0.10) {
-            return 0xFFA500 // orange
-          } else if (wtProb < 0.25) {
-            return 0xFFFF00 // yellow
-          } else {
-            return 0xFFFFFF // white
+          if (atom.resno === resNum) {
+            return gradientArray[normWtProb]
           }
         }
       }
-    }
-  })
+    })
+
+    customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
+      this.atomColor = function (atom) {
+        for (var i = 0; i <= csv.length; i++) {
+          const predProb = parseFloat(csv[i][csvPrProbCol])
+          const wtProb = parseFloat(csv[i][csvWtProbCol])
+          // console.log('wt', wtProb)
+          const resNum = parseFloat(csv[i][csvResNumCol])
+
+          if (atom.resno === resNum) {
+            if (wtProb < 0.01 && predProb > 0.7) {
+              return 0xFF0080// hot pink
+            } else if (wtProb < 0.01) {
+              return 0xCC00FF // hot pink
+            } else if (parseFloat(csv[i][7] < 0.05)) {
+              return 0xFF0000 // red
+            } else if (wtProb < 0.10) {
+              return 0xFFA500 // orange
+            } else if (wtProb < 0.25) {
+              return 0xFFFF00 // yellow
+            } else {
+              return 0xFFFFFF // white
+            }
+          }
+        }
+      }
+    })
 
     struc.autoView()
     cartoonRepr = struc.addRepresentation('cartoon', {
@@ -243,23 +242,23 @@ function loadStructure (proteinFile, csvFile) {
       color: customPercent,
       visible: false
     })
-    backboneRepr = struc.addRepresentation('backbone', {
-      visible: false,
-      colorValue: 'lightgrey',
-      radiusScale: 2
-    })
+    // backboneRepr = struc.addRepresentation('backbone', {
+    //   visible: false,
+    //   colorValue: 'lightgrey',
+    //   radiusScale: 2
+    // })
     ballStickRepr = struc.addRepresentation('ball+stick', {
-        visible: false,
-        // removes water ions
-        sele: 'polymer',
-        name: 'polymer'
+      visible: false,
+      // removes water ions
+      sele: 'polymer',
+      name: 'polymer'
     })
     waterIonRepr = struc.addRepresentation('ball+stick', {
-        name: 'waterIon',
-        visible: waterIonCheckbox.checked,
-        sele: 'water or ion',
-        scale: 0.25
-      })
+      name: 'waterIon',
+      visible: waterIonCheckbox.checked,
+      sele: 'water or ion',
+      scale: 0.25
+    })
     spacefillRepr = struc.addRepresentation('spacefill', {
       sele: ligandSele,
       visible: true
@@ -311,16 +310,15 @@ function loadStructure (proteinFile, csvFile) {
       labelGrouping: 'residue'
     })
   })
-  .catch(failure)
+  // .catch(failure)
 }
 
-function failure (error) {
-  console.error(error)
-  if (window.confirm('Sorry, this data does not exist. Please run your desired protein on mutcompute.com first. Would you like to be redirected to mutcompute.com?')) {
-    window.location.href = 'https://mutcompute.com';
-  }
-}
-
+// function failure (error) {
+//   console.error(error)
+//   if (window.confirm('Sorry, this data does not exist. Please run your desired protein on mutcompute.com first. Would you like to be redirected to mutcompute.com?')) {
+//     window.location.href = 'https://mutcompute.com';
+//   }
+// }
 
 function setLigandOptions () {
   ligandSelect.innerHTML = ''
@@ -342,8 +340,6 @@ function setLigandOptions () {
   })
 }
 
-
-
 // var loadStructureButton = createFileButton('Load ML CSV', {
 //   accept: '.csv',
 //   onchange: function (e) {
@@ -359,9 +355,10 @@ var loadPdbidInput = createElement('input', {
   placeholder: 'Enter pdbID',
   onkeypress: function (e) {
     if (e.keyCode === 13) {
-      inputValue = e.target.value.toLowerCase()
-      proteinInput = 'rcsb://' + inputValue
-      csvInput = 'data://mutcompute/' + inputValue + '.csv'
+      var inputValue = e.target.value.toLowerCase()
+      // str.slice(0, 4)
+      var proteinInput = 'rcsb://' + inputValue
+      var csvInput = 'data://mutcompute/' + inputValue + '.csv'
       e.preventDefault()
       loadStructure(proteinInput, csvInput)
     }
@@ -427,8 +424,6 @@ function showLigand (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
-
-
 function showRegion (sele) {
   var s = struc.structure
   ligandSele.value = ''
@@ -455,7 +450,6 @@ function showRegion (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
-
 var ligandSelect = createSelect([], {
   onchange: function (e) {
     // residueSelect.value = ''
@@ -469,37 +463,35 @@ var ligandSelect = createSelect([], {
 }, { top: getTopPosition(30), left: '12px', width: '130px' })
 addElement(ligandSelect)
 
-
 // onclick residue select and show ligand
-timesClicked = 0
-var residueClick = stage.signals.clicked.add(function (pickingProxy) {
-  if (pickingProxy === undefined) { 
+var timesClicked = 0
+// var residueClick =
+stage.signals.clicked.add(function (pickingProxy) {
+  if (pickingProxy === undefined) {
     showFull()
-    timesClicked ++
+    timesClicked++
   }
   if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
-      timesClicked ++
-      ligandSelect.value = ''
-      var sele = ''
-      if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno)!== undefined){
+    timesClicked++
+    ligandSelect.value = ''
+    var sele = ''
+    if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno) !== undefined) {
       sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
     }
-      if (pickingProxy.closestBondAtom ||pickingProxy.atom.chainname) {
+    if (pickingProxy.closestBondAtom || pickingProxy.atom.chainname) {
       sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
-    if (!sele ) {
+    if (!sele) {
       showFull()
-    } 
+    }
     if (timesClicked % 2 === 0) {
       showRegion(sele)
       timesClicked = 0
-    } 
-    else {
+    } else {
       showLigand(sele)
     }
-  }  
+  }
 })
-
 
 addElement(createElement('span', {
   innerText: 'pocket near clipping'
@@ -569,32 +561,30 @@ addElement(createElement('span', {
   innerText: 'Custom'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-
 var ballStickCheckbox = createElement('input', {
-    type: 'checkbox',
-    checked: false,
-    onchange: function (e) {
-      ballStickRepr.setVisibility(e.target.checked)
-    }
-  }, { top: getTopPosition(20), left: '12px' })
-  addElement(ballStickCheckbox)
-  addElement(createElement('span', {
-    innerText: 'ball+stick'
-  }, { top: getTopPosition(), left: '32px', color: 'grey' }))
+  type: 'checkbox',
+  checked: false,
+  onchange: function (e) {
+    ballStickRepr.setVisibility(e.target.checked)
+  }
+}, { top: getTopPosition(20), left: '12px' })
+addElement(ballStickCheckbox)
+addElement(createElement('span', {
+  innerText: 'ball+stick'
+}, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var waterIonCheckbox = createElement('input', {
   type: 'checkbox',
   checked: false,
   onchange: function (e) {
-    stage.getRepresentationsByName('waterIon')
-      .setVisibility(e.target.checked)
+    // stage.getRepresentationsByName('waterIon')
+    waterIonRepr.setVisibility(e.target.checked)
   }
 }, { top: getTopPosition(20), left: '12px' })
 addElement(waterIonCheckbox)
 addElement(createElement('span', {
   innerText: 'water ion'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
-
 
 var sidechainAttachedCheckbox = createElement('input', {
   type: 'checkbox',
@@ -743,6 +733,4 @@ addElement(createElement('span', {
   innerText: 'pi-stacking'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-
-
-loadStructure('data://mutcompute/6ij6.pdb', 'data://mutcompute/6ij6.csv')
+loadStructure('data://mutcompute/tk14.pdb', 'data://mutcompute/tk14.csv')
