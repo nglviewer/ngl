@@ -23,18 +23,18 @@ function createSelect (options, properties, style) {
   return select
 }
 
-function createFileButton (label, properties, style) {
-  var input = createElement('input', Object.assign({
-    type: 'file'
-  }, properties), { display: 'none' })
-  addElement(input)
-  var button = createElement('input', {
-    value: label,
-    type: 'button',
-    onclick: function () { input.click() }
-  }, style)
-  return button
-}
+// function createFileButton (label, properties, style) {
+//   var input = createElement('input', Object.assign({
+//     type: 'file'
+//   }, properties), { display: 'none' })
+//   addElement(input)
+//   var button = createElement('input', {
+//     value: label,
+//     type: 'button',
+//     onclick: function () { input.click() }
+//   }, style)
+//   return button
+// }
 
 var tooltip = document.createElement('div')
 Object.assign(tooltip.style, {
@@ -110,7 +110,7 @@ Promise.all([
   const csvWtProbCol = 7
   const csvPrProbCol = 8
   const firstResNum = parseInt(csv[0][csvResNumCol])
-  
+
   var gradientArray = makeGradientArray()
 
   var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
@@ -185,18 +185,18 @@ Promise.all([
   })
 
   // changes between heatmap and custom
-  // var schemeSelect = createSelect(
-  //   [
-  //     [heatMap, 'heat map'],
-  //     [customPercent, 'custom percent']
-  //   ],
-  //   null,
-  //   { top: '5em', left: '1em' }
-  // )
-  // schemeSelect.onchange = function (e) {
-  //   cartoon.setParameters({ colorScheme: e.target.value })
-  // }
-  // addElement(schemeSelect)
+  var schemeSelect = createSelect(
+    [
+      [heatMap, 'heat map'],
+      [customPercent, 'custom percent']
+    ],
+    null,
+    { top: '5em', left: '1em' }
+  )
+  schemeSelect.onchange = function (e) {
+    cartoon.setParameters({ colorScheme: e.target.value })
+  }
+  addElement(schemeSelect)
 
   // works but needs fine tuning with
   // var polymerSelect = createSelect([
@@ -226,8 +226,6 @@ Promise.all([
   // }
 
   // addElement(centerButton)
-
-  
 
   var cartoon = protein.addRepresentation('cartoon', { color: heatMap })
   protein.autoView()
