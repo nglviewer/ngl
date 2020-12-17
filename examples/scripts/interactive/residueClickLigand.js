@@ -66,7 +66,7 @@ stage.signals.hovered.add(function (pickingProxy) {
       // var mp = pickingProxy.mouse.position
       // console.log('pick', pickingProxy.atom.resno)
       var index = atom.resno - firstResNum
-      if (index < csv.length) {
+      if (atom.resno === index && index < csv.length) {
         tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
@@ -357,7 +357,7 @@ var loadPdbidInput = createElement('input', {
     if (e.keyCode === 13) {
       var inputValue = e.target.value.toLowerCase()
       // str.slice(0, 4)
-      var proteinInput = 'rcsb://' + inputValue
+      var proteinInput = 'data://mutcompute/' + inputValue + '.pdb'
       var csvInput = 'data://mutcompute/' + inputValue + '.csv'
       e.preventDefault()
       loadStructure(proteinInput, csvInput)
