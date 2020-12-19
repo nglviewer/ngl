@@ -66,7 +66,7 @@ stage.signals.hovered.add(function (pickingProxy) {
       // var mp = pickingProxy.mouse.position
       // console.log('pick', pickingProxy.atom.resno)
       var index = atom.resno - firstResNum
-      if (index < csv.length && index > firstResNum) {
+      if (index < csv.length && atom.resno >= firstResNum) {
         tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
