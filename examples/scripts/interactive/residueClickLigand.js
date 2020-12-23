@@ -24,18 +24,18 @@ function createSelect (options, properties, style) {
 }
 
 //TO-DO: create input for loading own structures and csv's
-// function createFileButton (label, properties, style) {
-//   var input = createElement('input', Object.assign({
-//     type: 'file'
-//   }, properties), { display: 'none' })
-//   addElement(input)
-//   var button = createElement('input', {
-//     value: label,
-//     type: 'button',
-//     onclick: function () { input.click() }
-//   }, style)
-//   return button
-// }
+function createFileButton (label, properties, style) {
+  var input = createElement('input', Object.assign({
+    type: 'file'
+  }, properties), { display: 'none' })
+  addElement(input)
+  var button = createElement('input', {
+    value: label,
+    type: 'button',
+    onclick: function () { input.click() }
+  }, style)
+  return button
+}
 
 var topPosition = 12
 
@@ -337,17 +337,41 @@ function setLigandOptions () {
   })
 }
 
-// TO-DO -- add ability to load own structures and data
-// var loadStructureButton = createFileButton('Load ML CSV', {
-//   accept: '.csv',
-//   onchange: function (e) {
-//     if (e.target.files[0]) {
-//       loadStructure(e.target.files[0])
-//     }
-//   }
-// }, { top: getTopPosition(), left: '12px' })
-// addElement(loadStructureButton)
+// TO-DO: add ability to load own structures and data
+var fileList = []
+var loadStructureButton = createFileButton('Load Structure 1st', {
+  accept: '.pdb,.cif,.ent,.gz,.mol2',
+  onchange: function (e) {
+    if (e.target.files[0]) {
+      fileList.push(e.target.files[0])
+      console.log('F', fileList)
+    }
+  }
+}, { top: getTopPosition(), left: '12px' })
+addElement(loadStructureButton)
 
+var loadCsvButton = createFileButton('Load csv 2nd', {
+  accept: '.csv',
+  onchange: function (e) {
+    if (e.target.files[0]) {
+      fileList.push(e.target.files[0])
+      console.log('F', fileList)
+    }
+  }
+}, { top: getTopPosition(20), left: '12px' })
+addElement(loadCsvButton)
+
+var submitButton = createElement('input', {
+  value: 'submit files',
+  type: 'button',
+  onclick: function (e) {
+    loadStructure(fileList[0], fileList[1])
+    fileList = []
+  }
+}, { top: getTopPosition(30), left: '12px' })
+addElement(submitButton)
+
+// More useful for mutcompute
 var loadPdbidInput = createElement('input', {
   type: 'text',
   placeholder: 'Enter pdbID',
@@ -361,7 +385,7 @@ var loadPdbidInput = createElement('input', {
       loadStructure(proteinInput, csvInput)
     }
   }
-}, { top: getTopPosition(20), left: '12px', width: '120px' })
+}, { top: getTopPosition(30), left: '12px', width: '120px' })
 addElement(loadPdbidInput)
 
 function showFull () {
@@ -453,7 +477,7 @@ var ligandSelect = createSelect([], {
       showLigand(sele)
     }
   }
-}, { top: getTopPosition(30), left: '12px', width: '130px' })
+}, { top: getTopPosition(40), left: '12px', width: '130px' })
 addElement(ligandSelect)
 
 // onclick residue select and show ligand
@@ -490,7 +514,7 @@ stage.signals.clicked.add(function (pickingProxy) {
 
 addElement(createElement('span', {
   innerText: 'pocket near clipping'
-}, { top: getTopPosition(30), left: '12px', color: 'grey' }))
+}, { top: getTopPosition(50), left: '12px', color: 'grey' }))
 var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: getTopPosition(16), left: '12px' })
