@@ -23,6 +23,7 @@ function createSelect (options, properties, style) {
   return select
 }
 
+//TO-DO: create input for loading own structures and csv's
 // function createFileButton (label, properties, style) {
 //   var input = createElement('input', Object.assign({
 //     type: 'file'
@@ -242,11 +243,6 @@ function loadStructure (proteinFile, csvFile) {
       color: customPercent,
       visible: false
     })
-    // backboneRepr = struc.addRepresentation('backbone', {
-    //   visible: false,
-    //   colorValue: 'lightgrey',
-    //   radiusScale: 2
-    // })
     ballStickRepr = struc.addRepresentation('ball+stick', {
       visible: false,
       // removes water ions
@@ -313,6 +309,7 @@ function loadStructure (proteinFile, csvFile) {
   // .catch(failure)
 }
 
+// ERROR HANDLING -- specifically for mutcompute version (including above catch)
 // function failure (error) {
 //   console.error(error)
 //   if (window.confirm('Sorry, this data does not exist. Please run your desired protein on mutcompute.com first. Would you like to be redirected to mutcompute.com?')) {
@@ -340,6 +337,7 @@ function setLigandOptions () {
   })
 }
 
+// TO-DO -- add ability to load own structures and data
 // var loadStructureButton = createFileButton('Load ML CSV', {
 //   accept: '.csv',
 //   onchange: function (e) {
@@ -434,11 +432,6 @@ function showRegion (sele) {
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
-  // var sview = s.getView(new NGL.Selection(sele))
-  // pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 5
-  // var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
-  // var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
-
   spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
@@ -464,18 +457,12 @@ var ligandSelect = createSelect([], {
 addElement(ligandSelect)
 
 // onclick residue select and show ligand
-var timesClicked = 0
 var prevSele = ''
-var prevPos = new NGL.Vector3(Infinity, Infinity, Infinity)
-// var residueClick =
 stage.signals.clicked.add(function (pickingProxy) {
   if (pickingProxy === undefined) {
     showFull()
-    ////timesClicked = 0
   }
   if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
-    timesClicked++
-    // ligandSelect.value = ''
     var sele = ''
     if (pickingProxy.closestBondAtom){ 
       sele = '' 
@@ -498,15 +485,6 @@ stage.signals.clicked.add(function (pickingProxy) {
       showRegion(sele)
       prevSele = ''
     }
-    
-    
-    // if (timesClicked % 2 === 0) {
-    //   showRegion(sele)
-    //   // sele = ''
-    // } else {
-    //   timesClicked++
-    //   showLigand(sele)
-    // }
   }
 })
 
