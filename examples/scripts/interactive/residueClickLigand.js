@@ -465,31 +465,48 @@ addElement(ligandSelect)
 
 // onclick residue select and show ligand
 var timesClicked = 0
+var prevSele = ''
+var prevPos = new NGL.Vector3(Infinity, Infinity, Infinity)
 // var residueClick =
 stage.signals.clicked.add(function (pickingProxy) {
   if (pickingProxy === undefined) {
     showFull()
-    timesClicked++
+    ////timesClicked = 0
   }
   if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
     timesClicked++
-    ligandSelect.value = ''
+    // ligandSelect.value = ''
     var sele = ''
-    if ((pickingProxy.closestBondAtom || pickingProxy.atom.resno) !== undefined) {
+    if (pickingProxy.closestBondAtom){ 
+      sele = '' 
+      return
+    }
+    if (pickingProxy.atom.resno !== undefined) {
       sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
     }
-    if (pickingProxy.closestBondAtom || pickingProxy.atom.chainname) {
+    if (pickingProxy.atom.chainname) {
       sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
     }
     if (!sele) {
       showFull()
     }
-    if (timesClicked % 2 === 0) {
-      showRegion(sele)
-      timesClicked = 0
-    } else {
+    if (sele !== prevSele) {
       showLigand(sele)
+      prevSele = sele
     }
+    else if (sele === prevSele) {
+      showRegion(sele)
+      prevSele = ''
+    }
+    
+    
+    // if (timesClicked % 2 === 0) {
+    //   showRegion(sele)
+    //   // sele = ''
+    // } else {
+    //   timesClicked++
+    //   showLigand(sele)
+    // }
   }
 })
 
