@@ -23,7 +23,7 @@ function createSelect (options, properties, style) {
   return select
 }
 
-//TO-DO: create input for loading own structures and csv's
+
 function createFileButton (label, properties, style) {
   var input = createElement('input', Object.assign({
     type: 'file'
