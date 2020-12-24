@@ -337,7 +337,8 @@ function setLigandOptions () {
   })
 }
 
-// TO-DO: add ability to load own structures and data
+// TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv 
+// and csv is in same format (alert?)
 var fileList = []
 var loadStructureButton = createFileButton('Load Structure 1st', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
