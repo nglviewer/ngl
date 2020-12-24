@@ -345,7 +345,6 @@ var loadStructureButton = createFileButton('Load Structure 1st', {
   onchange: function (e) {
     if (e.target.files[0]) {
       fileList.push(e.target.files[0])
-      console.log('F', fileList)
     }
   }
 }, { top: getTopPosition(), left: '12px' })
@@ -356,7 +355,6 @@ var loadCsvButton = createFileButton('Load csv 2nd', {
   onchange: function (e) {
     if (e.target.files[0]) {
       fileList.push(e.target.files[0])
-      console.log('F', fileList)
     }
   }
 }, { top: getTopPosition(20), left: '12px' })
