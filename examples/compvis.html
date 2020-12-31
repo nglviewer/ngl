@@ -412,7 +412,7 @@
     function showLigand (sele) {
       var s = struc.structure
     
-      var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 9)
+      var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 11)
       var withinGroup = s.getAtomSetWithinGroup(withinSele)
       var expandedSele = withinGroup.toSeleString()
       neighborSele = '(' + expandedSele + ') and not (' + sele + ')'

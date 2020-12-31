@@ -23,7 +23,6 @@ function createSelect (options, properties, style) {
   return select
 }
 
-
 function createFileButton (label, properties, style) {
   var input = createElement('input', Object.assign({
     type: 'file'
@@ -337,7 +336,7 @@ function setLigandOptions () {
   })
 }
 
-// TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv 
+// TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv
 // and csv is in same format (alert?)
 var fileList = []
 var loadStructureButton = createFileButton('Load Structure 1st', {
@@ -487,8 +486,8 @@ stage.signals.clicked.add(function (pickingProxy) {
   }
   if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
     var sele = ''
-    if (pickingProxy.closestBondAtom){ 
-      sele = '' 
+    if (pickingProxy.closestBondAtom) {
+      sele = ''
       return
     }
     if (pickingProxy.atom.resno !== undefined) {
@@ -503,8 +502,7 @@ stage.signals.clicked.add(function (pickingProxy) {
     if (sele !== prevSele) {
       showLigand(sele)
       prevSele = sele
-    }
-    else if (sele === prevSele) {
+    } else if (sele === prevSele) {
       showRegion(sele)
       prevSele = ''
     }

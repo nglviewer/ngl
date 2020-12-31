@@ -27,7 +27,6 @@ Promise.all([
   var csv = ol[1].data
   // var names = ol[1].columnNames
   // var resno = struc.residueStore.resno
-  console.log('struc', struc)
 
   var csvResNumCol = 4
   var csvWtProbCol = 7
@@ -36,13 +35,23 @@ Promise.all([
   const firstResNum = parseInt(csv[0][csvResNumCol])
   // adds csv column to structure residueStore
   function addStrucValue () {
-    var array = []
+    struc.predAaProb = []
+    struc.wtAaProb = []
+    struc.predAa = []
+    struc.pos = []
+
     for (var i = 0; i < csv.length; i++) {
-      var predAaProb = csv[i][csvPrProbCol]
-      array.push(predAaProb)
+     
+      var predAaProb = parseFloat(csv[i][csvPrProbCol])
+      var wtAaProb = parseFloat(csv[i][csvWtProbCol])
+      var predAa = csv[i][csvPrAaCol]
+      var pos = parseFloat(csv[i][csvResNumCol])
+      struc.predAaProb.push(predAaProb)
+      struc.wtAaProb.push(wtAaProb)
+      struc.predAa.push(predAa)
+      struc.pos.push(pos)
     }
-    struc.predAA = array
-    return struc.predAA
+    return struc.predAaProb, struc.wtAaProb, struc.predAa, struc.pos
   }
   addStrucValue()
   console.log('struc2', struc)
@@ -55,14 +64,15 @@ Promise.all([
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
       // var mp = pickingProxy.mouse.position
+      console.log('atomRes', atom.residueStore)
       var index = atom.resno - firstResNum
       if (index < csv.length) {
         tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
-      WT PROB: ${csv[index][csvWtProbCol]}<br/>
-      PRED AA: ${csv[index][csvPrAaCol]}<br/>
-      PRED PROB: ${csv[index][csvPrProbCol]}<br/>`
+      WT PROB: ${struc.wtAaProb[index]}<br/>
+      PRED AA: ${struc.predAa[index]}<br/>
+      PRED PROB: ${struc.predAaProb[index]}<br/>`
         tooltip.style.bottom = 3 + 'px'
         tooltip.style.left = stage.viewer.width - 200 + 'px'
         tooltip.style.display = 'block'
