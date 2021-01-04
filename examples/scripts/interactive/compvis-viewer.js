@@ -129,7 +129,7 @@ function makeGradientArray () {
 
 var gradientArray = makeGradientArray()
 
-var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
+// var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
@@ -154,7 +154,7 @@ function loadStructure (proteinFile, csvFile) {
   struc = undefined
   stage.setFocus(0)
   stage.removeAllComponents()
-  ligandSelect.innerHTML = ''
+  // ligandSelect.innerHTML = ''
   clipNearRange.value = 0
   clipRadiusRange.value = 100
   pocketOpacityRange.value = 0
@@ -184,7 +184,7 @@ function loadStructure (proteinFile, csvFile) {
     struc = ol[0]
     csv = ol[1].data
 
-    setLigandOptions()
+    // setLigandOptions()
 
     // var gradientArray = makeGradientArray()
     firstResNum = parseInt(csv[0][csvResNumCol])
@@ -254,10 +254,10 @@ function loadStructure (proteinFile, csvFile) {
       sele: 'water or ion',
       scale: 0.25
     })
-    spacefillRepr = struc.addRepresentation('spacefill', {
-      sele: ligandSele,
-      visible: true
-    })
+    // spacefillRepr = struc.addRepresentation('spacefill', {
+    //   sele: ligandSele,
+    //   visible: false
+    // })
     neighborRepr = struc.addRepresentation('ball+stick', {
       sele: 'none',
       aspectRatio: 1.1,
@@ -268,7 +268,7 @@ function loadStructure (proteinFile, csvFile) {
       multipleBond: 'symmetric',
       colorValue: 'grey',
       sele: 'none',
-      aspectRatio: 1.2,
+      aspectRatio: 1.1,
       radiusScale: 2.5
     })
     contactRepr = struc.addRepresentation('contact', {
@@ -316,34 +316,35 @@ function loadStructure (proteinFile, csvFile) {
 //   }
 // }
 
-function setLigandOptions () {
-  ligandSelect.innerHTML = ''
-  var options = [['', 'select ligand']]
-  struc.structure.eachResidue(function (rp) {
-    if (rp.isWater()) return
-    var sele = ''
-    if (rp.resno !== undefined) sele += rp.resno
-    if (rp.inscode) sele += '^' + rp.inscode
-    if (rp.chain) sele += ':' + rp.chainname
-    var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-    if (rp.entity && rp.entity.description) name += ' (' + rp.entity.description + ')'
-    options.push([sele, name])
-  }, new NGL.Selection(ligandSele))
-  options.forEach(function (d) {
-    ligandSelect.add(createElement('option', {
-      value: d[0], text: d[1]
-    }))
-  })
-}
+// function setLigandOptions () {
+//   ligandSelect.innerHTML = ''
+//   var options = [['', 'select ligand']]
+//   struc.structure.eachResidue(function (rp) {
+//     if (rp.isWater()) return
+//     var sele = ''
+//     if (rp.resno !== undefined) sele += rp.resno
+//     if (rp.inscode) sele += '^' + rp.inscode
+//     if (rp.chain) sele += ':' + rp.chainname
+//     var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
+//     if (rp.entity && rp.entity.description) name += ' (' + rp.entity.description + ')'
+//     options.push([sele, name])
+//   }, new NGL.Selection(ligandSele))
+//   options.forEach(function (d) {
+//     ligandSelect.add(createElement('option', {
+//       value: d[0], text: d[1]
+//     }))
+//   })
+// }
 
 // TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv
 // and csv is in same format (alert?)
-var fileList = []
+
+var loadStrucFile, loadCsvFile
 var loadStructureButton = createFileButton('Load Structure 1st', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
   onchange: function (e) {
     if (e.target.files[0]) {
-      fileList.push(e.target.files[0])
+      loadStrucFile = e.target.files[0]
     }
   }
 }, { top: getTopPosition(), left: '12px' })
@@ -353,7 +354,7 @@ var loadCsvButton = createFileButton('Load csv 2nd', {
   accept: '.csv',
   onchange: function (e) {
     if (e.target.files[0]) {
-      fileList.push(e.target.files[0])
+      loadCsvFile = e.target.files[0]
     }
   }
 }, { top: getTopPosition(20), left: '12px' })
@@ -363,16 +364,17 @@ var submitButton = createElement('input', {
   value: 'submit files',
   type: 'button',
   onclick: function (e) {
-    loadStructure(fileList[0], fileList[1])
-    fileList = []
+    loadStructure(loadStrucFile, loadCsvFile)
+    loadStrucFile = ''
+    loadCsvFile = ''
   }
 }, { top: getTopPosition(30), left: '12px' })
 addElement(submitButton)
 
-// More useful for mutcompute
+// More useful for mutcompute.com
 var loadPdbidInput = createElement('input', {
   type: 'text',
-  placeholder: 'Enter pdbID',
+  placeholder: 'pdbID: Try 2b3p',
   onkeypress: function (e) {
     if (e.keyCode === 13) {
       var inputValue = e.target.value.toLowerCase()
@@ -387,9 +389,9 @@ var loadPdbidInput = createElement('input', {
 addElement(loadPdbidInput)
 
 function showFull () {
-  ligandSelect.value = ''
+  // ligandSelect.value = ''
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
@@ -421,7 +423,7 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
   neighborRepr.setVisibility(true)
@@ -446,7 +448,7 @@ function showLigand (sele) {
 
 function showRegion (sele) {
   var s = struc.structure
-  ligandSele.value = ''
+  // ligandSele.value = ''
 
   var withinSele = s.getAtomSetWithinSelection(new NGL.Selection(sele), 5)
   var withinGroup = s.getAtomSetWithinGroup(withinSele)
@@ -454,7 +456,7 @@ function showRegion (sele) {
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
@@ -465,18 +467,18 @@ function showRegion (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
-var ligandSelect = createSelect([], {
-  onchange: function (e) {
-    // residueSelect.value = ''
-    var sele = e.target.value
-    if (!sele) {
-      showFull()
-    } else {
-      showLigand(sele)
-    }
-  }
-}, { top: getTopPosition(40), left: '12px', width: '130px' })
-addElement(ligandSelect)
+// var ligandSelect = createSelect([], {
+//   onchange: function (e) {
+//     // residueSelect.value = ''
+//     var sele = e.target.value
+//     if (!sele) {
+//       showFull()
+//     } else {
+//       showLigand(sele)
+//     }
+//   }
+// }, { top: getTopPosition(40), left: '12px', width: '130px' })
+// addElement(ligandSelect)
 
 // onclick residue select and show ligand
 var prevSele = ''
@@ -749,4 +751,4 @@ addElement(createElement('span', {
   innerText: 'pi-stacking'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-loadStructure('data://mutcompute/tk14.pdb', 'data://mutcompute/tk14.csv')
+loadStructure('data://mutcompute/2isk.pdb', 'data://mutcompute/2isk.csv')
