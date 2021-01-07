@@ -60,7 +60,7 @@ document.body.appendChild(tooltip)
 stage.mouseControls.remove('hoverPick')
 // listen to `hovered` signal to move tooltip around and change its text
 stage.signals.hovered.add(function (pickingProxy) {
-  if (cartoonCheckbox.checked === true || ballStickCheckbox.checked === true || customCheckbox.checked === true) {
+  if (cartoonCheckbox.checked === true || customCheckbox.checked === true) {
     if (pickingProxy && (pickingProxy.atom || pickingProxy.bond)) {
       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
       // var mp = pickingProxy.mouse.position
@@ -134,7 +134,7 @@ var gradientArray = makeGradientArray()
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr, ballStickRepr, waterIonRepr
+var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
 
 var heatMap, customPercent
 
@@ -160,8 +160,8 @@ function loadStructure (proteinFile, csvFile) {
   pocketOpacityRange.value = 0
   cartoonCheckbox.checked = true
   customCheckbox.checked = false
-  ballStickCheckbox.checked = false
-  waterIonCheckbox.checked = false
+  // ballStickCheckbox.checked = false
+  // waterIonCheckbox.checked = false
   hydrophobicCheckbox.checked = false
   hydrogenBondCheckbox.checked = true
   weakHydrogenBondCheckbox.checked = false
@@ -242,18 +242,18 @@ function loadStructure (proteinFile, csvFile) {
       color: customPercent,
       visible: false
     })
-    ballStickRepr = struc.addRepresentation('ball+stick', {
-      visible: false,
-      // removes water ions
-      sele: 'polymer',
-      name: 'polymer'
-    })
-    waterIonRepr = struc.addRepresentation('ball+stick', {
-      name: 'waterIon',
-      visible: waterIonCheckbox.checked,
-      sele: 'water or ion',
-      scale: 0.25
-    })
+    // ballStickRepr = struc.addRepresentation('ball+stick', {
+    //   visible: false,
+    //   // removes water ions
+    //   sele: 'polymer',
+    //   name: 'polymer'
+    // })
+    // waterIonRepr = struc.addRepresentation('ball+stick', {
+    //   name: 'waterIon',
+    //   visible: waterIonCheckbox.checked,
+    //   sele: 'water or ion',
+    //   scale: 0.25
+    // })
     // spacefillRepr = struc.addRepresentation('spacefill', {
     //   sele: ligandSele,
     //   visible: false
@@ -339,6 +339,16 @@ function loadStructure (proteinFile, csvFile) {
 // TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv
 // and csv is in same format (alert?)
 
+var instructionsText = createElement('span', {
+  innerHTML: `
+  This tool is for rendering Machine Learning data on proteins. <br/>
+  To use with your own Machine Learning CSV: <br/>
+  Copy the column order of data/mutcompute/2isk.csv in the source code<br/>
+  Then load your local structure and csv files.
+  `
+}, { top: getTopPosition(), left:'12px', color: 'grey'})
+addElement(instructionsText)
+
 var loadStrucFile, loadCsvFile
 var loadStructureButton = createFileButton('Load Structure 1st', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
@@ -347,7 +357,7 @@ var loadStructureButton = createFileButton('Load Structure 1st', {
       loadStrucFile = e.target.files[0]
     }
   }
-}, { top: getTopPosition(), left: '12px' })
+}, { top: getTopPosition(70), left: '12px' })
 addElement(loadStructureButton)
 
 var loadCsvButton = createFileButton('Load csv 2nd', {
@@ -355,38 +365,41 @@ var loadCsvButton = createFileButton('Load csv 2nd', {
   onchange: function (e) {
     if (e.target.files[0]) {
       loadCsvFile = e.target.files[0]
+      loadStructure(loadStrucFile,loadCsvFile)
+      loadCsvFile = ''
+      loadStrucFile = ''
     }
   }
 }, { top: getTopPosition(20), left: '12px' })
 addElement(loadCsvButton)
 
-var submitButton = createElement('input', {
-  value: 'submit files',
-  type: 'button',
-  onclick: function (e) {
-    loadStructure(loadStrucFile, loadCsvFile)
-    loadStrucFile = ''
-    loadCsvFile = ''
-  }
-}, { top: getTopPosition(30), left: '12px' })
-addElement(submitButton)
+// var submitButton = createElement('input', {
+//   value: 'submit files',
+//   type: 'button',
+//   onclick: function (e) {
+//     loadStructure(loadStrucFile, loadCsvFile)
+//     loadStrucFile = ''
+//     loadCsvFile = ''
+//   }
+// }, { top: getTopPosition(30), left: '12px' })
+// addElement(submitButton)
 
 // More useful for mutcompute.com
-var loadPdbidInput = createElement('input', {
-  type: 'text',
-  placeholder: 'pdbID: Try 2b3p',
-  onkeypress: function (e) {
-    if (e.keyCode === 13) {
-      var inputValue = e.target.value.toLowerCase()
-      // str.slice(0, 4)
-      var proteinInput = 'data://mutcompute/' + inputValue + '.pdb'
-      var csvInput = 'data://mutcompute/' + inputValue + '.csv'
-      e.preventDefault()
-      loadStructure(proteinInput, csvInput)
-    }
-  }
-}, { top: getTopPosition(30), left: '12px', width: '120px' })
-addElement(loadPdbidInput)
+// var loadPdbidInput = createElement('input', {
+//   type: 'text',
+//   placeholder: 'pdbID: Try 2b3p',
+//   onkeypress: function (e) {
+//     if (e.keyCode === 13) {
+//       var inputValue = e.target.value.toLowerCase()
+//       // str.slice(0, 4)
+//       var proteinInput = 'data://mutcompute/' + inputValue + '.pdb'
+//       var csvInput = 'data://mutcompute/' + inputValue + '.csv'
+//       e.preventDefault()
+//       loadStructure(proteinInput, csvInput)
+//     }
+//   }
+// }, { top: getTopPosition(30), left: '12px', width: '120px' })
+// addElement(loadPdbidInput)
 
 function showFull () {
   // ligandSelect.value = ''
@@ -402,12 +415,7 @@ function showFull () {
   struc.autoView(2000)
 }
 
-var fullButton = createElement('input', {
-  value: 'full structure',
-  type: 'button',
-  onclick: showFull
-}, { top: getTopPosition(30), left: '12px' })
-addElement(fullButton)
+
 
 function showLigand (sele) {
   var s = struc.structure
@@ -486,7 +494,7 @@ stage.signals.clicked.add(function (pickingProxy) {
   if (pickingProxy === undefined) {
     showFull()
   }
-  if (ballStickCheckbox.checked === false && pickingProxy !== undefined) {
+  if (pickingProxy !== undefined) {
     var sele = ''
     if (pickingProxy.closestBondAtom) {
       sele = ''
@@ -513,7 +521,7 @@ stage.signals.clicked.add(function (pickingProxy) {
 
 addElement(createElement('span', {
   innerText: 'pocket near clipping'
-}, { top: getTopPosition(50), left: '12px', color: 'grey' }))
+}, { top: getTopPosition(20), left: '12px', color: 'grey' }))
 var clipNearRange = createElement('input', {
   type: 'range', value: 0, min: 0, max: 10000, step: 1
 }, { top: getTopPosition(16), left: '12px' })
@@ -579,45 +587,45 @@ addElement(createElement('span', {
   innerText: 'Custom'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-var ballStickCheckbox = createElement('input', {
-  type: 'checkbox',
-  checked: false,
-  onchange: function (e) {
-    ballStickRepr.setVisibility(e.target.checked)
-  }
-}, { top: getTopPosition(20), left: '12px' })
-addElement(ballStickCheckbox)
-addElement(createElement('span', {
-  innerText: 'ball+stick'
-}, { top: getTopPosition(), left: '32px', color: 'grey' }))
+// var ballStickCheckbox = createElement('input', {
+//   type: 'checkbox',
+//   checked: false,
+//   onchange: function (e) {
+//     ballStickRepr.setVisibility(e.target.checked)
+//   }
+// }, { top: getTopPosition(20), left: '12px' })
+// addElement(ballStickCheckbox)
+// addElement(createElement('span', {
+//   innerText: 'ball+stick'
+// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-var waterIonCheckbox = createElement('input', {
-  type: 'checkbox',
-  checked: false,
-  onchange: function (e) {
-    // stage.getRepresentationsByName('waterIon')
-    waterIonRepr.setVisibility(e.target.checked)
-  }
-}, { top: getTopPosition(20), left: '12px' })
-addElement(waterIonCheckbox)
-addElement(createElement('span', {
-  innerText: 'water ion'
-}, { top: getTopPosition(), left: '32px', color: 'grey' }))
+// var waterIonCheckbox = createElement('input', {
+//   type: 'checkbox',
+//   checked: false,
+//   onchange: function (e) {
+//     // stage.getRepresentationsByName('waterIon')
+//     waterIonRepr.setVisibility(e.target.checked)
+//   }
+// }, { top: getTopPosition(20), left: '12px' })
+// addElement(waterIonCheckbox)
+// addElement(createElement('span', {
+//   innerText: 'water ion'
+// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-var sidechainAttachedCheckbox = createElement('input', {
-  type: 'checkbox',
-  checked: false,
-  onchange: function (e) {
-    sidechainAttached = e.target.checked
-    neighborRepr.setSelection(
-      sidechainAttached ? '(' + neighborSele + ') and (sidechainAttached or not polymer)' : neighborSele
-    )
-  }
-}, { top: getTopPosition(20), left: '12px' })
-addElement(sidechainAttachedCheckbox)
-addElement(createElement('span', {
-  innerText: 'sidechainAttached'
-}, { top: getTopPosition(), left: '32px', color: 'grey' }))
+// var sidechainAttachedCheckbox = createElement('input', {
+//   type: 'checkbox',
+//   checked: true,
+//   onchange: function (e) {
+//     sidechainAttached = e.target.checked
+//     neighborRepr.setSelection(
+//       sidechainAttached ? '(' + neighborSele + ') and (sidechainAttached or not polymer)' : neighborSele
+//     )
+//   }
+// }, { top: getTopPosition(20), left: '12px' })
+// addElement(sidechainAttachedCheckbox)
+// addElement(createElement('span', {
+//   innerText: 'sidechainAttached'
+// }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var labelCheckbox = createElement('input', {
   type: 'checkbox',
