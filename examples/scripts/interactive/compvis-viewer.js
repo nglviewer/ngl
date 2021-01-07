@@ -291,29 +291,6 @@ function loadStructure (proteinFile, csvFile) {
 //   }
 // }
 
-// function setLigandOptions () {
-//   ligandSelect.innerHTML = ''
-//   var options = [['', 'select ligand']]
-//   struc.structure.eachResidue(function (rp) {
-//     if (rp.isWater()) return
-//     var sele = ''
-//     if (rp.resno !== undefined) sele += rp.resno
-//     if (rp.inscode) sele += '^' + rp.inscode
-//     if (rp.chain) sele += ':' + rp.chainname
-//     var name = (rp.resname ? '[' + rp.resname + ']' : '') + sele
-//     if (rp.entity && rp.entity.description) name += ' (' + rp.entity.description + ')'
-//     options.push([sele, name])
-//   }, new NGL.Selection(ligandSele))
-//   options.forEach(function (d) {
-//     ligandSelect.add(createElement('option', {
-//       value: d[0], text: d[1]
-//     }))
-//   })
-// }
-
-// TO-DO: add safeguards to makesure file[0] is pdb and file[1] is csv
-// and csv is in same format (alert?)
-
 var instructionsText = createElement('span', {
   innerHTML: `
   This tool is for rendering Machine Learning data on proteins. <br/>
