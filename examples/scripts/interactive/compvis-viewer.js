@@ -279,7 +279,7 @@ var instructionsText = createElement('span', {
   Copy the column order of data/machineLearning/2isk.csv in the source code<br/>
   Then load your local structure and csv files.
   `
-}, { top: getTopPosition(), left:'12px', color: 'grey'})
+}, { top: getTopPosition(), left: '12px', color: 'grey' })
 addElement(instructionsText)
 
 var loadStrucFile, loadCsvFile
@@ -298,7 +298,7 @@ var loadCsvButton = createFileButton('Load csv 2nd', {
   onchange: function (e) {
     if (e.target.files[0]) {
       loadCsvFile = e.target.files[0]
-      loadStructure(loadStrucFile,loadCsvFile)
+      loadStructure(loadStrucFile, loadCsvFile)
       loadCsvFile = ''
       loadStrucFile = ''
     }
@@ -315,8 +315,6 @@ function showFull () {
 
   struc.autoView(2000)
 }
-
-
 
 function showLigand (sele) {
   var s = struc.structure
