@@ -112,7 +112,8 @@ abstract class Component {
   }
 
   /**
-   * Set rotation transform
+   * Set local rotation transform
+   * (for global rotation use setTransform)
    *
    * @example
    * // rotate by 2 degree radians on x axis

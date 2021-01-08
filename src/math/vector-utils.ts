@@ -146,10 +146,14 @@ export function normalizeVector3array (a: Float32Array) {
     const x = a[ i ]
     const y = a[ i + 1 ]
     const z = a[ i + 2 ]
-    const s = 1 / Math.sqrt(x * x + y * y + z * z)
-    a[ i ] = x * s
-    a[ i + 1 ] = y * s
-    a[ i + 2 ] = z * s
+    const len2 = x * x + y * y + z * z
+    if (len2 > 0) {             // avoid divide by zero
+      const s = 1 / Math.sqrt(len2)
+      a[ i ] = x * s
+      a[ i + 1 ] = y * s
+      a[ i + 2 ] = z * s
+    }
+    // else leave as all zeros
   }
 }
 

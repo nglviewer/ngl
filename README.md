@@ -22,8 +22,8 @@ See it in action:
 
 Documentation:
 
-* [Reference](http://arose.github.io/ngl/api/identifiers.html)
-* [Manual](http://arose.github.io/ngl/api/manual/index.html)
+* [Reference](http://nglviewer.org/ngl/api/identifiers.html)
+* [Manual](http://nglviewer.org/ngl/api/manual/index.html)
 
 
 Features
