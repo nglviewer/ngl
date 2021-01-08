@@ -12,7 +12,7 @@ import Store, { StoreField } from './store.js'
 export default class ResidueStore extends Store {
   chainIndex: Uint32Array
   atomOffset: Uint32Array
-  atomCount: Uint16Array
+  atomCount: Uint32Array
   residueTypeId: Uint16Array
 
   resno: Uint32Array
@@ -23,7 +23,7 @@ export default class ResidueStore extends Store {
     return [
       [ 'chainIndex', 1, 'uint32' ],
       [ 'atomOffset', 1, 'uint32' ],
-      [ 'atomCount', 1, 'uint16' ],
+      [ 'atomCount', 1, 'uint32' ],
       [ 'residueTypeId', 1, 'uint16' ],
 
       [ 'resno', 1, 'int32' ],
