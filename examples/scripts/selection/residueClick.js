@@ -15,7 +15,7 @@ function loadStructure (proteinFile) {
     struc.setDefaultAssembly('BU1')
 
     struc.addRepresentation('cartoon', {
-        color: 'resname',
+      color: 'resname'
     })
     neighborRepr = struc.addRepresentation('ball+stick', {
       sele: 'none',
@@ -81,28 +81,28 @@ stage.signals.clicked.add(function (pickingProxy) {
   if (pickingProxy === undefined) {
     showFull()
   }
-if (pickingProxy !== undefined) {
-  var sele = ''
-  if (pickingProxy.closestBondAtom) {
-    sele = ''
-    return
+  if (pickingProxy !== undefined) {
+    var sele = ''
+    if (pickingProxy.closestBondAtom) {
+      sele = ''
+      return
+    }
+    if (pickingProxy.atom.resno !== undefined) {
+      sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
+    }
+    if (pickingProxy.atom.chainname) {
+      sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
+    }
+    if (!sele) {
+      showFull()
+    }
+    if (sele !== prevSele) {
+      showLigand(sele)
+      prevSele = sele
+    } else if (sele === prevSele) {
+      showRegion(sele)
+      prevSele = ''
+    }
   }
-  if (pickingProxy.atom.resno !== undefined) {
-    sele += (pickingProxy.closestBondAtom || pickingProxy.atom.resno)
-  }
-  if (pickingProxy.atom.chainname) {
-    sele += ':' + (pickingProxy.closestBondAtom || pickingProxy.atom.chainname)
-  }
-  if (!sele) {
-    showFull()
-  }
-  if (sele !== prevSele) {
-    showLigand(sele)
-    prevSele = sele
-  } else if (sele === prevSele) {
-    showRegion(sele)
-    prevSele = ''
-  }
-}
 })
 loadStructure('data://mutcompute/2isk.pdb')
