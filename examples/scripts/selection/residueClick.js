@@ -105,4 +105,4 @@ stage.signals.clicked.add(function (pickingProxy) {
     }
   }
 })
-loadStructure('data://mutcompute/2isk.pdb')
+loadStructure('rcsb://2isk.pdb')
