@@ -13,16 +13,6 @@ function createElement (name, properties, style) {
   return el
 }
 
-function createSelect (options, properties, style) {
-  var select = createElement('select', properties, style)
-  options.forEach(function (d) {
-    select.add(createElement('option', {
-      value: d[0], text: d[1]
-    }))
-  })
-  return select
-}
-
 function createFileButton (label, properties, style) {
   var input = createElement('input', Object.assign({
     type: 'file'
@@ -134,7 +124,7 @@ var gradientArray = makeGradientArray()
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
+var cartoonRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
 
 var heatMap, customPercent
 
