@@ -344,10 +344,10 @@ class Stage {
       } else if ((instanceCount > 5 && sizeScore > 15000) || sizeScore > 700000) {
         let scaleFactor = (
           Math.min(
-            1.5,
+            2.0,
             Math.max(
               0.1,
-              2000 / (sizeScore / instanceCount)
+              6000 / (sizeScore / instanceCount)
             )
           )
         )
@@ -356,8 +356,8 @@ class Stage {
         component.addRepresentation('surface', {
           colorScheme, colorScale, colorReverse,
           sele: 'polymer',
-          surfaceType: 'sas',
-          probeRadius: 1.4,
+          surfaceType: 'vws',
+          probeRadius: 1.4,     // doesn't matter for vws but set anyway in case they switch
           scaleFactor: scaleFactor,
           useWorker: false
         })
