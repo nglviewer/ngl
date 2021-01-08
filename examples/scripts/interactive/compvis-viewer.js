@@ -280,22 +280,13 @@ function loadStructure (proteinFile, csvFile) {
       labelGrouping: 'residue'
     })
   })
-  // .catch(failure)
 }
-
-// ERROR HANDLING -- specifically for mutcompute version (including above catch)
-// function failure (error) {
-//   console.error(error)
-//   if (window.confirm('Sorry, this data does not exist. Please run your desired protein on mutcompute.com first. Would you like to be redirected to mutcompute.com?')) {
-//     window.location.href = 'https://mutcompute.com';
-//   }
-// }
 
 var instructionsText = createElement('span', {
   innerHTML: `
   This tool is for rendering Machine Learning data on proteins. <br/>
   To use with your own Machine Learning CSV: <br/>
-  Copy the column order of data/mutcompute/2isk.csv in the source code<br/>
+  Copy the column order of data/machineLearning/2isk.csv in the source code<br/>
   Then load your local structure and csv files.
   `
 }, { top: getTopPosition(), left:'12px', color: 'grey'})
@@ -621,4 +612,4 @@ addElement(createElement('span', {
   innerText: 'pi-stacking'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
-loadStructure('data://mutcompute/2isk.pdb', 'data://mutcompute/2isk.csv')
+loadStructure('data://machineLearning/2isk.pdb', 'data://machineLearning/2isk.csv')
