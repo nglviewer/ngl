@@ -438,7 +438,7 @@ export default class Viewer {
 
     // If not webgl2 context, explicitly check for these
     if (!this.renderer.capabilities.isWebGL2) {
-      setExtensionFragDepth(this.renderer.capabilities.isWebGL2)
+      setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'))
       this.renderer.extensions.get('OES_element_index_uint')
       
       setSupportsReadPixelsFloat(
