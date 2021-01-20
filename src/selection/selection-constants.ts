@@ -25,8 +25,8 @@ export enum kwd {
   RING = 17,
   AROMATICRING = 18,
   METAL = 19,
-  NONE = 20,
-  POLARH = 21
+  POLARH = 20,
+  NONE = 21
 }
 
 export const SelectAllKeyword = [ '*', '', 'ALL' ]
