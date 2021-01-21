@@ -8,8 +8,8 @@ import { Color, Vector3, Matrix4 } from 'three'
 
 import { Debug, Log, ColormakerRegistry, ExtensionFragDepth } from '../globals'
 import { defaults } from '../utils'
-import Queue from '../utils/queue.js'
-import Counter from '../utils/counter.js'
+import Queue from '../utils/queue'
+import Counter from '../utils/counter'
 import Viewer from '../viewer/viewer'
 import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
 import { ColormakerParameters, ColorMode } from '../color/colormaker';

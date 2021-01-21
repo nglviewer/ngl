@@ -12,7 +12,7 @@ import { Browser } from '../globals'
 import { defaults } from '../utils'
 import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
 import { uniformArray, uniformArray3 } from '../math/array-utils'
-import { Structure } from '../ngl.js';
+import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';

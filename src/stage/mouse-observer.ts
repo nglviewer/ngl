@@ -7,7 +7,7 @@
 import { Vector2 } from 'three'
 import { Signal } from 'signals'
 
-import { LeftMouseButton, RightMouseButton } from '../constants.js'
+import { LeftMouseButton, RightMouseButton } from '../constants'
 import { defaults } from '../utils'
 import Viewer from '../viewer/viewer'
 import MouseControls from '../controls/mouse-controls'

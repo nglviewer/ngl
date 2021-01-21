@@ -45,7 +45,7 @@ export default class PdbWriter extends Writer {
    * @param  {Structure} structure - the structure object
    * @param  {Object} params - parameters]
    */
-  constructor (structure: Structure, params: PdbWriterParams) {
+  constructor (structure: Structure, params?: PdbWriterParams) {
     super()
 
     const p = Object.assign({}, params)

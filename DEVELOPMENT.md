@@ -38,4 +38,4 @@ The [examples](examples/) need to served by a webserver. Options for a simple de
 Unit tests
 ----------
 
-[Mocha](https://mochajs.org/) is used for unit testing. The unit tests can be run all at once with `npm test` or individually like `mocha test/tests-utils.js`.
+[Jest](https://jest.io/) is used for unit testing. The unit tests can be run all at once with `npm test` or individually like `npx jest test/tests-utils.spec.js`.

@@ -8,19 +8,19 @@ import { Vector3, Box3, Matrix3, Matrix4 } from 'three'
 
 import { WorkerRegistry, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import WorkerPool from '../worker/worker-pool.js'
-import { VolumePicker } from '../utils/picker.js'
+import WorkerPool from '../worker/worker-pool'
+import { VolumePicker } from '../utils/picker'
 import {
   uniformArray, serialArray,
   arrayMin, arrayMax, arraySum, arrayMean, arrayRms
 } from '../math/array-utils'
-import MarchingCubes from './marching-cubes.js'
-import { laplacianSmooth, computeVertexNormals } from './surface-utils.js'
+import MarchingCubes from './marching-cubes'
+import { laplacianSmooth, computeVertexNormals } from './surface-utils'
 import {
   applyMatrix4toVector3array, applyMatrix3toVector3array
-} from '../math/vector-utils.js'
-import { m3new, m3makeNormal } from '../math/matrix-utils.js'
-import Surface from './surface.js'
+} from '../math/vector-utils'
+import { m3new, m3makeNormal } from '../math/matrix-utils'
+import Surface from './surface'
 import { NumberArray } from '../types';
 import { ColormakerParameters } from '../color/colormaker';
 

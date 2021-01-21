@@ -6,9 +6,9 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import { AtomDataFields } from '../structure/structure-data';

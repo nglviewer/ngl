@@ -7,8 +7,8 @@
 import { Matrix4, Vector3, CylinderBufferGeometry } from 'three'
 
 import { defaults } from '../utils'
-import { calculateCenterArray, serialBlockArray } from '../math/array-utils.js'
-import GeometryBuffer from './geometry-buffer.js'
+import { calculateCenterArray, serialBlockArray } from '../math/array-utils'
+import GeometryBuffer from './geometry-buffer'
 import { CylinderBufferData } from './cylinder-buffer'
 import { BufferDefaultParameters } from './buffer'
 

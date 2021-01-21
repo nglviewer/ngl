@@ -6,10 +6,10 @@
 
 import { WorkerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Worker from '../worker/worker.js'
-import EDTSurface from './edt-surface.js'
-import { AVSurface } from './av-surface.js'
-import Surface, { SurfaceData } from './surface.js'
+import Worker from '../worker/worker'
+import EDTSurface from './edt-surface'
+import { AVSurface } from './av-surface'
+import Surface, { SurfaceData } from './surface'
 import { Structure } from '../ngl';
 import { AtomData, RadiusParams } from '../structure/structure-data';
 

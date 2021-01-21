@@ -8,9 +8,9 @@
  import {  Vector3, Matrix4, Matrix3, BufferGeometry } from 'three'
 
 import { getUintArray } from '../utils'
-import { serialBlockArray } from '../math/array-utils.js'
-import { applyMatrix3toVector3array, applyMatrix4toVector3array } from '../math/vector-utils.js'
-import MeshBuffer from './mesh-buffer.js'
+import { serialBlockArray } from '../math/array-utils'
+import { applyMatrix3toVector3array, applyMatrix4toVector3array } from '../math/vector-utils'
+import MeshBuffer from './mesh-buffer'
 import { BufferParameters, BufferData } from './buffer'
 import {Log} from "../globals";
 

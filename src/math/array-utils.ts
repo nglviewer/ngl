@@ -346,7 +346,7 @@ export function quicksortIP (arr: NumberArray, eleSize: number, orderElement: nu
   return arr
 }
 
-export function quicksortCmp<T> (arr: T[], cmp?: (a: T, b: T) => number, begin = 0, end?: number) {
+export function quicksortCmp<T> (arr: NumberArray|T[], cmp?: (a: number|T, b: number|T) => number, begin = 0, end?: number) {
   cmp = cmp || function cmp (a, b) {
     if (a > b) return 1
     if (a < b) return -1
@@ -358,7 +358,7 @@ export function quicksortCmp<T> (arr: T[], cmp?: (a: T, b: T) => number, begin =
   let sp = -1
   let left = begin
   let right = end
-  let tmp: T
+  let tmp: number|T
 
   function swap (a: number, b: number) {
     const tmp2 = arr[ a ]
@@ -433,7 +433,7 @@ export function quicksortCmp<T> (arr: T[], cmp?: (a: T, b: T) => number, begin =
   return arr
 }
 
-export function quickselectCmp<T> (arr: T[], n: number, cmp?: (a: T, b: T) => number, left = 0, right?: number) {
+export function quickselectCmp<T> (arr: NumberArray|T[], n: number, cmp?: (a: number|T, b: number|T) => number, left = 0, right?: number) {
   cmp = cmp || function cmp (a, b) {
     if (a > b) return 1
     if (a < b) return -1
@@ -521,7 +521,7 @@ export function arraySorted (array: NumberArray) {
   return true
 }
 
-export function arraySortedCmp<T> (array: T[], cmp: (a: T, b: T) => number) {
+export function arraySortedCmp<T> (array: NumberArray|T[], cmp: (a: number|T, b: number|T) => number) {
   for (let i = 1, il = array.length; i < il; ++i) {
     if (cmp(array[ i - 1 ], array[ i ]) > 0) return false
   }

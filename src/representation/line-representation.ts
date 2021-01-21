@@ -6,9 +6,9 @@
 
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
-import { AtomPicker } from '../utils/picker.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import WideLineBuffer from '../buffer/wideline-buffer'
+import { AtomPicker } from '../utils/picker'
 // @ts-ignore: unused import Volume required for declaration only
 import { Structure, Volume } from '../ngl';
 import StructureView from '../structure/structure-view';

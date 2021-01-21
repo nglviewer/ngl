@@ -90,7 +90,7 @@ class PdbParser extends StructureParser {
    *                                residue numbers >9.999
    * @return {undefined}
    */
-  constructor (streamer: Streamer, params: PdbParserParameters) {
+  constructor (streamer: Streamer, params?: Partial<PdbParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

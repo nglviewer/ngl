@@ -5,9 +5,9 @@
  */
 
 import { defaults } from '../utils'
-import Representation, { RepresentationParameters } from './representation.js'
-import ImageBuffer, { ImageBufferParameters, ImageBufferData } from '../buffer/image-buffer.js'
-import VolumeSlice from '../surface/volume-slice.js'
+import Representation, { RepresentationParameters } from './representation'
+import ImageBuffer, { ImageBufferParameters, ImageBufferData } from '../buffer/image-buffer'
+import VolumeSlice from '../surface/volume-slice'
 import Viewer from '../viewer/viewer';
 import { Volume } from '../ngl';
 

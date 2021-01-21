@@ -4,7 +4,7 @@
  * @private
  */
 
-import Store, { StoreField } from './store.js'
+import Store, { StoreField } from './store'
 
 /**
  * Model store

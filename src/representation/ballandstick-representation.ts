@@ -6,10 +6,10 @@
 
 import { defaults } from '../utils'
 import { ExtensionFragDepth, RepresentationRegistry } from '../globals'
-import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation.js'
-import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer.js'
-import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer.js'
-import WideLineBuffer from '../buffer/wideline-buffer.js'
+import StructureRepresentation, { StructureRepresentationParameters, StructureRepresentationData } from './structure-representation'
+import SphereBuffer, { SphereBufferData, SphereBufferParameters } from '../buffer/sphere-buffer'
+import CylinderBuffer, { CylinderBufferData } from '../buffer/cylinder-buffer'
+import WideLineBuffer from '../buffer/wideline-buffer'
 import Viewer from '../viewer/viewer';
 // @ts-ignore: unused import Volume required for declaration only
 import { Structure, Volume } from '../ngl';

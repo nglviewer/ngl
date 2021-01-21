@@ -6,9 +6,9 @@
 
 import { ExtensionFragDepth, Mobile } from '../globals'
 import { defaults } from '../utils'
-import { RepresentationParameters, default as Representation } from './representation.js'
-import Selection from '../selection/selection.js'
-import RadiusFactory, { RadiusFactoryTypes, RadiusType } from '../utils/radius-factory.js'
+import { RepresentationParameters, default as Representation } from './representation'
+import Selection from '../selection/selection'
+import RadiusFactory, { RadiusFactoryTypes, RadiusType } from '../utils/radius-factory'
 import Structure from '../structure/structure'
 import Viewer from '../viewer/viewer'
 // @ts-ignore: unused import Volume required for declaration only

@@ -6,10 +6,10 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import { AtomPicker } from '../utils/picker.js'
-import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
-import Helixbundle, { Axis } from '../geometry/helixbundle.js'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
+import { AtomPicker } from '../utils/picker'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
+import Helixbundle, { Axis } from '../geometry/helixbundle'
+import CylinderBuffer from '../buffer/cylinder-buffer'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';

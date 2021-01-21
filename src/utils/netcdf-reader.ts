@@ -7,7 +7,7 @@
  * MIT License, Copyright (c) 2016 cheminfo
  */
 
-import IOBuffer from './io-buffer.js'
+import IOBuffer from './io-buffer'
 
 export interface NetCDFRecordDimension {
   length: number,

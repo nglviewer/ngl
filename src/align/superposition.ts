@@ -9,7 +9,7 @@ import { Debug, Log } from '../globals'
 import {
     Matrix, svd, meanRows, subRows, transpose,
     multiplyABt, invert3x3, multiply3x3, mat3x3determinant, multiply
-} from '../math/matrix-utils.js'
+} from '../math/matrix-utils'
 import Structure from '../structure/structure'
 
 class Superposition {

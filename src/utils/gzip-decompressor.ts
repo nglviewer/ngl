@@ -4,7 +4,7 @@
  * @private
  */
 
-import { ungzip } from '../../lib/pako_inflate.es6.js'
+import { ungzip } from '../../lib/pako_inflate.es6'
 
 import { DecompressorRegistry } from '../globals'
 

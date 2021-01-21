@@ -6,7 +6,7 @@
 
 import { RepresentationRegistry } from '../globals'
 import { defaults } from '../utils'
-import CartoonRepresentation, {CartoonRepresentationParameters} from './cartoon-representation.js'
+import CartoonRepresentation, {CartoonRepresentationParameters} from './cartoon-representation'
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 

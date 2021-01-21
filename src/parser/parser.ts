@@ -19,7 +19,7 @@ class Parser {
   path: string
   [k: string]: any
   
-  constructor (streamer: Streamer, params: Partial<ParserParameters>) {
+  constructor (streamer: Streamer, params?: Partial<ParserParameters>) {
     var p = params || {}
 
     this.streamer = streamer

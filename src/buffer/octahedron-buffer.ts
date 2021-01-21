@@ -6,7 +6,7 @@
 
 import { OctahedronBufferGeometry, Vector3, Matrix4 } from 'three'
 import { BufferRegistry } from '../globals'
-import GeometryBuffer from './geometry-buffer.js'
+import GeometryBuffer from './geometry-buffer'
 import { BufferData, BufferParameters } from './buffer'
 
 const scale = new Vector3()

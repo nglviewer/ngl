@@ -6,10 +6,10 @@
 
 import { defaults } from '../utils'
 import { RepresentationRegistry } from '../globals'
-import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation.js'
+import StructureRepresentation, { StructureRepresentationParameters } from './structure-representation'
 import { calculateContacts, getContactData, getLabelData } from '../chemistry/interactions/contact'
-import CylinderBuffer from '../buffer/cylinder-buffer.js'
-import TextBuffer from '../buffer/text-buffer.js'
+import CylinderBuffer from '../buffer/cylinder-buffer'
+import TextBuffer from '../buffer/text-buffer'
 import { getFixedCountDashData } from '../geometry/dash'
 import Viewer from '../viewer/viewer';
 import { Structure } from '../ngl';

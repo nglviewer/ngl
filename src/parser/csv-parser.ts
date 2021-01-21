@@ -26,7 +26,7 @@ class CsvParser extends Parser {
      * @param  {Char} params.comment - comment character
      * @param  {Boolean} params.columnNames - use first data line as column names
      */
-  constructor (streamer: Streamer, params: Partial<CsvParserParameters>) {
+  constructor (streamer: Streamer, params?: Partial<CsvParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

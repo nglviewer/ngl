@@ -14,7 +14,7 @@ export interface JsonParserParameters extends ParserParameters {
 }
 
 class JsonParser extends Parser {
-  constructor (streamer: Streamer, params: Partial<JsonParserParameters>) {
+  constructor (streamer: Streamer, params?: Partial<JsonParserParameters>) {
     const p = params || {}
 
     super(streamer, p)

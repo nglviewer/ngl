@@ -4,14 +4,14 @@
  * @private
  */
 
-import { getSurfaceGrid } from './surface-utils.js'
-import { VolumeSurface } from './volume.js'
-import { uniformArray } from '../math/array-utils.js'
+import { getSurfaceGrid } from './surface-utils'
+import { VolumeSurface } from './volume'
+import { uniformArray } from '../math/array-utils'
 import {
   computeBoundingBox, v3multiplyScalar, v3cross, v3normalize
-} from '../math/vector-utils.js'
+} from '../math/vector-utils'
 import { defaults } from '../utils'
-import { NumberArray } from '../types.js';
+import { NumberArray } from '../types';
 
 
 /**

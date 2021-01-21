@@ -7,11 +7,11 @@
 import { Matrix4, Vector3, Box3 } from 'three'
 
 import { defaults } from '../utils'
-import Representation, { RepresentationParameters } from './representation.js'
-import Volume from '../surface/volume.js'
-import SurfaceBuffer from '../buffer/surface-buffer.js'
+import Representation, { RepresentationParameters } from './representation'
+import Volume from '../surface/volume'
+import SurfaceBuffer from '../buffer/surface-buffer'
 import DoubleSidedBuffer from '../buffer/doublesided-buffer'
-import ContourBuffer from '../buffer/contour-buffer.js'
+import ContourBuffer from '../buffer/contour-buffer'
 import Surface from '../surface/surface';
 import Viewer from '../viewer/viewer';
 import {SurfaceData} from '../surface/surface'
