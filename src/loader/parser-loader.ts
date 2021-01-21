@@ -15,6 +15,9 @@ export interface ParserParams {
   cAlphaOnly?: boolean
   name?: string
   path?: string
+  delimiter?: string
+  comment?: string
+  columnNames?: string
 }
 
 /**
@@ -31,6 +34,9 @@ class ParserLoader extends Loader {
       firstModelOnly: params.firstModelOnly,
       asTrajectory: params.asTrajectory,
       cAlphaOnly: params.cAlphaOnly,
+      delimiter: params.delimiter,
+      comment: params.comment,
+      columnNames: params.columnNames,
       name: this.parameters.name,
       path: this.parameters.path
     }
