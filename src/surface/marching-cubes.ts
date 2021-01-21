@@ -43,7 +43,7 @@ function getEdgeTable () {
   ])
 }
 
-function getTriTable () {
+function getTriTable (): Int32Array {
   return new Int32Array([
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -361,6 +361,9 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
   var noNormals = false
   var contour = false
   var wrap = false
+  var isNegativeIso = false
+  var normalFactor = -1
+
 
   var n = nx * ny * nz
 
@@ -388,13 +391,17 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
 
   this.triangulate = function (_isolevel: number, _noNormals: boolean, _box: number[][]|undefined, _contour: boolean, _wrap: boolean) {
     isolevel = _isolevel
+    isNegativeIso = isolevel < 0.0
     contour = _contour
     wrap = _wrap
     // Normals currently disabled in contour mode for performance (unused)
     noNormals = _noNormals || contour
 
-    if (!noNormals && !normalCache) {
-      normalCache = new Float32Array(n * 3)
+    if (!noNormals) {
+      normalFactor = isolevel > 0 ? -1.0 : 1.0
+      if (!normalCache) {
+        normalCache = new Float32Array(n * 3)
+      }  
     }
 
     var vIndexLength = n * 3
@@ -465,9 +472,9 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
       if (!noNormals) {
         var q3 = q * 3
 
-        normalArray[ c ] = -lerp(nc[ q3 ], nc[ q3 + 3 ], mu)
-        normalArray[ c + 1 ] = -lerp(nc[ q3 + 1 ], nc[ q3 + 4 ], mu)
-        normalArray[ c + 2 ] = -lerp(nc[ q3 + 2 ], nc[ q3 + 5 ], mu)
+        normalArray[ c ] = normalFactor * lerp(nc[ q3 ], nc[ q3 + 3 ], mu)
+        normalArray[ c + 1 ] = normalFactor * lerp(nc[ q3 + 1 ], nc[ q3 + 4 ], mu)
+        normalArray[ c + 2 ] = normalFactor * lerp(nc[ q3 + 2 ], nc[ q3 + 5 ], mu)
       }
 
       if (atomindex) atomindexArray[ count ] = atomindex[ q + Math.round(mu) ]
@@ -498,9 +505,9 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
         var q3 = q * 3
         var q6 = q3 + yd * 3
 
-        normalArray[ c ] = -lerp(nc[ q3 ], nc[ q6 ], mu)
-        normalArray[ c + 1 ] = -lerp(nc[ q3 + 1 ], nc[ q6 + 1 ], mu)
-        normalArray[ c + 2 ] = -lerp(nc[ q3 + 2 ], nc[ q6 + 2 ], mu)
+        normalArray[ c ] = normalFactor * lerp(nc[ q3 ], nc[ q6 ], mu)
+        normalArray[ c + 1 ] = normalFactor * lerp(nc[ q3 + 1 ], nc[ q6 + 1 ], mu)
+        normalArray[ c + 2 ] = normalFactor * lerp(nc[ q3 + 2 ], nc[ q6 + 2 ], mu)
       }
 
       if (atomindex) atomindexArray[ count ] = atomindex[ q + Math.round(mu) * yd ]
@@ -531,9 +538,9 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
         var q3 = q * 3
         var q6 = q3 + zd * 3
 
-        normalArray[ c ] = -lerp(nc[ q3 ], nc[ q6 ], mu)
-        normalArray[ c + 1 ] = -lerp(nc[ q3 + 1 ], nc[ q6 + 1 ], mu)
-        normalArray[ c + 2 ] = -lerp(nc[ q3 + 2 ], nc[ q6 + 2 ], mu)
+        normalArray[ c ] = normalFactor * lerp(nc[ q3 ], nc[ q6 ], mu)
+        normalArray[ c + 1 ] = normalFactor * lerp(nc[ q3 + 1 ], nc[ q6 + 1 ], mu)
+        normalArray[ c + 2 ] = normalFactor * lerp(nc[ q3 + 2 ], nc[ q6 + 2 ], mu)
       }
 
       if (atomindex) atomindexArray[ count ] = atomindex[ q + Math.round(mu) * zd ]
@@ -743,9 +750,8 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
           indexArray[ icount++ ] = ilist[ e3 ]
         }
       } else {
-        // FIXME normals flipping (see above) and vertex order reversal
-        indexArray[ icount++ ] = ilist[ e2 ]
-        indexArray[ icount++ ] = ilist[ e1 ]
+        indexArray[ icount++ ] = ilist[ isNegativeIso ? e1 : e2 ]
+        indexArray[ icount++ ] = ilist[ isNegativeIso ? e2 : e1 ]
         indexArray[ icount++ ] = ilist[ e3 ]
       }
 
