@@ -25,14 +25,15 @@ export enum kwd {
   RING = 17,
   AROMATICRING = 18,
   METAL = 19,
-  NONE = 20
+  POLARH = 20,
+  NONE = 21
 }
 
 export const SelectAllKeyword = [ '*', '', 'ALL' ]
 export const SelectNoneKeyword = [ 'NONE' ]
 
 export const AtomOnlyKeywords = [
-  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING, kwd.METAL
+  kwd.BACKBONE, kwd.SIDECHAIN, kwd.BONDED, kwd.RING, kwd.AROMATICRING, kwd.METAL, kwd.POLARH
 ]
 
 export const ChainKeywords = [

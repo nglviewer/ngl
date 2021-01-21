@@ -556,6 +556,16 @@ class AtomProxy {
     return this.aromatic === 1
   }
 
+  isPolarHydrogen () {
+    let result = false
+
+    if (this.number !== 1) return result
+
+    result = !this.hasBondToElement(Elements.C)
+
+    return result
+  }
+
   isMetal () { return this.atomType.isMetal() }
   isNonmetal () { return this.atomType.isNonmetal() }
   isMetalloid () { return this.atomType.isMetalloid() }
