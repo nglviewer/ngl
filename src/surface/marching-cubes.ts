@@ -750,7 +750,6 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
           indexArray[ icount++ ] = ilist[ e3 ]
         }
       } else {
-        // FIXME normals flipping (see above) and vertex order reversal
         indexArray[ icount++ ] = ilist[ isNegativeIso ? e1 : e2 ]
         indexArray[ icount++ ] = ilist[ isNegativeIso ? e2 : e1 ]
         indexArray[ icount++ ] = ilist[ e3 ]
