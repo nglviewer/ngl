@@ -900,9 +900,10 @@ const elm2 = [ 'NA', 'CL', 'FE' ]
 
 export function guessElement (atomName: string) {
   let at = atomName.trim().toUpperCase()
-  if (parseInt(at.charAt(0))) at = at.substr(1)
+  // parseInt('C') -> NaN; (NaN > -1) -> false
+  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
     // parse again to check for a second integer
-  if (parseInt(at.charAt(0))) at = at.substr(1)
+  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
   const n = at.length
 
   if (n === 0) return ''
