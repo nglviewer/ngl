@@ -174,10 +174,11 @@ function loadStructure (proteinFile, csvFile) {
     var residueData = {}
     console.log('l', csv.length)
     for (var i = 0; i < csv.length; i++) {
-        const resNum = parseFloat(csv[i][csvResNumCol])
-        // console.log(i, resNum)
-        // 228 is undefined (2isk)
-        residueData[resNum] = csv[i]
+      const index = parseFloat(csv[i][0])
+      const resNum = parseFloat(csv[i][csvResNumCol])
+      console.log(i, resNum)
+      // 228 is undefined (2isk)
+      residueData[resNum] = csv[i]
     }
 
     firstResNum = parseInt(csv[0][csvResNumCol])
@@ -191,14 +192,20 @@ function loadStructure (proteinFile, csvFile) {
         //console.log(atom.residueIndex)
         // var index = parseFloat(residueData[atom.residueIndex][0])
         // console.log(atom.residueIndex, index)
+        //console.log('max', atom.resno[0])
         const csvRow = residueData[atom.resno]
-        const wtProb = parseFloat(csvRow[csvWtProbCol])
+        // const resNum = parseFloat(csvRow[0])
+        if (atom.isNucleic()) {
+          return 0x004e00
+        }
+        if (csvRow !== undefined) {
+          const wtProb = parseFloat(csvRow[csvWtProbCol])
+          return scale(wtProb)
         //var value = parseFloat(csv[ atom.resno ][ csvWtProbCol ])
-          if (atom.isNucleic()) {
-            return 0x004e00
-          }
-        return scale(wtProb)
+        }  else {
+        return 0xFF0080
       }
+    }
     })
 
     // heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
