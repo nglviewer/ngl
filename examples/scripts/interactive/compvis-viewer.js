@@ -119,7 +119,7 @@ function makeGradientArray () {
 
 var gradientArray = makeGradientArray()
 
-// var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
+var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
@@ -163,7 +163,7 @@ function loadStructure (proteinFile, csvFile) {
     stage.loadFile(proteinFile, { defaultRepresentation: true }),
     NGL.autoLoad(csvFile, {
       ext: 'csv',
-      delimiter: ' ',
+      delimiter: ',',
       comment: '#',
       columnNames: true
     })
@@ -171,22 +171,59 @@ function loadStructure (proteinFile, csvFile) {
     struc = ol[0]
     csv = ol[1].data
 
+    var residueData = {}
+    console.log('l', csv.length)
+    for (var i = 0; i < csv.length; i++) {
+        const resNum = parseFloat(csv[i][csvResNumCol])
+        // console.log(i, resNum)
+        // 228 is undefined (2isk)
+        residueData[resNum] = csv[i]
+    }
+
     firstResNum = parseInt(csv[0][csvResNumCol])
 
-    heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+    var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+      this.domain = [ 0.5, 1 ]
+      this.scale = 'rwb'
+      this.mode = 'rgb'
+      var scale = this.getScale()
       this.atomColor = function (atom) {
-        for (var i = 0; i < csv.length; i++) {
-          const wtProb = parseFloat(csv[i][csvWtProbCol])
-          const resNum = parseFloat(csv[i][csvResNumCol])
-
-          const normWtProb = (wtProb * 100).toFixed(0)
-
-          if (atom.resno === resNum) {
-            return gradientArray[normWtProb]
+        //console.log(atom.residueIndex)
+        // var index = parseFloat(residueData[atom.residueIndex][0])
+        // console.log(atom.residueIndex, index)
+        const csvRow = residueData[atom.resno]
+        const wtProb = parseFloat(csvRow[csvWtProbCol])
+        //var value = parseFloat(csv[ atom.resno ][ csvWtProbCol ])
+          if (atom.isNucleic()) {
+            return 0x004e00
           }
-        }
+        return scale(wtProb)
       }
     })
+
+    // heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
+    //   this.atomColor = function (atom) {
+    //     /* old for loop */
+    //     // for (var i = 0; i < csv.length; i++) {
+    //     //   // console.log(i)
+    //     //   // ^ causing infinite loop
+    //     //   const wtProb = parseFloat(csv[i][csvWtProbCol])
+    //     //   const resNum = parseFloat(csv[i][csvResNumCol])
+    //     //   const normWtProb = (wtProb * 100).toFixed(0)
+
+    //     /* uses residueData obj*/
+    //     const csvRow = residueData[atom.residueIndex]
+    //     const wtProb = parseFloat(csvRow[csvWtProbCol])
+    //     const resNum = parseFloat(csvRow[csvResNumCol])
+
+    //     const normWtProb = (wtProb * 100).toFixed(0)
+
+    //       if (atom.resno === resNum) {
+    //         return gradientArray[normWtProb]
+    //       }
+    //     // }
+    //   }
+    // })
 
     customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
       this.atomColor = function (atom) {
