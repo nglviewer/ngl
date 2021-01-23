@@ -322,7 +322,7 @@ function getTriTable (): Int32Array {
 // are drawn as they're redundant
 // The line between edge 1 and 5 is always drawn as it's on the leading edge
 
-function getAllowedContours () {
+function getAllowedContours (): any {
   return [
 
     [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
