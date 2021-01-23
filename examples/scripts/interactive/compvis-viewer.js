@@ -358,11 +358,11 @@ addElement(loadCsvButton)
 
 var loadPdbidInput = createElement('input', {
   type: 'text',
-  placeholder: 'Enter pdbID, Try:',
+  placeholder: 'Enter pdbID, Try:2gv5',
   onkeypress: function (e) {
     if (e.keyCode === 13) {
       var inputValue = e.target.value.toLowerCase()
-      var proteinInput = 'data://machineLearning/' + inputValue + '.pdb'
+      var proteinInput = 'rcsb://' + inputValue + '.pdb'
       var csvInput = 'data://machineLearning/' + inputValue + '.csv'
       e.preventDefault()
       loadStructure(proteinInput, csvInput)
