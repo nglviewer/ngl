@@ -92,7 +92,7 @@ var pocketRadiusClipFactor = 1
 
 var cartoonRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
 
-var heatMap, customPercent
+// var heatMap, customPercent
 
 var struc
 var csv
@@ -107,8 +107,6 @@ const csvResNumCol = 4
 const csvWtProbCol = 7
 const csvPrAaCol = 6
 const csvPrProbCol = 8
-
-var resNum, wtProb, normWtProb
 
 function loadStructure (proteinFile, csvFile) {
   struc = undefined
@@ -171,7 +169,7 @@ function loadStructure (proteinFile, csvFile) {
     }
     })
 
-    customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
+    var customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
       this.atomColor = function (atom) {
         for (var i = 0; i < csv.length; i++) {
           const csvRow = residueData[atom.resno]
