@@ -88,7 +88,7 @@ var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, /*spacefillRepr,*/ neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
+var cartoonRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
 
 var heatMap, customPercent
 
@@ -172,15 +172,15 @@ function loadStructure (proteinFile, csvFile) {
     customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
       this.atomColor = function (atom) {
         for (var i = 0; i < csv.length; i++) {
-          const predProb = parseFloat(csv[i][csvPrProbCol])
-          const wtProb = parseFloat(csv[i][csvWtProbCol])
-          // console.log('wt', wtProb)
-          const resNum = parseFloat(csv[i][csvResNumCol])
+          const csvRow = residueData[atom.resno]
 
-          if (atom.resno === resNum) {
             if (atom.isNucleic()) {
               return 0x004e00
-            } else if (wtProb < 0.01 && predProb > 0.7) {
+            } 
+            if (csvRow !== undefined) {
+              const wtProb = parseFloat(csvRow[csvWtProbCol])
+              const predProb = parseFloat(csvRow[csvPrProbCol])
+            if (wtProb < 0.01 && predProb > 0.7) {
               return 0xFF0080// hot pink
             } else if (wtProb < 0.01) {
               return 0xCC00FF // hot pink
@@ -207,10 +207,6 @@ function loadStructure (proteinFile, csvFile) {
       color: customPercent,
       visible: false
     })
-    // spacefillRepr = struc.addRepresentation('spacefill', {
-    //   sele: ligandSele,
-    //   visible: false
-    // })
     neighborRepr = struc.addRepresentation('ball+stick', {
       sele: 'none',
       aspectRatio: 1.1,
@@ -371,8 +367,6 @@ addElement(loadPdbidInput)
 function showFull () {
   ligandSelect.value = ''
 
-  // spacefillRepr.setVisibility(false)
-
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
   contactRepr.setVisibility(false)
@@ -395,8 +389,6 @@ function showLigand (sele) {
   pocketRadius = Math.max(sview.boundingBox.getSize(new NGL.Vector3()).length() / 2, 2) + 10
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
-
-  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
   neighborRepr.setVisibility(true)
@@ -428,8 +420,6 @@ function showRegion (sele) {
   var expandedSele = withinGroup.toSeleString()
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
-
-  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
