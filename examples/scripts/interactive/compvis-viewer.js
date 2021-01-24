@@ -76,14 +76,12 @@ stage.signals.hovered.add(function (pickingProxy) {
         tooltip.style.bottom = 3 + 'px'
         tooltip.style.left = stage.viewer.width - 200 + 'px'
         tooltip.style.display = 'block'
-      } 
-      else {
+      } else {
         tooltip.style.display = 'none'
       }
     }
   }
 })
-
 
 var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water or ACE or NH2 )'
 
@@ -151,7 +149,7 @@ function loadStructure (proteinFile, csvFile) {
     }
 
     var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
-      this.domain = [ 0.5, 1 ]
+      this.domain = [0.5, 1]
       this.scale = 'rwb'
       this.mode = 'rgb'
       var scale = this.getScale()
@@ -163,10 +161,10 @@ function loadStructure (proteinFile, csvFile) {
         if (csvRow !== undefined) {
           const wtProb = parseFloat(csvRow[csvWtProbCol])
           return scale(wtProb)
-        }  else {
-        return 0xcccccc
+        } else {
+          return 0xcccccc
+        }
       }
-    }
     })
 
     var customPercent = NGL.ColormakerRegistry.addScheme(function (params) {
@@ -174,12 +172,12 @@ function loadStructure (proteinFile, csvFile) {
         for (var i = 0; i < csv.length; i++) {
           const csvRow = residueData[atom.resno]
 
-            if (atom.isNucleic()) {
-              return 0x004e00
-            } 
-            if (csvRow !== undefined) {
-              const wtProb = parseFloat(csvRow[csvWtProbCol])
-              const predProb = parseFloat(csvRow[csvPrProbCol])
+          if (atom.isNucleic()) {
+            return 0x004e00
+          }
+          if (csvRow !== undefined) {
+            const wtProb = parseFloat(csvRow[csvWtProbCol])
+            const predProb = parseFloat(csvRow[csvPrProbCol])
             if (wtProb < 0.01 && predProb > 0.7) {
               return 0xFF0080// hot pink
             } else if (wtProb < 0.01) {
@@ -254,7 +252,7 @@ function loadStructure (proteinFile, csvFile) {
       labelGrouping: 'residue'
     })
   })
-  .catch(failure)
+    .catch(failure)
 }
 
 // ERROR HANDLING for input box
