@@ -321,6 +321,17 @@ function setResidueOptions (chain) {
   })
 }
 
+var instructionsText = createElement('span', {
+  innerHTML: `
+  This tool is for rendering Machine Learning data on proteins. <br/>
+  To use with your own Machine Learning CSV: <br/>
+  Copy the column order of data/machineLearning/2isk.csv in the source code<br/>
+  Then load your local structure and csv files.<br/>
+  Clicking: click a residue to see atoms, click residue again to turn off atoms, click blank space to zoom out
+  `
+}, { top: getTopPosition(), left: '12px', color: 'grey' })
+addElement(instructionsText)
+
 var loadStructureButton = createFileButton('Load Structure', {
   accept: '.pdb,.cif,.ent,.gz,.mol2',
   onchange: function (e) {
@@ -333,7 +344,7 @@ var loadStructureButton = createFileButton('Load Structure', {
       loadStrucFile = ''
     }
   }
-}, { top: getTopPosition(), left: '12px' })
+}, { top: getTopPosition(90), left: '12px' })
 addElement(loadStructureButton)
 
 var loadCsvButton = createFileButton('Load csv', {
