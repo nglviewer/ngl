@@ -65,12 +65,14 @@ stage.signals.hovered.add(function (pickingProxy) {
       var atom = pickingProxy.atom || pickingProxy.closestBondAtom
       const csvRow = residueData[atom.resno]
       if (csvRow !== undefined) {
+        const wtProb = parseFloat(csvRow[csvWtProbCol])
+        const prProb = parseFloat(csvRow[csvPrProbCol])
         tooltip.innerHTML = `
       RESNO: ${atom.resno}<br/>
       WT AA: ${atom.resname}<br/>
-      WT PROB: ${csvRow[csvWtProbCol]}<br/>
+      WT PROB: ${wtProb.toFixed(4)}<br/>
       PRED AA: ${csvRow[csvPrAaCol]}<br/>
-      PRED PROB: ${csvRow[csvPrProbCol]}<br/>`
+      PRED PROB: ${prProb.toFixed(4)}<br/>`
         tooltip.style.bottom = 3 + 'px'
         tooltip.style.left = stage.viewer.width - 200 + 'px'
         tooltip.style.display = 'block'
