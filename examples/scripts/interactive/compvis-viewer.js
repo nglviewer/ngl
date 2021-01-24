@@ -88,7 +88,7 @@ var ligandSele = '( not polymer or not ( protein or nucleic ) ) and not ( water 
 var pocketRadius = 0
 var pocketRadiusClipFactor = 1
 
-var cartoonRepr, spacefillRepr, neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
+var cartoonRepr, /*spacefillRepr,*/ neighborRepr, ligandRepr, contactRepr, pocketRepr, labelRepr, customRepr
 
 var heatMap, customPercent
 
@@ -106,7 +106,6 @@ const csvWtProbCol = 7
 const csvPrAaCol = 6
 const csvPrProbCol = 8
 
-var firstResNum
 var resNum, wtProb, normWtProb
 
 function loadStructure (proteinFile, csvFile) {
@@ -140,8 +139,6 @@ function loadStructure (proteinFile, csvFile) {
   ]).then(function (ol) {
     struc = ol[0]
     csv = ol[1].data
-
-    firstResNum = parseInt(csv[0][csvResNumCol])
 
     setLigandOptions()
     setChainOptions()
@@ -210,10 +207,10 @@ function loadStructure (proteinFile, csvFile) {
       color: customPercent,
       visible: false
     })
-    spacefillRepr = struc.addRepresentation('spacefill', {
-      sele: ligandSele,
-      visible: false
-    })
+    // spacefillRepr = struc.addRepresentation('spacefill', {
+    //   sele: ligandSele,
+    //   visible: false
+    // })
     neighborRepr = struc.addRepresentation('ball+stick', {
       sele: 'none',
       aspectRatio: 1.1,
@@ -374,7 +371,7 @@ addElement(loadPdbidInput)
 function showFull () {
   ligandSelect.value = ''
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
@@ -399,7 +396,7 @@ function showLigand (sele) {
   var withinSele2 = s.getAtomSetWithinSelection(new NGL.Selection(sele), pocketRadius + 2)
   var neighborSele2 = '(' + withinSele2.toSeleString() + ') and not (' + sele + ') and polymer'
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(true)
   neighborRepr.setVisibility(true)
@@ -432,7 +429,7 @@ function showRegion (sele) {
   neighborSele = '(' + expandedSele + ') and not (' + sele + ')'
   neighborSele = expandedSele
 
-  spacefillRepr.setVisibility(false)
+  // spacefillRepr.setVisibility(false)
 
   ligandRepr.setVisibility(false)
   neighborRepr.setVisibility(false)
