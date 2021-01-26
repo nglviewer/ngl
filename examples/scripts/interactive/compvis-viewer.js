@@ -79,7 +79,7 @@ stage.signals.hovered.add(function (pickingProxy) {
       WT PROB: ${wtProb.toFixed(4)}<br/>
       PRED AA: ${csvRow[csvPrAaCol]}<br/>
       PRED PROB: ${prProb.toFixed(4)}<br/>`
-        tooltip.style.bottom = stage.viewer.height - 80+ 'px'
+        tooltip.style.bottom = stage.viewer.height - 80 + 'px'
         tooltip.style.left = stage.viewer.width - 170 + 'px'
         tooltip.style.display = 'block'
       } else {
