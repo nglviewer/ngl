@@ -1,3 +1,10 @@
+/**
+ * @file Compvis Viewer
+ * @author Brad Alexander <bralexander@live.com>
+ * @private
+ */
+
+
 function addElement (el) {
   Object.assign(el.style, {
     position: 'absolute',
@@ -474,6 +481,9 @@ var residueSelect = createSelect([], {
   }
 }, { top: getTopPosition(20), left: '12px', width: '130px' })
 addElement(residueSelect)
+
+//remove default clicking
+stage.mouseControls.remove('clickPick-left')
 
 // onclick residue select and show ligandrepr
 var prevSele = ''
