@@ -150,7 +150,7 @@ function loadStructure (proteinFile, csvFile) {
     }
 
     var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
-      this.domain = [ 0.5, 1 ]
+      this.domain = [ 0, 1 ]
       this.scale = 'rwb'
       this.mode = 'rgb'
       var scale = this.getScale()
@@ -182,7 +182,7 @@ function loadStructure (proteinFile, csvFile) {
             if (wtProb < 0.01 && predProb > 0.7) {
               return 0xFF0080// hot pink
             } else if (wtProb < 0.01) {
-              return 0xCC00FF // hot pink
+              return 0xCC00FF // purple
             } else if (parseFloat(csv[i][7] < 0.05)) {
               return 0xFF0000 // red
             } else if (wtProb < 0.10) {
@@ -233,7 +233,7 @@ function loadStructure (proteinFile, csvFile) {
       clipNear: 0,
       opaqueBack: false,
       opacity: 0.0,
-      color: heatMap,
+      color: customPercent,
       roughness: 1.0,
       surfaceType: 'av'
     })
