@@ -75,6 +75,8 @@ function showRegion (sele) {
   struc.autoView(expandedSele, 2000)
 }
 
+// remove default clicking
+stage.mouseControls.remove('clickPick-left')
 // onclick residue select and show atoms
 var prevSele = ''
 stage.signals.clicked.add(function (pickingProxy) {
