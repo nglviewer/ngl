@@ -154,10 +154,10 @@ function loadStructure (proteinFile, csvFile) {
 
     var heatMap = NGL.ColormakerRegistry.addScheme(function (params) {
       this.parameters = Object.assign(this.parameters, {
-      domain: [ 0, 1 ],
-      scale: 'rwb',
-      mode: 'rgb'
-    })
+        domain: [0, 1],
+        scale: 'rwb',
+        mode: 'rgb'
+      })
       var scale = this.getScale()
       this.atomColor = function (atom) {
         const csvRow = residueData[atom.resno]
