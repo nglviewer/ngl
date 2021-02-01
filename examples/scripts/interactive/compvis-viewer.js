@@ -594,7 +594,7 @@ var sidechainAttachedCheckbox = createElement('input', {
 }, { top: getTopPosition(20), left: '12px' })
 addElement(sidechainAttachedCheckbox)
 addElement(createElement('span', {
-  innerText: 'sidechainAttached'
+  innerText: 'remove sidechain'
 }, { top: getTopPosition(), left: '32px', color: 'grey' }))
 
 var labelCheckbox = createElement('input', {
