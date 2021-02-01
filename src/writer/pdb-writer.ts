@@ -118,7 +118,7 @@ export default class PdbWriter extends Writer {
           defaults(a.element, '')
         ))
         ia += 1
-      })
+      }, this.structure.getSelection() || undefined)
 
       this._records.push(sprintf('%-80s', 'ENDMDL'))
       im += 1
