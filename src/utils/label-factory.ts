@@ -30,6 +30,7 @@ export type LabelType = keyof typeof LabelFactoryTypes
 class LabelFactory {
 
   static types = LabelFactoryTypes
+  errorLogged: boolean = false
 
   constructor(readonly type: LabelType, readonly text: { [k: number]: string } = {},
     readonly format: string = '') {}
@@ -94,7 +95,14 @@ class LabelFactory {
         break
 
       case 'format':
-        l = sprintf(this.format, a)
+        try {
+          l = sprintf(this.format, a)
+        } catch (e) {
+          if (!this.errorLogged) {
+            this.errorLogged = true
+            console.log(e.message)
+          }
+        }
         break
 
       // case "qualified":
