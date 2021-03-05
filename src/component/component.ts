@@ -18,7 +18,7 @@ import Stage from '../stage/stage'
 import Viewer from '../viewer/viewer'
 
 const _m = new Matrix4()
-const _v = new Vector3()
+// const _v = new Vector3()
 
 export const ComponentDefaultParameters = {
   name: '',
@@ -69,6 +69,7 @@ abstract class Component {
   quaternion = new Quaternion()
   scale = new Vector3(1, 1, 1)
   transform = new Matrix4()
+  pivot = new Vector3() // point to rotate/scale around (relative to center)
 
   controls: ComponentControls
 
@@ -116,7 +117,7 @@ abstract class Component {
    * (for global rotation use setTransform)
    *
    * @example
-   * // rotate by 2 degree radians on x axis
+   * // rotate by 2 radians on x axis
    * component.setRotation( [ 2, 0, 0 ] );
    *
    * @param {Quaternion|Euler|Array} r - the rotation
@@ -158,6 +159,28 @@ abstract class Component {
   }
 
   /**
+   * Set pivot point
+   *
+   * @example
+   * // pivot around a certain atom (assumes component is a structureComponent)
+   * const atom = comp.structure.getAtomProxy(atomIndex)
+   * const center = comp.getCenterUntransformed()
+   * const pos = atom.positionToVector3(new Vector3()).sub(center)
+   * comp.setPivot(pos.x, pos.y, pos.z)
+   *
+   * @param {number} px/py/pz - the pivot point, relative to center
+   * @return {Component} this object
+   *
+   * @see example at `examples/scripts/test/pivot.js`
+   */
+  setPivot (px: number, py: number, pz: number) {
+    this.pivot.set(px, py, pz)
+    this.updateMatrix()
+
+    return this
+  }
+
+  /**
    * Set general transform. Is applied before and in addition
    * to the position, rotation and scale transformations
    *
@@ -174,9 +197,22 @@ abstract class Component {
     return this
   }
 
-  updateMatrix () {
-    const c = this.getCenterUntransformed(_v)
-    this.matrix.makeTranslation(-c.x, -c.y, -c.z)
+  /**
+   * Update the component's transform matrix.
+   *
+   * The overall transform is:
+   * `T = transform * (position + center + pivot) * scale * rotate * -(center + pivot)`
+   * Note that the transform order is TSR rather than the more usual TRS.
+   * Transforms are applied relative to the component's center + specified pivot point.
+   *
+   * Center is defined by each subclass; for example, structure-component
+   * can optionally center on the current selection, or the whole structure's center.
+   */
+  updateMatrix (silent?: boolean) {
+    const c = this.getCenterUntransformed()
+    this.matrix.makeTranslation(-c.x - this.pivot.x,
+      -c.y - this.pivot.y,
+      -c.z - this.pivot.z)
 
     _m.makeRotationFromQuaternion(this.quaternion)
     this.matrix.premultiply(_m)
@@ -185,7 +221,9 @@ abstract class Component {
     this.matrix.premultiply(_m)
 
     const p = this.position
-    _m.makeTranslation(p.x + c.x, p.y + c.y, p.z + c.z)
+    _m.makeTranslation(p.x + c.x + this.pivot.x,
+                       p.y + c.y + this.pivot.y,
+                       p.z + c.z + this.pivot.z)
     this.matrix.premultiply(_m)
 
     this.matrix.premultiply(this.transform)
@@ -194,11 +232,12 @@ abstract class Component {
 
     this.stage.viewer.updateBoundingBox()
 
-    this.signals.matrixChanged.dispatch(this.matrix)
+    if (!silent)
+      this.signals.matrixChanged.dispatch(this.matrix)
   }
 
   /**
-   * Propogates our matrix to each representation
+   * Propagates our matrix to each representation
    */
   updateRepresentationMatrices () {
     this.reprList.forEach(repr => {
@@ -331,8 +370,8 @@ abstract class Component {
     this.removeAllAnnotations()
     this.removeAllRepresentations()
 
-    delete this.annotationList
-    delete this.reprList
+    this.annotationList = []
+    this.reprList = []
 
     this.signals.disposed.dispatch()
   }

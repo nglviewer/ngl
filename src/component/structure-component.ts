@@ -91,6 +91,8 @@ export interface StructureComponentSignals extends ComponentSignals {
   defaultAssemblyChanged: Signal  // on default assembly change
 }
 
+export type CenterMode = 'selection' | 'component'
+
 /**
  * Component wrapping a {@link Structure} object
  *
@@ -120,6 +122,11 @@ class StructureComponent extends Component {
   dihedralRepresentation: RepresentationElement
 
   measureRepresentations: RepresentationCollection
+
+  // StructureComponent rotates and scales around the selection's
+  // center when centerMode is "selection", otherwise around the whole
+  // structure's center.
+  centerMode: CenterMode = 'selection'
 
   constructor (stage: Stage, readonly structure: Structure, params: Partial<StructureComponentParameters> = {}) {
     super(stage, structure, Object.assign({ name: structure.name }, params))
@@ -201,6 +208,7 @@ class StructureComponent extends Component {
 
       this.rebuildRepresentations()
       this.rebuildTrajectories()
+      this.updateMatrix()
     })
   }
 
@@ -261,8 +269,8 @@ class StructureComponent extends Component {
   }
 
   /**
-   * Overrides {@link Component.updateRepresentationMatrices} 
-   * to also update matrix for measureRepresentations 
+   * Overrides {@link Component.updateRepresentationMatrices}
+   * to also update matrix for measureRepresentations
    */
   updateRepresentationMatrices () {
     super.updateRepresentationMatrices()
@@ -354,8 +362,16 @@ class StructureComponent extends Component {
     return bb
   }
 
-  getCenterUntransformed (sele: string): Vector3 {
-    if (sele && typeof sele === 'string') {
+  setCenterMode(mode: CenterMode) {
+    this.centerMode = mode
+    this.updateMatrix()
+  }
+
+  // Structure-component center can be based on the selection or the whole structure.
+  // Caller can override use of selection-center mode by passing useCenterMode = false.
+  getCenterUntransformed (useCenterMode: boolean = true): Vector3 {
+    const sele = this.selection.string
+    if (useCenterMode && this.centerMode === 'selection' && sele && typeof sele === 'string') {
       return this.structure.atomCenter(new Selection(sele))
     } else {
       return this.structure.center
