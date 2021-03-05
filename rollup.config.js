@@ -17,19 +17,6 @@ var umdGlobals = {'promise-polyfill': '_Promise',
                   'sprintf-js': 'sprintfJs',
                   three: 'three'};
 
-// For the bundled build, include three (remove it from the externals list)
-var bundleExternals = moduleExternals.filter(name => name !== 'three')
-var bundleGlobals = {'promise-polyfill': '_Promise',
-                     'chroma-js': 'chroma',
-                     'signals': 'signalsWrapper',
-                     'sprintf-js': 'sprintfJs'}
-
-// if (process.env.NGL_EXTERNAL_THREEJS) {
-//   external.push('three')
-//   globals.three = 'three'
-//   console.log(`Note: not bundling three.js into NGL due to env var`)
-// }
-
 function glsl () {
   return {
     name: "glsl",
@@ -106,7 +93,7 @@ const moduleConfig = {
   external: moduleExternals
 }
 
-// this version has three.js built in
+// this version has three.js and everything else built in
 const bundleConfig = {
   input: 'src/ngl.ts',
   plugins: [...plugins, internal(['three'])],
@@ -115,9 +102,9 @@ const bundleConfig = {
     format: 'umd',
     name: 'NGL',
     sourcemap: true,
-    globals: umdGlobals
+    globals: {}
   },
-  external: bundleExternals
+  external: []
 }
 
 export default [
