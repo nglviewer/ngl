@@ -450,8 +450,8 @@ class Structure implements Structure{
 
   //
 
-  getSelection (): false|Selection {
-    return false
+  getSelection (): undefined|Selection {
+    return
   }
 
   getStructure (): Structure|StructureView {
