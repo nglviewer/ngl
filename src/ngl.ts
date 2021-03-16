@@ -27,6 +27,7 @@ import PdbWriter from './writer/pdb-writer'
 import SdfWriter from './writer/sdf-writer'
 import StlWriter from './writer/stl-writer'
 import Stage from './stage/stage'
+import Viewer from './viewer/viewer'
 import Collection from './component/collection'
 import ComponentCollection from './component/component-collection'
 import Component from './component/component'
@@ -35,6 +36,7 @@ import StructureComponent, {StructureRepresentationType} from './component/struc
 import SurfaceComponent from './component/surface-component'
 import VolumeComponent from './component/volume-component'
 import RepresentationCollection from './component/representation-collection'
+import RepresentationElement from './component/representation-element'
 import Assembly from './symmetry/assembly'
 import TrajectoryPlayer from './trajectory/trajectory-player'
 import Superposition from './align/superposition'
@@ -191,6 +193,7 @@ import MdsrvDatasource from './datasource/mdsrv-datasource'
 export {
   LeftMouseButton, MiddleMouseButton, RightMouseButton
 } from './constants'
+export {MouseActionCallback} from './controls/mouse-actions'
 import MouseActions from './controls/mouse-actions'
 import KeyActions from './controls/key-actions'
 import PickingProxy from './controls/picking-proxy'
@@ -205,6 +208,8 @@ export {
 //
 
 export { UIStageParameters } from './ui/parameters'
+export { StageParameters } from './stage/stage'
+export { StructureComponentDefaultParameters } from './component/structure-component'
 
 //
 
@@ -224,9 +229,11 @@ export {
   SdfWriter,
   StlWriter,
   Stage,
+  Viewer,
   Collection,
   ComponentCollection,
   RepresentationCollection,
+  RepresentationElement,
   Component,
   ShapeComponent,
   StructureComponent,
