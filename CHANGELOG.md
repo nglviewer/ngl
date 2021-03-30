@@ -1,8 +1,17 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v.2.0.0.dev.39]
+### Added
+- allow writing of partial PDB structure
+- more typescript declarations
+- CallbackTrajectory class and example
 
-## [Unreleased]
+### Changed
+- catch errors thrown from sprintfjs in label format
+
+
+## [v.2.0.0.dev.38]
 ### Added
 - contour option for volume surfaces (electron density maps)
 - buble, for transpiling some ES2015 features (e.g. classes, arrow functions, ...)
