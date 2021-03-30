@@ -7,19 +7,19 @@ cd ${DIR};
 mkdir -p ../build/;
 cd ../build/;
 
-if [ -d "arose.github.io" ]; then
-	cd ./arose.github.io/;
+if [ -d "nglviewer.github.io" ]; then
+	cd ./nglviewer.github.io/;
 	git fetch --all;
 	git reset --hard origin/master;
 	cd ../
 else
-	git clone "https://github.com/arose/arose.github.io.git";
+	git clone "https://github.com/nglviewer/nglviewer.github.io.git";
 fi
 
 if [ "$LEVEL" = "prerelease" ]; then
-	cd ./arose.github.io/ngldev/;
+	cd ./nglviewer.github.io/ngldev/;
 else
-	cd ./arose.github.io/ngl/;
+	cd ./nglviewer.github.io/ngl/;
 fi
 
 cp -r ${DIR}/../data/. ./data/;
@@ -40,4 +40,5 @@ if [ "$LEVEL" = "prerelease" ]; then
 else
 	git commit -m "ngl update";
 fi
-git push;
+# git push;
+echo "Done";

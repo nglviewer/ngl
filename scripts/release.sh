@@ -7,7 +7,8 @@ cd ${DIR};
 
 npm version $LEVEL;
 npm run-script doc;
-npm run-script gallery;
+# Gallery not working atm
+# npm run-script gallery;
 ./deploy.sh $LEVEL;
 cd ${DIR}/..;
 if [ "$LEVEL" = "prerelease" ]; then
