@@ -3223,7 +3223,7 @@
                   this$1._records.push(sprintfJs.sprintf(formatString, serial, atomname, a.resname, defaults(a.chainname, ' '), a.resno, a.x, a.y, a.z, defaults(a.occupancy, 1.0), defaults(a.bfactor, 0.0), '', // segid
                   defaults(a.element, '')));
                   ia += 1;
-              });
+              }, this$1.structure.getSelection());
               this$1._records.push(sprintfJs.sprintf('%-80s', 'ENDMDL'));
               im += 1;
           });
@@ -23536,7 +23536,7 @@
   };
   //
   Structure.prototype.getSelection = function getSelection () {
-      return false;
+      return;
   };
   Structure.prototype.getStructure = function getStructure () {
       return this;
@@ -27785,6 +27785,70 @@
   }(Trajectory));
 
   /**
+   * @file Callback Trajectory
+   * @author Tarn W. Burton <twburton@gmail.com>
+   * @private
+   */
+  /**
+   * Callback trajectory class. Gets data from an JavaScript function.
+   */
+  var CallbackTrajectory = /*@__PURE__*/(function (Trajectory$$1) {
+      function CallbackTrajectory(requestCallback, structure, params) {
+          Trajectory$$1.call(this, '', structure, params);
+          this.requestCallback = requestCallback;
+          this._init(structure);
+      }
+
+      if ( Trajectory$$1 ) CallbackTrajectory.__proto__ = Trajectory$$1;
+      CallbackTrajectory.prototype = Object.create( Trajectory$$1 && Trajectory$$1.prototype );
+      CallbackTrajectory.prototype.constructor = CallbackTrajectory;
+
+      var prototypeAccessors = { type: { configurable: true } };
+      prototypeAccessors.type.get = function () { return 'callback'; };
+      CallbackTrajectory.prototype._makeAtomIndices = function _makeAtomIndices () {
+          var atomIndices = [];
+          if (this.structure.type === 'StructureView') {
+              var indices = this.structure.getAtomIndices(); // TODO
+              var n = indices.length;
+              var p = indices[0];
+              var q = indices[0];
+              for (var i = 1; i < n; ++i) {
+                  var r = indices[i];
+                  if (q + 1 < r) {
+                      atomIndices.push([p, q + 1]);
+                      p = r;
+                  }
+                  q = r;
+              }
+              atomIndices.push([p, q + 1]);
+          }
+          else {
+              atomIndices.push([0, this.atomCount]);
+          }
+          this.atomIndices = atomIndices;
+      };
+      CallbackTrajectory.prototype._loadFrame = function _loadFrame (i, callback) {
+          var this$1 = this;
+
+          this.requestCallback(function (i, box, coords, frameCount) {
+              this$1._process(i, box, coords, frameCount);
+              if (typeof callback === 'function') {
+                  callback();
+              }
+          }, i, this.atomIndices);
+      };
+      CallbackTrajectory.prototype._loadFrameCount = function _loadFrameCount () {
+          var this$1 = this;
+
+          this.requestCallback(function (count) { return this$1._setFrameCount(count); });
+      };
+
+      Object.defineProperties( CallbackTrajectory.prototype, prototypeAccessors );
+
+      return CallbackTrajectory;
+  }(Trajectory));
+
+  /**
    * @file Trajectory Utils
    * @author Alexander Rose <alexander.rose@weirdbyte.de>
    * @private
@@ -27796,6 +27860,9 @@
       }
       else if (!trajSrc && structure.frames) {
           traj = new StructureTrajectory(trajSrc, structure, params);
+      }
+      else if (trajSrc && typeof trajSrc === 'function') {
+          traj = new CallbackTrajectory(trajSrc, structure, params);
       }
       else {
           traj = new RemoteTrajectory(trajSrc, structure, params);
@@ -36094,6 +36161,7 @@
       this.type = type;
       this.text = text;
       this.format = format;
+      this.errorLogged = false;
   };
   LabelFactory.prototype.atomLabel = function atomLabel (a) {
       var type = this.type;
@@ -36142,7 +36210,15 @@
               l = this.text[a.index];
               break;
           case 'format':
-              l = sprintfJs.sprintf(this.format, a);
+              try {
+                  l = sprintfJs.sprintf(this.format, a);
+              }
+              catch (e) {
+                  if (!this.errorLogged) {
+                      this.errorLogged = true;
+                      console.log(e.message);
+                  }
+              }
               break;
           // case "qualified":
           default:
@@ -51178,7 +51254,7 @@
       mousePreset: SelectParam.apply(void 0, Object.keys(MouseActionPresets))
   };
 
-  var version$1 = "2.0.0-dev.38";
+  var version$1 = "2.0.0-dev.39";
 
   /**
    * @file Version
@@ -51219,9 +51295,11 @@
   exports.SdfWriter = SdfWriter;
   exports.StlWriter = StlWriter;
   exports.Stage = Stage;
+  exports.Viewer = Viewer;
   exports.Collection = Collection;
   exports.ComponentCollection = ComponentCollection;
   exports.RepresentationCollection = RepresentationCollection;
+  exports.RepresentationElement = RepresentationElement;
   exports.Component = Component;
   exports.ShapeComponent = ShapeComponent;
   exports.StructureComponent = StructureComponent;
@@ -51282,6 +51360,7 @@
   exports.MiddleMouseButton = MiddleMouseButton;
   exports.RightMouseButton = RightMouseButton;
   exports.UIStageParameters = UIStageParameters;
+  exports.StructureComponentDefaultParameters = StructureComponentDefaultParameters;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
