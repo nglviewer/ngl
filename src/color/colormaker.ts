@@ -16,8 +16,26 @@ import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
 export type ColorMode = 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
-
 export type ColorSpace = 'sRGB' | 'linear'
+
+/**
+ * Internal color space for all colors (global).
+ * Colors are always specified as sRGB; if this is set to
+ * 'linear' then colors get linearized when used internally
+ * as vertex or texture colors.
+ * @see setColorSpace/getColorSpace.
+ */
+var colorSpace = 'linear' as ColorSpace
+
+/** Set the global internal color space for colormakers */
+export function setColorSpace(space: ColorSpace) {
+  colorSpace = space
+}
+
+/** Get the global internal color space for colormakers */
+export function getColorSpace() {
+  return colorSpace
+}
 
 export const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
@@ -25,7 +43,6 @@ export const ScaleDefaultParameters = {
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
   reverse: false,
-  colorSpace: 'linear' as ColorSpace // TODO: hook up to Viewer colorEncoding
 }
 export type ScaleParameters = typeof ScaleDefaultParameters
 
@@ -50,7 +67,7 @@ export function manageColor<T extends {parameters: ColormakerParameters}>
     const originalMethod = descriptor.value
     const linearize: colorFuncType = function (this: T, value: any) {
       let result = originalMethod!.bind(this, value)()
-      if (this.parameters.colorSpace == 'linear') {
+      if (colorSpace == 'linear') {
         tmpColor.set(result)
         tmpColor.convertSRGBToLinear()
         return tmpColor.getHex()

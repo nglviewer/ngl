@@ -31,6 +31,7 @@ import {
 import { degToRad } from '../math/math-utils'
 import Stats from './stats'
 import { getShader } from '../shader/shader-utils'
+import { setColorSpace } from '../color/colormaker'
 import { JitterVectors } from './viewer-constants'
 import {
   makeImage, ImageParameters,
@@ -161,7 +162,6 @@ export interface ViewerParameters {
   sampleLevel: number
 
   rendererEncoding: TextureEncoding // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
-  colorEncoding: TextureEncoding // default is three.sRGBEncoding; set to three.LinearEncoding for a linear workflow
 }
 
 export interface BufferInstance {
@@ -325,8 +325,6 @@ export default class Viewer {
 
       // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
       rendererEncoding: sRGBEncoding,
-      // Linear converts colors to linear for a linear workflow. Use sRGB for traditional workflow.
-      colorEncoding: LinearEncoding
     }
   }
 
@@ -856,12 +854,38 @@ export default class Viewer {
     this.requestRender()
   }
 
+  /**
+   * Set the output color encoding, i.e. how the renderer translates
+   * colorspaces as it renders to the screen.
+
+   * The default is LinearEncoding, because the internals of NGL are
+   * already sRGB so no translation is needed to show sRGB colors.
+   * Set to sRGBEncoding to create a linear workflow, and also call
+   * `setColorEncoding(LinearEncoding)` to linearize colors on input.
+   * @see setColorEncoding
+   */
   setOutputEncoding (encoding: TextureEncoding) {
     this.parameters.rendererEncoding = encoding
     this.renderer.outputEncoding = encoding
     this.pickingTarget.texture.encoding = encoding
     this.sampleTarget.texture.encoding = encoding
     this.holdTarget.texture.encoding = encoding
+  }
+
+  /**
+   * Set the internal color encoding of colormaker values, i.e. the colors
+   * that are used when creating geometry. For linear workflow, specify
+   * LinearEncoding. The default is sRGBEncoding.
+   * Call this just after creating the viewer, before loading any models.
+   * @see setOutputEncoding
+   */
+  setColorEncoding (encoding: TextureEncoding) {
+    if (encoding != LinearEncoding && encoding != sRGBEncoding)
+      throw new Error(`setColorEncoding: invalid encoding ${encoding}`)
+    setColorSpace(encoding == LinearEncoding ? 'linear' : 'sRGB')
+    // Note: this doesn't rebuild models, so existing geometry will have
+    // the old color encoding.
+    this.requestRender()
   }
 
   setCamera (type: CameraType, fov?: number, eyeSep?: number) {
