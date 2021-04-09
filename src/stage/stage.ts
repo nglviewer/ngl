@@ -344,19 +344,19 @@ class Stage {
       } else if ((instanceCount > 5 && sizeScore > 15000) || sizeScore > 700000) {
         let scaleFactor = (
           Math.min(
-            1.5,
+            2.0,
             Math.max(
               0.1,
-              2000 / (sizeScore / instanceCount)
+              6000 / (sizeScore / instanceCount)
             )
           )
         )
-        if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.15)
+        if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.5)
 
         component.addRepresentation('surface', {
           colorScheme, colorScale, colorReverse,
           sele: 'polymer',
-          surfaceType: 'sas',
+          surfaceType: 'av',
           probeRadius: 1.4,
           scaleFactor: scaleFactor,
           useWorker: false
