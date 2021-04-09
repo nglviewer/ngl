@@ -351,13 +351,13 @@ class Stage {
             )
           )
         )
-        if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.15)
+        if (backboneOnly) scaleFactor = Math.min(scaleFactor, 0.5)
 
         component.addRepresentation('surface', {
           colorScheme, colorScale, colorReverse,
           sele: 'polymer',
-          surfaceType: 'vws',
-          probeRadius: 1.4,     // doesn't matter for vws but set anyway in case they switch
+          surfaceType: 'av',
+          probeRadius: 1.4,
           scaleFactor: scaleFactor,
           useWorker: false
         })
