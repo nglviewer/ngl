@@ -6,7 +6,7 @@
 
 import {
   Color, Vector3, Matrix4,
-  FrontSide, BackSide, DoubleSide, 
+  FrontSide, BackSide, DoubleSide,
   // VertexColors,
   NoBlending,
   BufferGeometry, BufferAttribute,
@@ -724,6 +724,7 @@ class Buffer {
           )
         } else {
           index.set(array)
+          index.count = length
           index.needsUpdate = length > 0
           index.updateRange.count = length
           geometry.setDrawRange(0, length)
