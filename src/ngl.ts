@@ -34,7 +34,7 @@ import Component from './component/component'
 import ShapeComponent from './component/shape-component'
 import StructureComponent, {StructureRepresentationType} from './component/structure-component'
 import SurfaceComponent from './component/surface-component'
-import VolumeComponent from './component/volume-component'
+import VolumeComponent, {VolumeRepresentationType} from './component/volume-component'
 import RepresentationCollection from './component/representation-collection'
 import RepresentationElement from './component/representation-element'
 import Assembly from './symmetry/assembly'
@@ -240,6 +240,7 @@ export {
   SurfaceComponent,
   VolumeComponent,
   StructureRepresentationType,
+  VolumeRepresentationType,
 
   Assembly,
   TrajectoryPlayer,
