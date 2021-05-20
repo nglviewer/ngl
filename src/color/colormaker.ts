@@ -25,7 +25,7 @@ export type ColorSpace = 'sRGB' | 'linear'
  * as vertex or texture colors.
  * @see setColorSpace/getColorSpace.
  */
-var colorSpace = 'linear' as ColorSpace
+var colorSpace: ColorSpace = 'sRGB' // default: don't linearize
 
 /** Set the global internal color space for colormakers */
 export function setColorSpace(space: ColorSpace) {

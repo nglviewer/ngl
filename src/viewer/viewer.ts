@@ -130,6 +130,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 }
 
 export type CameraType = 'perspective'|'orthographic'|'stereo'
+export type ColorWorkflow = 'linear' | 'sRGB'
 
 export interface ViewerSignals {
   ticked: Signal,
@@ -324,7 +325,7 @@ export default class Viewer {
       sampleLevel: 0,
 
       // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
-      rendererEncoding: sRGBEncoding,
+      rendererEncoding: LinearEncoding,
     }
   }
 
@@ -864,7 +865,7 @@ export default class Viewer {
    * `setColorEncoding(LinearEncoding)` to linearize colors on input.
    * @see setColorEncoding
    */
-  setOutputEncoding (encoding: TextureEncoding) {
+  private setOutputEncoding (encoding: TextureEncoding) {
     this.parameters.rendererEncoding = encoding
     this.renderer.outputEncoding = encoding
     this.pickingTarget.texture.encoding = encoding
@@ -873,16 +874,17 @@ export default class Viewer {
   }
 
   /**
-   * Set the internal color encoding of colormaker values, i.e. the colors
-   * that are used when creating geometry. For linear workflow, specify
-   * LinearEncoding. The default is sRGBEncoding.
+   * Set the internal color workflow, linear or sRGB.
+   * sRGB, the default, is more "vibrant" at the cost of accuracy.
+   * Linear gives more accurate results, especially for transparent objects.
+   * In all cases, the output is always sRGB; this just affects how colors are computed internally.
    * Call this just after creating the viewer, before loading any models.
-   * @see setOutputEncoding
    */
-  setColorEncoding (encoding: TextureEncoding) {
-    if (encoding != LinearEncoding && encoding != sRGBEncoding)
-      throw new Error(`setColorEncoding: invalid encoding ${encoding}`)
-    setColorSpace(encoding == LinearEncoding ? 'linear' : 'sRGB')
+  setColorWorkflow (encoding: ColorWorkflow) {
+    if (encoding != 'linear' && encoding != 'sRGB')
+      throw new Error(`setColorWorkflow: invalid color workflow ${encoding}`)
+    setColorSpace(encoding == 'linear' ? 'linear' : 'sRGB')
+    this.setOutputEncoding(encoding == 'linear' ? sRGBEncoding : LinearEncoding)
     // Note: this doesn't rebuild models, so existing geometry will have
     // the old color encoding.
     this.requestRender()
