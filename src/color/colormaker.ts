@@ -16,13 +16,33 @@ import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
 export type ColorMode = 'rgb'|'hsv'|'hsl'|'hsi'|'lab'|'hcl'
+export type ColorSpace = 'sRGB' | 'linear'
+
+/**
+ * Internal color space for all colors (global).
+ * Colors are always specified as sRGB; if this is set to
+ * 'linear' then colors get linearized when used internally
+ * as vertex or texture colors.
+ * @see setColorSpace/getColorSpace.
+ */
+var colorSpace: ColorSpace = 'sRGB' // default: don't linearize
+
+/** Set the global internal color space for colormakers */
+export function setColorSpace(space: ColorSpace) {
+  colorSpace = space
+}
+
+/** Get the global internal color space for colormakers */
+export function getColorSpace() {
+  return colorSpace
+}
 
 export const ScaleDefaultParameters = {
   scale: 'uniform' as string|string[],
   mode: 'hcl' as ColorMode,
   domain: [ 0, 1 ] as number[],
   value: 0xFFFFFF,
-  reverse: false
+  reverse: false,
 }
 export type ScaleParameters = typeof ScaleDefaultParameters
 
@@ -37,6 +57,27 @@ export type VolumeColormakerParams = { volume: Volume } & Partial<ColormakerPara
 export type ColormakerScale = (v: number) => number
 
 const tmpColor = new Color()
+
+/** Decorator for optionally linearizing a numeric color */
+type colorFuncType = (value: any) => number // decorator applies to functions with this shape
+export function manageColor<T extends {parameters: ColormakerParameters}>
+  (_target: Object,
+   _name: string | symbol,
+   descriptor: TypedPropertyDescriptor<colorFuncType>): PropertyDescriptor {
+    const originalMethod = descriptor.value
+    const linearize: colorFuncType = function (this: T, value: any) {
+      let result = originalMethod!.bind(this, value)()
+      if (colorSpace == 'linear') {
+        tmpColor.set(result)
+        tmpColor.convertSRGBToLinear()
+        return tmpColor.getHex()
+      } else {
+        return result
+      }
+    }
+    descriptor.value = linearize
+    return descriptor
+  }
 
 /**
  * Class for making colors.
@@ -78,11 +119,11 @@ abstract class Colormaker {
       .scale(p.scale as any)  // TODO
       .mode(p.mode)
       .domain(p.domain)
-      .out('num' as any)  // TODO
+      .out('num' as any)  // returns RGB color as numeric (not string "#ffffff")
   }
 
   /**
-   * safe a color to an array
+   * save a color to an array
    * @param  {Integer} color - hex color value
    * @param  {Array|TypedArray} array - destination
    * @param  {Integer} offset - index into the array
@@ -99,7 +140,7 @@ abstract class Colormaker {
   atomColor? (atom: AtomProxy): number
 
   /**
-   * safe a atom color to an array
+   * save an atom color to an array
    * @param  {AtomProxy} atom - atom to get color for
    * @param  {Array|TypedArray} array - destination
    * @param  {Integer} offset - index into the array

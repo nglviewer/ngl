@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { ColormakerParameters, ColormakerScale } from './colormaker'
+import Colormaker, { ColormakerParameters, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 /**
@@ -37,6 +37,7 @@ class PartialchargeColormaker extends Colormaker {
     this.partialchargeScale = this.getScale()
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     return this.partialchargeScale(a.partialCharge || 0)
   }

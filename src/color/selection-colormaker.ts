@@ -46,6 +46,7 @@ class SelectionColormaker extends Colormaker {
     })
   }
 
+  // NOT NEEDED @manageColor
   atomColor (a: AtomProxy) {
     for (let i = 0, n = this.selectionList.length; i < n; ++i) {
       const test = this.selectionList[ i ].test

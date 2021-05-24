@@ -326,7 +326,7 @@ class Stage {
       let colorReverse = false
       if (structure.getChainnameCount(new Selection('polymer and /0')) === 1) {
         colorScheme = 'residueindex'
-        colorScale = 'spectral'
+        colorScale = 'Spectral'
         colorReverse = true
       }
 

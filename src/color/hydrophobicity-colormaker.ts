@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { ColormakerParameters, ColormakerScale } from './colormaker'
+import Colormaker, { ColormakerParameters, ColormakerScale, manageColor } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 import {
@@ -50,6 +50,7 @@ class HydrophobicityColormaker extends Colormaker {
     this.hfScale = this.getScale()
   }
 
+  @manageColor
   atomColor (a: AtomProxy) {
     return this.hfScale(this.resHF[ a.resname ] || this.defaultResidueHydrophobicity)
   }

@@ -8,7 +8,7 @@ import { Vector3 } from 'three'
 import { lerp } from '../math/math-utils'
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { VolumeColormakerParams, ColormakerScale } from './colormaker'
+import Colormaker, { VolumeColormakerParams, ColormakerScale, manageColor } from './colormaker'
 
 /**
  * Color by volume position
@@ -27,6 +27,7 @@ class VolumeColormaker extends Colormaker {
    * @param  {Vector3} coords - xyz coordinates
    * @return {Integer} hex coords color
    */
+  @manageColor
   positionColor (coords: Vector3) {
     const volume = this.parameters.volume as any  // TODO
 

@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker from './colormaker'
+import Colormaker, { manageColor } from './colormaker'
 
 function randomColor () {
   return Math.random() * 0xFFFFFF
@@ -19,6 +19,7 @@ class RandomColormaker extends Colormaker {
    * get color for an atom
    * @return {Integer} random hex color
    */
+  @manageColor
   atomColor () {
     return randomColor()
   }
@@ -27,6 +28,7 @@ class RandomColormaker extends Colormaker {
    * get color for volume cell
    * @return {Integer} random hex color
    */
+  @manageColor
   volumeColor () {
     return randomColor()
   }
@@ -35,6 +37,7 @@ class RandomColormaker extends Colormaker {
    * get color for coordinates in space
    * @return {Integer} random hex color
    */
+  @manageColor
   positionColor () {
     return randomColor()
   }

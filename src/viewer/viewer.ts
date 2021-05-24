@@ -16,9 +16,9 @@ import {
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, SpotLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments
+  LineSegments,
+  LinearEncoding, sRGBEncoding, TextureEncoding
 } from 'three'
-
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
 import '../shader/Quad.vert'
@@ -31,6 +31,7 @@ import {
 import { degToRad } from '../math/math-utils'
 import Stats from './stats'
 import { getShader } from '../shader/shader-utils'
+import { setColorSpace } from '../color/colormaker'
 import { JitterVectors } from './viewer-constants'
 import {
   makeImage, ImageParameters,
@@ -129,6 +130,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 }
 
 export type CameraType = 'perspective'|'orthographic'|'stereo'
+export type ColorWorkflow = 'linear' | 'sRGB'
 
 export interface ViewerSignals {
   ticked: Signal,
@@ -159,6 +161,8 @@ export interface ViewerParameters {
   ambientIntensity: number
 
   sampleLevel: number
+
+  rendererEncoding: TextureEncoding // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
 }
 
 export interface BufferInstance {
@@ -318,7 +322,10 @@ export default class Viewer {
       ambientColor: new Color(0xdddddd),
       ambientIntensity: 0.2,
 
-      sampleLevel: 0
+      sampleLevel: 0,
+
+      // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
+      rendererEncoding: LinearEncoding,
     }
   }
 
@@ -422,15 +429,16 @@ export default class Viewer {
     this.renderer.setSize(width, height)
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
+    this.renderer.outputEncoding = this.parameters.rendererEncoding
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
     // console.log(gl.getParameter(gl.SAMPLES))
 
-    // For WebGL1, extensions must be explicitly enabled. 
-    // The following are builtin to WebGL2 (and don't appear as 
+    // For WebGL1, extensions must be explicitly enabled.
+    // The following are builtin to WebGL2 (and don't appear as
     // extensions)
-    // EXT_frag_depth, OES_element_index_uint, OES_texture_float 
+    // EXT_frag_depth, OES_element_index_uint, OES_texture_float
     // OES_texture_half_float
 
     // The WEBGL_color_buffer_float extension is replaced by
@@ -440,7 +448,7 @@ export default class Viewer {
     if (!this.renderer.capabilities.isWebGL2) {
       setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'))
       this.renderer.extensions.get('OES_element_index_uint')
-      
+
       setSupportsReadPixelsFloat(
         (this.renderer.extensions.get('OES_texture_float') &&
           this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
@@ -494,6 +502,7 @@ export default class Viewer {
       }
     )
     this.pickingTarget.texture.generateMipmaps = false
+    this.pickingTarget.texture.encoding = this.parameters.rendererEncoding
 
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
@@ -512,6 +521,7 @@ export default class Viewer {
         format: RGBAFormat
       }
     )
+    this.sampleTarget.texture.encoding = this.parameters.rendererEncoding
 
     this.holdTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
@@ -526,6 +536,7 @@ export default class Viewer {
         // )
       }
     )
+    this.holdTarget.texture.encoding = this.parameters.rendererEncoding
 
     this.compositeUniforms = {
       'tForeground': new Uniform(this.sampleTarget.texture),
@@ -841,6 +852,41 @@ export default class Viewer {
       this.sampleLevel = level
     }
 
+    this.requestRender()
+  }
+
+  /**
+   * Set the output color encoding, i.e. how the renderer translates
+   * colorspaces as it renders to the screen.
+
+   * The default is LinearEncoding, because the internals of NGL are
+   * already sRGB so no translation is needed to show sRGB colors.
+   * Set to sRGBEncoding to create a linear workflow, and also call
+   * `setColorEncoding(LinearEncoding)` to linearize colors on input.
+   * @see setColorEncoding
+   */
+  private setOutputEncoding (encoding: TextureEncoding) {
+    this.parameters.rendererEncoding = encoding
+    this.renderer.outputEncoding = encoding
+    this.pickingTarget.texture.encoding = encoding
+    this.sampleTarget.texture.encoding = encoding
+    this.holdTarget.texture.encoding = encoding
+  }
+
+  /**
+   * Set the internal color workflow, linear or sRGB.
+   * sRGB, the default, is more "vibrant" at the cost of accuracy.
+   * Linear gives more accurate results, especially for transparent objects.
+   * In all cases, the output is always sRGB; this just affects how colors are computed internally.
+   * Call this just after creating the viewer, before loading any models.
+   */
+  setColorWorkflow (encoding: ColorWorkflow) {
+    if (encoding != 'linear' && encoding != 'sRGB')
+      throw new Error(`setColorWorkflow: invalid color workflow ${encoding}`)
+    setColorSpace(encoding == 'linear' ? 'linear' : 'sRGB')
+    this.setOutputEncoding(encoding == 'linear' ? sRGBEncoding : LinearEncoding)
+    // Note: this doesn't rebuild models, so existing geometry will have
+    // the old color encoding.
     this.requestRender()
   }
 
@@ -1192,11 +1238,9 @@ export default class Viewer {
     this.renderer.clear()
     this.__setVisibility(false, true, false, false)
     this.renderer.render(this.scene, camera)
+    //  back to standard render target
     this.renderer.setRenderTarget(null)
     this.updateInfo()
-
-    //  back to standard render target
-    this.renderer.setRenderTarget(null!)  // TODO
 
     // if (Debug) {
     //   this.__setVisibility(false, true, false, true);
@@ -1207,7 +1251,7 @@ export default class Viewer {
   }
 
   private __renderModelGroup (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
-    this.renderer.setRenderTarget(renderTarget || null!)
+    this.renderer.setRenderTarget(renderTarget || null)
     this.renderer.clear()
     this.__setVisibility(false, false, true, false)
     this.renderer.render(this.scene, camera)
@@ -1216,11 +1260,11 @@ export default class Viewer {
 
     this.__setVisibility(true, false, false, Debug)
     this.renderer.render(this.scene, camera)
-    this.renderer.setRenderTarget(null!) // set back to default canvas
+    this.renderer.setRenderTarget(null) // set back to default canvas
     this.updateInfo()
   }
 
-  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera) {
+  private __renderSuperSample (camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     // based on the Supersample Anti-Aliasing Render Pass
     // contributed to three.js by bhouston / http://clara.io/
     //
@@ -1273,12 +1317,12 @@ export default class Viewer {
     this.compositeUniforms.tForeground.value = this.holdTarget.texture
 
     camera.clearViewOffset()
-    this.renderer.setRenderTarget(null!)
+    this.renderer.setRenderTarget(renderTarget || null)
     this.renderer.clear()
     this.renderer.render(this.compositeScene, this.compositeCamera)
   }
 
-  private __renderStereo (picking = false) {
+  private __renderStereo (picking = false, _renderTarget?: WebGLRenderTarget) {
     const stereoCamera = this.stereoCamera
     stereoCamera.update(this.perspectiveCamera);
 
@@ -1302,18 +1346,18 @@ export default class Viewer {
     renderer.setViewport(0, 0, size.width, size.height)
   }
 
-  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera) {
+  private __render(picking = false, camera: PerspectiveCamera|OrthographicCamera, renderTarget?: WebGLRenderTarget) {
     if (picking) {
       if (!this.lastRenderedPicking) this.__renderPickingGroup(camera)
     } else if (this.sampleLevel > 0 && this.parameters.cameraType !== 'stereo') {
       // TODO super sample broken for stereo camera
-      this.__renderSuperSample(camera)
+      this.__renderSuperSample(camera, renderTarget)
     } else {
-      this.__renderModelGroup(camera)
+      this.__renderModelGroup(camera, renderTarget)
     }
   }
 
-  render (picking = false) {
+  render (picking = false, renderTarget?: WebGLRenderTarget) {
     if (this.rendering) {
       Log.warn("'tried to call 'render' from within 'render'")
       return
@@ -1331,9 +1375,9 @@ export default class Viewer {
 
       // render
       if (this.parameters.cameraType === 'stereo') {
-        this.__renderStereo(picking)
+        this.__renderStereo(picking, renderTarget)
       } else {
-        this.__render(picking, this.camera)
+        this.__render(picking, this.camera, renderTarget)
       }
       this.lastRenderedPicking = picking
     } finally {
