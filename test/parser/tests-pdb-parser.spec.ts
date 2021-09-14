@@ -1,4 +1,3 @@
-
 import StringStreamer from '../../src/streamer/string-streamer'
 import PdbParser from '../../src/parser/pdb-parser'
 import {
@@ -130,6 +129,31 @@ describe('parser/pdb-parser', function () {
         expect(bs.atomIndex1[ 26 ]).toBe(19)
         expect(bs.atomIndex2[ 26 ]).toBe(20)
         expect(bs.bondOrder[ 26 ]).toBe(2)
+      })
+    })
+
+    it('parses charges', function () {
+      var file = join(__dirname, '/../data/charged.pdb')
+      var str = fs.readFileSync(file, 'utf-8')
+      var streamer = new StringStreamer(str)
+      var pdbParser = new PdbParser(streamer)
+      return pdbParser.parse().then(function (structure) {
+        var as = structure.atomStore
+        expect(as.formalCharge).toBeDefined()
+        expect(as.formalCharge[ 0 ]).toBe(1)
+        expect(as.formalCharge[ 1 ]).toBe(0)
+        expect(as.formalCharge[ 8 ]).toBe(-1)
+      })
+    })
+
+    it('doesn\'t add formalCharge field when not declared', function() {
+      var file = join(__dirname, '/../data/doubleBonds.pdb')
+      var str = fs.readFileSync(file, 'utf-8')
+      var streamer = new StringStreamer(str)
+      var pdbParser = new PdbParser(streamer)
+      return pdbParser.parse().then(function (structure) {
+        expect(structure.atomStore.formalCharge).toBeUndefined()
+        expect(structure.getAtomProxy().formalCharge).toBeNull()
       })
     })
   })

@@ -140,6 +140,7 @@ class PdbParser extends StructureParser {
     let line, recordName
     let serial, chainname: string, resno: number, resname: string, occupancy: number
     let inscode: string, atomname, hetero: number, bfactor: number, altloc
+    let formalCharge: number
 
     let startChain, startResi, startIcode
     let endChain, endResi, endIcode
@@ -307,6 +308,7 @@ class PdbParser extends StructureParser {
                   chainname = line.substr(72, 4).trim() // segid
                 }
               }
+              formalCharge = parseInt((line.substr(79,1) + line.substr(78, 1)).trim()) // Usually blank
             }
           }
 
@@ -327,6 +329,12 @@ class PdbParser extends StructureParser {
             atomStore.bfactor[ idx ] = isNaN(bfactor) ? 0 : bfactor
             if (isPdbqt) {
               atomStore.partialCharge![ idx ] = parseFloat(line.substr(70, 6))
+            }
+            if (isFinite(formalCharge)) {
+              if (!atomStore.formalCharge) {
+                atomStore.addField('formalCharge', 1, 'int8')
+              }
+              atomStore.formalCharge![ idx ] = formalCharge
             }
           }
 
