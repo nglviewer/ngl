@@ -10,10 +10,9 @@
     "lint-src": "standard \"src/**/*.js\"",
     "lint-test": "standard --env mocha \"test/**/*.js\"",
     "lint-script": "standard --global stage --global NGL \"examples/scripts/**/*.js\"",
-    "copy": "cpy --parents \"src/**/*.{vert,frag,glsl}\" build/js/ && cpy \"lib/*.js\" build/js/lib/ && cpy \"package.json\" build/js/ && cpy \"src/polyfills.js\" build/js/src/",
     "dts": "tsc -d --declarationDir \"dist/declarations\" --emitDeclarationOnly --skipLibCheck",
     "prebuild": "npm run lint",
-    "build": "npm run copy && npm run dts && rollup -c",
+    "build": "npm run dts && rollup -c",
     "postbuild": "node ./scripts/makeScriptsList.js",
     "test": "jest",
     "preversion": "npm test",
@@ -26,8 +25,7 @@
     "deploy": "./scripts/deploy.sh prerelease",
     "gallery": "./scripts/gallery.sh",
     "prerelease": "./scripts/release.sh prerelease",
-    "min": "mkdir -p dist && uglifyjs build/js/ngl.dev.js --source-map -cm -o dist/ngl.js && cpy build/js/ngl.esm.js dist && cpy build/js/ngl.umd.js dist && cpy build/js/ngl.{umd,esm}.js.map dist",
-    "build-min": "npm run build && npm run min"
+    "build-min": "npm run lint && npm run dts && rollup -c rollup.config.dist.js"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -66,6 +64,7 @@
     "@babel/plugin-external-helpers": "^7.8.3",
     "@babel/preset-env": "^7.8.4",
     "@babel/register": "^7.8.3",
+    "@rollup/plugin-buble": "^0.21.3",
     "@rollup/plugin-commonjs": "^17.1.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^11.1.1",
@@ -80,29 +79,26 @@
     "babelrc-rollup": "^3.0.0",
     "cpy-cli": "^3.1.0",
     "eslint": "^5.3.0",
-    "eslint-plugin-import": "^2.13.0",
-    "eslint-plugin-react": "^7.10.0",
     "jest": "^25.5.1",
     "mocha": "^5.2.0",
     "rollup": "^2.38.5",
-    "rollup-plugin-babel": "^4.3.3",
-    "rollup-plugin-buble": "^0.19.2",
     "rollup-plugin-internal": "^1.0.4",
-    "rollup-watch": "^4.3.1",
+    "rollup-plugin-terser": "^7.0.2",
     "slimerjs": "^1.0.0",
     "source-map-support": "^0.5.6",
     "standard": "^11.0.1",
     "ts-jest": "25.5.1",
+    "ts-standard": "^10.0.0",
     "typedoc": "^0.16.11",
-    "typescript": "^3.8.3",
-    "uglify-js": "^3.4.6"
+    "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@typescript-eslint/parser": "^4.31.1",
     "chroma-js": "^1.3.7",
     "promise-polyfill": "^8.0.0",
     "signals": "^1.0.0",
     "sprintf-js": "^1.1.2",
     "three": "^0.118.0",
-    "update": "^0.7.4"
+    "tslib": "^2.2.0"
   }
 }
