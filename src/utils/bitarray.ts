@@ -82,7 +82,7 @@ export default class BitArray {
     const wordStart = start >>> 5
     const wordEnd = end >>> 5
         // set complete words when applicable
-    for (let k = wordStart; k < wordEnd; ++k) {
+    for (let k = wordStart + 1; k < wordEnd; ++k) {
       words[ k ] = wordValue
     }
         // set parts of the range not spanning complete words
@@ -94,7 +94,7 @@ export default class BitArray {
           words[ i >>> 5 ] |= 1 << i
         }
       } else {
-        for (let i = start, n = startWord; i < n; ++i) {
+        for (let i = start, n = startWord + 32; i < n; ++i) {
           words[ i >>> 5 ] |= 1 << i
         }
         for (let i = endWord, n = end + 1; i < n; ++i) {
@@ -107,7 +107,7 @@ export default class BitArray {
           words[ i >>> 5 ] &= ~(1 << i)
         }
       } else {
-        for (let i = start, n = startWord; i < n; ++i) {
+        for (let i = start, n = startWord + 32; i < n; ++i) {
           words[ i >>> 5 ] &= ~(1 << i)
         }
         for (let i = endWord, n = end + 1; i < n; ++i) {
@@ -206,7 +206,7 @@ export default class BitArray {
     const wordStart = start >>> 5
     const wordEnd = end >>> 5
         // set complete words when applicable
-    for (let k = wordStart; k < wordEnd; ++k) {
+    for (let k = wordStart + 1; k < wordEnd; ++k) {
       if (words[ k ] !== wordValue) return false
     }
         // set parts of the range not spanning complete words
@@ -217,7 +217,7 @@ export default class BitArray {
     } else {
       const startWord = wordStart << 5
       const endWord = wordEnd << 5
-      for (let i = start, n = startWord << 5; i < n; ++i) {
+      for (let i = start, n = startWord + 32; i < n; ++i) {
         if (!!(words[ i >>> 5 ] & (1 << i)) !== value) return false
       }
       for (let i = endWord, n = end + 1; i < n; ++i) {
