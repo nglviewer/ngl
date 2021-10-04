@@ -124,11 +124,8 @@ void main(){
     // calculate a dicriminant of the above quadratic equation
     float d = a1*a1 - a0*a2;
     if (d < 0.0) {
-        // outside of the cylinder - in practice there are very few of these points
-        // as the box is exactly the right size, uncomment to trace and note faint green line
-        // (where pixel falls just outside triangle):
-        // gl_FragColor = vec4(0., 0.61, 0.1, 1.);
-        // return;
+        // Point outside of the cylinder, becomes significant in perspective mode when camera is close
+        // to the cylinder
         discard;
     }
     float dist = (-a1 + sqrt(d)) / a2;
@@ -159,14 +156,21 @@ void main(){
     if (base_cap_test < 0.0) // The (extended) surface point falls outside the cylinder - beyond the base (away from camera)
     {
         // ray-plane intersection
-        // @fredludlow - I think this is always true if execution reaches this point:
-        // ray_direction is always towards camera, and -axis is always away.
-        float dNV = dot(-axis, ray_direction);
-        if (dNV < 0.0) {
-            discard;
+        // Ortho mode - surface point is ray_target
+        float dNV;
+        float near;
+        vec3 front_point;
+        if ( ortho == 1.0 ) {
+            front_point = ray_target;
+        } else {
+            dNV = dot(-axis, ray_direction);
+            // @fredludlow: Explicit discard is not required here?
+            // if (dNV < 0.0) {
+            //     discard;
+            // }
+            near = dot(-axis, (base)) / dNV;
+            front_point = ray_direction * near + ray_origin;
         }
-        float near = dot(-axis, (base)) / dNV;
-        vec3 front_point = ray_direction * near + ray_origin;
         // within the cap radius?
         if (dot(front_point - base, front_point-base) > radius2) {
             discard;
@@ -176,6 +180,7 @@ void main(){
             surface_point = front_point;
             _normal = axis;
         #else
+            // Calculate interior point
             surface_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
             dNV = dot(-axis, ray_direction);
             near = dot(axis, end) / dNV;
@@ -193,24 +198,30 @@ void main(){
     // flat
     if( end_cap_test > 0.0 )
     {
-        // @fredludlow: NOTE: Rewrote this section as it was causing errors in orthographic mode.
-        // The original code first checks to see if axis and ray_direction align, but this is always
-        // the case, so not needed
-        // float dNV = dot(axis, ray_direction);
-        // if (dNV < 0.0) {
-        //     gl_FragColor = vec4(0., 1., 0.7, 1.);
-        //     return;
-        //     discard;
-        // }
-        // NOTE: Previously the point on the cap surface was calculated like this, but because the front cap
-        // is always drawn on one of the impostor faces, we don't actually need to calculate the point (it's unchagned 
-        // from `w` or `ray_target`)
-        // float near = dot(axis, end) / dNV;
-        // vec3 end_point = ray_direction * near + ray_origin;
-        vec3 end_point = ray_target;
+        // @fredludlow: NOTE: Perspective and ortho behaviour is quite different here. In perspective mode
+        // it is possible to see the inside face of the mapped aligned box and these points should be 
+        // discarded. This occcurs when the camera is focused on one end of the cylinder and the cylinder
+        // is not quite in line with the camera (In orthographic mode this view is not possible).
+        // It is also possible to see the back face of the near (end) cap when looking nearly side-on.
+        float dNV;
+        float near;
+        vec3 end_point;
+        if ( ortho == 1.0 ) {
+            end_point = ray_target;
+        } else {   
+            dNV = dot(axis, ray_direction);
+            if (dNV < 0.0) {
+                // Viewing inside/back face of end-cap
+                discard;
+            }
+            near = dot(axis, end) / dNV;
+            end_point = ray_direction * near + ray_origin;
+        }
+        
         // within the cap radius?
         if( dot(end_point - end, end_point-base) > radius2 ) {
             discard;
+
         }
         #ifdef CAP
             surface_point = end_point;
@@ -219,8 +230,8 @@ void main(){
             // Looking down the tube at an interior point, but check to see if interior point is 
             // within range:
             surface_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
-            float dNV = dot(-axis, ray_direction);
-            float near = dot(-axis, (base)) / dNV;
+            dNV = dot(-axis, ray_direction);
+            near = dot(-axis, (base)) / dNV;
             new_point2 = ray_direction * near + ray_origin;
             if (dot(new_point2 - base, new_point2-base) < radius2) {
                 // Looking down the tube, which should be open-ended
