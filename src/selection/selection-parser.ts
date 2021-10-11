@@ -255,10 +255,14 @@ function parseSele (string: string) {
                   { atomname: 'OP2' },
                   { atomname: "O3'" },
                   { atomname: 'O3*' },
+                  { atomname: "HO3'"},
                   { atomname: "O5'" },
                   { atomname: 'O5*' },
+                  { atomname: "HO5'"},
                   { atomname: "C5'" },
-                  { atomname: 'C5*' }
+                  { atomname: 'C5*' },
+                  { atomname: "H5'" },
+                  { atomname: "H5''"}
                 ]
               }
             ]
