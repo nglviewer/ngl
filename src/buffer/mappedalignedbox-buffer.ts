@@ -7,6 +7,17 @@
 import { BufferParameters, BufferData } from './buffer'
 import MappedBuffer from './mapped-buffer'
 
+//       +Y   /
+//    0**********2
+//    *   | /   **
+//    *   |/   * *
+// -----------3---- +X
+//    *  /|   *  *
+//    * / |   *  *
+//    1/**|******4
+//    /   |   * *
+//   /    |   **  
+//  +Z    |   5 
 const mapping = new Float32Array([
   -1.0, 1.0, -1.0,
   -1.0, -1.0, -1.0,
