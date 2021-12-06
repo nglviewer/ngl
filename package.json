@@ -96,6 +96,6 @@
     "promise-polyfill": "^8.0.0",
     "signals": "^1.0.0",
     "sprintf-js": "^1.1.2",
-    "three": "^0.118.0"
+    "three": "^0.126.2"
   }
 }
