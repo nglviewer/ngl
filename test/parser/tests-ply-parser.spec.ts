@@ -14,9 +14,9 @@ describe('parser/ply-parser', function () {
       var streamer = new StringStreamer(str)
       var plyParser = new PlyParser(streamer)
       return plyParser.parse().then(function (surface) {
-        expect(surface.size).toBe(36)
-        expect(surface.position.length).toBe(108)
-        expect(surface.normal.length).toBe(108)
+        expect(surface.size).toBe(8)
+        expect(surface.position.length).toBe(24)
+        expect(surface.normal.length).toBe(24)
       })
     })
   })

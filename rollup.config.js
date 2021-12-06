@@ -70,7 +70,7 @@ export const plugins = [
   glsl(),
   text(),
   json(),
-  buble()
+  buble({forOf: false})
 ]
 
 const moduleConfig = {
