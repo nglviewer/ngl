@@ -12,7 +12,7 @@ import Queue from '../utils/queue'
 import Counter from '../utils/counter'
 import Viewer from '../viewer/viewer'
 import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
-import { ColormakerParameters, ColorMode } from '../color/colormaker';
+import { ColorData, ColormakerParameters, ColorMode } from '../color/colormaker';
 
 export interface RepresentationParameters {
   name: string
@@ -25,6 +25,7 @@ export interface RepresentationParameters {
   depthWrite: boolean,
   side: BufferSide,
   wireframe: boolean,
+  colorData: ColorData,
   colorScheme: string,
   colorScale: string | number[],
   colorReverse: boolean,
@@ -65,6 +66,7 @@ export interface RepresentationParameters {
  * @property {String} [side] - which triangle sides to render, "front" front-side,
  *                            "back" back-side, "double" front- and back-side
  * @property {Boolean} [wireframe] - render as wireframe
+ * @property {ColorData} [colorData] - atom or bond indexed data for coloring
  * @property {String} [colorScheme] - color scheme
  * @property {String} [colorScale] - color scale, either a string for a
  *                                 predefined scale or an array of
@@ -111,6 +113,7 @@ class Representation {
   protected depthWrite: boolean
   protected side: BufferSide
   protected wireframe: boolean
+  protected colorData: ColorData
   protected colorScheme: string
   protected colorScale: string | string[]
   protected colorReverse: boolean
@@ -179,6 +182,11 @@ class Representation {
       },
       wireframe: {
         type: 'boolean', buffer: true
+      },
+
+      colorData: {
+        type: 'hidden',
+        update: 'color',
       },
 
       colorScheme: {
@@ -284,6 +292,7 @@ class Representation {
 
     this.setColor(p.color, p)
 
+    this.colorData = defaults(p.colorData, undefined)
     this.colorScheme = defaults(p.colorScheme, 'uniform')
     this.colorScale = defaults(p.colorScale, '')
     this.colorReverse = defaults(p.colorReverse, false)
@@ -370,6 +379,7 @@ class Representation {
   getColorParams (p?: {[k: string]: any}): { scheme: string, [k: string]: any } & ColormakerParameters {
     return Object.assign({
 
+      data: this.colorData,
       scheme: this.colorScheme,
       scale: this.colorScale,
       reverse: this.colorReverse,
