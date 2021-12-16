@@ -34,7 +34,18 @@ class StructuredataColormaker extends Colormaker {
   @manageColor
   bondColor(bond: BondProxy, fromTo: boolean) {
       const val = this.bondData?.[bond.index]
-      return (val !== undefined) ?  this.scale(val) : this.parameters.value
+      
+      // Explicit bond data?
+      if (val !== undefined) return  this.scale(val)
+      
+      // No, fall back to atomData
+      if (this.atomProxy) {
+        this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2
+        return this.atomColor(this.atomProxy)
+      } 
+      
+      // Fallback
+      return this.parameters.value
   }
 }
 
