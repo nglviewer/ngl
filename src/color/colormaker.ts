@@ -47,8 +47,8 @@ export const ScaleDefaultParameters = {
 export type ScaleParameters = typeof ScaleDefaultParameters
 
 export interface ColorData {
-  atomData?: { [key: number]: number }
-  bondData?: { [key: number]: number }
+  atomData?: number[],
+  bondData?: number[]
 }
 
 export interface ColormakerParameters extends ScaleParameters {
@@ -71,8 +71,8 @@ export function manageColor<T extends {parameters: ColormakerParameters}>
    _name: string | symbol,
    descriptor: TypedPropertyDescriptor<colorFuncType>): PropertyDescriptor {
     const originalMethod = descriptor.value
-    const linearize: colorFuncType = function (this: T, value: any) {
-      let result = originalMethod!.bind(this, value)()
+    const linearize: colorFuncType = function (this: T, value: any, fromTo?: boolean) {
+      let result = originalMethod!.bind(this, value, fromTo)()
       if (colorSpace == 'linear') {
         tmpColor.set(result)
         tmpColor.convertSRGBToLinear()

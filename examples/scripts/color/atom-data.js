@@ -1,29 +1,30 @@
-/** Demonstration of data colormaker - passing arbitrary data through to the
- * colormaker for plotting.
+/** Demonstration of structuredata colormaker, coloring atoms by numeric property passed
+ * in as colorData.atomData
  */
-stage.loadFile('data://1blu.mmtf').then(function (c) {
+stage.loadFile('data://1lee.pdb').then(function (c) {
   // We might be colouring by some calculated/predicted property (e.g. ML model which outputs
   // scores/quantities for individual atoms)
-  // To keep this self-contained, we'll just calculate distance from the origin for each
-  // atom:
+
+  // For our example, we'll generate some random "scores" for the ligand atoms in PDB entry 1lee
+  // (Ligand has hetcode R36), leaving all the protein atoms unscored
 
   var structure = c.structure
-  var distance = new Float64Array(structure.atomCount)
+  var scores = []
 
-  structure.eachAtom(ap => {
-    distance[ap.index] = Math.sqrt(ap.x ** 2 + ap.y ** 2 + ap.z ** 2)
+  var ligandView = structure.getView(new NGL.Selection('R36'))
+
+  ligandView.eachAtom(ap => {
+    // We only populate scores for some of the atoms (those in the R36 residue),
+    // For non-ligand atoms scores[i] will be undefined, and color will fallback to color value
+    scores[ap.index] = Math.random()
   })
 
-  var repr = c.addRepresentation('ball+stick', {
+  c.addRepresentation('licorice', {
     color: 'structuredata',
-    colorData: {atomData: distance},
-    colorDomain: [30.0, 60.0]
+    colorData: {atomData: scores},
+    colorDomain: [0.0, 1.0], // This is the default domain
+    colorScale: 'rainbow', // Any of the normal color scales are available
+    colorValue: '#888' // Fallback color for atoms without data
   })
-  c.autoView()
-
-  // If colorData isn't defined, empty etc, falls back to value, here we wait 2 seconds
-  // then update the paramter to an empty array to demonstrate
-  window.setTimeout(() => {
-    repr.setParameters({colorData: [], colorValue: 'green'})
-  }, 2000)
+  c.autoView('R36')
 })
