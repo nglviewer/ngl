@@ -138,7 +138,7 @@ class ColormakerRegistry {
    * @param {Colormaker} scheme - the colormaker
    * @return {undefined}
    */
-  add (id: string, scheme: Colormaker) {
+  add (id: string, scheme: Colormaker | typeof Colormaker) {
     id = id.toLowerCase()
     this.schemes[ id ] = scheme
   }
