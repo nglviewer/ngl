@@ -6,6 +6,9 @@ import PdbWriter from '../../src/writer/pdb-writer'
 import { join } from 'path'
 import * as fs from 'fs'
 
+const LINES_1CRN = 3 + 327 + 1    // HEADER + ATOM + END
+const CHARS_1CRN = LINES_1CRN * 81 - 1 // 80 COL + line breaks - No final line break
+
 describe('writer/pdb-writer', function () {
   describe('writing', function () {
     it('getData', function () {
@@ -16,9 +19,9 @@ describe('writer/pdb-writer', function () {
       return pdbParser.parse().then(function (structure) {
         var pdbWriter = new PdbWriter(structure)
         var string = pdbWriter.getData()
-        expect(string.length).toBe(26810)
+        expect(string.length).toBe(CHARS_1CRN)
         var lines = string.split('\n')
-        expect(lines.length).toBe(331)
+        expect(lines.length).toBe(LINES_1CRN)
       })
     })
 
@@ -40,7 +43,6 @@ describe('writer/pdb-writer', function () {
       })
     })
 
-    // skip because there is no Blob in node.js
     it('getBlob', function () {
       var file = join(__dirname, '/../data/1crn.pdb')
       var str = fs.readFileSync(file, 'utf-8')
@@ -50,7 +52,7 @@ describe('writer/pdb-writer', function () {
         var pdbWriter = new PdbWriter(structure)
         var blob = pdbWriter.getBlob()
         expect(blob.type).toBe('text/plain')
-        expect(blob.size).toBe(26810)
+        expect(blob.size).toBe(CHARS_1CRN)
       })
     })
   })

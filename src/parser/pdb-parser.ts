@@ -308,7 +308,8 @@ class PdbParser extends StructureParser {
                   chainname = line.substr(72, 4).trim() // segid
                 }
               }
-              formalCharge = parseInt((line.substr(79,1) + line.substr(78, 1)).trim()) // Usually blank
+              // Where specified, formalCharge is of form "2-" or "1+"
+              formalCharge = parseInt((line.substr(79,1) + line.substr(78, 1)).trim())
             }
           }
 
@@ -330,6 +331,7 @@ class PdbParser extends StructureParser {
             if (isPdbqt) {
               atomStore.partialCharge![ idx ] = parseFloat(line.substr(70, 6))
             }
+            // isFinite check will reject undefined (in legacy case) and NaN values
             if (isFinite(formalCharge)) {
               if (!atomStore.formalCharge) {
                 atomStore.addField('formalCharge', 1, 'int8')
