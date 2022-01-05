@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Vector3, Box3, Geometry, BufferGeometry, Group, Color } from 'three'
+import { Vector3, Box3, BufferGeometry, Group, Color } from 'three'
 
 import { Debug, Log, ColormakerRegistry } from '../globals'
 import { getUintArray } from '../utils'
@@ -66,9 +66,8 @@ class Surface {
     this.center = new Vector3()
     this.boundingBox = new Box3()
 
-    if (data instanceof Geometry ||
-      data instanceof BufferGeometry ||
-      data instanceof Group
+    if (data instanceof BufferGeometry ||
+        data instanceof Group
     ) {
       // to be removed
       this.fromGeometry(data)
@@ -130,14 +129,14 @@ class Surface {
     this.contour = contour
   }
 
-  fromGeometry (geometry: Geometry|BufferGeometry|Group) {
+  fromGeometry (geometry: BufferGeometry|Group) {
     if (Debug) Log.time('GeometrySurface.fromGeometry')
 
     let geo
 
-    if (geometry instanceof Geometry) {
-      geometry.computeVertexNormals(true)
-      geo = new BufferGeometry().fromGeometry(geometry)
+    if (geometry instanceof BufferGeometry) {
+      geometry.computeVertexNormals()
+      geo = new BufferGeometry().copy(geometry)
     } else if (geometry instanceof BufferGeometry) {
       geo = geometry
     } else {

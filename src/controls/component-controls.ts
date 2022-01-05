@@ -69,13 +69,12 @@ class ComponentControls {
    * @return {undefined}
    */
   spin (axis: Vector3, angle: number) {
-    tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
-    tmpRotateVector
-      .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
+    tmpRotateMatrix.copy(this.viewer.rotationGroup.matrix).invert()
+    tmpRotateVector.copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
 
     tmpRotateMatrix.extractRotation(this.component.transform)
     tmpRotateMatrix.premultiply(this.viewer.rotationGroup.matrix)
-    tmpRotateMatrix.getInverse(tmpRotateMatrix)
+    tmpRotateMatrix.copy(tmpRotateMatrix).invert()
 
     tmpRotateVector.copy(ensureVector3(axis))
     tmpRotateVector.applyMatrix4(tmpRotateMatrix)

@@ -764,8 +764,6 @@ class KinParser extends Parser {
           kinemage.pointmasterDict[ groupName as string] = {
             id: Object.keys(groupFlags as {[k: string]: boolean})[ 0 ].replace(reTrimQuotes, '')
           }
-        } else {
-          console.log(line)
         }
       }
     }

@@ -38,13 +38,6 @@ describe('parser/mmtf-parser', function () {
           [ 10.593500256538391, 10.21050015091896, 6.078999996185303 ]
         )
 
-        // assert.deepEqual( structure.boxes, [
-        //     new Float32Array([
-        //         40.959999084472656, 0, 0,
-        //         0, 18.649999618530273, 0,
-        //         0, 0, 22.520000457763672
-        //     ])
-        // ] );
         expect(structure.frames).toEqual([])
         expect(structure.header).toEqual({
           'depositionDate': '1981-04-30',

@@ -2,7 +2,6 @@ import json from '@rollup/plugin-json'
 import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
-import buble from '@rollup/plugin-buble'
 import internal from 'rollup-plugin-internal'
 
 // import terser from 'rollup-plugin-terser'
@@ -69,8 +68,7 @@ export const plugins = [
   commonjs(),
   glsl(),
   text(),
-  json(),
-  buble()
+  json()
 ]
 
 const moduleConfig = {
