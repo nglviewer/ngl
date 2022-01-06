@@ -458,8 +458,8 @@ class MouseObserver {
     const box = this.domElement.getBoundingClientRect()
     let offsetX, offsetY;
     if ('clientX' in event && 'clientY' in event) {
-      offsetX = event.clientX - left
-      offsetY = event.clientY - top
+      offsetX = event.clientX - box.left
+      offsetY = event.clientY - box.top
     } else {
       offsetX = event.offsetX
       offsetY = event.offsetY
