@@ -46,10 +46,16 @@ export const ScaleDefaultParameters = {
 }
 export type ScaleParameters = typeof ScaleDefaultParameters
 
+export interface ColorData {
+  atomData?: number[],
+  bondData?: number[]
+}
+
 export interface ColormakerParameters extends ScaleParameters {
   structure?: Structure
   volume?: Volume
   surface?: Surface
+  data?: ColorData
 }
 
 export type StuctureColormakerParams = { structure: Structure } & Partial<ColormakerParameters>
@@ -59,14 +65,14 @@ export type ColormakerScale = (v: number) => number
 const tmpColor = new Color()
 
 /** Decorator for optionally linearizing a numeric color */
-type colorFuncType = (value: any) => number // decorator applies to functions with this shape
+type colorFuncType = (value: any, fromTo?: boolean) => number // decorator applies to functions with this shape
 export function manageColor<T extends {parameters: ColormakerParameters}>
   (_target: Object,
    _name: string | symbol,
    descriptor: TypedPropertyDescriptor<colorFuncType>): PropertyDescriptor {
     const originalMethod = descriptor.value
-    const linearize: colorFuncType = function (this: T, value: any) {
-      let result = originalMethod!.bind(this, value)()
+    const linearize: colorFuncType = function (this: T, value: any, fromTo?: boolean) {
+      let result = originalMethod!.bind(this, value, fromTo)()
       if (colorSpace == 'linear') {
         tmpColor.set(result)
         tmpColor.convertSRGBToLinear()

@@ -17,10 +17,10 @@ import AtomProxy from '../proxy/atom-proxy'
 // ATOM      1  N   ARG     1      29.292  13.212 -12.751  1.00 33.78      1BPT 108
 
 const AtomFormat =
-  'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
+  'ATOM  %5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s%1s%1s'
 
 const HetatmFormat =
-  'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s'
+  'HETATM%5d %-4s %3s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s%1s%1s'
 
 export interface PdbWriterParams {
   renumberSerial: boolean
@@ -90,6 +90,8 @@ export default class PdbWriter extends Writer {
   private _writeAtoms () {
     let ia = 1
     let im = 1
+    let charge = " "
+    let chargeSign = " "
 
     this.structure.eachModel(m => {
       this._records.push(sprintf('MODEL %-74d', im++))
@@ -103,6 +105,14 @@ export default class PdbWriter extends Writer {
         let atomname = a.atomname
         if (atomname.length === 1) atomname = ' ' + atomname
 
+        if (a.formalCharge) { // Skip nulls and zeros
+          charge = Math.abs(a.formalCharge).toPrecision(1)
+          chargeSign = (a.formalCharge > 0) ? "+" : "-"
+        } else {
+          charge = " "
+          chargeSign = " "
+        }
+
         this._records.push(sprintf(
           formatString,
 
@@ -115,7 +125,9 @@ export default class PdbWriter extends Writer {
           defaults(a.occupancy, 1.0),
           defaults(a.bfactor, 0.0),
           '',  // segid
-          defaults(a.element, '')
+          defaults(a.element, ''),
+          charge,
+          chargeSign
         ))
         ia += 1
       }, this.structure.getSelection())
