@@ -12,6 +12,8 @@ import { defaults } from '../utils'
 import Viewer from '../viewer/viewer'
 import MouseControls from '../controls/mouse-controls'
 
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
 /**
  * @example
  * mouseObserver.signals.scrolled.add( function( delta ){ ... } );
@@ -228,15 +230,18 @@ class MouseObserver {
    * @param  {Event} event - mouse event
    * @return {undefined}
    */
-  _onMousewheel(event: WheelEvent & { wheelDelta?: number, wheelDeltaY?: number }) {
+  _onMousewheel(event: Optional<WheelEvent, 'detail'> & { wheelDelta?: number, wheelDeltaY?: number }) {
     if (event.target !== this.domElement || !this.handleScroll) {
       return
     }
     event.preventDefault()
-    this._setKeys(event)
+    this._setKeys({...{detail: 0}, ...event})
 
     let delta = 0
-    if ('deltaY' in event && 'deltaMode' in event) {
+    // This has to be written in a particular way to handle old browsers that
+    // all send events with different properties set in different ways.
+    if ('deltaY' in event && 'deltaMode' in event &&
+      event.deltaY !== undefined && event.deltaMode !== undefined) {
       // all modern browsers, using WheelEvent; deltaY + down (toward user)
       if (event.deltaMode === WheelEvent.DOM_DELTA_PIXEL)
         // everything except Firefox: normally 100 per wheel click
@@ -253,7 +258,7 @@ class MouseObserver {
       delta = -event.wheelDelta * (2.5 / 100)
     } else if (event.wheelDeltaY !== undefined) {
       delta = -event.wheelDeltaY * (2.5 / 100)
-    } else {
+    } else if (event.detail !== undefined){
       // Old Firefox, MouseWheelEvent
       delta = -event.detail / 3
     }

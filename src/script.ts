@@ -53,7 +53,7 @@ class Script {
    * @param  {Stage} stage - the stage context
    * @return {Promise} - resolve when script finished running
    */
-  run (stage: Stage) {
+  run (stage: Stage): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         this.fn.apply(null, [ stage, this.name, this.path, this.dir ])

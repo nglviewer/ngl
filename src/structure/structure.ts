@@ -1095,14 +1095,8 @@ class Structure implements Structure{
     this.chainStore.dispose()
     this.modelStore.dispose()
 
-    delete this.bondStore
-    delete this.atomStore
-    delete this.residueStore
-    delete this.chainStore
-    delete this.modelStore
-
-    delete this.frames
-    delete this.boxes
+    // can't delete non-optional properties as of TS 4
+    // and since we've already disposed them, don't need to.
 
     delete this.bondSet
     delete this.atomSet

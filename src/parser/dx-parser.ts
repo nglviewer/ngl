@@ -28,7 +28,7 @@ class DxParser extends VolumeParser {
   get type () { return 'dx' }
 
   _parse () {
-    // http://apbs-pdb2pqr.readthedocs.io/en/latest/formats/opendx.html
+    // http://apbs.readthedocs.io/en/latest/formats/opendx.html
 
     if (Debug) Log.time('DxParser._parse ' + this.name)
 

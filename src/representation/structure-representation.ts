@@ -396,9 +396,7 @@ abstract class StructureRepresentation extends Representation {
 
   dispose () {
     this.structureView.dispose()
-
-    delete this.structure
-    delete this.structureView
+    this.structure.dispose()
 
     super.dispose()
   }

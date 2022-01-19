@@ -20,7 +20,7 @@ export default class Store {
   count: number
 
   _fields: StoreField[]
-  _defaultFields: StoreField[]
+  get _defaultFields(): StoreField[] { return [] }
 
   /**
    * @param {Integer} [size] - initial size
@@ -221,8 +221,6 @@ export default class Store {
    * @return {undefined}
    */
   dispose () {
-    delete this.length
-    delete this.count
 
     for (let i = 0, il = this._fields.length; i < il; ++i) {
       const name = this._fields[ i ][ 0 ]
