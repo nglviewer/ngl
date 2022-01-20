@@ -904,6 +904,7 @@ class CifParser extends StructureParser {
               if (first) {
                 authAsymId = pointerNames.indexOf('auth_asym_id')
                 authSeqId = pointerNames.indexOf('auth_seq_id')
+                if (authSeqId === -1) authSeqId = pointerNames.indexOf('label_seq_id')
                 labelAtomId = pointerNames.indexOf('label_atom_id')
                 labelCompId = pointerNames.indexOf('label_comp_id')
                 labelAsymId = pointerNames.indexOf('label_asym_id')
