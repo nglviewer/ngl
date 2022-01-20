@@ -119,7 +119,7 @@ abstract class Colormaker {
     }
 
     if (p.reverse) {
-      p.domain.reverse()
+      p.domain = p.domain.slice().reverse()
     }
     return chroma
       .scale(p.scale as any)  // TODO
