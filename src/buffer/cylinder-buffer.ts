@@ -38,7 +38,7 @@ export type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
  *   radius: new Float32Array([ 1 ])
  * });
  */
-class CylinderBuffer {
+class CylinderBufferImpl {
   constructor (data: CylinderBufferData, params: Partial<CylinderBufferParameters> = {}) {
     if (!data.color2 && data.color) data.color2 = data.color
     if (!ExtensionFragDepth || (params && params.disableImpostor)) {
@@ -48,6 +48,12 @@ class CylinderBuffer {
     }
   }
 }
+
+const CylinderBuffer: {
+  new(data: CylinderBufferData, params: Partial<CylinderBufferParameters>): CylinderGeometryBuffer | CylinderImpostorBuffer;
+} = CylinderBufferImpl as any;
+
+type CylinderBuffer = CylinderGeometryBuffer | CylinderImpostorBuffer;
 
 BufferRegistry.add('cylinder', CylinderBuffer)
 
