@@ -41,7 +41,7 @@ export type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultP
  *   radius2: new Float32Array([ 2 ])
  * });
  */
-class HyperballStickBuffer {
+class HyperballStickBufferImpl {
   /**
    * @param  {Object} data - attribute object
    * @param  {Float32Array} data.position1 - from positions
@@ -62,5 +62,11 @@ class HyperballStickBuffer {
     }
   }
 }
+
+const HyperballStickBuffer: {
+  new(data: HyperballStickBufferData, params: Partial<HyperballStickBufferParameters>): CylinderGeometryBuffer | HyperballStickImpostorBuffer;
+} = HyperballStickBufferImpl as any;
+
+type HyperballStickBuffer = CylinderGeometryBuffer | HyperballStickImpostorBuffer;
 
 export default HyperballStickBuffer

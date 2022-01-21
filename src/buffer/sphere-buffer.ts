@@ -33,7 +33,7 @@ export type SphereBufferParameters = typeof SphereBufferDefaultParameters
  *     radius: new Float32Array( [ 1 ] )
  * } );
  */
-class SphereBuffer {
+class SphereBufferImpl {
     /**
      * @param {Object} data - buffer data
      * @param {Float32Array} data.position - positions
@@ -51,6 +51,12 @@ class SphereBuffer {
     }
   }
 }
+
+const SphereBuffer: {
+  new(data: SphereBufferData, params: SphereBufferParameters): SphereGeometryBuffer | SphereImpostorBuffer;
+} = SphereBufferImpl as any;
+
+type SphereBuffer = SphereGeometryBuffer | SphereImpostorBuffer;
 
 BufferRegistry.add('sphere', SphereBuffer)
 
