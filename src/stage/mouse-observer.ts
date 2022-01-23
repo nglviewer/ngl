@@ -456,13 +456,13 @@ class MouseObserver {
 
   _setCanvasPosition (event: any) {  // TODO
     const box = this.domElement.getBoundingClientRect()
-    let offsetX, offsetY
-    if ('offsetX' in event && 'offsetY' in event) {
-      offsetX = event.offsetX
-      offsetY = event.offsetY
-    } else {
+    let offsetX, offsetY;
+    if ('clientX' in event && 'clientY' in event) {
       offsetX = event.clientX - box.left
       offsetY = event.clientY - box.top
+    } else {
+      offsetX = event.offsetX
+      offsetY = event.offsetY
     }
     this.canvasPosition.set(offsetX, box.height - offsetY)
   }
