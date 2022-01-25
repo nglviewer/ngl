@@ -20,19 +20,6 @@ export const SphereBufferDefaultParameters = Object.assign({
 }, SphereGeometryBufferDefaultParameters)
 export type SphereBufferParameters = typeof SphereBufferDefaultParameters
 
-/**
- * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and
- * `params.disableImpostor` the constructor returns either a
- * {@link SphereGeometryBuffer} or a {@link SphereImpostorBuffer}
- * @implements {Buffer}
- *
- * @example
- * var sphereBuffer = new SphereBuffer( {
- *     position: new Float32Array( [ 0, 0, 0 ] ),
- *     color: new Float32Array( [ 1, 0, 0 ] ),
- *     radius: new Float32Array( [ 1 ] )
- * } );
- */
 class SphereBufferImpl {
     /**
      * @param {Object} data - buffer data
@@ -52,9 +39,23 @@ class SphereBufferImpl {
   }
 }
 
+/**
+ * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and
+ * `params.disableImpostor` the constructor returns either a
+ * {@link SphereGeometryBuffer} or a {@link SphereImpostorBuffer}
+ * @implements {Buffer}
+ *
+ * @example
+ * var sphereBuffer = new SphereBuffer( {
+ *     position: new Float32Array( [ 0, 0, 0 ] ),
+ *     color: new Float32Array( [ 1, 0, 0 ] ),
+ *     radius: new Float32Array( [ 1 ] )
+ * } );
+ */
+//@ts-expect-error Incompatible constructor signatures
 const SphereBuffer: {
   new(data: SphereBufferData, params: SphereBufferParameters): SphereGeometryBuffer | SphereImpostorBuffer;
-} = SphereBufferImpl as any;
+} = SphereBufferImpl;
 
 type SphereBuffer = SphereGeometryBuffer | SphereImpostorBuffer;
 

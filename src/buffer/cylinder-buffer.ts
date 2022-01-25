@@ -23,6 +23,17 @@ export const CylinderBufferDefaultParameters = Object.assign({
 }, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters)
 export type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
 
+class CylinderBufferImpl {
+  constructor (data: CylinderBufferData, params: Partial<CylinderBufferParameters> = {}) {
+    if (!data.color2 && data.color) data.color2 = data.color
+    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
+      return new CylinderGeometryBuffer(data, params)
+    } else {
+      return new CylinderImpostorBuffer(data, params)
+    }
+  }
+}
+
 /**
  * Cylinder buffer. Depending on the value {@link ExtensionFragDepth} and
  * `params.disableImpostor` the constructor returns either a
@@ -38,20 +49,10 @@ export type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
  *   radius: new Float32Array([ 1 ])
  * });
  */
-class CylinderBufferImpl {
-  constructor (data: CylinderBufferData, params: Partial<CylinderBufferParameters> = {}) {
-    if (!data.color2 && data.color) data.color2 = data.color
-    if (!ExtensionFragDepth || (params && params.disableImpostor)) {
-      return new CylinderGeometryBuffer(data, params)
-    } else {
-      return new CylinderImpostorBuffer(data, params)
-    }
-  }
-}
-
+//@ts-expect-error Incompatible constructor signatures
 const CylinderBuffer: {
   new(data: CylinderBufferData, params: Partial<CylinderBufferParameters>): CylinderGeometryBuffer | CylinderImpostorBuffer;
-} = CylinderBufferImpl as any;
+} = CylinderBufferImpl;
 
 type CylinderBuffer = CylinderGeometryBuffer | CylinderImpostorBuffer;
 

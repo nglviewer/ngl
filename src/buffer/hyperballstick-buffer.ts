@@ -25,22 +25,6 @@ export const HyperballStickBufferDefaultParameters = Object.assign({
 }, CylinderGeometryBufferDefaultParameters, HyperballStickImpostorBufferDefaultParameters)
 export type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultParameters
 
-/**
- * Hyperball stick buffer. Depending on the value {@link ExtensionFragDepth} and
- * `params.disableImpostor` the constructor returns either a
- * {@link CylinderGeometryBuffer} or a {@link HyperballStickImpostorBuffer}
- * @implements {Buffer}
- *
- * @example
- * var hyperballStickBuffer = new HyperballStickBuffer({
- *   position1: new Float32Array([ 0, 0, 0 ]),
- *   position2: new Float32Array([ 2, 2, 2 ]),
- *   color: new Float32Array([ 1, 0, 0 ]),
- *   color2: new Float32Array([ 0, 1, 0 ]),
- *   radius: new Float32Array([ 1 ]),
- *   radius2: new Float32Array([ 2 ])
- * });
- */
 class HyperballStickBufferImpl {
   /**
    * @param  {Object} data - attribute object
@@ -63,9 +47,26 @@ class HyperballStickBufferImpl {
   }
 }
 
+/**
+ * Hyperball stick buffer. Depending on the value {@link ExtensionFragDepth} and
+ * `params.disableImpostor` the constructor returns either a
+ * {@link CylinderGeometryBuffer} or a {@link HyperballStickImpostorBuffer}
+ * @implements {Buffer}
+ *
+ * @example
+ * var hyperballStickBuffer = new HyperballStickBuffer({
+ *   position1: new Float32Array([ 0, 0, 0 ]),
+ *   position2: new Float32Array([ 2, 2, 2 ]),
+ *   color: new Float32Array([ 1, 0, 0 ]),
+ *   color2: new Float32Array([ 0, 1, 0 ]),
+ *   radius: new Float32Array([ 1 ]),
+ *   radius2: new Float32Array([ 2 ])
+ * });
+ */
+//@ts-expect-error Incompatible constructor signatures
 const HyperballStickBuffer: {
   new(data: HyperballStickBufferData, params: Partial<HyperballStickBufferParameters>): CylinderGeometryBuffer | HyperballStickImpostorBuffer;
-} = HyperballStickBufferImpl as any;
+} = HyperballStickBufferImpl;
 
 type HyperballStickBuffer = CylinderGeometryBuffer | HyperballStickImpostorBuffer;
 
