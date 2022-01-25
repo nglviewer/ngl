@@ -1,6 +1,6 @@
 
 import BitArray from '../utils/bitarray'
-import { AtomPicker } from '../utils/picker'
+import { AtomPicker, BondPicker } from '../utils/picker'
 import BondStore from '../store/bond-store'
 import { ColormakerParameters } from '../color/colormaker'
 
@@ -50,7 +50,7 @@ export interface BondData {
     position2?: Float32Array,
     color?: Float32Array,
     color2?: Float32Array,
-    picking?: AtomPicker,
+    picking?: BondPicker,
     radius?: Float32Array
     radius2?: Float32Array
 }
