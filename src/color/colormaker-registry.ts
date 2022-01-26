@@ -236,7 +236,7 @@ class ColormakerRegistry {
    * @param {String} label - scheme name
    * @return {String} id to refer to the registered scheme
    */
-  addSelectionScheme (dataList: SelectionSchemeData, label?: string) {
+  addSelectionScheme (dataList: SelectionSchemeData[], label?: string) {
     class MySelectionColormaker extends SelectionColormaker {
       constructor (params: { structure: Structure } & ColormakerParameters) {
         super(Object.assign({ dataList }, params))
