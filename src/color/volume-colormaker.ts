@@ -91,6 +91,6 @@ class VolumeColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('volume', VolumeColormaker as any)
+ColormakerRegistry.add('volume', VolumeColormaker)
 
 export default VolumeColormaker

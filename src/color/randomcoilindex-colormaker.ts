@@ -39,6 +39,6 @@ class RandomcoilindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('randomcoilindex', RandomcoilindexColormaker as any)
+ColormakerRegistry.add('randomcoilindex', RandomcoilindexColormaker)
 
 export default RandomcoilindexColormaker

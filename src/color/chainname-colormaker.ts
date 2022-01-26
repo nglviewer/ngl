@@ -48,6 +48,6 @@ class ChainnameColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('chainname', ChainnameColormaker as any)
+ColormakerRegistry.add('chainname', ChainnameColormaker)
 
 export default ChainnameColormaker

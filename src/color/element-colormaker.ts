@@ -157,6 +157,6 @@ class ElementColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('element', ElementColormaker as any)
+ColormakerRegistry.add('element', ElementColormaker)
 
 export default ElementColormaker

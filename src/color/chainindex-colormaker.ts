@@ -34,6 +34,6 @@ class ChainindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('chainindex', ChainindexColormaker as any)
+ColormakerRegistry.add('chainindex', ChainindexColormaker)
 
 export default ChainindexColormaker

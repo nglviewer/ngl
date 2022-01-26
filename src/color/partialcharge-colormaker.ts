@@ -43,6 +43,6 @@ class PartialchargeColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('partialcharge', PartialchargeColormaker as any)
+ColormakerRegistry.add('partialcharge', PartialchargeColormaker)
 
 export default PartialchargeColormaker

@@ -57,6 +57,6 @@ class DensityfitColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('densityfit', DensityfitColormaker as any)
+ColormakerRegistry.add('densityfit', DensityfitColormaker)
 
 export default DensityfitColormaker

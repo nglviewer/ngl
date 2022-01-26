@@ -37,6 +37,6 @@ class MoleculetypeColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('moleculetype', MoleculetypeColormaker as any)
+ColormakerRegistry.add('moleculetype', MoleculetypeColormaker)
 
 export default MoleculetypeColormaker

@@ -32,6 +32,6 @@ class UniformColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('uniform', UniformColormaker as any)
+ColormakerRegistry.add('uniform', UniformColormaker)
 
 export default UniformColormaker

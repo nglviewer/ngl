@@ -36,6 +36,6 @@ class ResidueindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('residueindex', ResidueindexColormaker as any)
+ColormakerRegistry.add('residueindex', ResidueindexColormaker)
 
 export default ResidueindexColormaker
