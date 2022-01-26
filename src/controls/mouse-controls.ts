@@ -167,7 +167,7 @@ class MouseControls {
    * @param {Function} [callback] - the callback function for the action
    * @return {undefined}
    */
-  remove (triggerStr: string, callback: MouseActionCallback) {
+  remove (triggerStr: string, callback?: MouseActionCallback) {
     const wildcard = triggerStr.includes('*')
     const [ type, key, button ] = triggerFromString(triggerStr)
 
