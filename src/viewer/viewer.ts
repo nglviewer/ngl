@@ -58,6 +58,8 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   const u = material.uniforms
   const updateList = []
 
+  if (!u) return
+
   if (u.objectId) {
     u.objectId.value = SupportsReadPixelsFloat ? this.id : this.id / 255
     updateList.push('objectId')
