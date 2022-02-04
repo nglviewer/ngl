@@ -208,7 +208,11 @@ class StructureComponent extends Component {
 
       this.rebuildRepresentations()
       this.rebuildTrajectories()
-      this.updateMatrix()
+      if (this.centerMode === 'selection')
+        // Selection's center point has changed, and in center mode we use
+        // the selection center in the matrix (via getCenterUntransformed),
+        // so we need to recalculate the matrix.
+        this.updateMatrix()
     })
   }
 
@@ -369,12 +373,22 @@ class StructureComponent extends Component {
 
   // Structure-component center can be based on the selection or the whole structure.
   // Caller can override use of selection-center mode by passing useCenterMode = false.
-  getCenterUntransformed (useCenterMode: boolean = true): Vector3 {
-    const sele = this.selection.string
-    if (useCenterMode && this.centerMode === 'selection' && sele && typeof sele === 'string') {
+  getCenterUntransformed (sele?: string, useCenterMode: boolean = true): Vector3 {
+    if (!useCenterMode)
+        return this.structure.center
+
+    if (sele !== undefined && typeof sele === 'string') {
+      // selection passed in explicitly: ignore current `centerMode`
+      // and use the selection no matter what.
       return this.structure.atomCenter(new Selection(sele))
     } else {
-      return this.structure.center
+      // No explicitly passed selection; use current centerMode
+      sele = this.selection.string
+      if (this.centerMode === 'selection' && sele && typeof sele === 'string') {
+        return this.structure.atomCenter(new Selection(sele))
+      } else {
+        return this.structure.center
+      }
     }
   }
 

@@ -172,7 +172,7 @@ class TrackballControls {
     this._getCameraRotation(tmpRotateCameraMatrix)
 
     tmpRotateMatrix.extractRotation(this.component.transform)
-    tmpRotateMatrix2.extractRotation(this.viewer.rotationGroup.matrix)
+    tmpRotateMatrix2.extractRotation(this.viewer.rotationGroup.matrix) // may contain non-unit scale
     tmpRotateMatrix.premultiply(tmpRotateMatrix2)
     tmpRotateMatrix.getInverse(tmpRotateMatrix)
     tmpRotateMatrix.premultiply(tmpRotateCameraMatrix)
