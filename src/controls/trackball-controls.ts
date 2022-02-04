@@ -18,6 +18,7 @@ const tmpRotateXMatrix = new Matrix4()
 const tmpRotateYMatrix = new Matrix4()
 const tmpRotateZMatrix = new Matrix4()
 const tmpRotateMatrix = new Matrix4()
+const tmpRotateMatrix2 = new Matrix4()
 const tmpRotateCameraMatrix = new Matrix4()
 const tmpRotateVector = new Vector3()
 const tmpRotateQuaternion = new Quaternion()
@@ -87,6 +88,7 @@ class TrackballControls {
 
     // Adjust for component and scene rotation
     tmpPanMatrix.extractRotation(this.component.transform)
+    // Note: use rotation _and_ scale of rotationGroup here
     tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
     tmpPanMatrix.getInverse(tmpPanMatrix)
 
@@ -103,7 +105,7 @@ class TrackballControls {
   pan (x: number, y: number) {
     this._setPanVector(x, y)
 
-    // Adjust for scene rotation
+    // Adjust for scene rotation and scale
     tmpPanMatrix.getInverse(this.viewer.rotationGroup.matrix)
 
     // Adjust for camera rotation
@@ -170,7 +172,8 @@ class TrackballControls {
     this._getCameraRotation(tmpRotateCameraMatrix)
 
     tmpRotateMatrix.extractRotation(this.component.transform)
-    tmpRotateMatrix.premultiply(this.viewer.rotationGroup.matrix)
+    tmpRotateMatrix2.extractRotation(this.viewer.rotationGroup.matrix) // may contain non-unit scale
+    tmpRotateMatrix.premultiply(tmpRotateMatrix2)
     tmpRotateMatrix.getInverse(tmpRotateMatrix)
     tmpRotateMatrix.premultiply(tmpRotateCameraMatrix)
 
