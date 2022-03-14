@@ -58,6 +58,8 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   const u = material.uniforms
   const updateList = []
 
+  if (!u) return  // See #908 - some materials may not have uniforms, ignore these
+
   if (u.objectId) {
     u.objectId.value = SupportsReadPixelsFloat ? this.id : this.id / 255
     updateList.push('objectId')
