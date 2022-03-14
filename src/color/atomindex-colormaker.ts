@@ -53,6 +53,6 @@ class AtomindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('atomindex', AtomindexColormaker as any)  // TODO
+ColormakerRegistry.add('atomindex', AtomindexColormaker)
 
 export default AtomindexColormaker

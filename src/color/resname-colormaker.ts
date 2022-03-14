@@ -66,6 +66,6 @@ class ResnameColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('resname', ResnameColormaker as any)
+ColormakerRegistry.add('resname', ResnameColormaker)
 
 export default ResnameColormaker

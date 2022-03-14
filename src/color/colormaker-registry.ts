@@ -138,7 +138,7 @@ class ColormakerRegistry {
    * @param {Colormaker} scheme - the colormaker
    * @return {undefined}
    */
-  add (id: string, scheme: Colormaker | typeof Colormaker) {
+  add (id: string, scheme: typeof Colormaker) {
     id = id.toLowerCase()
     this.schemes[ id ] = scheme
   }
@@ -236,7 +236,7 @@ class ColormakerRegistry {
    * @param {String} label - scheme name
    * @return {String} id to refer to the registered scheme
    */
-  addSelectionScheme (dataList: SelectionSchemeData, label?: string) {
+  addSelectionScheme (dataList: SelectionSchemeData[], label?: string) {
     class MySelectionColormaker extends SelectionColormaker {
       constructor (params: { structure: Structure } & ColormakerParameters) {
         super(Object.assign({ dataList }, params))

@@ -69,6 +69,6 @@ class SstrucColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('sstruc', SstrucColormaker as any)
+ColormakerRegistry.add('sstruc', SstrucColormaker)
 
 export default SstrucColormaker

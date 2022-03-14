@@ -55,6 +55,6 @@ class GeoqualityColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('geoquality', GeoqualityColormaker as any)
+ColormakerRegistry.add('geoquality', GeoqualityColormaker)
 
 export default GeoqualityColormaker

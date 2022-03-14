@@ -29,6 +29,6 @@ class ValueColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('value', ValueColormaker as any)
+ColormakerRegistry.add('value', ValueColormaker)
 
 export default ValueColormaker

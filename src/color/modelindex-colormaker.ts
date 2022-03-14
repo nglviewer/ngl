@@ -33,6 +33,6 @@ class ModelindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('modelindex', ModelindexColormaker as any)
+ColormakerRegistry.add('modelindex', ModelindexColormaker)
 
 export default ModelindexColormaker

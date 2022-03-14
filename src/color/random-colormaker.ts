@@ -43,6 +43,6 @@ class RandomColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('random', RandomColormaker as any)
+ColormakerRegistry.add('random', RandomColormaker)
 
 export default RandomColormaker

@@ -58,6 +58,6 @@ class BfactorColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('bfactor', BfactorColormaker as any)
+ColormakerRegistry.add('bfactor', BfactorColormaker)
 
 export default BfactorColormaker

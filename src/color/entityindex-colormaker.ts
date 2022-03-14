@@ -33,6 +33,6 @@ class EntityindexColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('entityindex', EntityindexColormaker as any)
+ColormakerRegistry.add('entityindex', EntityindexColormaker)
 
 export default EntityindexColormaker

@@ -293,6 +293,6 @@ class ElectrostaticColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('electrostatic', ElectrostaticColormaker as any)
+ColormakerRegistry.add('electrostatic', ElectrostaticColormaker)
 
 export default ElectrostaticColormaker

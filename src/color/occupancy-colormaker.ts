@@ -34,6 +34,6 @@ class OccupancyColormaker extends Colormaker {
   }
 }
 
-ColormakerRegistry.add('occupancy', OccupancyColormaker as any)
+ColormakerRegistry.add('occupancy', OccupancyColormaker)
 
 export default OccupancyColormaker
