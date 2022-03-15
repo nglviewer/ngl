@@ -18,7 +18,7 @@
     "preversion": "npm test",
     "version": "npm run build-min && git add -A dist",
     "postversion": "git push && git push --tags",
-    "prepare": "npm test",
+    "prepublishOnly": "npm test",
     "devpublish": "npm publish --tag next",
     "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/",
     "watch": "rollup -c -w",
