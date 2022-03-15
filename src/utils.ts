@@ -187,9 +187,9 @@ export function download (data: Blob|string, downloadName = 'download') {
     openUrl(isChromeIos ? str : str.replace(/^data:[^;]*;/, 'data:attachment/file;'))
   }
 
-  if (typeof navigator !== 'undefined' && navigator.msSaveOrOpenBlob) {
+  if (typeof navigator !== 'undefined' && (navigator as any).msSaveOrOpenBlob) {
     // native saveAs in IE 10+
-    navigator.msSaveOrOpenBlob(data, downloadName)
+    (navigator as any).msSaveOrOpenBlob(data, downloadName)
   } else if ((isSafari || isChromeIos) && FileReader) {
     if (data instanceof Blob) {
       // no downloading of blob urls in Safari

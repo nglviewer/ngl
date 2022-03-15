@@ -158,7 +158,7 @@ class Volume {
     this.data = data || new Float32Array(1)
     this.setAtomindex(atomindex)
 
-    delete this._position
+    this._position = new Float32Array()
 
     delete this._min
     delete this._max

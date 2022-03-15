@@ -284,13 +284,11 @@ class StructureView extends Structure {
 
     this.structure.signals.refreshed.remove(this.refresh, this)
 
-    delete this.structure
+    this.structure = new Structure() // delete old data
 
     delete this.atomSet
     delete this.bondSet
 
-    delete this.atomCount
-    delete this.bondCount
   }
 }
 
