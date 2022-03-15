@@ -331,8 +331,7 @@ abstract class Component {
     this.removeAllAnnotations()
     this.removeAllRepresentations()
 
-    delete this.annotationList
-    delete this.reprList
+    this.reprList.length = 0
 
     this.signals.disposed.dispatch()
   }

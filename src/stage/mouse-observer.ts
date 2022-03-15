@@ -235,7 +235,7 @@ class MouseObserver {
       return
     }
     event.preventDefault()
-    this._setKeys({...{detail: 0}, ...event})
+    this._setKeys(event as any)
 
     let delta = 0
     // This has to be written in a particular way to handle old browsers that
