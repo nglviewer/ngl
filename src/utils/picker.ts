@@ -176,7 +176,7 @@ class AxesPicker extends Picker {
 class BondPicker extends Picker {
   structure: Structure
   bondStore: BondStore
-  constructor (array: number[]|TypedArray|undefined, structure: Structure, bondStore: BondStore) {
+  constructor (array: number[]|TypedArray|undefined, structure: Structure, bondStore?: BondStore) {
     super(array)
     this.structure = structure
     this.bondStore = bondStore || structure.bondStore
