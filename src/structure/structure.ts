@@ -758,7 +758,7 @@ class Structure implements Structure{
       colormaker = ColormakerRegistry.getScheme(p.colorParams)
     }
     if (!what || what.picking) {
-      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore) as any
+      bondData.picking = new BondPicker(new Float32Array(bondCount), this.getStructure(), p.bondStore)
     }
     if (!what || what.radius || (isMulti && what.position)) {
       radiusFactory = new RadiusFactory(p.radiusParams as RadiusParams)
