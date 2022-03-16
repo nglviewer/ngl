@@ -1,6 +1,18 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v.2.0.0.dev.40]
+### Added
+- color management
+- Export many more types (representations, params)
+- support coloring atoms or bonds by external data 
+
+### Changed
+- default surface type is 'av'
+- numerous Typescript fixes, typos etc
+- build system fixes and dependency updates
+- fix CylinderImpostor bugs
+
 ## [v.2.0.0.dev.39]
 ### Added
 - allow writing of partial PDB structure
