@@ -14,7 +14,7 @@ import TextBuffer, { TextBufferData } from '../buffer/text-buffer'
 import WideLineBuffer from '../buffer/wideline-buffer'
 
 import { copyArray, uniformArray, uniformArray3 } from '../math/array-utils'
-import { v3add, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
+import { v3add, v3angle, v3cross, v3dot, v3multiplyScalar, v3fromArray, v3length,
   v3negate, v3new, v3normalize, v3sub, v3toArray } from '../math/vector-utils'
 import { RAD2DEG } from '../math/math-constants'
 import { getFixedLengthWrappedDashData } from '../geometry/dash'
@@ -347,8 +347,7 @@ function getDihedralData (position: Float32Array, params: Partial<DihedralRepres
     v3normalize(inPlane1, inPlane1)
     v3normalize(inPlane2, inPlane2)
 
-    // Can use acos as normalized and non-zero
-    const angle = angles[ i ] = Math.acos(v3dot(inPlane1, inPlane2))
+    const angle = angles[ i ] = v3angle(inPlane1, inPlane2)
     labelText[ i ] = (RAD2DEG * angle).toFixed(1) + String.fromCharCode(0x00B0)
 
     v3cross(cross, inPlane1, v23)
