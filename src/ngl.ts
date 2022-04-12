@@ -187,6 +187,7 @@ import './utils/gzip-decompressor'
 import './datasource/rcsb-datasource'
 import './datasource/pubchem-datasource'
 import './datasource/passthrough-datasource'
+import './datasource/alphafold-datasource'
 import StaticDatasource from './datasource/static-datasource'
 import MdsrvDatasource from './datasource/mdsrv-datasource'
 
