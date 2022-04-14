@@ -100,10 +100,26 @@ export default class PdbWriter extends Writer {
         const formatString = a.hetero ? HetatmFormat : AtomFormat
         const serial = this.renumberSerial ? ia : a.serial
 
+        // Formal PDB spec
         // Alignment of one-letter atom name such as C starts at column 14,
         // while two-letter atom name such as FE starts at column 13.
+
+        // This, however, leaves Calcium and C-alpha ambiguous
+        // The convention (from earlier versions of the spec, see 1992, and also: 
+        // https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html#misalignment)
+        // is that element is right-justified in 13-14, modifiers are left justified in columns 15-16
+        // A single-character element symmbol should not appear in column 13 unless the atom name has four characters
         let atomname = a.atomname
-        if (atomname.length === 1) atomname = ' ' + atomname
+
+        if (atomname.length === 1) {
+          // Simple case
+          atomname = ' ' + atomname
+        } else if (atomname.length < 4) {
+          // 2 or 3-letter name, if element symbol is single char and matches name, add a space
+          if (a.element.length === 1 && atomname[0] === a.element) {
+            atomname = ' ' + atomname
+          }
+        }
 
         if (a.formalCharge) { // Skip nulls and zeros
           charge = Math.abs(a.formalCharge).toPrecision(1)

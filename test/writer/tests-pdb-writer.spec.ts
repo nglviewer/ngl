@@ -25,6 +25,19 @@ describe('writer/pdb-writer', function () {
       })
     })
 
+    it('formatsAtomName', function() {
+      // Do a round trip on a few lines containing both calcium and c-alpha
+      var file = join(__dirname, '/../data/calcium-calpha-example.pdb')
+      var str = fs.readFileSync(file, 'utf-8')
+      var streamer = new StringStreamer(str)
+      var pdbParser = new PdbParser(streamer)
+      return pdbParser.parse().then(function(structure) {
+        var pdbWriter = new PdbWriter(structure, {renumberSerial: false, remarks: []})
+        var string = pdbWriter.getData()
+        expect(string).toBe(str)
+      })
+    })
+
     it('formatsCharges', function () {
       var file = join(__dirname, '/../data/charged.pdb')
       var str = fs.readFileSync(file, 'utf-8')
