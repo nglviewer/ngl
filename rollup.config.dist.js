@@ -1,4 +1,3 @@
-import internal from 'rollup-plugin-internal'
 import { terser } from 'rollup-plugin-terser'
 import { plugins, moduleGlobals, umdGlobals, moduleExternals } from './rollup.config.js'
 import { threeMinifier } from "@yushijinhun/three-minifier-rollup";
