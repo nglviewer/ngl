@@ -76,6 +76,7 @@
     "@types/promise-polyfill": "^6.0.0",
     "@types/signals": "1.0.1",
     "@types/sprintf-js": "^1.1.2",
+    "@yushijinhun/three-minifier-rollup": "^0.3.1",
     "babel-plugin-array-includes": "^2.0.3",
     "babelrc-rollup": "^3.0.0",
     "cpy-cli": "^3.1.0",
