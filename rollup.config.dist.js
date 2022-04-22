@@ -1,6 +1,7 @@
 import internal from 'rollup-plugin-internal'
 import { terser } from 'rollup-plugin-terser'
 import { plugins, moduleGlobals, umdGlobals, moduleExternals } from './rollup.config.js'
+import { threeMinifier } from "@yushijinhun/three-minifier-rollup";
 
 const minModuleConfig = {
   input: 'src/ngl.ts',
@@ -25,14 +26,22 @@ const minModuleConfig = {
 
 const minBundleConfig = {
   input: 'src/ngl.ts',
-  plugins: [...plugins, internal(['three']), terser()],
-  output: {
-    file: 'dist/ngl.js',
+  plugins: [ threeMinifier(), ...plugins, terser()],
+  output: [{
+    file: 'dist/ngl.bundle.umd.js',
     format: 'umd',
     name: 'NGL',
     sourcemap: true,
     globals: {}
   },
+  {
+    file: 'dist/ngl.bundle.esm.js',
+    format: 'es',
+    name: 'NGL',
+    sourcemap: true,
+    globals: {}
+  },
+  ],
   external: []
 }
 
