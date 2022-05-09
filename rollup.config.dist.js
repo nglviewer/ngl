@@ -26,21 +26,13 @@ const minModuleConfig = {
 const minBundleConfig = {
   input: 'src/ngl.ts',
   plugins: [ threeMinifier(), ...plugins, terser()],
-  output: [{
-    file: 'dist/ngl.bundle.umd.js',
+  output: {
+    file: 'dist/ngl.js',
     format: 'umd',
     name: 'NGL',
     sourcemap: true,
     globals: {}
   },
-  {
-    file: 'dist/ngl.bundle.esm.js',
-    format: 'es',
-    name: 'NGL',
-    sourcemap: true,
-    globals: {}
-  },
-  ],
   external: []
 }
 
