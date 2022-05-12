@@ -20,7 +20,7 @@
     "postversion": "git push && git push --tags",
     "prepublishOnly": "npm test",
     "devpublish": "npm publish --tag next",
-    "doc": "typedoc --mode file --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/",
+    "doc": "typedoc --includes doc/usage/ --media doc/usage/ --out build/docs/ ./src/ngl.ts",
     "watch": "rollup -c -w",
     "deploy": "./scripts/deploy.sh prerelease",
     "gallery": "./scripts/gallery.sh",
@@ -68,6 +68,7 @@
     "@types/chroma-js": "^1.3.5",
     "@types/jest": "^27.5.1",
     "@types/node": "^10.17.9",
+    "@types/offscreencanvas": "^2019.6.4",
     "@types/promise-polyfill": "^6.0.0",
     "@types/signals": "1.0.1",
     "@types/sprintf-js": "^1.1.2",
@@ -81,7 +82,7 @@
     "standard": "^11.0.1",
     "ts-jest": "^28.0.2",
     "tslib": "^2.3.1",
-    "typedoc": "^0.16.11",
+    "typedoc": "^0.22.15",
     "typescript": "^4.5.4"
   },
   "dependencies": {
