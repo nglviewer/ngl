@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 
 import StringStreamer from '../../src/streamer/string-streamer'
 import PdbParser from '../../src/parser/pdb-parser'
