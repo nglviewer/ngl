@@ -1,3 +1,8 @@
+/**
+ * @jest-environment jsdom
+ */
+
+
 import KinParser from '../../src/parser/kin-parser'
 import FileStreamer from '../../src/streamer/file-streamer'
 
