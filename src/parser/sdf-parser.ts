@@ -102,7 +102,7 @@ class SdfParser extends StructureParser {
           }
 
           const element = line.substr(31, 3).trim()
-          const atomname = element + (idx + 1)
+          const atomname = element + (idx - modelAtomIdxStart + 1)
 
           atomStore.growIfFull()
           atomStore.atomTypeId[ idx ] = atomMap.add(atomname, element)
