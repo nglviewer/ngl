@@ -50,7 +50,7 @@ class SdfParser extends StructureParser {
     const sdfData: {[k: string]: string[]}[] = []
     let currentItem: string|boolean = false
     let currentData: {[k: string]: string[]} = {}
-    let mItem
+    let mItem: RegExpMatchArray | null
     s.extraData.sdf = sdfData
 
     let atomCount, bondCount, atomStart: number, atomEnd: number, bondStart: number, bondEnd: number
@@ -125,7 +125,7 @@ class SdfParser extends StructureParser {
           const order = parseInt(line.substr(6, 3))
 
           s.bondStore.addBond(ap1, ap2, order)
-        } else if (line.match(/M {2}CHG/)) {
+        } else if (line.substr(0, 6) === 'M  CHG') {
           const chargeCount = parseInt(line.substr(6, 3))
           for (let ci = 0, coffset = 10; ci < chargeCount; ++ci, coffset += 8) {
             const aToken = parseInt(line.substr(coffset, 3))
@@ -134,7 +134,7 @@ class SdfParser extends StructureParser {
             atomStore.formalCharge[ atomIdx ] = cToken
           }
         // eslint-disable-next-line no-cond-assign
-        } else if (mItem = line.match(reItem)) {
+        } else if (line.charAt(0) === '>' && (mItem = line.match(reItem))) {
           currentItem = mItem[ 1 ]
           currentData[ currentItem ] = []
         } else if (currentItem !== false && line) {
