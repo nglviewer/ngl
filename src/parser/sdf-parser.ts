@@ -55,14 +55,28 @@ class SdfParser extends StructureParser {
 
     let atomCount, bondCount, atomStart: number, atomEnd: number, bondStart: number, bondEnd: number, x: number, y: number, z: number, atomname: string, element: string, atomindex: number, order: number
     let isV3000 = false, isAtomBlock = false, isBondBlock = false
-    let tokens: string[] = []
+    let tokens: string[] = [], acc: string[] = []
     const atomindexToStoreindex = new Map<number, number>()
 
     function _parseChunkOfLines (_i: number, _n: number, lines: string[]) {
       for (let i = _i; i < _n; ++i) {
         const line = lines[ i ]
 
-        if (isV3000 && line) tokens = line.substring(7).split(' ')
+        if (isV3000 && line) {
+          tokens = line.substring(7).split(' ')
+
+          // Entity properties may extend over multiple lines (hanging line finishes with '-')
+          // Tokens are accumulated to be processed at the same time for a given entity
+          if (acc.length) {
+            tokens = [...acc, ...tokens]
+            acc = []
+          }
+          if (tokens[tokens.length - 1] === '-') {
+            tokens.pop();
+            acc = tokens;
+            continue;
+          }
+        }
 
         if (line.substr(0, 4) === '$$$$') {
           lineNo = -1
@@ -78,7 +92,7 @@ class SdfParser extends StructureParser {
           if (isV3000) {
             atomindexToStoreindex.clear()
           } else {
-            
+
             atomCount = parseInt(line.substr(0, 3))
             bondCount = parseInt(line.substr(3, 3))
 
@@ -121,7 +135,6 @@ class SdfParser extends StructureParser {
 
           let charge = 0
           if (isV3000) {
-            // TODO hanging multiple lines, when previous line terminates with '-'
             x = parseFloat(tokens[2])
             y = parseFloat(tokens[3])
             z = parseFloat(tokens[4])
