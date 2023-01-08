@@ -13,6 +13,7 @@ import Counter from '../utils/counter'
 import Viewer from '../viewer/viewer'
 import { BufferParameters, BufferSide, default as Buffer } from '../buffer/buffer';
 import { ColorData, ColormakerParameters, ColorMode } from '../color/colormaker';
+import { GenericColor } from '../types'
 
 export interface RepresentationParameters {
   name: string
@@ -29,22 +30,22 @@ export interface RepresentationParameters {
   colorScheme: string,
   colorScale: string | number[],
   colorReverse: boolean,
-  colorValue: number,
+  colorValue: GenericColor,
   colorDomain: number[],
   colorMode: ColorMode,
   colorSpace: 'sRGB' | 'linear',
   roughness: number,
   metalness: number,
-  diffuse: Color,
+  diffuse: GenericColor,
   diffuseInterior: boolean,
   useInteriorColor: boolean,
-  interiorColor: Color,
+  interiorColor: GenericColor,
   interiorDarkening: number,
   disablePicking: boolean,
   matrix: Matrix4
   quality: string,
   visible: boolean,
-  color: number | string | Color,
+  color: GenericColor,
   sphereDetail: number,
   radialSegments: number,
   openEnded: boolean
@@ -122,10 +123,10 @@ class Representation {
   protected colorMode: ColorMode
   protected roughness: number
   protected metalness: number
-  protected diffuse: number
+  protected diffuse: GenericColor
   protected diffuseInterior?: boolean
   protected useInteriorColor?: boolean
-  protected interiorColor: number
+  protected interiorColor: GenericColor
   protected interiorDarkening: number
   protected disablePicking: boolean
   protected sphereDetail: number

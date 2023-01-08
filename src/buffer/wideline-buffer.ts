@@ -12,7 +12,7 @@ import '../shader/WideLine.frag'
 
 import { BufferRegistry } from '../globals'
 import MappedQuadBuffer from './mappedquad-buffer'
-import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
+import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferParameters } from './buffer'
 
 export interface WideLineBufferData extends BufferData {
   position1: Float32Array
@@ -23,7 +23,7 @@ export interface WideLineBufferData extends BufferData {
 export const WideLineBufferDefaultParameters = Object.assign({
   linewidth: 2
 }, BufferDefaultParameters)
-export type WideLineBufferParameters = typeof WideLineBufferDefaultParameters
+export type WideLineBufferParameters = BufferParameters & { linewidth: number }
 
 const WideLineBufferParameterTypes = Object.assign({
   linewidth: { uniform: true }

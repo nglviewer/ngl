@@ -7,7 +7,7 @@
 // @ts-ignore: unused import Vector3, Matrix4 required for declaration only 
 import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
-import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters } from './spheregeometry-buffer'
+import SphereGeometryBuffer, { SphereGeometryBufferDefaultParameters, SphereGeometryBufferParameters } from './spheregeometry-buffer'
 import SphereImpostorBuffer from './sphereimpostor-buffer'
 import { BufferData } from './buffer'
 
@@ -18,7 +18,7 @@ export interface SphereBufferData extends BufferData {
 export const SphereBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, SphereGeometryBufferDefaultParameters)
-export type SphereBufferParameters = typeof SphereBufferDefaultParameters
+export type SphereBufferParameters = SphereGeometryBufferParameters & { disableImpostor: boolean }
 
 /**
  * Sphere buffer. Depending on the value {@link ExtensionFragDepth} and

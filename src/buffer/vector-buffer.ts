@@ -11,7 +11,8 @@ import '../shader/Line.vert'
 import '../shader/Line.frag'
 
 import { uniformArray3 } from '../math/array-utils'
-import Buffer, { BufferDefaultParameters, BufferData } from './buffer'
+import Buffer, { BufferDefaultParameters, BufferData, BufferParameters } from './buffer'
+import { GenericColor } from '../types'
 
 function getSize(data: BufferData){
   const n = data.position!.length / 3
@@ -26,7 +27,7 @@ export const VectorBufferDefaultParameters = Object.assign({
   scale: 1,
   color: 'grey'
 }, BufferDefaultParameters)
-export type VectorBufferParameters = typeof VectorBufferDefaultParameters
+export type VectorBufferParameters = BufferParameters & { scale: number, color: GenericColor }
 
 /**
  * Vector buffer. Draws vectors as lines.

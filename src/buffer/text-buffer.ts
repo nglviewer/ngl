@@ -15,7 +15,8 @@ import { createParams } from '../utils'
 import MappedQuadBuffer from './mappedquad-buffer'
 import { IgnorePicker } from '../utils/picker'
 import { edt } from '../utils/edt'
-import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
+import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes, BufferParameters } from './buffer'
+import { GenericColor } from '../types'
 
 const TextAtlasCache: { [k: string]: TextAtlas } = {}
 
@@ -305,7 +306,25 @@ export const TextBufferDefaultParameters = Object.assign({
   forceTransparent: true,
   fixedSize: false
 }, BufferDefaultParameters)
-export type TextBufferParameters = typeof TextBufferDefaultParameters
+export type TextBufferParameters = BufferParameters & {
+  fontFamily: TextFonts,
+  fontStyle: TextStyles,
+  fontWeight: TextWeights,
+  fontSize: number,
+  xOffset: number,
+  yOffset: number,
+  zOffset: number,
+  attachment: TextAttachments,
+  showBorder: boolean,
+  borderColor: GenericColor,
+  borderWidth: number,
+  showBackground: boolean,
+  backgroundColor: GenericColor,
+  backgroundMargin: number,
+  backgroundOpacity: number,
+  forceTransparent: boolean,
+  fixedSize: boolean
+}
 
 const TextBufferParameterTypes = Object.assign({
   fontFamily: { uniform: true },

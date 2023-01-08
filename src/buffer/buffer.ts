@@ -17,7 +17,7 @@ import {
 
 import { Log } from '../globals'
 import { createParams, getTypedArray, getUintArray } from '../utils'
-import { NumberArray } from '../types'
+import { GenericColor, NumberArray } from '../types'
 import { getShader, ShaderDefines } from '../shader/shader-utils'
 import { serialArray } from '../math/array-utils'
 import { Picker } from '../utils/picker'
@@ -79,7 +79,7 @@ export const BufferDefaultParameters = {
   sortParticles: false,
   background: false
 }
-export type BufferParameters = typeof BufferDefaultParameters
+export type BufferParameters = Omit<typeof BufferDefaultParameters, 'diffuse'|'interiorColor'> & { diffuse: GenericColor; interiorColor: GenericColor }
 
 export const BufferParameterTypes = {
   opaqueBack: { updateShader: true },
