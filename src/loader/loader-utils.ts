@@ -7,7 +7,6 @@
 import {
   DatasourceRegistry, DecompressorRegistry, ParserRegistry, ScriptExtensions
 } from '../globals'
-import { Partial } from '../types'
 import ParserLoader from './parser-loader'
 import ScriptLoader from './script-loader'
 

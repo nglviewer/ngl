@@ -5,5 +5,3 @@ export type TypedArray = (
 )
 
 export type NumberArray = number[] | TypedArray
-
-export type Partial<T> = { [p in keyof T]?: T[p] }

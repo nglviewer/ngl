@@ -6,7 +6,6 @@
 
 import { ParserRegistry } from '../globals'
 import { createParams } from '../utils'
-import { Partial } from '../types'
 import FileStreamer from '../streamer/file-streamer'
 import NetworkStreamer from '../streamer/network-streamer'
 import { LoaderParameters, LoaderInput } from './loader-utils'
