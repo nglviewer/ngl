@@ -433,7 +433,7 @@ class Structure implements Structure{
    * @param  {Selection} selection - the selection object
    * @return {BitArray} set of atoms
    */
-  getAtomSetWithinGroup (selection: boolean|Selection) {
+  getAtomSetWithinGroup (selection: boolean|Selection|BitArray) {
     const atomResidueIndex = this.atomStore.residueIndex
     const atomSet = this.getAtomSet(false)
     const rp = this.getResidueProxy()
