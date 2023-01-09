@@ -19,6 +19,12 @@ describe('structure-utils/guessElement', function () {
     it('prioritizes first letter when element is not Na, Cl nor Fe in atomnames containing 2 letters ', function () {
         expect(guessElement('HF')).toBe('H')
     })
+
+    it('recognizes other standard elements names with 2 letters', function () {
+        expect(guessElement('MG')).toBe('MG')
+        expect(guessElement('MZ')).toBe('')
+        expect(guessElement('NE')).toBe('N') // 'N' has priority
+    })
     
   })
 })
