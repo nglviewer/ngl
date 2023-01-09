@@ -105,11 +105,11 @@ export const BufferRegistry = new Registry('buffer')
 export const PickerRegistry = new Registry('picker')
 
 export let ListingDatasource: any
-export function setListingDatasource (value: boolean) {
+export function setListingDatasource (value: any) {
   ListingDatasource = value
 }
 
-export let TrajectoryDatasource: any
-export function setTrajectoryDatasource (value: boolean) {
+export let TrajectoryDatasource: any  // TODO should accept mdsrvDatasource
+export function setTrajectoryDatasource (value: any) {
   TrajectoryDatasource = value
 }
