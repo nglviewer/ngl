@@ -39,7 +39,7 @@ export interface TextDataField {
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
- * @property {String[]} labelFormat - sprintf-js format string, any attribute of
+ * @property {String} labelFormat - sprintf-js format string, any attribute of
  *                                  {@link  AtomProxy} can be used
  * @property {String} labelGrouping - grouping of the label, one of:
  *                                 "atom", "residue".
@@ -64,7 +64,7 @@ export interface TextDataField {
  */
 export interface LabelRepresentationParameters extends RepresentationParameters {
   labelType: LabelType
-  labelText: string
+  labelText: string[]
   labelFormat: string
   labelGrouping: 'atom'|'residue'
   fontFamily: 'sans-serif'|'monospace'|'serif'
@@ -89,7 +89,7 @@ export interface LabelRepresentationParameters extends RepresentationParameters 
 class LabelRepresentation extends StructureRepresentation {
 
   protected labelType: LabelType
-  protected labelText: string
+  protected labelText: string[]
   protected labelFormat: string
   protected labelGrouping: 'atom'|'residue'
   protected fontFamily: 'sans-serif'|'monospace'|'serif'
