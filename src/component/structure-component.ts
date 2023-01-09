@@ -328,7 +328,6 @@ class StructureComponent extends Component {
    * @param  {Integer} [duration] - duration of the animation, defaults to 0
    * @return {undefined}
    */
-  autoView (duration?: number): any
   autoView (sele?: string|number, duration?: number) {
     if (typeof sele === 'number') {
       duration = sele
