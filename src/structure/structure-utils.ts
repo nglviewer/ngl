@@ -899,11 +899,18 @@ const elm1 = [ 'H', 'C', 'O', 'N', 'S', 'P' ]
 const elm2 = [ 'NA', 'CL', 'FE' ]
 
 export function guessElement (atomName: string) {
-  let at = atomName.trim().toUpperCase()
-  // parseInt('C') -> NaN; (NaN > -1) -> false
-  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
-    // parse again to check for a second integer
-  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
+  // Retain first group of letters in atomName
+  let at = atomName.toUpperCase()
+  let begin = 0, end = 0
+  for (let i = 0; i < at.length ; i++) {
+    if (at.charCodeAt(i) < 65) {
+      if (end > 0) break
+      ++begin
+    }
+    else end = i + 1
+  }
+  if (begin > 0 || end < at.length) at = at.substring(begin, end)
+  
   const n = at.length
 
   if (n === 0) return ''
