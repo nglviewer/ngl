@@ -12,7 +12,7 @@ import StructureParser from './structure-parser'
 import Entity, { EntityTypeString } from '../structure/entity'
 import Unitcell, { UnitcellParams } from '../symmetry/unitcell'
 import Assembly, { AssemblyPart } from '../symmetry/assembly'
-import { WaterNames } from '../structure/structure-constants'
+import { PDBQTSpecialElements, WaterNames } from '../structure/structure-constants'
 import {
   assignSecondaryStructure, buildUnitcellAssembly,
   calculateBonds, calculateChainnames, calculateSecondaryStructure
@@ -301,7 +301,9 @@ class PdbParser extends StructureParser {
 
             if (!isLegacy) {
               if (isPdbqt) {
-                element = line.substr(12, 2).trim()
+                element = line.substr(76, 3).trim()
+                // @ts-expect-error TS limitation on narrowing indexes types with `in`
+                if (element in PDBQTSpecialElements) element = PDBQTSpecialElements[element]
               } else {
                 element = line.substr(76, 2).trim()
                 if (!chainname) {

@@ -1105,3 +1105,24 @@ ResidueTypeAtoms[ CgDnaBackboneType ] = {
 }
 
 ResidueTypeAtoms[ UnknownBackboneType ] = {}
+
+// Mappings taken from Meeko: https://github.com/forlilab/Meeko/blob/develop/meeko/utils/autodock4_atom_types_elements.py
+export const PDBQTSpecialElements = {
+  'HD':  'H',
+  'HS':  'H',
+  'A':   'C',
+  'NA':  'N',
+  'NS':  'N',
+  'OA':  'O',
+  'OS':  'O',
+  'SA':  'S',
+  'G0':  'C',
+  'G1':  'C',
+  'G2':  'C',
+  'G3':  'C',
+  'CG0': 'C',
+  'CG1': 'C',
+  'CG2': 'C',
+  'CG3': 'C',
+  'W':   'O'
+}
