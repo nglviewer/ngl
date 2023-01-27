@@ -17,6 +17,7 @@ import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
 import { LabelRepresentationParameters } from './label-representation';
 import TextBuffer, { TextBufferData } from '../buffer/text-buffer';
+import { GenericColor } from '../types'
 
 export interface LabelDataField {
   position?: boolean
@@ -40,7 +41,7 @@ export interface LabelDataField {
 export interface MeasurementRepresentationParameters extends StructureRepresentationParameters {
   labelVisible: boolean
   labelSize: number
-  labelColor: number
+  labelColor: GenericColor
   labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
   labelText: string
   labelFormat: string
@@ -54,10 +55,10 @@ export interface MeasurementRepresentationParameters extends StructureRepresenta
   labelZOffset: number
   labelAttachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
   labelBorder: boolean
-  labelBorderColor: number
+  labelBorderColor: GenericColor
   labelBorderWidth: number
   labelBackground: boolean
-  labelBackgroundColor: number
+  labelBackgroundColor: GenericColor
   labelBackgroundMargin: number
   labelBackgroundOpacity: number
   labelFixedSize: boolean
@@ -73,7 +74,7 @@ abstract class MeasurementRepresentation extends StructureRepresentation {
   protected n: number
   protected labelVisible: boolean
   protected labelSize: number
-  protected labelColor: number
+  protected labelColor: GenericColor
   protected labelType: 'atomname'|'atomindex'|'occupancy'|'bfactor'|'serial'|'element'|'atom'|'resname'|'resno'|'res'|'text'|'qualified'
   protected labelText: string
   protected labelFormat: string
@@ -87,10 +88,10 @@ abstract class MeasurementRepresentation extends StructureRepresentation {
   protected labelZOffset: number
   protected labelAttachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
   protected labelBorder: boolean
-  protected labelBorderColor: number
+  protected labelBorderColor: GenericColor
   protected labelBorderWidth: number
   protected labelBackground: boolean
-  protected labelBackgroundColor: number
+  protected labelBackgroundColor: GenericColor
   protected labelBackgroundMargin: number
   protected labelBackgroundOpacity: number
   protected labelFixedSize: boolean

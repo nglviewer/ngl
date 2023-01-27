@@ -11,13 +11,13 @@ import '../shader/CylinderImpostor.vert'
 import '../shader/CylinderImpostor.frag'
 
 import MappedAlignedBoxBuffer from './mappedalignedbox-buffer'
-import { BufferDefaultParameters, BufferParameterTypes, BufferTypes } from './buffer'
+import { BufferDefaultParameters, BufferParameters, BufferParameterTypes, BufferTypes } from './buffer'
 import { CylinderBufferData } from './cylinder-buffer'
 
 export const CylinderImpostorBufferDefaultParameters = Object.assign({
   openEnded: false
 }, BufferDefaultParameters)
-export type CylinderImpostorBufferParameters = typeof CylinderImpostorBufferDefaultParameters
+export type CylinderImpostorBufferParameters = BufferParameters & { openEnded: boolean }
 
 const CylinderImpostorBufferParameterTypes = Object.assign({
   openEnded: { updateShader: true }

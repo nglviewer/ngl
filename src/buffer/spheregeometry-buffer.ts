@@ -8,14 +8,14 @@ import { IcosahedronBufferGeometry, Vector3, Matrix4 } from 'three'
 import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer'
 import { SphereBufferData } from './sphere-buffer'
-import { BufferDefaultParameters } from './buffer'
+import { BufferDefaultParameters, BufferParameters } from './buffer'
 
 const scale = new Vector3()
 
 export const SphereGeometryBufferDefaultParameters = Object.assign({
   sphereDetail: 1
 }, BufferDefaultParameters)
-export type SphereGeometryBufferParameters = typeof SphereGeometryBufferDefaultParameters
+export type SphereGeometryBufferParameters = BufferParameters & { sphereDetail: number }
 
 /**
  * Sphere geometry buffer.

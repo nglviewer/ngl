@@ -10,7 +10,7 @@ import { defaults } from '../utils'
 import { calculateCenterArray, serialBlockArray } from '../math/array-utils'
 import GeometryBuffer from './geometry-buffer'
 import { CylinderBufferData } from './cylinder-buffer'
-import { BufferDefaultParameters } from './buffer'
+import { BufferDefaultParameters, BufferParameters } from './buffer'
 
 const scale = new Vector3()
 const eye = new Vector3()
@@ -21,7 +21,7 @@ export const CylinderGeometryBufferDefaultParameters = Object.assign({
   radialSegments: 1,
   openEnded: true
 }, BufferDefaultParameters)
-export type CylinderGeometryBufferParameters = typeof CylinderGeometryBufferDefaultParameters
+export type CylinderGeometryBufferParameters = BufferParameters & {radialSegments: number, openEnded: boolean}
 
 function getData (data: CylinderBufferData, params: Partial<CylinderGeometryBufferParameters> = {}) {
   const geo = getGeo(params)

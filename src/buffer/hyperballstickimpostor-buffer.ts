@@ -11,7 +11,7 @@ import '../shader/HyperballStickImpostor.vert'
 import '../shader/HyperballStickImpostor.frag'
 
 import MappedBoxBuffer from './mappedbox-buffer'
-import { BufferDefaultParameters, BufferParameterTypes, BufferData } from './buffer'
+import { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferParameters } from './buffer'
 
 export interface HyperballStickImpostorBufferData extends BufferData {
   position1: Float32Array
@@ -24,7 +24,7 @@ export interface HyperballStickImpostorBufferData extends BufferData {
 export const HyperballStickImpostorBufferDefaultParameters = Object.assign({
   shrink: 0.14
 }, BufferDefaultParameters)
-export type HyperballStickImpostorBufferParameters = typeof HyperballStickImpostorBufferDefaultParameters
+export type HyperballStickImpostorBufferParameters = BufferParameters & { shrink: number }
 
 const HyperballStickImpostorBufferParameterTypes = Object.assign({
   shrink: { uniform: true }

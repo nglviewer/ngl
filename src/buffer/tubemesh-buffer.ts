@@ -10,7 +10,7 @@ import { Vector3, Matrix4 } from 'three'
 import { defaults, getUintArray } from '../utils'
 import { serialArray } from '../math/array-utils'
 import MeshBuffer from './mesh-buffer'
-import { BufferDefaultParameters, BufferData } from './buffer'
+import { BufferDefaultParameters, BufferData, BufferParameters } from './buffer'
 import {Log} from "../globals";
 
 const vTangent = new Vector3()
@@ -27,7 +27,11 @@ export const TubeMeshBufferDefaultParameters = Object.assign({
   capped: false,
   aspectRatio: 1.0
 }, BufferDefaultParameters)
-export type TubeMeshBufferParameters = typeof TubeMeshBufferDefaultParameters
+export type TubeMeshBufferParameters = BufferParameters & {
+  radialSegments: number,
+  capped: boolean,
+  aspectRatio: number
+}
 
 function getData (data: TubeMeshBufferData, params: Partial<TubeMeshBufferParameters> = {}) {
   const radialSegments = defaults(params.radialSegments, 4)

@@ -4,10 +4,9 @@
  * @private
  */
 
-import { Color } from 'three'
-
 import RepresentationElement from './representation-element'
 import Collection from './collection'
+import { GenericColor } from '../types'
 
 class RepresentationCollection extends Collection<RepresentationElement> {
   setParameters (params: any) {
@@ -22,7 +21,7 @@ class RepresentationCollection extends Collection<RepresentationElement> {
     return this.forEach((repr) => repr.setSelection(string))
   }
 
-  setColor (color: number|string|Color) {
+  setColor (color: GenericColor) {
     return this.forEach((repr) => repr.setColor(color))
   }
 

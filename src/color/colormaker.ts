@@ -8,7 +8,7 @@ import { Vector3, Color } from 'three'
 import * as chroma from 'chroma-js'
 
 import { createParams } from '../utils'
-import { NumberArray, Partial } from '../types'
+import { NumberArray } from '../types'
 import Structure from '../structure/structure'
 import Surface from '../surface/surface'
 import Volume from '../surface/volume'

@@ -8,8 +8,8 @@
 import { Vector3, Matrix4 } from 'three'
 import { ExtensionFragDepth } from '../globals'
 import { calculateMinArray } from '../math/array-utils'
-import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
-import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters } from './hyperballstickimpostor-buffer'
+import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters, CylinderGeometryBufferParameters } from './cylindergeometry-buffer'
+import HyperballStickImpostorBuffer, { HyperballStickImpostorBufferDefaultParameters, HyperballStickImpostorBufferParameters } from './hyperballstickimpostor-buffer'
 import { BufferData } from './buffer'
 
 export interface HyperballStickBufferData extends BufferData {
@@ -23,7 +23,7 @@ export interface HyperballStickBufferData extends BufferData {
 export const HyperballStickBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, CylinderGeometryBufferDefaultParameters, HyperballStickImpostorBufferDefaultParameters)
-export type HyperballStickBufferParameters = typeof HyperballStickBufferDefaultParameters
+export type HyperballStickBufferParameters = HyperballStickImpostorBufferParameters & CylinderGeometryBufferParameters & { disableImpostor: boolean }
 
 class HyperballStickBufferImpl {
   /**

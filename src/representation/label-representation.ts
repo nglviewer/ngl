@@ -14,6 +14,7 @@ import { RepresentationParameters } from './representation';
 import { Structure } from '../ngl';
 import Viewer from '../viewer/viewer';
 import StructureView from '../structure/structure-view';
+import { GenericColor } from '../types'
 
 export interface TextDataField {
   position?: boolean
@@ -38,7 +39,7 @@ export interface TextDataField {
  *                                 `labelText` list is used.
  * @property {String[]} labelText - list of label strings, must set `labelType` to "text"
  *                                   to take effect
- * @property {String[]} labelFormat - sprintf-js format string, any attribute of
+ * @property {String} labelFormat - sprintf-js format string, any attribute of
  *                                  {@link  AtomProxy} can be used
  * @property {String} labelGrouping - grouping of the label, one of:
  *                                 "atom", "residue".
@@ -63,7 +64,7 @@ export interface TextDataField {
  */
 export interface LabelRepresentationParameters extends RepresentationParameters {
   labelType: LabelType
-  labelText: string
+  labelText: string[]
   labelFormat: string
   labelGrouping: 'atom'|'residue'
   fontFamily: 'sans-serif'|'monospace'|'serif'
@@ -74,10 +75,10 @@ export interface LabelRepresentationParameters extends RepresentationParameters 
   zOffset: number
   attachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
   showBorder: boolean
-  borderColor: number
+  borderColor: GenericColor
   borderWidth: number
   showBackground: boolean
-  backgroundColor: number
+  backgroundColor: GenericColor
   backgroundMargin: number
   backgroundOpacity: number
   fixedSize: boolean
@@ -88,7 +89,7 @@ export interface LabelRepresentationParameters extends RepresentationParameters 
 class LabelRepresentation extends StructureRepresentation {
 
   protected labelType: LabelType
-  protected labelText: string
+  protected labelText: string[]
   protected labelFormat: string
   protected labelGrouping: 'atom'|'residue'
   protected fontFamily: 'sans-serif'|'monospace'|'serif'
@@ -99,10 +100,10 @@ class LabelRepresentation extends StructureRepresentation {
   protected zOffset: number
   protected attachment: 'bottom-left'|'bottom-center'|'bottom-right'|'middle-left'|'middle-center'|'middle-right'|'top-left'|'top-center'|'top-right'
   protected showBorder: boolean
-  protected borderColor: number
+  protected borderColor: GenericColor
   protected borderWidth: number
   protected showBackground: boolean
-  protected backgroundColor: number
+  protected backgroundColor: GenericColor
   protected backgroundMargin: number
   protected backgroundOpacity: number
   protected fixedSize: boolean

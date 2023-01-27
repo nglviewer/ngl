@@ -13,7 +13,7 @@ import '../shader/Point.frag'
 import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
 import { smoothstep } from '../math/math-utils'
-import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes } from './buffer'
+import Buffer, { BufferDefaultParameters, BufferParameterTypes, BufferData, BufferTypes, BufferParameters } from './buffer'
 
 function distance (x0: number, y0: number, x1: number, y1: number) {
   const dx = x1 - x0
@@ -70,7 +70,15 @@ export const PointBufferDefaultParameters = Object.assign({
   forceTransparent: false,
   edgeBleach: 0.0
 }, BufferDefaultParameters)
-export type PointBufferParameters = typeof PointBufferDefaultParameters
+export type PointBufferParameters = BufferParameters & {
+  pointSize: number,
+  sizeAttenuation: boolean,
+  sortParticles: boolean,
+  alphaTest: number,
+  useTexture: boolean,
+  forceTransparent: boolean,
+  edgeBleach: number
+}
 
 const PointBufferParameterTypes = Object.assign({
   pointSize: { uniform: 'size' },

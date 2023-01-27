@@ -7,8 +7,7 @@
 import {
   DatasourceRegistry, DecompressorRegistry, ParserRegistry, ScriptExtensions
 } from '../globals'
-import { Partial } from '../types'
-import ParserLoader from './parser-loader'
+import ParserLoader, { ParserParams } from './parser-loader'
 import ScriptLoader from './script-loader'
 
 export interface LoaderParameters {
@@ -106,7 +105,7 @@ export function getDataInfo (src: LoaderInput) {
  * @param  {LoaderParameters} params - loading parameters
  * @return {Promise} Promise resolves to the loaded data
  */
-export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters> = {}) {
+export function autoLoad (file: LoaderInput, params: Partial<LoaderParameters & ParserParams> = {}) {
   const p = Object.assign(getDataInfo(file), params)
 
   let loader

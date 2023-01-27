@@ -7,8 +7,8 @@
 // @ts-ignore: unused import required for declaration only
 import { Vector3, Matrix4 } from 'three'
 import { BufferRegistry, ExtensionFragDepth } from '../globals'
-import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters } from './cylindergeometry-buffer'
-import CylinderImpostorBuffer, { CylinderImpostorBufferDefaultParameters } from './cylinderimpostor-buffer'
+import CylinderGeometryBuffer, { CylinderGeometryBufferDefaultParameters, CylinderGeometryBufferParameters } from './cylindergeometry-buffer'
+import CylinderImpostorBuffer, { CylinderImpostorBufferDefaultParameters, CylinderImpostorBufferParameters } from './cylinderimpostor-buffer'
 import { BufferData } from './buffer'
 
 export interface CylinderBufferData extends BufferData {
@@ -21,7 +21,7 @@ export interface CylinderBufferData extends BufferData {
 export const CylinderBufferDefaultParameters = Object.assign({
   disableImpostor: false
 }, CylinderGeometryBufferDefaultParameters, CylinderImpostorBufferDefaultParameters)
-export type CylinderBufferParameters = typeof CylinderBufferDefaultParameters
+export type CylinderBufferParameters = (CylinderGeometryBufferParameters & {disableImpostor: boolean}) | (CylinderImpostorBufferParameters & {disableImpostor: boolean})
 
 class CylinderBufferImpl {
   constructor (data: CylinderBufferData, params: Partial<CylinderBufferParameters> = {}) {
