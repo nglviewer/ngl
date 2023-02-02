@@ -17,7 +17,7 @@ import StructureBuilder from '../structure/structure-builder'
 import Polymer from '../proxy/polymer'
 import ResidueProxy from '../proxy/residue-proxy'
 
-import { UnknownBackboneType, AA3, Bases } from './structure-constants'
+import { UnknownBackboneType, AA3, Bases, AtomicNumbers } from './structure-constants'
 
 export function reorderAtoms (structure: Structure) {
   if (Debug) Log.time('reorderAtoms')
@@ -899,11 +899,18 @@ const elm1 = [ 'H', 'C', 'O', 'N', 'S', 'P' ]
 const elm2 = [ 'NA', 'CL', 'FE' ]
 
 export function guessElement (atomName: string) {
-  let at = atomName.trim().toUpperCase()
-  // parseInt('C') -> NaN; (NaN > -1) -> false
-  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
-    // parse again to check for a second integer
-  if (parseInt(at.charAt(0)) > -1) at = at.substr(1)
+  // Retain first group of letters in atomName
+  let at = atomName.toUpperCase()
+  let begin = 0, end = 0
+  for (let i = 0; i < at.length ; i++) {
+    if (at.charCodeAt(i) < 65) {
+      if (end > 0) break
+      ++begin
+    }
+    else end = i + 1
+  }
+  if (begin > 0 || end < at.length) at = at.substring(begin, end)
+  
   const n = at.length
 
   if (n === 0) return ''
@@ -911,6 +918,7 @@ export function guessElement (atomName: string) {
   if (n === 2) {
     if (elm2.indexOf(at) !== -1) return at
     if (elm1.indexOf(at[0]) !== -1) return at[0]
+    if (at in AtomicNumbers) return at
   }
   if (n >= 3) {
     if (elm1.indexOf(at[0]) !== -1) return at[0]
