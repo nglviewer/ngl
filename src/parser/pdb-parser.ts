@@ -139,7 +139,7 @@ class PdbParser extends StructureParser {
 
     let line, recordName
     let serial, chainname: string, resno: number, resname: string, occupancy: number
-    let inscode: string, atomname, hetero: number, bfactor: number, altloc
+    let inscode: string, atomname, hetero: boolean, bfactor: number, altloc
     let formalCharge: number
 
     let startChain, startResi, startIcode
@@ -275,7 +275,7 @@ class PdbParser extends StructureParser {
           if (isPqr) {
             serial = parseInt(ls![ 1 ])
             element = ''
-            hetero = (line[ 0 ] === 'H') ? 1 : 0
+            hetero = (line[ 0 ] === 'H')
             chainname = dd ? '' : ls![ 4 ]
             resno = parseInt(ls![ 5 - dd! ])
             inscode = ''
@@ -287,7 +287,7 @@ class PdbParser extends StructureParser {
             if (hex && serial === 99999) {
               serialRadix = 16
             }
-            hetero = (line[ 0 ] === 'H') ? 1 : 0
+            hetero = (line[ 0 ] === 'H')
             chainname = line[ 21 ].trim()
             resno = parseInt(line.substr(22, 4), resnoRadix)
             if (hex && resno === 9999) {

@@ -207,7 +207,7 @@ class PrmtopParser extends StructureParser {
       }
       atomStore.atomTypeId[i] = atomMap.add(atomNames![i])
       atomStore.serial[i] = i + 1
-      sb.addAtom(0, '', '', curResname, curResno)
+      sb.addAtom(0, '', '', curResname, curResno, false)
     }
 
     atomStore.partialCharge.set(charges!)

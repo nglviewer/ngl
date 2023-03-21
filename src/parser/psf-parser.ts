@@ -78,7 +78,7 @@ class PsfParser extends StructureParser {
           atomStore.serial[ idx ] = serial
           atomStore.partialCharge[ idx ] = charge
 
-          sb.addAtom(0, chainid, chainid, resname, resno)
+          sb.addAtom(0, chainid, chainid, resname, resno, false)
 
           idx += 1
           lastSegid = segid
