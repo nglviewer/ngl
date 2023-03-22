@@ -513,7 +513,7 @@ export function calculateBonds (structure: Structure, inferBonds: InferBondsOpti
 
 /**
  * Should Bonds be inferred for `all` atoms, `none` or `auto`
- * If `auto`, any residue with at least one CONECT record will 
+ * If `auto`, any hetgroup residue with at least one CONECT record will 
  * not have bonding inferred, and will rely on the CONECT records
  */
 export type InferBondsOptions = 'all' | 'none' | 'auto'
@@ -669,7 +669,7 @@ export function calculateBondsWithin (structure: Structure, onlyAddRung = false,
   const atomBondMap = onlyAddRung ? null : calculateAtomBondMap(structure)
 
   let bondedAtoms: Set<number>
-  if (!onlyAddRung && inferBonds == 'auto') {
+  if (!onlyAddRung && inferBonds === 'auto') {
     bondedAtoms = new Set()
     atomBondMap!.forEach((a, i) => {
       bondedAtoms.add(i)
@@ -687,7 +687,7 @@ export function calculateBondsWithin (structure: Structure, onlyAddRung = false,
         return
       }
 
-      if (inferBonds == 'auto') {
+      if (inferBonds === 'auto' && r.hetero) {
         // Are bonds present on this residue?
         for (let rai=r.atomOffset; rai<r.atomEnd; rai++) {
           if (bondedAtoms.has(rai)) return

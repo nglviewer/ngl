@@ -95,7 +95,7 @@ class PdbParser extends StructureParser {
    *                                atom numbers >99.999 and
    *                                residue numbers >9.999
    * @param  {InferBondsOptions} params.inferBonds: 'all': use explicit bonds and detect by distance
-   *                                               'auto': If a residue has explicit bonds, don't auto-detect
+   *                                               'auto': If a hetgroup residue has explicit bonds, don't auto-detect
    *                                               'none': Don't add any bonds automatically
    * @return {undefined}
    */
@@ -105,7 +105,7 @@ class PdbParser extends StructureParser {
     super(streamer, p)
 
     this.hex = defaults(p.hex, false)
-    this.inferBonds = defaults(p.inferBonds, 'auto')
+    this.inferBonds = defaults(p.inferBonds, 'all')
   }
 
   get type () { return 'pdb' }
