@@ -14,7 +14,7 @@ import Unitcell, { UnitcellParams } from '../symmetry/unitcell'
 import Assembly, { AssemblyPart } from '../symmetry/assembly'
 import { PDBQTSpecialElements, WaterNames } from '../structure/structure-constants'
 import {
-  assignSecondaryStructure, buildUnitcellAssembly,
+  assignSecondaryStructure, InferBondsOptions, buildUnitcellAssembly,
   calculateBonds, calculateChainnames, calculateSecondaryStructure
 } from '../structure/structure-utils'
 import Streamer from '../streamer/streamer';
@@ -76,11 +76,17 @@ function getModresId (resno: number, chainname?: string, inscode?: string) {
   if (inscode) id += `^${inscode}`
   return id
 }
+
 export interface PdbParserParameters extends ParserParameters {
   hex: boolean
+  inferBonds: InferBondsOptions
 }
 
 class PdbParser extends StructureParser {
+
+  hex: boolean
+  inferBonds: InferBondsOptions
+
   /**
    * Create a pdb parser
    * @param  {Streamer} streamer - streamer object
@@ -88,6 +94,9 @@ class PdbParser extends StructureParser {
    * @param  {Boolean} params.hex - hexadecimal parsing of
    *                                atom numbers >99.999 and
    *                                residue numbers >9.999
+   * @param  {InferBondsOptions} params.inferBonds: 'all': use explicit bonds and detect by distance
+   *                                               'auto': If a residue has explicit bonds, don't auto-detect
+   *                                               'none': Don't add any bonds automatically
    * @return {undefined}
    */
   constructor (streamer: Streamer, params?: Partial<PdbParserParameters>) {
@@ -96,6 +105,7 @@ class PdbParser extends StructureParser {
     super(streamer, p)
 
     this.hex = defaults(p.hex, false)
+    this.inferBonds = defaults(p.inferBonds, 'auto')
   }
 
   get type () { return 'pdb' }
@@ -707,7 +717,7 @@ class PdbParser extends StructureParser {
 
     s.finalizeAtoms()
     if (!isLegacy) calculateChainnames(s)
-    calculateBonds(s)
+    calculateBonds(s, this.inferBonds)
     s.finalizeBonds()
 
     if (!helices.length && !sheets.length) {
