@@ -16,6 +16,9 @@ export interface StructureParserParameters extends ParserParameters {
   cAlphaOnly: boolean
 }
 class StructureParser extends Parser {
+
+  structureBuilder: StructureBuilder
+
   constructor (streamer: Streamer, params?: Partial<StructureParserParameters>) {
     var p = params || {}
 

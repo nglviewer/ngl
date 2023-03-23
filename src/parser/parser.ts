@@ -7,7 +7,6 @@
 import { Debug, Log } from '../globals'
 import { defaults } from '../utils'
 import Streamer from '../streamer/streamer';
-import StructureBuilder from '../structure/structure-builder';
 
 export interface ParserParameters {
   name: string
@@ -18,7 +17,6 @@ class Parser {
   streamer: Streamer
   name: string
   path: string
-  structureBuilder: StructureBuilder
   [k: string]: any
   
   constructor (streamer: Streamer, params?: Partial<ParserParameters>) {
