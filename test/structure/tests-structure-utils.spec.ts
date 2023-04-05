@@ -1,5 +1,10 @@
 import { guessElement } from '../../src/structure/structure-utils'
+import StringStreamer from '../../src/streamer/string-streamer'
+import PdbParser from '../../src/parser/pdb-parser'
 
+import { join } from 'path'
+import * as fs from 'fs'
+import { Structure } from '../../src/ngl'
 
 describe('structure-utils/guessElement', function () {
   describe('basic', function () {
@@ -27,4 +32,20 @@ describe('structure-utils/guessElement', function () {
     })
     
   })
+})
+
+describe('structure-utils/calculateChainNames', function () {
+    it('Calculates new chain names when none is set', function () {
+        var file = join(__dirname, '/../data/noChainNameTerRecords.pdb')
+        var str = fs.readFileSync(file, 'utf-8')
+        var streamer = new StringStreamer(str)
+        var pdbParser = new PdbParser(streamer)
+        return pdbParser.parse().then(function (structure: Structure) {
+            const chainNames: string[] = []
+            structure.eachChain(cp => chainNames.push(cp.chainname))
+
+            expect(chainNames).toEqual(['A', 'B', 'C', 'D'])
+            expect(structure.modelStore.chainCount[0]).toBe(structure.chainStore.count)
+        })
+    })
 })
