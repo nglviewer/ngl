@@ -378,6 +378,13 @@ interface ChainData {
   rCount: number
 }
 
+/**
+ * When no chain names are set for the given structure, calculates
+ * chains based on:
+ * - polymer connectivity: when adjacent residues are not bonded, a new chain is created.
+ * - non polymer chemical type: adjacent residues which are not polymers but are of the same
+ * chemical type (e.g. water molecules) are grouped into the same chain.
+ **/
 export function calculateChainnames (structure: Structure, useExistingBonds = false) {
   if (Debug) Log.time('calculateChainnames')
 
