@@ -486,6 +486,8 @@ export function calculateChainnames (structure: Structure, useExistingBonds = fa
     //
 
     chainStore.count = 0
+    modelStore.chainCount.fill(0, 0, modelStore.count)
+    modelStore.chainOffset.fill(0, 0, modelStore.count)
     chainData.forEach(function (d) {
       addChain(d.mIndex, d.chainname, d.rStart, d.rCount)
     })
@@ -493,7 +495,6 @@ export function calculateChainnames (structure: Structure, useExistingBonds = fa
     let chainOffset = 0
     structure.eachModel(function (mp) {
       modelStore.chainOffset[ mp.index ] = chainOffset
-      modelStore.chainCount[ mp.index ] -= 1
       chainOffset += modelStore.chainCount[ mp.index ]
     })
   }
