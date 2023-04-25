@@ -94,7 +94,7 @@ export default class PdbWriter extends Writer {
     let chargeSign = " "
 
     this.structure.eachModel(m => {
-      this._records.push(sprintf('MODEL     %4d%-66s', im++, ''))
+      this._records.push(sprintf('MODEL     %4d%-66s', im, ''))
 
       m.eachAtom((a: AtomProxy) => {
         const formatString = a.hetero ? HetatmFormat : AtomFormat

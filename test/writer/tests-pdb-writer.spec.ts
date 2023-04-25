@@ -60,7 +60,7 @@ describe('writer/pdb-writer', function () {
     })
 
     it('formatsModels', function () {
-      var file = join(__dirname, '/../data/charged.pdb')
+      var file = join(__dirname, '/../data/multi-models-example.pdb')
       var str = fs.readFileSync(file, 'utf-8')
       var streamer = new StringStreamer(str)
       var pdbParser = new PdbParser(streamer)
@@ -68,9 +68,11 @@ describe('writer/pdb-writer', function () {
         var pdbWriter = new PdbWriter(structure)
         var string = pdbWriter.getData()
         var lines = string.split('\n')
+        console.log(string)
         // Cut out MODEL lines and check format
         lines = lines.filter(line => line.startsWith('MODEL'))
         expect(lines[0].substr(10, 4)).toBe('   1')
+        expect(lines[1].substr(10, 4)).toBe('   2')
       })
     })
 
