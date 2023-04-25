@@ -59,6 +59,21 @@ describe('writer/pdb-writer', function () {
       })
     })
 
+    it('formatsModels', function () {
+      var file = join(__dirname, '/../data/charged.pdb')
+      var str = fs.readFileSync(file, 'utf-8')
+      var streamer = new StringStreamer(str)
+      var pdbParser = new PdbParser(streamer)
+      return pdbParser.parse().then(function (structure) {
+        var pdbWriter = new PdbWriter(structure)
+        var string = pdbWriter.getData()
+        var lines = string.split('\n')
+        // Cut out MODEL lines and check format
+        lines = lines.filter(line => line.startsWith('MODEL'))
+        expect(lines[0].substr(10, 4)).toBe('   1')
+      })
+    })
+
     it('getBlob', function () {
       var file = join(__dirname, '/../data/1crn.pdb')
       var str = fs.readFileSync(file, 'utf-8')
