@@ -9,7 +9,7 @@ import PdbWriter from '../../src/writer/pdb-writer'
 import { join } from 'path'
 import * as fs from 'fs'
 
-const LINES_1CRN = 3 + 327 + 1    // HEADER + ATOM + END
+const LINES_1CRN = 1 + 327 + 1    // TITLE + ATOM + END
 const CHARS_1CRN = LINES_1CRN * 81 - 1 // 80 COL + line breaks - No final line break
 
 describe('writer/pdb-writer', function () {
@@ -68,11 +68,22 @@ describe('writer/pdb-writer', function () {
         var pdbWriter = new PdbWriter(structure)
         var string = pdbWriter.getData()
         var lines = string.split('\n')
-        console.log(string)
         // Cut out MODEL lines and check format
         lines = lines.filter(line => line.startsWith('MODEL'))
         expect(lines[0].substr(10, 4)).toBe('   1')
         expect(lines[1].substr(10, 4)).toBe('   2')
+      })
+    })
+
+    it('skips MODEL when only one is present', function () {
+      var file = join(__dirname, '/../data/charged.pdb')
+      var str = fs.readFileSync(file, 'utf-8')
+      var streamer = new StringStreamer(str)
+      var pdbParser = new PdbParser(streamer)
+      return pdbParser.parse().then(function (structure) {
+        var pdbWriter = new PdbWriter(structure)
+        var string = pdbWriter.getData()
+        expect(string.indexOf('MODEL')).toBe(-1)
       })
     })
 
