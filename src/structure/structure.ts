@@ -1059,9 +1059,15 @@ class Structure implements Structure{
     return chainnames.size
   }
 
-  //
-
-  updatePosition (position: Float32Array|number[]) {
+  /**
+   * Update atomic positions
+   * @param position - Array to copy positions from
+   * @param refresh - Whether or not to issue a full refresh (automatically
+   *                  triggers re-calculation of bounding boxes, spatial hash,
+   *                  representations etc etc). This provides compatibility with
+   *                  the old behaviour
+   */
+  updatePosition (position: Float32Array|number[], refresh: boolean = true) {
     let i = 0
 
     this.eachAtom(function (ap: AtomProxy) {
@@ -1069,13 +1075,21 @@ class Structure implements Structure{
       i += 3
     }, undefined)
 
-    this._hasCoords = undefined  // to trigger recalculation
+    this._hasCoords = undefined  // to trigger recalculation (of the _hasCoords value)
+
+    if (refresh) { 
+      this.refreshPosition()  // Recalculate bounds - structure-component listener will 
+                              // trigger representation rebuild
+    }
+
   }
 
   refreshPosition () {
     this.getBoundingBox(undefined, this.boundingBox)
     this.boundingBox.getCenter(this.center)
     this.spatialHash = new SpatialHash(this.atomStore, this.boundingBox)
+
+    this.signals.refreshed.dispatch(this)
   }
 
   /**

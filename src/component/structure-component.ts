@@ -165,6 +165,10 @@ class StructureComponent extends Component {
     //
 
     this.setDefaultAssembly(this.parameters.defaultAssembly)
+
+    this.structure.signals.refreshed.add(() => {
+      this.updateRepresentations({ position: true })
+    })
   }
 
   /**
@@ -288,10 +292,6 @@ class StructureComponent extends Component {
    */
   addTrajectory (trajPath = '', params: { [k: string]: any } = {}) {
     const traj = makeTrajectory(trajPath, this.structureView, params as TrajectoryParameters)
-
-    traj.signals.frameChanged.add(() => {
-      this.updateRepresentations({ 'position': true })
-    })
 
     const trajComp = new TrajectoryElement(this.stage, traj, params)
     this.trajList.push(trajComp)
