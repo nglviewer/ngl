@@ -92,9 +92,10 @@ export default class PdbWriter extends Writer {
     let im = 1
     let charge = " "
     let chargeSign = " "
+    const hasModels = this.structure.modelStore.count > 1
 
     this.structure.eachModel(m => {
-      this._records.push(sprintf('MODEL %-74d', im++))
+      if (hasModels) this._records.push(sprintf('MODEL     %4d%-66s', im++, ''))
 
       m.eachAtom((a: AtomProxy) => {
         const formatString = a.hetero ? HetatmFormat : AtomFormat
@@ -148,8 +149,7 @@ export default class PdbWriter extends Writer {
         ia += 1
       }, this.structure.getSelection())
 
-      this._records.push(sprintf('%-80s', 'ENDMDL'))
-      im += 1
+      if (hasModels) this._records.push(sprintf('%-80s', 'ENDMDL'))
     })
 
     this._records.push(sprintf('%-80s', 'END'))
