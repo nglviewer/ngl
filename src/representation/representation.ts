@@ -586,7 +586,7 @@ class Representation {
 
     for (let name in p) {
       if (p[ name ] === undefined) continue
-      if (tp[ name ] === undefined) continue
+      if (tp[ name ] == undefined ) continue // Skip nulls as well as undefined
 
       if (tp[ name ].int) p[ name ] = parseInt(p[ name ] as string)
       if (tp[ name ].float) p[ name ] = parseFloat(p[ name ] as string)
