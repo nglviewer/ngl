@@ -386,7 +386,7 @@ function getSurfaceGrid (min: Float32Array, max: Float32Array, maxRadius: number
     scaleFactor: scaleFactor
   }
 }
-Object.assign(getSurfaceGrid, {'__deps': [
+Object.assign(getSurfaceGrid, {__deps: [
   degToRad,
   v3subScalar, v3addScalar, v3divideScalar, v3multiplyScalar,
   v3floor, v3ceil, v3sub, v3negate,
