@@ -304,42 +304,6 @@ function getTriTable (): Int32Array {
   ])
 }
 
-// Triangles are constructed between points on cube edges.
-// allowedContours[edge1][edge1] indicates which lines from a given
-// triangle should be shown in line mode.
-
-// Values are bitmasks:
-// In loop over cubes we keep another bitmask indicating whether our current
-// cell is the first x-value (1),
-// first y-value (2) or first z-value (4) of the current loop.
-// We draw all lines on leading faces but only draw trailing face lines the first
-// time through the loop
-// A value of 8 below means the edge is always drawn (leading face)
-
-// E.g. the first row, lines between edge0 and other edges in the bottom
-// x-y plane are only drawn for the first value of z, edges in the
-// x-z plane are only drawn for the first value of y. No other lines
-// are drawn as they're redundant
-// The line between edge 1 and 5 is always drawn as it's on the leading edge
-
-function getAllowedContours () {
-  return [
-
-    [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
-    [ 4, 0, 4, 4, 0, 8, 0, 0, 0, 8, 8, 0 ], // 0 2 3 5 9 10
-    [ 4, 4, 0, 4, 0, 0, 8, 0, 0, 0, 8, 8 ], // 0 1 3 6 10 11
-    [ 4, 4, 4, 0, 0, 0, 0, 1, 1, 0, 0, 1 ], // 0 1 2 7 8 11
-    [ 2, 0, 0, 0, 0, 8, 8, 8, 2, 2, 0, 0 ], // 0 5 6 7 8 9
-    [ 0, 8, 0, 0, 8, 0, 8, 8, 0, 8, 8, 0 ], // And rotate it
-    [ 0, 0, 8, 0, 8, 8, 0, 8, 0, 0, 8, 8 ],
-    [ 0, 0, 0, 1, 8, 8, 8, 0, 1, 0, 0, 1 ],
-    [ 2, 0, 0, 1, 2, 0, 0, 1, 0, 2, 0, 1 ], // 0 3 4 7 9 11
-    [ 2, 8, 0, 0, 2, 8, 0, 0, 2, 0, 8, 0 ], // And rotate some more
-    [ 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 0, 8 ],
-    [ 0, 0, 8, 1, 0, 0, 8, 1, 1, 0, 8, 0 ]
-
-  ]
-}
 interface MarchingCubes {
   new (field: number[], nx: number, ny: number, nz: number, atomindex: number[]): void
   triangulate: (_isolevel: number, _noNormals: boolean, _box: number[][]|undefined, _contour: boolean, _wrap: boolean) => {
@@ -356,6 +320,40 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
   // http://webglsamples.googlecode.com/hg/blob/blob.html
   //
   // Adapted for NGL by Alexander Rose
+
+  // Triangles are constructed between points on cube edges.
+  // allowedContours[edge1][edge1] indicates which lines from a given
+  // triangle should be shown in line mode.
+
+  // Values are bitmasks:
+  // In loop over cubes we keep another bitmask indicating whether our current
+  // cell is the first x-value (1),
+  // first y-value (2) or first z-value (4) of the current loop.
+  // We draw all lines on leading faces but only draw trailing face lines the first
+  // time through the loop
+  // A value of 8 below means the edge is always drawn (leading face)
+
+  // E.g. the first row, lines between edge0 and other edges in the bottom
+  // x-y plane are only drawn for the first value of z, edges in the
+  // x-z plane are only drawn for the first value of y. No other lines
+  // are drawn as they're redundant
+  // The line between edge 1 and 5 is always drawn as it's on the leading edge
+  var allowedContours = [
+
+    [ 0, 4, 4, 4, 2, 0, 0, 0, 2, 2, 0, 0 ], // 1 2 3 4 8 9
+    [ 4, 0, 4, 4, 0, 8, 0, 0, 0, 8, 8, 0 ], // 0 2 3 5 9 10
+    [ 4, 4, 0, 4, 0, 0, 8, 0, 0, 0, 8, 8 ], // 0 1 3 6 10 11
+    [ 4, 4, 4, 0, 0, 0, 0, 1, 1, 0, 0, 1 ], // 0 1 2 7 8 11
+    [ 2, 0, 0, 0, 0, 8, 8, 8, 2, 2, 0, 0 ], // 0 5 6 7 8 9
+    [ 0, 8, 0, 0, 8, 0, 8, 8, 0, 8, 8, 0 ], // And rotate it
+    [ 0, 0, 8, 0, 8, 8, 0, 8, 0, 0, 8, 8 ],
+    [ 0, 0, 0, 1, 8, 8, 8, 0, 1, 0, 0, 1 ],
+    [ 2, 0, 0, 1, 2, 0, 0, 1, 0, 2, 0, 1 ], // 0 3 4 7 9 11
+    [ 2, 8, 0, 0, 2, 8, 0, 0, 2, 0, 8, 0 ], // And rotate some more
+    [ 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 0, 8 ],
+    [ 0, 0, 8, 1, 0, 0, 8, 1, 1, 0, 8, 0 ]
+
+  ]
 
   var isolevel = 0
   var noNormals = false
@@ -383,7 +381,6 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
 
   var edgeTable = getEdgeTable()
   var triTable = getTriTable()
-  var allowedContours = getAllowedContours()
 
   var mx: number, my: number, mz: number
 
@@ -465,7 +462,7 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
 
       var c = count * 3
 
-      positionArray[ c + 0 ] = x + mu
+      positionArray[ c ] = x + mu
       positionArray[ c + 1 ] = y
       positionArray[ c + 2 ] = z
 
@@ -983,6 +980,6 @@ function MarchingCubes (this: MarchingCubes, field: number[], nx: number, ny: nu
     }
   }
 }
-Object.assign(MarchingCubes, {__deps: [ getEdgeTable, getTriTable, getAllowedContours, getUintArray ]})
+Object.assign(MarchingCubes, {__deps: [ getEdgeTable, getTriTable, getUintArray ]})
 
 export default MarchingCubes
