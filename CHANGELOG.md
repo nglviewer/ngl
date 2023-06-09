@@ -1,5 +1,23 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
+
+## [v2.1.1]
+- Summary of changes from v2.0.0
+### Changed
+ - Inline getAllowedContour result #988
+ - Fix calculate chain names #979
+ - Fix pdbwriter model format #984
+ - Reworked structure.refreshed signal and logic on updates #942
+ - Housekeeping for github actions #976
+ - Fix CL1 atom type guess #959
+ - Typescript delarations #958
+ - Fix pdbqt #957
+ - molfile v3000 #955
+ - Fix typing of CylinderBuffer #906
+ - Fix sdf atom names #949
+ - Fix unecessary structure disposal #941
+ - Housekeeping #929
+
 ## [v2.0.0]
 - Stable release
 ### Added

@@ -13,6 +13,13 @@ export interface SecStruct {
 export declare function assignSecondaryStructure(structure: Structure, secStruct: SecStruct): void;
 export declare const calculateSecondaryStructure: (structure: Structure) => void;
 export declare function getChainname(index: number): string;
+/**
+ * When no chain names are set for the given structure, calculates
+ * chains based on:
+ * - polymer connectivity: when adjacent residues are not bonded, a new chain is created.
+ * - non polymer chemical type: adjacent residues which are not polymers but are of the same
+ * chemical type (e.g. water molecules) are grouped into the same chain.
+ **/
 export declare function calculateChainnames(structure: Structure, useExistingBonds?: boolean): void;
 export declare function calculateBonds(structure: Structure): void;
 export interface ResidueBonds {

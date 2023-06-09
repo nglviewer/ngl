@@ -251,7 +251,15 @@ declare class Structure implements Structure {
      * @return {Integer} count
      */
     getChainnameCount(selection?: Selection): number;
-    updatePosition(position: Float32Array | number[]): void;
+    /**
+     * Update atomic positions
+     * @param position - Array to copy positions from
+     * @param refresh - Whether or not to issue a full refresh (automatically
+     *                  triggers re-calculation of bounding boxes, spatial hash,
+     *                  representations etc etc). This provides compatibility with
+     *                  the old behaviour
+     */
+    updatePosition(position: Float32Array | number[], refresh?: boolean): void;
     refreshPosition(): void;
     /**
      * Calls dispose() method of property objects.
