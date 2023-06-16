@@ -285,7 +285,7 @@ function processSecondaryStructure (cif: Cif, structure: Structure, asymIdDict: 
   // get helices
   var sc = cif.struct_conf
 
-  if (sc && sc.pdbx_PDB_helix_class) {
+  if (sc?.pdbx_PDB_helix_class) {
     ensureArray(sc, 'id')
 
     for (i = 0, il = sc.beg_auth_seq_id.length; i < il; ++i) {
