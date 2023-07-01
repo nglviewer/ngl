@@ -13,11 +13,12 @@ var pkg = require('./package.json')
 // When building UMD or ES6 module, mark dependencies as external
 export const moduleExternals = Object.keys(pkg.dependencies)
 export const moduleGlobals = {three: 'three'}
-export const umdGlobals = {'promise-polyfill': '_Promise',
+export const umdGlobals = {
   'chroma-js': 'chroma',
   'signals': 'signalsWrapper',
   'sprintf-js': 'sprintfJs',
-  three: 'three'}
+  three: 'three'
+}
 
 function glsl () {
   return {
@@ -70,7 +71,6 @@ export const plugins = [
   glsl(),
   text(),
   json(),
-  buble()
 ]
 
 const moduleConfig = {
