@@ -3,9 +3,6 @@ import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
 
-import internal from 'rollup-plugin-internal'
-
-
 var path = require('path')
 var pkg = require('./package.json')
 
@@ -97,7 +94,7 @@ const moduleConfig = {
 // this version has three.js and everything else built in
 const bundleConfig = {
   input: 'src/ngl.ts',
-  plugins: [...plugins, internal(['three'])],
+  plugins: [...plugins],
   output: {
     file: 'build/js/ngl.dev.js',
     format: 'umd',
