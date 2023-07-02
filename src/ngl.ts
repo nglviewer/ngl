@@ -4,8 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import './polyfills'
-
 /**
  * The NGL module. These members are available in the `NGL` namespace when using the {@link https://github.com/umdjs/umd|UMD} build in the `ngl.js` file.
  * @module NGL
