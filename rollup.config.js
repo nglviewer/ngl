@@ -8,7 +8,7 @@ var pkg = require('./package.json')
 
 // When building UMD or ES6 module, mark dependencies as external
 export const moduleExternals = Object.keys(pkg.dependencies)
-export const moduleGlobals = { three: 'three' }
+export const moduleGlobals = {three: 'three'}
 export const umdGlobals = {
   'chroma-js': 'chroma',
   'signals': 'signalsWrapper',
@@ -39,7 +39,7 @@ function glsl () {
           .replace(/ {2,}/g, ' ')
           .replace(/ *\n */g, '\n')
       )
-      var register = 'ShaderRegistry.add(\'' + key + '\', ' + shader + ');'
+      var register = "ShaderRegistry.add('" + key + "', " + shader + ');'
       code = registryImport + register
       return { code: code, map: { mappings: '' } }
     }
@@ -58,7 +58,7 @@ function text () {
 }
 
 export const plugins = [
-  typescript({ sourceMap: true, inlineSources: true }),
+  typescript({sourceMap: true, inlineSources: true}),
   resolve({
     jsnext: true,
     main: true,
