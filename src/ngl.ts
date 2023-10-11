@@ -4,9 +4,6 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  */
 
-import './polyfills'
-import _Promise from 'promise-polyfill'
-
 /**
  * The NGL module. These members are available in the `NGL` namespace when using the {@link https://github.com/umdjs/umd|UMD} build in the `ngl.js` file.
  * @module NGL
@@ -217,10 +214,6 @@ export { StructureComponentDefaultParameters } from './component/structure-compo
 //
 
 import Version from './version'
-
-if (!(window as any).Promise) {
-  (window as any).Promise = _Promise
-}
 
 export {
   Version,
