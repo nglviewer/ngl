@@ -21,7 +21,7 @@ See it in action:
 
 Integration with python and R:
 
-* [NGLView](https://github.com/nglviewer/nglview): Jupyter Notebook Widget 
+* [NGLView](https://github.com/nglviewer/nglview): Jupyter Notebook Widget
 * [NGLViewR](https://github.com/nvelden/NGLVieweR/) R htmlwidget (and an example [Shiny Application](https://niels-van-der-velden.shinyapps.io/shinyNGLVieweR/))
 
 Documentation:
@@ -65,7 +65,6 @@ This project would not be possible without many fine open-source projects. Espec
 * [Font Awesome](http://fontawesome.io) - for icons
 * [JS Signals](http://millermedeiros.github.com/js-signals)
 * [tether.js](http://github.hubspot.com/tether/)
-* [Lightweight promise polyfill](https://github.com/taylorhakes/promise-polyfill)
 * [pako - zlib port](https://github.com/nodeca/pako)
 * [Open Source PyMOL](http://sourceforge.net/projects/pymol/) - screen aligned cylinder shader
 * [VTK](http://www.vtk.org/) Quadric shader code from the PointSprite Plugin - quadric surface center calculation
