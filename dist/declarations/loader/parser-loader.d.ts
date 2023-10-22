@@ -3,6 +3,7 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
+import type { InferBondsOptions } from '../structure/structure-utils';
 import Loader from './loader';
 import { LoaderParameters, LoaderInput } from './loader-utils';
 export interface ParserParams {
@@ -15,6 +16,7 @@ export interface ParserParams {
     delimiter?: string;
     comment?: string;
     columnNames?: string;
+    inferBonds?: InferBondsOptions;
 }
 /**
  * Parser loader class

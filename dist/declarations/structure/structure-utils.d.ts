@@ -21,7 +21,13 @@ export declare function getChainname(index: number): string;
  * chemical type (e.g. water molecules) are grouped into the same chain.
  **/
 export declare function calculateChainnames(structure: Structure, useExistingBonds?: boolean): void;
-export declare function calculateBonds(structure: Structure): void;
+export declare function calculateBonds(structure: Structure, inferBonds?: InferBondsOptions): void;
+/**
+ * Should Bonds be inferred for `all` atoms, `none` or `auto`
+ * If `auto`, any hetgroup residue with at least one CONECT record will
+ * not have bonding inferred, and will rely on the CONECT records
+ */
+export declare type InferBondsOptions = 'all' | 'none' | 'auto';
 export interface ResidueBonds {
     atomIndices1: number[];
     atomIndices2: number[];
@@ -33,7 +39,7 @@ export declare function calculateResidueBonds(r: ResidueProxy): {
     bondOrders: number[];
 };
 export declare function calculateAtomBondMap(structure: Structure): number[][];
-export declare function calculateBondsWithin(structure: Structure, onlyAddRung?: boolean): void;
+export declare function calculateBondsWithin(structure: Structure, onlyAddRung?: boolean, inferBonds?: InferBondsOptions): void;
 export declare function calculateBondsBetween(structure: Structure, onlyAddBackbone?: boolean, useExistingBonds?: boolean): void;
 export declare function buildUnitcellAssembly(structure: Structure): void;
 export declare function guessElement(atomName: string): string;
