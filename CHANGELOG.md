@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.2.0]
+- Summary of changes from v2.1.1
+### Added
+ - Pymol mouse bindings: add focus scroll #992
+### Changed
+ - Remove support for Internet Explorer #993
+
 ## [v2.1.1]
 - Summary of changes from v2.0.0
 ### Changed
@@ -32,7 +39,7 @@ All notable changes to this project will be documented in this file, following t
 ### Added
 - color management
 - Export many more types (representations, params)
-- support coloring atoms or bonds by external data 
+- support coloring atoms or bonds by external data
 
 ### Changed
 - default surface type is 'av'

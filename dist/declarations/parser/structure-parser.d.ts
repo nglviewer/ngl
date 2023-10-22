@@ -4,6 +4,7 @@
  * @private
  */
 import Parser, { ParserParameters } from './parser';
+import StructureBuilder from '../structure/structure-builder';
 import Streamer from '../streamer/streamer';
 export interface StructureParserParameters extends ParserParameters {
     firstModelOnly: boolean;
@@ -11,6 +12,7 @@ export interface StructureParserParameters extends ParserParameters {
     cAlphaOnly: boolean;
 }
 declare class StructureParser extends Parser {
+    structureBuilder: StructureBuilder;
     constructor(streamer: Streamer, params?: Partial<StructureParserParameters>);
     get type(): string;
     get __objName(): string;
