@@ -159,7 +159,7 @@ class TopParser extends StructureParser {
           atomStore.atomTypeId[atomIdx] = atomMap.add(atomname)
           atomStore.serial[atomIdx] = atomIdx + 1
           atomStore.partialCharge[atomIdx] = charge
-          sb.addAtom(0, chainname, chainid, resname, resIdx + 1)
+          sb.addAtom(0, chainname, chainid, resname, resIdx + 1, false)
           ++atomIdx
           lastResno = resno
         })

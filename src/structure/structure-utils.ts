@@ -509,14 +509,22 @@ export function calculateChainnames (structure: Structure, useExistingBonds = fa
   if (Debug) Log.timeEnd('calculateChainnames')
 }
 
-export function calculateBonds (structure: Structure) {
+export function calculateBonds (structure: Structure, inferBonds: InferBondsOptions='all') {
+  if (inferBonds === 'none') return 
   if (Debug) Log.time('calculateBonds')
 
-  calculateBondsWithin(structure)
+  calculateBondsWithin(structure, false, inferBonds)
   calculateBondsBetween(structure)
 
   if (Debug) Log.timeEnd('calculateBonds')
 }
+
+/**
+ * Should Bonds be inferred for `all` atoms, `none` or `auto`
+ * If `auto`, any hetgroup residue with at least one CONECT record will 
+ * not have bonding inferred, and will rely on the CONECT records
+ */
+export type InferBondsOptions = 'all' | 'none' | 'auto'
 
 export interface ResidueBonds {
   atomIndices1: number[]
@@ -657,7 +665,7 @@ export function calculateAtomBondMap (structure: Structure) {
   return atomBondMap
 }
 
-export function calculateBondsWithin (structure: Structure, onlyAddRung = false) {
+export function calculateBondsWithin (structure: Structure, onlyAddRung = false, inferBonds: InferBondsOptions='all') {
   if (Debug) Log.time('calculateBondsWithin')
 
   const bondStore = structure.bondStore
@@ -668,6 +676,15 @@ export function calculateBondsWithin (structure: Structure, onlyAddRung = false)
   const bp = structure.getBondProxy()
   const atomBondMap = onlyAddRung ? null : calculateAtomBondMap(structure)
 
+  let bondedAtoms: Set<number>
+  if (!onlyAddRung && inferBonds === 'auto') {
+    bondedAtoms = new Set()
+    atomBondMap!.forEach((a, i) => {
+      bondedAtoms.add(i)
+      a.forEach(j => {bondedAtoms.add(j)})
+    })
+  }
+
   structure.eachResidue(function (r) {
     if (!onlyAddRung && atomBondMap) {
       const count = r.atomCount
@@ -676,6 +693,13 @@ export function calculateBondsWithin (structure: Structure, onlyAddRung = false)
       if (count > 500) {
         Log.warn('more than 500 atoms, skip residue for auto-bonding', r.qualifiedName())
         return
+      }
+
+      if (inferBonds === 'auto' && r.hetero) {
+        // Are bonds present on this residue?
+        for (let rai=r.atomOffset; rai<r.atomEnd; rai++) {
+          if (bondedAtoms.has(rai)) return
+        }
       }
 
       const bonds = r.getBonds()
@@ -740,10 +764,18 @@ export function calculateBondsBetween (structure: Structure, onlyAddBackbone = f
     if (bbType1 !== UnknownBackboneType && bbType1 === bbType2) {
       ap1.index = rp1.backboneEndAtomIndex
       ap2.index = rp2.backboneStartAtomIndex
-      if ((useExistingBonds && ap1.hasBondTo(ap2)) || ap1.connectedTo(ap2)) {
-        if (!onlyAddBackbone) {
-          bondStore.addBond(ap1, ap2, 1)  // assume single bond
-        }
+      let needsBond = false
+      let needsBackbone = false
+
+      if (useExistingBonds && ap1.hasBondTo(ap2)) {
+        needsBond = false
+        needsBackbone = true
+      } else if (ap1.connectedTo(ap2)) {
+        needsBond = !onlyAddBackbone
+        needsBackbone = true
+      }
+      if (needsBond) {bondStore.addBond(ap1, ap2, 1)}  // assume single bond
+      if (needsBackbone) {
         ap1.index = rp1.traceAtomIndex
         ap2.index = rp2.traceAtomIndex
         backboneBondStore.addBond(ap1, ap2)

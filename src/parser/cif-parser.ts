@@ -983,7 +983,7 @@ class CifParser extends StructureParser {
               inscode = (inscode === '?') ? '' : inscode
               const chainname = ls[ authAsymId ]
               const chainid = ls[ labelAsymId ]
-              const hetero = (ls[ groupPDB ][ 0 ] === 'H') ? 1 : 0
+              const hetero = (ls[ groupPDB ][ 0 ] === 'H')
 
               //
 

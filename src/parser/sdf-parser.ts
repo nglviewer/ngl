@@ -180,7 +180,7 @@ class SdfParser extends StructureParser {
           atomStore.serial[ idx ] = isV3000 ? atomindex : idx
           atomStore.formalCharge[ idx ] = charge
 
-          sb.addAtom(modelIdx, '', '', 'HET', 1, 1)
+          sb.addAtom(modelIdx, '', '', 'HET', 1, true)
 
           idx += 1
         } else if (

@@ -5,6 +5,7 @@
  */
 
 import { ParserRegistry } from '../globals'
+import type { InferBondsOptions } from '../structure/structure-utils'
 import Loader from './loader'
 import { LoaderParameters, LoaderInput } from './loader-utils'
 
@@ -18,6 +19,7 @@ export interface ParserParams {
   delimiter?: string
   comment?: string
   columnNames?: string
+  inferBonds?: InferBondsOptions
 }
 
 /**
@@ -37,6 +39,7 @@ class ParserLoader extends Loader {
       delimiter: params.delimiter,
       comment: params.comment,
       columnNames: params.columnNames,
+      inferBonds: params.inferBonds,
       name: this.parameters.name,
       path: this.parameters.path
     }

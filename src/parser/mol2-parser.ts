@@ -158,7 +158,7 @@ class Mol2Parser extends StructureParser {
           atomStore.serial[ idx ] = serial
           atomStore.partialCharge[ idx ] = partialCharge
 
-          sb.addAtom(modelIdx, '', '', resname, resno, 1)
+          sb.addAtom(modelIdx, '', '', resname, resno, true)
 
           idx += 1
         } else if (currentRecordType === bondRecordType) {
