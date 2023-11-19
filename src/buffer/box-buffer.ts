@@ -4,7 +4,7 @@
  * @private
  */
 
-import { BoxBufferGeometry, Vector3, Matrix4 } from 'three'
+import { BoxGeometry, Vector3, Matrix4 } from 'three'
 
 import { BufferRegistry } from '../globals'
 import GeometryBuffer from './geometry-buffer'
@@ -41,7 +41,7 @@ class BoxBuffer extends GeometryBuffer {
   _size: Float32Array
 
   constructor (data: BoxBufferData, params: Partial<BufferParameters> = {}) {
-    super(data, params, new BoxBufferGeometry(1, 1, 1))
+    super(data, params, new BoxGeometry(1, 1, 1))
 
     this.setAttributes(data, true)
   }

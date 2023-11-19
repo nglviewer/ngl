@@ -12,7 +12,7 @@ import {
   NearestFilter, LinearFilter, AdditiveBlending,
   RGBAFormat, FloatType, /*HalfFloatType, */UnsignedByteType,
   ShaderMaterial,
-  PlaneGeometry, Geometry,
+  PlaneGeometry,
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, SpotLight, AmbientLight,
   BufferGeometry, BufferAttribute,
@@ -54,7 +54,7 @@ const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,2
 
 const tmpMatrix = new Matrix4()
 
-function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera|OrthographicCamera, geometry: Geometry, material: ShaderMaterial/*, group */) {
+function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera|OrthographicCamera, geometry: BufferGeometry, material: ShaderMaterial/*, group */) {
   const u = material.uniforms
   const updateList = []
 

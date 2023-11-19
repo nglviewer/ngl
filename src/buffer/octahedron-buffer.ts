@@ -4,7 +4,7 @@
  * @private
  */
 
-import { OctahedronBufferGeometry, Vector3, Matrix4 } from 'three'
+import { OctahedronGeometry, Vector3, Matrix4 } from 'three'
 import { BufferRegistry } from '../globals'
 import GeometryBuffer from './geometry-buffer'
 import { BufferData, BufferParameters } from './buffer'
@@ -40,7 +40,7 @@ class OctahedronBuffer extends GeometryBuffer {
   _size: Float32Array
 
   constructor (data: OctahedronBufferData, params: Partial<BufferParameters> = {}) {
-    super(data, params, new OctahedronBufferGeometry(1, 0))
+    super(data, params, new OctahedronGeometry(1, 0))
 
     this.setAttributes(data, true)
   }
