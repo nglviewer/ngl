@@ -4,7 +4,7 @@
  * @private
  */
 
-import { TorusBufferGeometry, Vector3, Matrix4 } from 'three'
+import { TorusGeometry, Vector3, Matrix4 } from 'three'
 
 import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
@@ -52,7 +52,7 @@ class TorusBuffer extends GeometryBuffer {
   _radius: Float32Array
 
   constructor (data: TorusBufferData, params: Partial<TorusBufferParameters> = {}) {
-    super(data, params, new TorusBufferGeometry(
+    super(data, params, new TorusGeometry(
       1,
       defaults(params.radiusRatio, 0.2),
       defaults(params.radialSegments, 16),
