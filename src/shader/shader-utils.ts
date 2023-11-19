@@ -60,7 +60,7 @@ export function getShader (name: string, defines: ShaderDefines = {}) {
     if (!shaderText) {
       throw new Error(`empty shader, '${name}'`)
     }
-    shaderText = shaderText.replace(reInclude, function (match, p1) {
+    shaderText = shaderText.replace(reInclude, function (match, p1: keyof typeof ShaderChunk) {
       const path = `shader/chunk/${p1}.glsl`
       const chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
       if (!chunk) {
