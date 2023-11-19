@@ -19,7 +19,7 @@ import {
 
 import { Log } from '../globals'
 import { createParams, getTypedArray, getUintArray } from '../utils'
-import { GenericColor, NumberArray } from '../types'
+import { GenericColor, TypedArray } from '../types'
 import { getShader, ShaderDefines } from '../shader/shader-utils'
 import { serialArray } from '../math/array-utils'
 import { Picker } from '../utils/picker'
@@ -53,7 +53,7 @@ export type BufferMaterials = 'material'|'wireframeMaterial'|'pickingMaterial'
 
 export interface _BufferAttribute {
   type: 'f'|'v2'|'v3'|'c'
-  value?: NumberArray
+  value?: TypedArray
 }
 
 export type Uniforms = { [k: string]: Uniform|{ value: any } }
