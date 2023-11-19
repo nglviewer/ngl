@@ -219,7 +219,7 @@ class Superposition {
         //update transformation matrices for each assembly
 
         const invertTrasform = new Matrix4()
-        invertTrasform.getInverse(transform)
+        invertTrasform.copy(transform).invert()
 
         const biomolDict = atoms.biomolDict
 

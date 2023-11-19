@@ -328,7 +328,7 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
   const ortho = camera.type === 'OrthographicCamera'
 
   resolution.set(size.width, size.height)
-  projectionMatrixInverse.getInverse(camera.projectionMatrix)
+  projectionMatrixInverse.copy(camera.projectionMatrix).invert()
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
   group.traverse(function (o: any) {
@@ -371,7 +371,7 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
 }
 
 export function updateCameraUniforms (group: Object3D, camera: Camera) {
-  projectionMatrixInverse.getInverse(camera.projectionMatrix)
+  projectionMatrixInverse.copy(camera.projectionMatrix).invert()
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
   group.traverse(function (o: any) {
