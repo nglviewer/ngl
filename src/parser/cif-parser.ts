@@ -1072,7 +1072,7 @@ class CifParser extends StructureParser {
       _parseChunkOfLines(0, lines.length, lines)
     })
 
-    if (cif.chem_comp && cif.chem_comp_atom) {
+    if (cif.chem_comp && cif.chem_comp_atom && !cif.struct) {
       parseChemComp(cif, s, sb)
       sb.finalize()
       s.finalizeAtoms()
