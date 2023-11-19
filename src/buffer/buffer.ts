@@ -12,7 +12,9 @@ import {
   BufferGeometry, BufferAttribute,
   UniformsUtils, UniformsLib, Uniform,
   Group, LineSegments, Points, Mesh, Object3D,
-  ShaderMaterial
+  ShaderMaterial,
+  DynamicDrawUsage,
+  StaticDrawUsage
 } from 'three'
 
 import { Log } from '../globals'
@@ -255,7 +257,7 @@ class Buffer {
     )
     const nindex = this.geometry.getIndex();
     if (!nindex) { Log.error('Index is null'); return; }
-    nindex.setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+    nindex.setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
   }
 
   makeMaterial () {
@@ -326,7 +328,7 @@ class Buffer {
     wireframeGeometry.attributes = geometry.attributes
     if (wireframeIndex) {
       wireframeGeometry.setIndex(
-        new BufferAttribute(wireframeIndex, 1).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(wireframeIndex, 1).setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
       )
       wireframeGeometry.setDrawRange(0, this.wireframeIndexCount)
     }
@@ -441,7 +443,7 @@ class Buffer {
     if (this.wireframeGeometry.index &&
         this.wireframeIndex.length > this.wireframeGeometry.index.array.length) {
       this.wireframeGeometry.setIndex(
-        new BufferAttribute(this.wireframeIndex, 1).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(this.wireframeIndex, 1).setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
       )
     } else {
       const index = this.wireframeGeometry.getIndex()
@@ -593,7 +595,7 @@ class Buffer {
 
       this.geometry.setAttribute(
         name,
-        new BufferAttribute(buf, itemSize[ a.type ]).setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+        new BufferAttribute(buf, itemSize[ a.type ]).setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
       )
     }
   }
@@ -720,11 +722,10 @@ class Buffer {
         if (length > index.array.length) {
           geometry.setIndex(
             new BufferAttribute(array, 1)
-              .setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+              .setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
           )
         } else {
           index.set(array)
-          index.count = length
           index.needsUpdate = length > 0
           index.updateRange.count = length
           geometry.setDrawRange(0, length)
@@ -739,7 +740,7 @@ class Buffer {
           geometry.setAttribute(
             name,
             new BufferAttribute(array, attribute.itemSize)
-              .setUsage(this.dynamic ? WebGLRenderingContext.DYNAMIC_DRAW : 0)
+              .setUsage(this.dynamic ? DynamicDrawUsage : StaticDrawUsage)
           )
         } else {
           attributes[ name ].set(array)
