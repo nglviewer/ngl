@@ -25,6 +25,7 @@ const reWhitespace = /\s+/
 const reQuotedWhitespace = /'((?:(?!'\s).)*)'|"((?:(?!"\s).)*)"|(\S+)/g
 const reDoubleQuote = /"/g
 const reTrimQuotes = /^['"]+|['"]+$/g
+const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
 
 interface Cif {[k: string]: any}
 
@@ -186,11 +187,20 @@ function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureB
   const c = new Vector3()
   const n = cif.atom_site_type_symbol.length
 
+  const typeSymbolMap: Record<string, string> = {}
+
   for (let i = 0; i < n; ++i) {
     atomStore.growIfFull()
 
     const atomname = cif.atom_site_label[ i ]
-    const element = cif.atom_site_type_symbol[ i ]
+    const typeSymbol = cif.atom_site_type_symbol[ i ]
+
+    // typeSymbol can be like `Al2.5+`. Retain element symbol only.
+    let element = typeSymbolMap[typeSymbol]
+    if (!element) {
+      const match = typeSymbol.match(reAtomSymbol)
+      typeSymbolMap[typeSymbol] = element = match?.[0] ?? typeSymbol
+    }
 
     atomStore.atomTypeId[ i ] = atomMap.add(atomname, element)
 
