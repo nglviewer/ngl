@@ -155,7 +155,6 @@ import './parser/xplor-parser'
 
 import './parser/kin-parser'
 import './parser/obj-parser'
-import './parser/ply-parser'
 
 import './parser/csv-parser'
 import './parser/json-parser'
