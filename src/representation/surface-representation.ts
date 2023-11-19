@@ -184,7 +184,7 @@ class SurfaceRepresentation extends Representation {
 
     super.init(p)
 
-    this.inverseMatrix.getInverse(this.matrix)
+    this.inverseMatrix.copy(this.matrix).invert()
 
     this.build()
   }
@@ -364,7 +364,7 @@ class SurfaceRepresentation extends Representation {
     super.setParameters(params, what, rebuild)
 
     if (params.matrix) {
-      this.inverseMatrix.getInverse(params.matrix)
+      this.inverseMatrix.copy(params.matrix).invert()
     }
 
     if (this.volume) {

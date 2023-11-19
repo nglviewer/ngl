@@ -236,7 +236,7 @@ class Volume {
     ne[ 7 ] = cp.y
     ne[ 8 ] = cp.z
 
-    this.inverseMatrix.getInverse(this.matrix)
+    this.inverseMatrix.copy(this.matrix).invert()
   }
 
   /**

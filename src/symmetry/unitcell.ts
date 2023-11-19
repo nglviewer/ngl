@@ -111,10 +111,10 @@ class Unitcell {
         this.c * cosBeta, -this.c * sinBeta * cosAlphaStar, 1.0 / cStar, 0,
         0, 0, 0, 1
       ).transpose()
-      this.cartToFrac.getInverse(this.fracToCart)
+      this.cartToFrac.copy(this.fracToCart).invert()
     } else {
       this.cartToFrac.copy(params.cartToFrac)
-      this.fracToCart.getInverse(this.cartToFrac)
+      this.fracToCart.copy(this.cartToFrac).invert()
     }
   }
 

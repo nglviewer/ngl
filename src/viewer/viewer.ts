@@ -72,7 +72,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   }
 
   if (u.modelViewMatrixInverse) {
-    u.modelViewMatrixInverse.value.getInverse(this.modelViewMatrix)
+    u.modelViewMatrixInverse.value.copy(this.modelViewMatrix).invert()
     updateList.push('modelViewMatrixInverse')
   }
 
@@ -83,7 +83,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
       ).transpose()
     } else {
       u.modelViewMatrixInverseTranspose.value
-        .getInverse(this.modelViewMatrix)
+        .copy(this.modelViewMatrix).invert()
         .transpose()
     }
     updateList.push('modelViewMatrixInverseTranspose')
@@ -101,15 +101,15 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
       tmpMatrix.copy(
         u.modelViewProjectionMatrix.value
       )
-      u.modelViewProjectionMatrixInverse.value.getInverse(
-        tmpMatrix
+      u.modelViewProjectionMatrixInverse.value.copy(
+        tmpMatrix.invert()
       )
     } else {
       tmpMatrix.multiplyMatrices(
         camera.projectionMatrix, this.modelViewMatrix
       )
-      u.modelViewProjectionMatrixInverse.value.getInverse(
-        tmpMatrix
+      u.modelViewProjectionMatrixInverse.value.copy(
+        tmpMatrix.invert()
       )
     }
     updateList.push('modelViewProjectionMatrixInverse')

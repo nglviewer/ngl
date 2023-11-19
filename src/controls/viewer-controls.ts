@@ -192,7 +192,7 @@ class ViewerControls {
    * @return {undefined}
    */
   spin (axis: Vector3|number[], angle: number) {
-    tmpRotateMatrix.getInverse(this.viewer.rotationGroup.matrix)
+    tmpRotateMatrix.copy(this.viewer.rotationGroup.matrix).invert()
     tmpRotateVector
       .copy(ensureVector3(axis)).applyMatrix4(tmpRotateMatrix)
 
@@ -217,7 +217,7 @@ class ViewerControls {
    * @return {undefined}
    */
   align (basis: Matrix4|number[]) {
-    tmpAlignMatrix.getInverse(ensureMatrix4(basis))
+    tmpAlignMatrix.copy(ensureMatrix4(basis)).invert()
 
     this.viewer.rotationGroup.setRotationFromMatrix(tmpAlignMatrix)
     this.changed()
