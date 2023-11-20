@@ -71,6 +71,7 @@
     "@types/offscreencanvas": "^2019.6.4",
     "@types/signals": "1.0.1",
     "@types/sprintf-js": "^1.1.2",
+    "@types/three": "^0.158.2",
     "@yushijinhun/three-minifier-rollup": "^0.3.1",
     "babel-plugin-array-includes": "^2.0.3",
     "jest": "^28.1.0",
@@ -86,6 +87,6 @@
     "chroma-js": "^1.3.7",
     "signals": "^1.0.0",
     "sprintf-js": "^1.1.2",
-    "three": "^0.118.0"
+    "three": "^0.158.0"
   }
 }
