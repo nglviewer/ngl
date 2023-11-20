@@ -16,8 +16,7 @@ import {
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, SpotLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments,
-  LinearEncoding, sRGBEncoding, TextureEncoding
+  LineSegments, ColorSpace
 } from 'three'
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
@@ -164,7 +163,7 @@ export interface ViewerParameters {
 
   sampleLevel: number
 
-  rendererEncoding: TextureEncoding // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
+  outputColorSpace: ColorSpace // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
 }
 
 export interface BufferInstance {
@@ -327,8 +326,8 @@ export default class Viewer {
 
       sampleLevel: 0,
 
-      // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
-      rendererEncoding: LinearEncoding,
+      // output encoding: use srgb for a linear internal workflow, srgb-linear for traditional sRGB workflow.
+      outputColorSpace: 'srgb-linear',
     }
   }
 
@@ -432,7 +431,7 @@ export default class Viewer {
     this.renderer.setSize(width, height)
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
-    this.renderer.outputEncoding = this.parameters.rendererEncoding
+    this.renderer.outputColorSpace = this.parameters.outputColorSpace
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
@@ -505,7 +504,7 @@ export default class Viewer {
       }
     )
     this.pickingTarget.texture.generateMipmaps = false
-    this.pickingTarget.texture.encoding = this.parameters.rendererEncoding
+    this.pickingTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
@@ -524,7 +523,7 @@ export default class Viewer {
         format: RGBAFormat
       }
     )
-    this.sampleTarget.texture.encoding = this.parameters.rendererEncoding
+    this.sampleTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.holdTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
@@ -539,7 +538,7 @@ export default class Viewer {
         // )
       }
     )
-    this.holdTarget.texture.encoding = this.parameters.rendererEncoding
+    this.holdTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.compositeUniforms = {
       'tForeground': new Uniform(this.sampleTarget.texture),
@@ -868,12 +867,12 @@ export default class Viewer {
    * `setColorEncoding(LinearEncoding)` to linearize colors on input.
    * @see setColorEncoding
    */
-  private setOutputEncoding (encoding: TextureEncoding) {
-    this.parameters.rendererEncoding = encoding
-    this.renderer.outputEncoding = encoding
-    this.pickingTarget.texture.encoding = encoding
-    this.sampleTarget.texture.encoding = encoding
-    this.holdTarget.texture.encoding = encoding
+  private setOutputEncoding (colorspace: ColorSpace) {
+    this.parameters.outputColorSpace = colorspace
+    this.renderer.outputColorSpace = colorspace
+    this.pickingTarget.texture.colorSpace = colorspace
+    this.sampleTarget.texture.colorSpace = colorspace
+    this.holdTarget.texture.colorSpace = colorspace
   }
 
   /**
@@ -883,11 +882,11 @@ export default class Viewer {
    * In all cases, the output is always sRGB; this just affects how colors are computed internally.
    * Call this just after creating the viewer, before loading any models.
    */
-  setColorWorkflow (encoding: ColorWorkflow) {
-    if (encoding != 'linear' && encoding != 'sRGB')
-      throw new Error(`setColorWorkflow: invalid color workflow ${encoding}`)
-    setColorSpace(encoding == 'linear' ? 'linear' : 'sRGB')
-    this.setOutputEncoding(encoding == 'linear' ? sRGBEncoding : LinearEncoding)
+  setColorWorkflow (colorspace: ColorSpace) {
+    if (colorspace != 'srgb-linear' && colorspace != 'srgb')
+      throw new Error(`setColorWorkflow: invalid color workflow ${colorspace}`)
+    setColorSpace(colorspace == 'srgb-linear' ? 'linear' : 'sRGB')
+    this.setOutputEncoding(colorspace == 'srgb-linear' ? 'srgb' : 'srgb-linear')
     // Note: this doesn't rebuild models, so existing geometry will have
     // the old color encoding.
     this.requestRender()
