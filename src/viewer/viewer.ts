@@ -432,6 +432,7 @@ export default class Viewer {
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
     this.renderer.outputColorSpace = this.parameters.outputColorSpace
+    this.renderer.useLegacyLights = true
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
