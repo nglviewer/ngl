@@ -323,9 +323,10 @@ void main(){
         // @fredludlow: Previous comment from @arose says don't use normal_fragment_begin
         // though not clear why, but sticking with it. The r118 version of this chunk also
         // defines geometryNormal, so adding that here
+        // @ppillot: geometryNormal is replaced with nonPerturbedNormal in normal_fragment_begin chunk
         // #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
-        vec3 geometryNormal = normal;
+        vec3 nonPerturbedNormal = normal;
 
         #include lights_physical_fragment
         #include lights_fragment_begin
