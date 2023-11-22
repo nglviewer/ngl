@@ -105,7 +105,7 @@ class Volume {
 
   worker: Worker
   workerPool: WorkerPool
-  _position: Float32Array
+  _position: Float32Array|undefined
   _min: number|undefined
   _max: number|undefined
   _mean: number|undefined
@@ -158,7 +158,7 @@ class Volume {
     this.data = data || new Float32Array(1)
     this.setAtomindex(atomindex)
 
-    this._position = new Float32Array()
+    delete this._position
 
     delete this._min
     delete this._max
