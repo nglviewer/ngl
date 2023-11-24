@@ -201,15 +201,13 @@ class ColormakerRegistry {
     delete this.userSchemes[ id ]
   }
 
-  _createScheme (constructor: any) {
-    const _Colormaker = function (this: any, params: ColormakerParameters) {
-      Colormaker.call(this, params)
-      constructor.call(this, params)
+  _createScheme (constructor: any): typeof Colormaker {
+    class _Colormaker extends Colormaker {
+      constructor (params: ColormakerParameters) {
+        super(params)
+        constructor.call(this, params)
+      }
     }
-
-    _Colormaker.prototype = Colormaker.prototype
-    _Colormaker.prototype.constructor = Colormaker
-
     return _Colormaker
   }
 
