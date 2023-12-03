@@ -84,7 +84,7 @@ const PointBufferParameterTypes = Object.assign({
   pointSize: { uniform: 'size' },
   sizeAttenuation: { updateShader: true },
   sortParticles: {},
-  alphaTest: { updateShader: true },
+  alphaTest: { uniform: true },
   useTexture: { updateShader: true },
   forceTransparent: {},
   edgeBleach: { uniform: true }
@@ -123,7 +123,8 @@ class PointBuffer extends Buffer {
       'size': { value: this.parameters.pointSize },
       'canvasHeight': { value: 1.0 },
       'pixelRatio': { value: 1.0 },
-      'map': { value: null }
+      'map': { value: null },
+      'alphaTest': {value: this.parameters.alphaTest}
     })
   }
 
@@ -163,7 +164,7 @@ class PointBuffer extends Buffer {
     }
 
     if (this.parameters.alphaTest > 0 && this.parameters.alphaTest <= 1) {
-      defines.ALPHATEST = this.parameters.alphaTest.toPrecision(2)
+      defines.USE_ALPHATEST = 1
     }
 
     return defines
