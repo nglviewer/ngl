@@ -14,7 +14,7 @@ import {
   ShaderMaterial,
   PlaneGeometry,
   Scene, Mesh, Group, Object3D, Uniform,
-  Fog, SpotLight, AmbientLight,
+  Fog, DirectionalLight, AmbientLight,
   BufferGeometry, BufferAttribute,
   LineSegments, ColorSpace
 } from 'three'
@@ -203,7 +203,7 @@ export default class Viewer {
   height: number
 
   scene: Scene
-  private spotLight: SpotLight
+  private directionalLight: DirectionalLight
   private ambientLight: AmbientLight
   rotationGroup: Group
   translationGroup: Group
@@ -402,10 +402,10 @@ export default class Viewer {
 
     // light
 
-    this.spotLight = new SpotLight(
+    this.directionalLight = new DirectionalLight(
       this.parameters.lightColor.getHex(), this.parameters.lightIntensity
     )
-    this.scene.add(this.spotLight)
+    this.scene.add(this.directionalLight)
 
     this.ambientLight = new AmbientLight(
       this.parameters.ambientColor.getHex(), this.parameters.ambientIntensity
@@ -1226,11 +1226,11 @@ export default class Viewer {
   }
 
   private __updateLights () {
-    this.spotLight.color.set(this.parameters.lightColor)
-    this.spotLight.intensity = this.parameters.lightIntensity
+    this.directionalLight.color.set(this.parameters.lightColor)
+    this.directionalLight.intensity = this.parameters.lightIntensity
 
     this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100)
-    this.spotLight.position.copy(this.camera.position).add(this.distVector)
+    this.directionalLight.position.copy(this.camera.position).add(this.distVector)
 
     this.ambientLight.color.set(this.parameters.ambientColor)
     this.ambientLight.intensity = this.parameters.ambientIntensity
