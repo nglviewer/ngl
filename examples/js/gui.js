@@ -105,9 +105,9 @@ NGL.Preferences = function (id, defaultParams) {
     cameraFov: 40,
     cameraType: 'perspective',
     lightColor: 0xdddddd,
-    lightIntensity: 1.0,
+    lightIntensity: 3.14,
     ambientColor: 0xdddddd,
-    ambientIntensity: 0.2,
+    ambientIntensity: 1,
     hoverTimeout: 0
   }
 
