@@ -107,7 +107,7 @@ NGL.Preferences = function (id, defaultParams) {
     lightColor: 0xdddddd,
     lightIntensity: 3.14,
     ambientColor: 0xdddddd,
-    ambientIntensity: 1,
+    ambientIntensity: 0.63,
     hoverTimeout: 0
   }
 
