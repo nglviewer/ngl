@@ -319,7 +319,7 @@ export default class Viewer {
       lightColor: new Color(0xdddddd),
       lightIntensity: 3.14,
       ambientColor: new Color(0xdddddd),
-      ambientIntensity: 1,
+      ambientIntensity: 0.63,
 
       sampleLevel: 0,
     }

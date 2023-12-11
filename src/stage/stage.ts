@@ -141,7 +141,7 @@ export const StageDefaultParameters = {
   lightColor: 0xdddddd as GenericColor,
   lightIntensity: 3.14,
   ambientColor: 0xdddddd as GenericColor,
-  ambientIntensity: 1.0,
+  ambientIntensity: 0.63,
   hoverTimeout: 0,
   tooltip: true,
   mousePreset: 'default' as MouseControlPreset
