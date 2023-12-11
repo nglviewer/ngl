@@ -16,7 +16,7 @@ import {
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, DirectionalLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments, ColorSpace
+  LineSegments
 } from 'three'
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
@@ -30,7 +30,6 @@ import {
 import { degToRad } from '../math/math-utils'
 import Stats from './stats'
 import { getShader } from '../shader/shader-utils'
-import { setColorSpace } from '../color/colormaker'
 import { JitterVectors } from './viewer-constants'
 import {
   makeImage, ImageParameters,
@@ -162,8 +161,6 @@ export interface ViewerParameters {
   ambientIntensity: number
 
   sampleLevel: number
-
-  outputColorSpace: ColorSpace // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
 }
 
 export interface BufferInstance {
@@ -325,9 +322,6 @@ export default class Viewer {
       ambientIntensity: 1,
 
       sampleLevel: 0,
-
-      // output encoding: use srgb for a linear internal workflow, srgb-linear for traditional sRGB workflow.
-      outputColorSpace: 'srgb-linear',
     }
   }
 
@@ -431,8 +425,6 @@ export default class Viewer {
     this.renderer.setSize(width, height)
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
-    this.renderer.outputColorSpace = this.parameters.outputColorSpace
-    this.renderer.useLegacyLights = true
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
@@ -505,7 +497,6 @@ export default class Viewer {
       }
     )
     this.pickingTarget.texture.generateMipmaps = false
-    this.pickingTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
@@ -524,7 +515,6 @@ export default class Viewer {
         format: RGBAFormat
       }
     )
-    this.sampleTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.holdTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
@@ -539,7 +529,6 @@ export default class Viewer {
         // )
       }
     )
-    this.holdTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.compositeUniforms = {
       'tForeground': new Uniform(this.sampleTarget.texture),
@@ -855,41 +844,6 @@ export default class Viewer {
       this.sampleLevel = level
     }
 
-    this.requestRender()
-  }
-
-  /**
-   * Set the output color encoding, i.e. how the renderer translates
-   * colorspaces as it renders to the screen.
-
-   * The default is LinearEncoding, because the internals of NGL are
-   * already sRGB so no translation is needed to show sRGB colors.
-   * Set to sRGBEncoding to create a linear workflow, and also call
-   * `setColorEncoding(LinearEncoding)` to linearize colors on input.
-   * @see setColorEncoding
-   */
-  private setOutputEncoding (colorspace: ColorSpace) {
-    this.parameters.outputColorSpace = colorspace
-    this.renderer.outputColorSpace = colorspace
-    this.pickingTarget.texture.colorSpace = colorspace
-    this.sampleTarget.texture.colorSpace = colorspace
-    this.holdTarget.texture.colorSpace = colorspace
-  }
-
-  /**
-   * Set the internal color workflow, linear or sRGB.
-   * sRGB, the default, is more "vibrant" at the cost of accuracy.
-   * Linear gives more accurate results, especially for transparent objects.
-   * In all cases, the output is always sRGB; this just affects how colors are computed internally.
-   * Call this just after creating the viewer, before loading any models.
-   */
-  setColorWorkflow (colorspace: ColorSpace) {
-    if (colorspace != 'srgb-linear' && colorspace != 'srgb')
-      throw new Error(`setColorWorkflow: invalid color workflow ${colorspace}`)
-    setColorSpace(colorspace == 'srgb-linear' ? 'linear' : 'sRGB')
-    this.setOutputEncoding(colorspace == 'srgb-linear' ? 'srgb' : 'srgb-linear')
-    // Note: this doesn't rebuild models, so existing geometry will have
-    // the old color encoding.
     this.requestRender()
   }
 
