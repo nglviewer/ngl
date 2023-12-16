@@ -392,7 +392,7 @@ export default class Viewer {
 
     // fog
 
-    this.scene.fog = new Fog(this.parameters.fogColor.getHex())
+    this.scene.fog = new Fog(this.parameters.fogColor.convertSRGBToLinear().getHex())
 
     // light
 
@@ -819,7 +819,12 @@ export default class Viewer {
   setFog (color?: Color|number|string, near?: number, far?: number) {
     const p = this.parameters
 
-    if (color !== undefined) p.fogColor.set(color as string)  // TODO
+    if (color !== undefined) {
+      p.fogColor.set(color)
+      if (typeof(color) !== 'object') {
+        p.fogColor.convertSRGBToLinear()
+      }
+    }
     if (near !== undefined) p.fogNear = near
     if (far !== undefined) p.fogFar = far
 
@@ -829,7 +834,12 @@ export default class Viewer {
   setBackground (color?: Color|number|string) {
     const p = this.parameters
 
-    if (color) p.backgroundColor.set(color as string)  // TODO
+    if (color) {
+      p.backgroundColor.set(color)
+      if (typeof(color) !== 'object') {
+        p.backgroundColor.convertSRGBToLinear()
+      }
+    }
 
     this.setFog(p.backgroundColor)
     this.renderer.setClearColor(p.backgroundColor, 0)
