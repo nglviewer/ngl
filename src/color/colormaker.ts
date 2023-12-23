@@ -45,22 +45,16 @@ export type ColormakerConstructor = new (...p: ConstructorParameters<typeof Colo
 
 const tmpColor = new Color()
 
-/** Decorator for optionally linearizing a numeric color */
-type colorFuncType = (value: any, fromTo?: boolean) => number // decorator applies to functions with this shape
-export function manageColor<T extends {parameters: ColormakerParameters}>
-  (_target: Object,
-   _name: string | symbol,
-   descriptor: TypedPropertyDescriptor<colorFuncType>): PropertyDescriptor {
-    const originalMethod = descriptor.value
-    const linearize: colorFuncType = function (this: T, value: any, fromTo?: boolean) {
-      let result = originalMethod!.bind(this, value, fromTo)()
-      tmpColor.set(result)
-      tmpColor.convertSRGBToLinear()
-      return tmpColor.getHex()
-    }
-    descriptor.value = linearize
-    return descriptor
-  }
+/**
+ * Three.js function for converting a normalized color component (r, g, or b) from
+ * rgb (screen) colorspace to linear (internal) colorspace
+ * @param c normalized ([0-1]) component vale
+ * @returns linearized value
+ */
+function SRGBToLinear( c: number ) {
+  return ( c < 0.04045 ) ? c * 0.0773993808 : Math.pow( c * 0.9478672986 + 0.0521327014, 2.4 );
+}
+
 
 /**
  * Class for making colors.
@@ -113,9 +107,9 @@ abstract class Colormaker {
    * @return {Array} the destination array
    */
   colorToArray (color: number, array: NumberArray = [], offset = 0) {
-    array[ offset ] = (color >> 16 & 255) / 255
-    array[ offset + 1 ] = (color >> 8 & 255) / 255
-    array[ offset + 2 ] = (color & 255) / 255
+    array[ offset ] = SRGBToLinear( (color >> 16 & 255) / 255)
+    array[ offset + 1 ] = SRGBToLinear((color >> 8 & 255) / 255)
+    array[ offset + 2 ] = SRGBToLinear((color & 255) / 255)
 
     return array
   }

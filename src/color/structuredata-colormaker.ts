@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { ColorData, ColormakerScale, manageColor, StuctureColormakerParams } from './colormaker'
+import Colormaker, { ColorData, ColormakerScale, StuctureColormakerParams } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import BondProxy from '../proxy/bond-proxy'
 
@@ -25,25 +25,23 @@ class StructuredataColormaker extends Colormaker {
     this.scale = this.getScale(this.parameters)
   }
 
-  @manageColor
   atomColor(a: AtomProxy) {
     const val = this.atomData?.[a.index]
     return  (val !== undefined) ? this.scale(val) : this.parameters.value
   }
 
-  @manageColor
   bondColor(bond: BondProxy, fromTo: boolean) {
       const val = this.bondData?.[bond.index]
-      
+
       // Explicit bond data?
       if (val !== undefined) return this.scale(val)
-      
-      
+
+
       if (this.atomProxy) {
         this.atomProxy.index = fromTo ? bond.atomIndex1 : bond.atomIndex2
         return this.atomColor(this.atomProxy)
-      } 
-      
+      }
+
       // Fallback
       return this.parameters.value
   }

@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 
 /**
@@ -27,7 +27,6 @@ class EntityindexColormaker extends Colormaker {
     this.entityindexScale = this.getScale()
   }
 
-  @manageColor
   atomColor (a: AtomProxy) {
     return this.entityindexScale(a.entityIndex)
   }

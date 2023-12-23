@@ -6,7 +6,7 @@
 
 import { ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
-import Colormaker, { StuctureColormakerParams, ColormakerScale, manageColor } from './colormaker'
+import Colormaker, { StuctureColormakerParams, ColormakerScale } from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import ModelProxy from '../proxy/model-proxy'
 
@@ -47,7 +47,6 @@ class AtomindexColormaker extends Colormaker {
    * @param  {AtomProxy} atom - atom to get color for
    * @return {Integer} hex atom color
    */
-  @manageColor
   atomColor (atom: AtomProxy) {
     return this.scalePerModel[ atom.modelIndex ](atom.index)
   }
