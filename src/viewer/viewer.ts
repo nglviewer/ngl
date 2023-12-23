@@ -130,7 +130,6 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
 }
 
 export type CameraType = 'perspective'|'orthographic'|'stereo'
-export type ColorWorkflow = 'linear' | 'sRGB'
 
 export interface ViewerSignals {
   ticked: Signal,

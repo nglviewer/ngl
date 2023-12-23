@@ -33,7 +33,6 @@ export interface RepresentationParameters {
   colorValue: GenericColor,
   colorDomain: number[],
   colorMode: ColorMode,
-  colorSpace: 'sRGB' | 'linear',
   roughness: number,
   metalness: number,
   diffuse: GenericColor,
@@ -387,7 +386,6 @@ class Representation {
       value: this.colorValue,
       domain: this.colorDomain,
       mode: this.colorMode,
-      colorSpace: this.colorSpace,
 
     }, p)
   }
