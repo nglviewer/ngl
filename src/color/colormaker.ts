@@ -61,6 +61,7 @@ export interface ColormakerParameters extends ScaleParameters {
 export type StuctureColormakerParams = { structure: Structure } & Partial<ColormakerParameters>
 export type VolumeColormakerParams = { volume: Volume } & Partial<ColormakerParameters>
 export type ColormakerScale = (v: number) => number
+export type ColormakerConstructor = new (...p: ConstructorParameters<typeof Colormaker>) => Colormaker
 
 const tmpColor = new Color()
 
