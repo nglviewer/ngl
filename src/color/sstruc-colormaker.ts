@@ -5,7 +5,7 @@
  */
 
 import { ColormakerRegistry } from '../globals'
-import Colormaker, { StuctureColormakerParams, manageColor } from './colormaker'
+import Colormaker, { StuctureColormakerParams} from './colormaker'
 import AtomProxy from '../proxy/atom-proxy'
 import ResidueProxy from '../proxy/residue-proxy'
 
@@ -37,7 +37,6 @@ class SstrucColormaker extends Colormaker {
     this.residueProxy = params.structure.getResidueProxy()
   }
 
-  @manageColor
   atomColor (ap: AtomProxy) {
     const sstruc = ap.sstruc
     const rp = this.residueProxy
