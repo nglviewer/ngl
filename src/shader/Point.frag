@@ -18,6 +18,7 @@ uniform float clipRadius;
     #include common
     #include color_pars_fragment
     #include fog_pars_fragment
+    #include alphatest_pars_fragment
     varying vec3 vViewPosition;
 #endif
 
@@ -55,7 +56,7 @@ void main(){
 
         #include premultiplied_alpha_fragment
         #include tonemapping_fragment
-        #include encodings_fragment
+        #include colorspace_fragment
         #include fog_fragment
 
     #endif

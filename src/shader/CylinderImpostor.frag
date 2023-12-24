@@ -86,7 +86,7 @@ void main(){
     vec3 ray_target = w.xyz / w.w;
 
     // unpack variables
-    vec3 base = base_radius.xyz; // center of the base (far end), in modelView space 
+    vec3 base = base_radius.xyz; // center of the base (far end), in modelView space
     float vRadius = base_radius.w; // radius in model view space
     vec3 end = end_b.xyz; // center of the end (near end) in modelView
     float b = end_b.w; // b is flag to decide if we're flipping this cylinder (see vertex shader)
@@ -94,16 +94,16 @@ void main(){
     vec3 ray_origin = vec3(0.0); // Camera position for perspective mode
     vec3 ortho_ray_direction =  vec3(0.0, 0.0, 1.0); // Ray is cylinder -> camera
     vec3 persp_ray_direction = normalize(ray_origin - ray_target); // Ditto
- 
+
     vec3 ray_direction = mix(persp_ray_direction, ortho_ray_direction, ortho);
-    
+
     // basis is the rotation matrix for cylinder-aligned coords -> modelView
     // (or post-multiply to reverse, see below)
     mat3 basis = mat3( U, V, axis );
 
     // diff is vector from center of cylinder to target
     vec3 diff = ray_target - 0.5 * (base + end);
-    
+
     // P is point transformed back to cylinder-aligned (post-multiplied)
     vec3 P = diff * basis;
 
@@ -199,7 +199,7 @@ void main(){
     if( end_cap_test > 0.0 )
     {
         // @fredludlow: NOTE: Perspective and ortho behaviour is quite different here. In perspective mode
-        // it is possible to see the inside face of the mapped aligned box and these points should be 
+        // it is possible to see the inside face of the mapped aligned box and these points should be
         // discarded. This occcurs when the camera is focused on one end of the cylinder and the cylinder
         // is not quite in line with the camera (In orthographic mode this view is not possible).
         // It is also possible to see the back face of the near (end) cap when looking nearly side-on.
@@ -208,7 +208,7 @@ void main(){
         vec3 end_point;
         if ( ortho == 1.0 ) {
             end_point = ray_target;
-        } else {   
+        } else {
             dNV = dot(axis, ray_direction);
             if (dNV < 0.0) {
                 // Viewing inside/back face of end-cap
@@ -217,7 +217,7 @@ void main(){
             near = dot(axis, end) / dNV;
             end_point = ray_direction * near + ray_origin;
         }
-        
+
         // within the cap radius?
         if( dot(end_point - end, end_point-base) > radius2 ) {
             discard;
@@ -227,7 +227,7 @@ void main(){
             surface_point = end_point;
             _normal = axis;
         #else
-            // Looking down the tube at an interior point, but check to see if interior point is 
+            // Looking down the tube at an interior point, but check to see if interior point is
             // within range:
             surface_point = ray_target + ( (-a1 - sqrt(d)) / a2 ) * ray_direction;
             dNV = dot(-axis, ray_direction);
@@ -242,7 +242,7 @@ void main(){
     }
 
     gl_FragDepthEXT = calcDepth( surface_point );
-    
+
 
     #ifdef NEAR_CLIP
         if( calcClip( surface_point ) > 0.0 ){
@@ -323,9 +323,10 @@ void main(){
         // @fredludlow: Previous comment from @arose says don't use normal_fragment_begin
         // though not clear why, but sticking with it. The r118 version of this chunk also
         // defines geometryNormal, so adding that here
+        // @ppillot: geometryNormal is replaced with nonPerturbedNormal in normal_fragment_begin chunk
         // #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
-        vec3 geometryNormal = normal;
+        vec3 nonPerturbedNormal = normal;
 
         #include lights_physical_fragment
         #include lights_fragment_begin
@@ -348,7 +349,7 @@ void main(){
 
         #include premultiplied_alpha_fragment
         #include tonemapping_fragment
-        #include encodings_fragment
+        #include colorspace_fragment
         #include fog_fragment
 
     #endif

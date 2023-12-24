@@ -278,7 +278,7 @@ void main(){
 
         // don't use #include normal_fragment_begin
         vec3 normal = normalize( vNormal );
-        vec3 geometryNormal = normal;
+        vec3 nonPerturbedNormal = normal;
 
         #include lights_physical_fragment
         #include lights_fragment_begin
@@ -301,7 +301,7 @@ void main(){
 
         #include premultiplied_alpha_fragment
         #include tonemapping_fragment
-        #include encodings_fragment
+        #include colorspace_fragment
         #include fog_fragment
 
     #endif

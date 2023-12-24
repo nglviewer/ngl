@@ -88,7 +88,7 @@ class TrackballControls {
     // Adjust for component and scene rotation
     tmpPanMatrix.extractRotation(this.component.transform)
     tmpPanMatrix.premultiply(this.viewer.rotationGroup.matrix)
-    tmpPanMatrix.getInverse(tmpPanMatrix)
+    tmpPanMatrix.invert()
 
     // Adjust for camera rotation
     tmpPanMatrix.multiply(this._getCameraRotation(tmpRotateMatrix))
@@ -104,7 +104,7 @@ class TrackballControls {
     this._setPanVector(x, y)
 
     // Adjust for scene rotation
-    tmpPanMatrix.getInverse(this.viewer.rotationGroup.matrix)
+    tmpPanMatrix.copy(this.viewer.rotationGroup.matrix).invert()
 
     // Adjust for camera rotation
     tmpPanMatrix.multiply(this._getCameraRotation(tmpRotateMatrix))
@@ -171,7 +171,7 @@ class TrackballControls {
 
     tmpRotateMatrix.extractRotation(this.component.transform)
     tmpRotateMatrix.premultiply(this.viewer.rotationGroup.matrix)
-    tmpRotateMatrix.getInverse(tmpRotateMatrix)
+    tmpRotateMatrix.invert()
     tmpRotateMatrix.premultiply(tmpRotateCameraMatrix)
 
     tmpRotateVector.set(1, 0, 0)

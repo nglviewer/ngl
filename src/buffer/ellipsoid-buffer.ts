@@ -4,7 +4,7 @@
  * @private
  */
 
-import { IcosahedronBufferGeometry, Vector3, Matrix4 } from 'three'
+import { IcosahedronGeometry, Vector3, Matrix4 } from 'three'
 
 import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
@@ -50,7 +50,7 @@ class EllipsoidBuffer extends GeometryBuffer {
   _radius: Float32Array
 
   constructor (data: EllipsoidBufferData, params: Partial<EllipsoidBufferParameters> = {}) {
-    super(data, params, new IcosahedronBufferGeometry(1, defaults(params.sphereDetail, 2)))
+    super(data, params, new IcosahedronGeometry(1, defaults(params.sphereDetail, 2)))
 
     this.setAttributes(data, true)
   }

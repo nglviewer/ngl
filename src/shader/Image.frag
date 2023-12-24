@@ -33,7 +33,7 @@ varying vec2 vUv;
             const float C = 0.333;
         #endif
 
-        float filter( float x ){
+        float applyFilter( float x ){
             float f = x;
             if( f < 0.0 ){
                 f = -f;
@@ -54,7 +54,7 @@ varying vec2 vUv;
 
     #elif defined( BSPLINE_FILTER )
 
-        float filter( float x ){
+        float applyFilter( float x ){
             float f = x;
             if( f < 0.0 ){
                 f = -f;
@@ -69,7 +69,7 @@ varying vec2 vUv;
 
     #else
 
-        float filter( float x ){
+        float applyFilter( float x ){
             return 1.0;
         }
 
@@ -86,7 +86,7 @@ varying vec2 vUv;
                 vec4 vecData = texture2D(
                     tex, texCoord + texelSize * vec2( m, n )
                 );
-                float c = filter( m - cell.x ) * filter( -n + cell.y );
+                float c = applyFilter( m - cell.x ) * applyFilter( -n + cell.y );
                 nSum += vecData * c;
                 nDenom += c;
             }

@@ -7,5 +7,6 @@ void main() {
 
     vec4 foreground = texture2D( tForeground, vUv );
     gl_FragColor = foreground * scale;
+    #include colorspace_fragment
 
 }
