@@ -16,7 +16,8 @@ import {
   Scene, Mesh, Group, Object3D, Uniform,
   Fog, DirectionalLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments, ColorSpace
+  LineSegments, ColorSpace,
+  HalfFloatType
 } from 'three'
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
@@ -521,7 +522,10 @@ export default class Viewer {
       {
         minFilter: LinearFilter,
         magFilter: LinearFilter,
-        format: RGBAFormat
+        format: RGBAFormat,
+        type: this.supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        )
       }
     )
     this.sampleTarget.texture.colorSpace = this.parameters.outputColorSpace
@@ -532,11 +536,9 @@ export default class Viewer {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: UnsignedByteType
-        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
-        // type: this.supportsHalfFloat ? HalfFloatType : (
-        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        // )
+        type: this.supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        )
       }
     )
     this.holdTarget.texture.colorSpace = this.parameters.outputColorSpace
