@@ -1149,8 +1149,8 @@ export default class Viewer {
         this.camera.near = this.cDist - (this.bRadius * nearFactor)
         this.camera.far = this.cDist + (this.bRadius * farFactor)
 
-        const fogNearFactor = (50 - p.fogNear) / 50
-        const fogFarFactor = -(50 - p.fogFar) / 50
+        const fogNearFactor = (50 - p.fogNear) / 25
+        const fogFarFactor = -(50 - p.fogFar) / 25
         fog.near = this.cDist - (this.bRadius * fogNearFactor)
         fog.far = this.cDist + (this.bRadius * fogFarFactor)
       }
