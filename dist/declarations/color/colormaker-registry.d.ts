@@ -3,30 +3,31 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-import Colormaker, { ColormakerParameters } from './colormaker';
+import Colormaker, { ColormakerConstructor, ColormakerParameters } from './colormaker';
 import { SelectionSchemeData } from './selection-colormaker';
+declare type ColormakerDefinitionFunction = ((this: Colormaker, param?: ColormakerParameters) => void);
 /**
  * Class for registering {@link Colormaker}s. Generally use the
  * global {@link src/globals.js~ColormakerRegistry} instance.
  */
 declare class ColormakerRegistry {
     schemes: {
-        [k: string]: any;
+        [k: string]: ColormakerConstructor;
     };
     userSchemes: {
-        [k: string]: any;
+        [k: string]: ColormakerConstructor;
     };
     constructor();
     getScheme(params: Partial<{
         scheme: string;
-    } & ColormakerParameters>): any;
+    } & ColormakerParameters>): Colormaker;
     /**
      * Get an description of available schemes as an
      * object with id-label as key-value pairs
      * @return {Object} available schemes
      */
     getSchemes(): {
-        [k: string]: any;
+        [k: string]: string;
     };
     /**
      * Get an description of available scales as an
@@ -89,7 +90,7 @@ declare class ColormakerRegistry {
      * @param {Colormaker} scheme - the colormaker
      * @return {undefined}
      */
-    add(id: string, scheme: typeof Colormaker): void;
+    add(id: string, scheme: ColormakerConstructor): void;
     /**
      * Register a custom scheme
      *
@@ -116,24 +117,21 @@ declare class ColormakerRegistry {
      * @param {String} label - scheme label
      * @return {String} id to refer to the registered scheme
      */
-    addScheme(scheme: any, label?: string): string;
+    addScheme(scheme: ColormakerConstructor | ColormakerDefinitionFunction, label?: string): string;
     /**
      * Add a user-defined scheme
      * @param {Colormaker} scheme - the user-defined scheme
      * @param {String} [label] - scheme label
      * @return {String} id to refer to the registered scheme
      */
-    _addUserScheme(scheme: any, label?: string): string;
+    _addUserScheme(scheme: ColormakerConstructor, label?: string): string;
     /**
      * Remove the scheme with the given id
      * @param  {String} id - scheme to remove
      * @return {undefined}
      */
     removeScheme(id: string): void;
-    _createScheme(constructor: any): {
-        (this: any, params: ColormakerParameters): void;
-        prototype: Colormaker;
-    };
+    _createScheme(constructor: ColormakerDefinitionFunction): ColormakerConstructor;
     /**
      * Create and a selection-based coloring scheme. Supply a list with pairs
      * of colorname and selection for coloring by selections. Use the last

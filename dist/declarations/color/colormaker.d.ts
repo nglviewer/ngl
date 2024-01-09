@@ -42,6 +42,7 @@ export declare type VolumeColormakerParams = {
     volume: Volume;
 } & Partial<ColormakerParameters>;
 export declare type ColormakerScale = (v: number) => number;
+export declare type ColormakerConstructor = new (...p: ConstructorParameters<typeof Colormaker>) => Colormaker;
 /** Decorator for optionally linearizing a numeric color */
 declare type colorFuncType = (value: any, fromTo?: boolean) => number;
 export declare function manageColor<T extends {
