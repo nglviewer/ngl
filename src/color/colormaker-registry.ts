@@ -5,9 +5,11 @@
  */
 
 import { generateUUID } from '../math/math-utils'
-import Colormaker, { ColormakerParameters } from './colormaker'
+import Colormaker, { ColormakerConstructor, ColormakerParameters } from './colormaker'
 import SelectionColormaker, { SelectionSchemeData } from './selection-colormaker'
 import Structure from '../structure/structure'
+
+type ColormakerDefinitionFunction = ((this: Colormaker, param?: ColormakerParameters) => void)
 
 const ColormakerScales = {
   '': '',
@@ -75,8 +77,8 @@ const ColormakerModes = {
  * global {@link src/globals.js~ColormakerRegistry} instance.
  */
 class ColormakerRegistry {
-  schemes: { [k: string]: any }
-  userSchemes: { [k: string]: any }
+  schemes: { [k: string]: ColormakerConstructor }
+  userSchemes: { [k: string]: ColormakerConstructor }
 
   constructor () {
     this.schemes = {}
@@ -87,13 +89,14 @@ class ColormakerRegistry {
     const p = params || {}
     const id = (p.scheme || '').toLowerCase()
 
-    let SchemeClass
+    let SchemeClass: ColormakerConstructor
 
     if (id in this.schemes) {
       SchemeClass = this.schemes[ id ]
     } else if (id in this.userSchemes) {
       SchemeClass = this.userSchemes[ id ]
     } else {
+      //@ts-expect-error  abstract class used as a constructor
       SchemeClass = Colormaker
     }
 
@@ -106,7 +109,7 @@ class ColormakerRegistry {
    * @return {Object} available schemes
    */
   getSchemes () {
-    const types: { [k: string]: any } = {}
+    const types: { [k: string]: string } = {}
 
     Object.keys(this.schemes).forEach(function (k) {
       types[ k ] = k
@@ -138,7 +141,7 @@ class ColormakerRegistry {
    * @param {Colormaker} scheme - the colormaker
    * @return {undefined}
    */
-  add (id: string, scheme: typeof Colormaker) {
+  add (id: string, scheme: ColormakerConstructor) {
     id = id.toLowerCase()
     this.schemes[ id ] = scheme
   }
@@ -169,8 +172,8 @@ class ColormakerRegistry {
    * @param {String} label - scheme label
    * @return {String} id to refer to the registered scheme
    */
-  addScheme (scheme: any, label?: string) {
-    if (!(scheme instanceof Colormaker)) {
+  addScheme (scheme: ColormakerConstructor|ColormakerDefinitionFunction, label?: string) {
+    if (!(isColormakerSubClass(scheme))) {
       scheme = this._createScheme(scheme)
     }
 
@@ -183,7 +186,7 @@ class ColormakerRegistry {
    * @param {String} [label] - scheme label
    * @return {String} id to refer to the registered scheme
    */
-  _addUserScheme (scheme: any, label?: string) {
+  _addUserScheme (scheme: ColormakerConstructor, label?: string) {
     label = label || ''
     const id = `${generateUUID()}|${label}`.toLowerCase()
     this.userSchemes[ id ] = scheme
@@ -201,15 +204,13 @@ class ColormakerRegistry {
     delete this.userSchemes[ id ]
   }
 
-  _createScheme (constructor: any) {
-    const _Colormaker = function (this: any, params: ColormakerParameters) {
-      Colormaker.call(this, params)
-      constructor.call(this, params)
+  _createScheme (constructor: ColormakerDefinitionFunction): ColormakerConstructor {
+    class _Colormaker extends Colormaker {
+      constructor (params: ColormakerParameters) {
+        super(params)
+        constructor.call(this, params)
+      }
     }
-
-    _Colormaker.prototype = Colormaker.prototype
-    _Colormaker.prototype.constructor = Colormaker
-
     return _Colormaker
   }
 
@@ -255,6 +256,12 @@ class ColormakerRegistry {
     id = id.toLowerCase()
     return id in this.schemes || id in this.userSchemes
   }
+}
+
+function isColormakerSubClass (
+  scheme: ColormakerConstructor|((this: Colormaker, param?: ColormakerParameters) => void)
+): scheme is ColormakerConstructor {
+  return (scheme instanceof Colormaker)
 }
 
 export default ColormakerRegistry
