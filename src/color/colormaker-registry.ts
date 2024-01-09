@@ -9,6 +9,8 @@ import Colormaker, { ColormakerConstructor, ColormakerParameters } from './color
 import SelectionColormaker, { SelectionSchemeData } from './selection-colormaker'
 import Structure from '../structure/structure'
 
+type ColormakerDefinitionFunction = ((this: Colormaker, param?: ColormakerParameters) => void)
+
 const ColormakerScales = {
   '': '',
 
@@ -170,8 +172,8 @@ class ColormakerRegistry {
    * @param {String} label - scheme label
    * @return {String} id to refer to the registered scheme
    */
-  addScheme (scheme: ColormakerConstructor, label?: string) {
-    if (!(scheme instanceof Colormaker)) {
+  addScheme (scheme: ColormakerConstructor|ColormakerDefinitionFunction, label?: string) {
+    if (!(isColormakerSubClass(scheme))) {
       scheme = this._createScheme(scheme)
     }
 
@@ -202,7 +204,7 @@ class ColormakerRegistry {
     delete this.userSchemes[ id ]
   }
 
-  _createScheme (constructor: any): ColormakerConstructor {
+  _createScheme (constructor: ColormakerDefinitionFunction): ColormakerConstructor {
     class _Colormaker extends Colormaker {
       constructor (params: ColormakerParameters) {
         super(params)
@@ -254,6 +256,12 @@ class ColormakerRegistry {
     id = id.toLowerCase()
     return id in this.schemes || id in this.userSchemes
   }
+}
+
+function isColormakerSubClass (
+  scheme: ColormakerConstructor|((this: Colormaker, param?: ColormakerParameters) => void)
+): scheme is ColormakerConstructor {
+  return (scheme instanceof Colormaker)
 }
 
 export default ColormakerRegistry
