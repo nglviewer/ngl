@@ -125,6 +125,7 @@ import TetrahedronBuffer from './buffer/tetrahedron-buffer'
 import TextBuffer from './buffer/text-buffer'
 import TorusBuffer from './buffer/torus-buffer'
 import WidelineBuffer from './buffer/wideline-buffer'
+import NetworkStreamer from "./streamer/network-streamer";
 
 //
 
@@ -132,7 +133,7 @@ import './parser/cif-parser'
 import './parser/gro-parser'
 import './parser/mmtf-parser'
 import './parser/mol2-parser'
-import './parser/pdb-parser'
+import PdbParser from './parser/pdb-parser'
 import './parser/pdbqt-parser'
 import './parser/pqr-parser'
 import './parser/sdf-parser'
@@ -221,6 +222,7 @@ export {
   MdsrvDatasource,
   Colormaker,
   Selection,
+  PdbParser,
   PdbWriter,
   SdfWriter,
   StlWriter,
@@ -305,6 +307,7 @@ export {
   TextBuffer,
   TorusBuffer,
   WidelineBuffer,
+  NetworkStreamer,
 
   Shape,
 
