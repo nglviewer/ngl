@@ -316,9 +316,9 @@ export default class Viewer {
       clipMode: 'scene',
       clipScale: 'relative',
 
-      lightColor: new Color(0xdddddd),
+      lightColor: new Color(0xdddddd).convertSRGBToLinear(),
       lightIntensity: 3.14,
-      ambientColor: new Color(0xdddddd),
+      ambientColor: new Color(0xdddddd).convertSRGBToLinear(),
       ambientIntensity: 0.63,
 
       sampleLevel: 0,

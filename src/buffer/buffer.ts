@@ -181,13 +181,13 @@ class Buffer {
         emissive: { value: new Color(0x000000) },
         roughness: { value: this.parameters.roughness },
         metalness: { value: this.parameters.metalness },
-        interiorColor: { value: new Color(this.parameters.interiorColor) },
+        interiorColor: { value: new Color(this.parameters.interiorColor).convertSRGBToLinear() },
         interiorDarkening: { value: this.parameters.interiorDarkening },
       },
       UniformsLib.lights
     ])
 
-    this.uniforms.diffuse.value.set(this.parameters.diffuse)
+    this.uniforms.diffuse.value.set(new Color(this.parameters.diffuse).convertSRGBToLinear())
 
     this.pickingUniforms = {
       clipNear: { value: 0.0 },
