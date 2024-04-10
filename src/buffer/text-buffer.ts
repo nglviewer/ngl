@@ -431,20 +431,17 @@ class TextBuffer extends MappedQuadBuffer {
 
     const m = this.material
     m.transparent = true
-    m.extensions.derivatives = true
     m.lights = false
     m.uniforms.fontTexture.value = tex
     m.needsUpdate = true
 
     const wm = this.wireframeMaterial
     wm.transparent = true
-    wm.extensions.derivatives = true
     wm.lights = false
     wm.uniforms.fontTexture.value = tex
     wm.needsUpdate = true
 
     const pm = this.pickingMaterial
-    pm.extensions.derivatives = true
     pm.lights = false
     pm.uniforms.fontTexture.value = tex
     pm.needsUpdate = true

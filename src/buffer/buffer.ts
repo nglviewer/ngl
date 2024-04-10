@@ -275,8 +275,6 @@ class Buffer {
       side: side
     })
     m.vertexColors = true
-    m.extensions.derivatives = true
-    m.extensions.fragDepth = this.isImpostor
 
     const wm = new ShaderMaterial({
       uniforms: this.uniforms,
@@ -304,7 +302,6 @@ class Buffer {
       blending: NoBlending
     })
     pm.vertexColors = true
-    pm.extensions.fragDepth = this.isImpostor
 
     ;(m as any).clipNear = this.parameters.clipNear
     ;(wm as any).clipNear = this.parameters.clipNear

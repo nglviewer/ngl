@@ -430,42 +430,12 @@ export default class Viewer {
     // console.log(gl.getContextAttributes().antialias)
     // console.log(gl.getParameter(gl.SAMPLES))
 
-    // For WebGL1, extensions must be explicitly enabled.
-    // The following are builtin to WebGL2 (and don't appear as
-    // extensions)
-    // EXT_frag_depth, OES_element_index_uint, OES_texture_float
-    // OES_texture_half_float
-
-    // The WEBGL_color_buffer_float extension is replaced by
-    // EXT_color_buffer_float
-
-    // If not webgl2 context, explicitly check for these
-    if (!this.renderer.capabilities.isWebGL2) {
-      setExtensionFragDepth(this.renderer.extensions.get('EXT_frag_depth'))
-      this.renderer.extensions.get('OES_element_index_uint')
-
-      setSupportsReadPixelsFloat(
-        (this.renderer.extensions.get('OES_texture_float') &&
-          this.renderer.extensions.get('WEBGL_color_buffer_float')) ||
-        (this.renderer.extensions.get('OES_texture_float') &&
-          testTextureSupport(gl.FLOAT))
-      )
-      // picking texture
-
-      this.renderer.extensions.get('OES_texture_float')
-
-      this.supportsHalfFloat = (
-        this.renderer.extensions.get('OES_texture_half_float') &&
-        testTextureSupport(0x8D61)
-      )
-
-    } else {
-      setExtensionFragDepth(true)
-      setSupportsReadPixelsFloat(
-        this.renderer.extensions.get('EXT_color_buffer_float')
-      )
-      this.supportsHalfFloat = true
-    }
+    // webgl2 context settings
+    setExtensionFragDepth(true)
+    setSupportsReadPixelsFloat(
+      this.renderer.extensions.get('EXT_color_buffer_float')
+    )
+    this.supportsHalfFloat = true
 
     this.wrapper.appendChild(this.renderer.domElement)
 
@@ -476,9 +446,6 @@ export default class Viewer {
     if (Debug) {
       console.log(JSON.stringify({
         'Browser': Browser,
-        'OES_texture_float': !!this.renderer.extensions.get('OES_texture_float'),
-        'OES_texture_half_float': !!this.renderer.extensions.get('OES_texture_half_float'),
-        'WEBGL_color_buffer_float': !!this.renderer.extensions.get('WEBGL_color_buffer_float'),
         'testTextureSupport Float': testTextureSupport(gl.FLOAT),
         'testTextureSupport HalfFloat': testTextureSupport(0x8D61),
         'this.supportsHalfFloat': this.supportsHalfFloat,
