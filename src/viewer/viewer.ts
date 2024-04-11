@@ -320,9 +320,9 @@ export default class Viewer {
       clipScale: 'relative',
 
       lightColor: new Color(0xdddddd),
-      lightIntensity: 1.0,
+      lightIntensity: 1.2,
       ambientColor: new Color(0xdddddd),
-      ambientIntensity: 0.2,
+      ambientIntensity: 0.3,
 
       sampleLevel: 0,
 

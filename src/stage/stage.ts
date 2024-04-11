@@ -47,6 +47,7 @@ import Surface from '../surface/surface'
 import Volume from '../surface/volume'
 import Shape from '../geometry/shape'
 import Script from '../script'
+import { GenericColor } from '../types'
 
 function matchName (name: string|RegExp, object: { name: string }) {
   if (name instanceof RegExp) {
@@ -123,7 +124,7 @@ export const StageDefaultParameters = {
   quality: 'medium' as RenderQualityType,
   workerDefault: true,
   sampleLevel: 0,
-  backgroundColor: 'black' as string|number,
+  backgroundColor: 'black' as GenericColor,
   rotateSpeed: 2.0,
   zoomSpeed: 1.2,
   panSpeed: 1.0,
@@ -137,10 +138,10 @@ export const StageDefaultParameters = {
   cameraFov: 40,
   cameraEyeSep: 0.3,
   cameraType: 'perspective' as 'perspective'|'orthographic'|'stereo',
-  lightColor: 0xdddddd as string|number,
-  lightIntensity: 1.0,
-  ambientColor: 0xdddddd as string|number,
-  ambientIntensity: 0.2,
+  lightColor: 0xdddddd as GenericColor,
+  lightIntensity: 1.2,
+  ambientColor: 0xdddddd as GenericColor,
+  ambientIntensity: 0.3,
   hoverTimeout: 0,
   tooltip: true,
   mousePreset: 'default' as MouseControlPreset
