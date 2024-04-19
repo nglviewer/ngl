@@ -17,6 +17,7 @@ export interface StructureParserParameters extends ParserParameters {
 }
 class StructureParser extends Parser {
 
+  structure: Structure
   structureBuilder: StructureBuilder
 
   constructor (streamer: Streamer, params?: Partial<StructureParserParameters>) {

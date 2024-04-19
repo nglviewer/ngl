@@ -17,6 +17,7 @@ import Unitcell from '../symmetry/unitcell'
 import Assembly, { AssemblyPart } from '../symmetry/assembly'
 
 import { decodeMsgpack, decodeMmtf } from '../../lib/mmtf.es6'
+import type { Structure } from '../ngl'
 
 const SstrucMap: {[k: string]: number} = {
   '0': 'i'.charCodeAt(0), // pi helix
@@ -45,7 +46,7 @@ class MmtfParser extends StructureParser {
     const sd: {[k: string]: any} = decodeMmtf(decodeMsgpack(this.streamer.data))
 
     // structure header
-    const headerFields = [
+    const headerFields: (keyof Structure['header'])[] = [
       'depositionDate', 'releaseDate', 'resolution',
       'rFree', 'rWork', 'experimentalMethods'
     ]
@@ -122,7 +123,7 @@ class MmtfParser extends StructureParser {
 
     const gChainIndex = new Uint32Array(numGroups)
     const gAtomOffset = new Uint32Array(numGroups)
-    const gAtomCount = new Uint16Array(numGroups)
+    const gAtomCount = new Uint32Array(numGroups)
 
     const cModelIndex = new Uint16Array(numChains)
     const cGroupOffset = new Uint32Array(numChains)

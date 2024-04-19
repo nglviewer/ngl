@@ -210,7 +210,7 @@ class PrmtopParser extends StructureParser {
       sb.addAtom(0, '', '', curResname, curResno, false)
     }
 
-    atomStore.partialCharge.set(charges!)
+    atomStore.partialCharge!.set(charges!)
     atomStore.radius.set(radii!)
 
     s.bondStore.length = bBondOrder!.length

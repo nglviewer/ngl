@@ -22,7 +22,7 @@ export default class AtomStore extends Store {
   occupancy: Float32Array
 
   partialCharge?: Float32Array
-  formalCharge?: Uint8Array
+  formalCharge?: Int8Array
 
   get _defaultFields () {
     return [
