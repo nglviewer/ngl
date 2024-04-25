@@ -128,7 +128,8 @@ import WidelineBuffer from './buffer/wideline-buffer'
 
 //
 
-import './parser/cif-parser'
+import './parser/bcif-parser'
+// import './parser/cif-parser'
 import './parser/gro-parser'
 import './parser/mmtf-parser'
 import './parser/mol2-parser'

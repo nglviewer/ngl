@@ -5,7 +5,7 @@
  */
 
 import { Vector3, Matrix4 } from 'three'
-import { CIF, CifCategories, CifCategory, CifField } from 'molstar/lib/mol-io/reader/cif'
+import { CIF, CifBlock, CifCategories, CifCategory, CifField } from 'molstar/lib/mol-io/reader/cif'
 
 import { Debug, Log, ParserRegistry } from '../globals'
 import StructureParser from './structure-parser'
@@ -21,25 +21,13 @@ import {
 import { Structure } from '../ngl';
 import StructureBuilder from '../structure/structure-builder';
 
-const reDoubleQuote = /"/g
-const reTrimQuotes = /^['"]+|['"]+$/g
 const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
-
-interface Cif {[k: string]: any}
 
 function trimQuotes (str: string) {
   if (str && str[0] === str[ str.length - 1 ] && (str[0] === "'" || str[0] === '"')) {
     return str.substring(1, str.length - 1)
   } else {
     return str
-  }
-}
-
-function ensureArray (dict: {[k: string]: any[]}, field: string) {
-  if (!Array.isArray(dict[ field ])) {
-    Object.keys(dict).forEach(function (key) {
-      dict[ key ] = [ dict[ key ] ]
-    })
   }
 }
 
@@ -62,88 +50,86 @@ function getBondOrder (valueOrder: string) {
   return 0
 }
 
-function parseChemComp (cif: Cif, structure: Structure, structureBuilder: StructureBuilder) {
+function parseChemComp (cif: CifCategories, structure: Structure, structureBuilder: StructureBuilder) {
   const atomStore = structure.atomStore
   const atomMap = structure.atomMap
 
-  let i, n
+  let i: number, n: number
   const cc = cif.chem_comp
   const cca = cif.chem_comp_atom
   const ccb = cif.chem_comp_bond
+  let field: CifField | undefined
 
   if (cc) {
-    if (cc.name) {
-      structure.title = cc.name.trim().replace(reTrimQuotes, '')
+    if (field = cc.getField('name')) {
+      structure.title = field.str(0)
     }
-    if (cc.id) {
-      structure.id = cc.id.trim().replace(reTrimQuotes, '')
+    if (field = cc.getField('id')) {
+      structure.id = field.str(0)
     }
   }
 
-  var atomnameDict: {[k: string]: number} = {}
+  const atomnameDict: {[k: string]: number} = {}
 
   if (cca) {
-    ensureArray(cca, 'comp_id')
 
-    var atomname, element, resname, resno
-    n = cca.comp_id.length
+    let atomname, element, resname, resno
+    n = cca.rowCount
+    atomStore.resize(n * 2)
 
-    for (i = 0; i < n; ++i) {
-      atomStore.growIfFull()
+    const atomnameField = cca.getField('atom_id')!
+    const elementField = cca.getField('type_symbol')!
+    const resnameField = cca.getField('pdbx_component_comp_id')!
+    const resnoField = cca.getField('pdbx_residue_numbering');
 
-      atomname = cca.atom_id[ i ].replace(reDoubleQuote, '')
-      element = cca.type_symbol[ i ]
+    [
+      ['model_Cartn_x','model_Cartn_y','model_Cartn_z'], 
+      ['pdbx_model_Cartn_x_ideal','pdbx_model_Cartn_y_ideal','pdbx_model_Cartn_z_ideal',]
+    ].forEach(([xFieldName, yFieldName, zFieldName], modelindex) => {
+      const xField = cca.getField(xFieldName)!
+      const yField = cca.getField(yFieldName)!
+      const zField = cca.getField(zFieldName)!
+      const atomOffset = modelindex * n
 
-      atomnameDict[ atomname ] = i
-      atomStore.atomTypeId[ i ] = atomMap.add(atomname, element)
-
-      atomStore.x[ i ] = cca.model_Cartn_x[ i ]
-      atomStore.y[ i ] = cca.model_Cartn_y[ i ]
-      atomStore.z[ i ] = cca.model_Cartn_z[ i ]
-      atomStore.serial[ i ] = i
-
-      resname = cca.pdbx_component_comp_id[ i ]
-      resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1
-
-      structureBuilder.addAtom(0, '', '', resname, resno, true)
-    }
-
-    for (i = 0; i < n; ++i) {
-      var j = i + n
-
-      atomStore.growIfFull()
-
-      atomname = cca.atom_id[ i ].replace(reDoubleQuote, '')
-      element = cca.type_symbol[ i ]
-
-      atomStore.atomTypeId[ j ] = atomMap.add(atomname, element)
-
-      atomStore.x[ j ] = cca.pdbx_model_Cartn_x_ideal[ i ]
-      atomStore.y[ j ] = cca.pdbx_model_Cartn_y_ideal[ i ]
-      atomStore.z[ j ] = cca.pdbx_model_Cartn_z_ideal[ i ]
-      atomStore.serial[ j ] = j
-
-      resname = cca.pdbx_component_comp_id[ i ]
-      resno = cca.pdbx_residue_numbering ? cca.pdbx_residue_numbering[ i ] : 1
-
-      structureBuilder.addAtom(1, '', '', resname, resno, true)
-    }
+      for (let i = 0; i < n; ++i) {
+        const asindex = i + atomOffset
+        atomStore.growIfFull()
+  
+        atomname = atomnameField?.str(i)
+        element = elementField?.str(i)
+  
+        atomnameDict[ atomname ] = i
+        atomStore.atomTypeId[ asindex ] = atomMap.add(atomname, element)
+  
+        atomStore.x[ asindex ] = xField.float(i)
+        atomStore.y[ asindex ] = yField.float(i)
+        atomStore.z[ asindex ] = zField.float(i)
+        atomStore.serial[ asindex ] = i
+  
+        resname = resnameField.str(i)
+        resno = resnoField?.int(i) ?? 1
+  
+        structureBuilder.addAtom(modelindex, '', '', resname, resno, true)
+      }
+    })
   }
 
   if (cca && ccb) {
-    ensureArray(ccb, 'comp_id')
+    let atomname1, atomname2, bondOrder
+    n = ccb.rowCount
+    const na = cca.rowCount
 
-    var atomname1, atomname2, bondOrder
-    n = ccb.comp_id.length
-    var na = cca.comp_id.length
+    const ap1 = structure.getAtomProxy()
+    const ap2 = structure.getAtomProxy()
 
-    var ap1 = structure.getAtomProxy()
-    var ap2 = structure.getAtomProxy()
+    const atomname1Field = ccb.getField('atom_id_1')!
+    const atomname2Field = ccb.getField('atom_id_2')!
+    const bondOrderField = ccb.getField('value_order')!
 
     for (i = 0; i < n; ++i) {
-      atomname1 = ccb.atom_id_1[ i ].replace(reDoubleQuote, '')
-      atomname2 = ccb.atom_id_2[ i ].replace(reDoubleQuote, '')
-      bondOrder = getBondOrder(ccb.value_order[ i ])
+      atomname1 = atomname1Field.str(i)
+      atomname2 = atomname2Field.str(i)
+      bondOrder = getBondOrder(bondOrderField.str(i))
 
       ap1.index = atomnameDict[ atomname1 ]
       ap2.index = atomnameDict[ atomname2 ]
@@ -158,36 +144,46 @@ function parseChemComp (cif: Cif, structure: Structure, structureBuilder: Struct
   }
 }
 
-function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureBuilder) {
+function parseCore (cif: CifBlock, structure: Structure, structureBuilder: StructureBuilder) {
   var atomStore = structure.atomStore
   var atomMap = structure.atomMap
 
-  if (cif.data) {
-    structure.id = cif.data
-    structure.name = cif.data
+  if (cif.header) {
+    structure.id = cif.header
+    structure.name = cif.header
   }
+  
 
   structure.unitcell = new Unitcell({
-    a: parseFloat(cif.cell_length_a),
-    b: parseFloat(cif.cell_length_b),
-    c: parseFloat(cif.cell_length_c),
-    alpha: parseFloat(cif.cell_angle_alpha),
-    beta: parseFloat(cif.cell_angle_beta),
-    gamma: parseFloat(cif.cell_angle_gamma),
-    spacegroup: trimQuotes(cif['symmetry_space_group_name_H-M'])
+    a: cif.getField('cell_length_a')!.float(0),
+    b: cif.getField('cell_length_b')!.float(0), 
+    c: cif.getField('cell_length_c')!.float(0), 
+    alpha: cif.getField('cell_angle_alpha')!.float(0), 
+    beta: cif.getField('cell_angle_beta')!.float(0), 
+    gamma: cif.getField('cell_angle_gamma')!.float(0), 
+    spacegroup: cif.getField('symmetry_space_group_name_H-M')!.str(0)
   })
 
   const v = new Vector3()
   const c = new Vector3()
-  const n = cif.atom_site_type_symbol.length
+
+  const typeSymbolField = cif.getField('atom_site_type_symbol')
+  if (!typeSymbolField) return;
+
+  const n = typeSymbolField.rowCount ?? 0
+  const atomnameField = cif.getField('atom_site_type_symbol')!
+  const fractXField = cif.getField('atom_site_fract_x')!
+  const fractYField = cif.getField('atom_site_fract_y')!
+  const fractZField = cif.getField('atom_site_fract_z')!
+  const occField = cif.getField('atom_site_occupancy')
 
   const typeSymbolMap: Record<string, string> = {}
 
   for (let i = 0; i < n; ++i) {
     atomStore.growIfFull()
 
-    const atomname = cif.atom_site_label[ i ]
-    const typeSymbol = cif.atom_site_type_symbol[ i ]
+    const atomname = atomnameField.str(i)
+    const typeSymbol = typeSymbolField!.str(i)
 
     // typeSymbol can be like `Al2.5+`. Retain element symbol only.
     let element = typeSymbolMap[typeSymbol]
@@ -199,9 +195,9 @@ function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureB
     atomStore.atomTypeId[ i ] = atomMap.add(atomname, element)
 
     v.set(
-      cif.atom_site_fract_x[ i ],
-      cif.atom_site_fract_y[ i ],
-      cif.atom_site_fract_z[ i ]
+      fractXField.float(i),
+      fractYField.float(i),
+      fractZField.float(i)
     )
     v.applyMatrix4(structure.unitcell.fracToCart)
     c.add(v)
@@ -209,8 +205,8 @@ function parseCore (cif: Cif, structure: Structure, structureBuilder: StructureB
     atomStore.x[ i ] = v.x
     atomStore.y[ i ] = v.y
     atomStore.z[ i ] = v.z
-    if (cif.atom_site_occupancy) {
-      atomStore.occupancy[ i ] = parseFloat(cif.atom_site_occupancy[ i ])
+    if (occField) {
+      atomStore.occupancy[ i ] = occField.float(i)
     }
     atomStore.serial[ i ] = i
 
@@ -288,7 +284,6 @@ function processSecondaryStructure (cif: CifCategories, structure: Structure, as
 
   // get helices
   const sc = cif.struct_conf
-  debugger
 
   if (sc?.fieldNames.includes('pdbx_PDB_helix_class')) {
     const begIcodeField = sc.getField('pdbx_beg_PDB_ins_code')
@@ -808,9 +803,9 @@ function processEntities (cif: CifCategories, structure: Structure, chainIndexDi
 
 //
 
-class BinaryCifParser extends StructureParser {
-  get type () { return 'bcif' }
-  get isBinary () { return true}
+class CifParser extends StructureParser {
+  get type () { return 'cif' }
+  get isBinary () { return false}
 
   async _parse () {
     // http://mmcif.wwpdb.org/
@@ -830,104 +825,107 @@ class BinaryCifParser extends StructureParser {
 
     
     //
-    const data = CIF.parseBinary(this.streamer.data)
+    const data = this.isBinary ? CIF.parseBinary(this.streamer.data) : CIF.parseText(this.streamer.data)
     const parsed = await data.run()
     if (parsed.isError) {
       throw parsed;
     }
 
     const models = parsed.result.blocks[0]
-    
-    const asymIdDict: {[k: string]: string} = {}
-    const chainIndexDict:{[k: string]: Set<number>} = {}
 
-    
-    //
-
-    const atomMap = s.atomMap
-    const atomStore = s.atomStore
-    atomStore.resize(this.streamer.data.length / 100)
-
-    // var idx = 0
-    // var modelIdx = 0
-  
-
-    const atomSite = models.categories.atom_site
-    //@FIXME: this is wrong for multi models files
-    const numAtoms = atomSite.rowCount
-
-    const getFieldAsFloat32 = (cat: CifCategory, field: string) => {
-      const cifField = cat.getField(field)
-      if (!cifField) {
-        return new Float32Array()
-      }
-      return cifField.toFloatArray({array: Float32Array}) as unknown as Float32Array
-    }
-
-    atomStore.resize(numAtoms)
-    atomStore.x = getFieldAsFloat32(atomSite, 'Cartn_x')
-    atomStore.y = getFieldAsFloat32(atomSite, 'Cartn_y')
-    atomStore.z = getFieldAsFloat32(atomSite, 'Cartn_z')
-    atomStore.serial = atomSite.getField('id')!.toIntArray() as unknown as Int32Array
-    atomStore.bfactor = getFieldAsFloat32(atomSite, 'B_iso_or_equiv')
-    atomStore.occupancy = getFieldAsFloat32(atomSite, 'occupancy')
-    atomStore.altloc = atomSite.getField('label_alt_id')!.toIntArray({array: Uint8Array}) as unknown as Uint8Array
-
-    const atomnameField = atomSite.getField('label_atom_id')
-    const elementField = atomSite.getField('type_symbol')
-    const resnameField = atomSite.getField('label_comp_id')
-    const resnoField = atomSite.fieldNames.includes('auth_seq_id') ? atomSite.getField('auth_seq_id') : atomSite.getField('label_seq_id')
-    const inscodeField = atomSite.getField('pdbx_PDB_ins_code')
-    const chainnameField = atomSite.getField('auth_asym_id')
-    const chainidField = atomSite.getField('label_asym_id')
-    const heteroField = atomSite.getField('group_PDB')
-    const modelNumField = atomSite.getField('pdbx_PDB_model_num')
-    const entityIdField = atomSite.getField('label_entity_id')
-
-    for (let row = 0; row < numAtoms; row ++) {
-      const modelNum = modelNumField?.int(row) ?? 1
-      const chainname = chainnameField?.str(row) ?? ''
-      const chainid = chainidField?.str(row) ?? ''
-      const resname = resnameField?.str(row) ?? ''
-      const resno = resnoField?.int(row) ?? 0
-      const hetero = heteroField?.str(row)[0] === 'H'
-      const inscode = inscodeField?.str(row) ?? ''
-      const entityId = entityIdField?.int(row) ?? 1
-
-      atomStore.atomTypeId[ row ] = atomMap.add(atomnameField?.str(row) || '', elementField?.str(row))
-      sb.addAtom(modelNum - 1, chainname, chainid, resname, resno, hetero, undefined, inscode)
-
-      // chainname mapping: label_asym_id -> auth_asym_id
-      asymIdDict[ chainid ] = chainname
-
-      // entity mapping: chainIndex -> label_entity_id
-      if (!chainIndexDict[ entityId ]) {
-        chainIndexDict[ entityId ] = new Set()
-      }
-      chainIndexDict[ entityId ].add(s.chainStore.count - 1)
-
-    }
-
-
+    // PDB chemcomp dictionary schema
+    // (This is how the PDB dictionary for ligands is distributed)
     if ('chem_comp' in models.categories 
       && 'chem_comp_atom' in models.categories 
       && !('struct' in models.categories)
     ) {
-      //@FIXME
-      parseChemComp(models, s, sb)
+      parseChemComp(models.categories, s, sb)
       sb.finalize()
       s.finalizeAtoms()
       s.finalizeBonds()
       assignResidueTypeBonds(s)
-    } else if ('atom_site_type_symbol' in models.categories && 'atom_site_label' in models.categories && 'atom_site_fract_x' in models.categories) {
-      //@FIXME
+    } 
+    // IUCr core CIF schema
+    // (This format is used in IUCr publications, or databases such as COD)
+    else if ('atom_site_type_symbol' in models.categories && 'atom_site_label' in models.categories && 'atom_site_fract_x' in models.categories) {
       parseCore(models, s, sb)
       sb.finalize()
       s.finalizeAtoms()
       calculateBonds(s)
       s.finalizeBonds()
       // assignResidueTypeBonds( s );
-    } else {
+    } 
+    // PDBx/mmCIF schema
+    // (Preferred format from wwPDB for macromolecular data. PDBe also distributes 
+    // "Updated mmCif files" that notably contain intra-residue connectivities - chem_comp_bond records -)
+    else {
+      const asymIdDict: {[k: string]: string} = {}
+      const chainIndexDict:{[k: string]: Set<number>} = {}
+      const atomMap = s.atomMap
+      const atomStore = s.atomStore
+      atomStore.resize(this.streamer.data.length / 100)
+
+      //@TODO: handle multi models files
+      // var idx = 0
+      // var modelIdx = 0
+    
+
+      const atomSite = models.categories.atom_site
+      //@FIXME: this is wrong for multi models files
+      const numAtoms = atomSite.rowCount
+
+      const getFieldAsFloat32 = (cat: CifCategory, field: string) => {
+        const cifField = cat.getField(field)
+        if (!cifField) {
+          return new Float32Array()
+        }
+        return cifField.toFloatArray({array: Float32Array}) as unknown as Float32Array
+      }
+
+      atomStore.resize(numAtoms)
+      atomStore.x = getFieldAsFloat32(atomSite, 'Cartn_x')
+      atomStore.y = getFieldAsFloat32(atomSite, 'Cartn_y')
+      atomStore.z = getFieldAsFloat32(atomSite, 'Cartn_z')
+      atomStore.serial = atomSite.getField('id')!.toIntArray() as unknown as Int32Array
+      atomStore.bfactor = getFieldAsFloat32(atomSite, 'B_iso_or_equiv')
+      atomStore.occupancy = getFieldAsFloat32(atomSite, 'occupancy')
+      atomStore.altloc = atomSite.getField('label_alt_id')!.toIntArray({array: Uint8Array}) as unknown as Uint8Array
+
+      const atomnameField = atomSite.getField('label_atom_id')
+      const elementField = atomSite.getField('type_symbol')
+      const resnameField = atomSite.getField('label_comp_id')
+      const resnoField = atomSite.fieldNames.includes('auth_seq_id') ? atomSite.getField('auth_seq_id') : atomSite.getField('label_seq_id')
+      const inscodeField = atomSite.getField('pdbx_PDB_ins_code')
+      const chainnameField = atomSite.getField('auth_asym_id')
+      const chainidField = atomSite.getField('label_asym_id')
+      const heteroField = atomSite.getField('group_PDB')
+      const modelNumField = atomSite.getField('pdbx_PDB_model_num')
+      const entityIdField = atomSite.getField('label_entity_id')
+
+      for (let row = 0; row < numAtoms; row ++) {
+        const modelNum = modelNumField?.int(row) ?? 1
+        const chainname = chainnameField?.str(row) ?? ''
+        const chainid = chainidField?.str(row) ?? ''
+        const resname = resnameField?.str(row) ?? ''
+        const resno = resnoField?.int(row) ?? 0
+        const hetero = heteroField?.str(row)[0] === 'H'
+        const inscode = inscodeField?.str(row) ?? ''
+        const entityId = entityIdField?.int(row) ?? 1
+
+        atomStore.atomTypeId[ row ] = atomMap.add(atomnameField?.str(row) || '', elementField?.str(row))
+        sb.addAtom(modelNum - 1, chainname, chainid, resname, resno, hetero, undefined, inscode)
+
+        // chainname mapping: label_asym_id -> auth_asym_id
+        asymIdDict[ chainid ] = chainname
+
+        // entity mapping: chainIndex -> label_entity_id
+        if (!chainIndexDict[ entityId ]) {
+          chainIndexDict[ entityId ] = new Set()
+        }
+        chainIndexDict[ entityId ].add(s.chainStore.count - 1)
+
+      }
+
       const secStruct = processSecondaryStructure(models.categories, s, asymIdDict)
       processSymmetry(models.categories, s, asymIdDict)
       processConnections(models.categories, s, asymIdDict)
@@ -1021,7 +1019,13 @@ class BinaryCifParser extends StructureParser {
   }
 }
 
+class BinaryCifParser extends CifParser {
+  get type () { return 'bcif' }
+  get isBinary () { return true}
+}
+
 ParserRegistry.add('bcif', BinaryCifParser)
-console.log('added ')
+ParserRegistry.add('cif', CifParser)
+ParserRegistry.add('mmcif', CifParser)
 
 export default BinaryCifParser
