@@ -23,6 +23,18 @@ import StructureBuilder from '../structure/structure-builder';
 
 const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
 
+// source: dssp man page
+const cif2dssp = {
+  HELX_RH_AL_P: 'h',  // Alpha helix
+  STRN: 'e',          // Strand. Note Betabridge has the same mmcif code and is encoded with 'e' too instead of 'b'.
+  HELX_RH_3T_P: 'g',  // Helix 3-10
+  HELX_RH_PI_P: 'i',  // Pi Helix (5 turn)
+  HELX_LH_PP_P: 'e',  // Left handed polyproline Helix. Note, should be 'p', but encoded 'h' for consistency with PDB parsing
+  TURN_TY1_P: 't',    // Hydrogen bonded turn
+  BEND: 's',          // Bend
+  OTHER: ' ',         // Coil
+}
+
 function trimQuotes (str: string) {
   if (str && str[0] === str[ str.length - 1 ] && (str[0] === "'" || str[0] === '"')) {
     return str.substring(1, str.length - 1)
@@ -311,11 +323,52 @@ function processSecondaryStructure (cif: CifCategories, structure: Structure, as
       }
     }
   }
+  // AlphaFold mmCifs have their secondary structures assigned from DSSP 
+  // entirely defined in the `struct_conf` category  
+  else if (sc?.fieldNames.includes('conf_type_id')) {
+    const conftypeField = sc.getField('conf_type_id')!
+    const begIcodeField = sc.getField('pdbx_beg_PDB_ins_code')
+    const endIcodeField = sc.getField('pdbx_end_PDB_ins_code')
+    const begAsymIdField = sc.getField('beg_label_asym_id')
+    const endAsymIdField = sc.getField('end_label_asym_id')
+    const begSeqIdField = sc.getField('beg_auth_seq_id')
+    const endSeqIdField = sc.getField('end_auth_seq_id')
+    let dsspcode: string
+
+    for (i = 0, il = sc.rowCount; i < il; ++i) {
+      const conftype = conftypeField.str(i) as keyof typeof cif2dssp
+      if (dsspcode = cif2dssp[conftype]) {
+        begIcode = begIcodeField?.str(i) ?? ''
+        endIcode = endIcodeField?.str(i) ?? ''
+
+        if (dsspcode === 'h' || dsspcode === 'g' || dsspcode === 'i') {
+          helices.push([
+            asymIdDict[ begAsymIdField!.str(i) ],
+            begSeqIdField!.int(i),
+            begIcode,
+            asymIdDict[ endAsymIdField!.str(i) ],
+            endSeqIdField!.int(i),
+            endIcode,
+            dsspcode.charCodeAt(0)
+          ])
+        } else if (dsspcode === 'e') {
+          sheets.push([
+            asymIdDict[ begAsymIdField!.str(i) ],
+            begSeqIdField!.int(i),
+            begIcode,
+            asymIdDict[ endAsymIdField!.str(i) ],
+            endSeqIdField!.int(i),
+            endIcode
+          ])
+        }
+      }
+    }
+  }
 
   // get sheets
   const ssr = cif.struct_sheet_range
 
-  if (ssr) {
+  if (ssr && sheets.length === 0) {
     const begIcodeField = ssr.getField('pdbx_beg_PDB_ins_code')
     const endIcodeField = ssr.getField('pdbx_end_PDB_ins_code')
     const begAsymIdField = ssr.getField('beg_label_asym_id')
