@@ -20,6 +20,7 @@ import {
 } from '../structure/structure-utils'
 import { Structure } from '../ngl';
 import StructureBuilder from '../structure/structure-builder';
+import { NumberArray } from '../types'
 
 const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
 
@@ -868,13 +869,14 @@ class CifParser extends StructureParser {
     const s = this.structure
     const sb = this.structureBuilder
 
-    // const firstModelOnly = this.firstModelOnly
-    // const asTrajectory = this.asTrajectory
-    // const cAlphaOnly = this.cAlphaOnly
+    const firstModelOnly = this.firstModelOnly
+    const asTrajectory = this.asTrajectory
+    //@TODO add back the cAlphaOnly property
+    //const cAlphaOnly = this.cAlphaOnly
 
-    // const frames = s.frames
-    // let currentFrame: NumberArray
-    // let currentCoord: number
+    const frames = s.frames
+    let currentFrame: NumberArray
+    let currentCoord: number
 
     
     //
@@ -916,44 +918,49 @@ class CifParser extends StructureParser {
       const chainIndexDict:{[k: string]: Set<number>} = {}
       const atomMap = s.atomMap
       const atomStore = s.atomStore
-      atomStore.resize(this.streamer.data.length / 100)
-
-      //@TODO: handle multi models files
-      // var idx = 0
-      // var modelIdx = 0
-    
 
       const atomSite = models.categories.atom_site
-      //@FIXME: this is wrong for multi models files
-      const numAtoms = atomSite.rowCount
+      let numAtoms = atomSite.rowCount
+      const modelNumField = atomSite.getField('pdbx_PDB_model_num')
+      const hasSingleModel = modelNumField?.areValuesEqual(0, numAtoms - 1) ?? true
 
-      const getFieldAsFloat32 = (cat: CifCategory, field: string) => {
+      if (!hasSingleModel && (asTrajectory || firstModelOnly)) {
+        const firstModel = modelNumField!.int(0)
+        for (let i = 0 ; i < numAtoms; i++) {
+          if (modelNumField!.int(i) > firstModel) {
+            numAtoms = i
+            break;
+          }
+        }
+      }
+
+      const getFieldAsFloat32 = (cat: CifCategory, field: string, endAtom: number) => {
         const cifField = cat.getField(field)
         if (!cifField) {
-          return new Float32Array()
+          return new Float32Array(endAtom)
         }
-        return cifField.toFloatArray({array: Float32Array}) as unknown as Float32Array
+        return cifField.toFloatArray({array: Float32Array, start:0, end: endAtom}) as unknown as Float32Array
       }
 
       atomStore.resize(numAtoms)
-      atomStore.x = getFieldAsFloat32(atomSite, 'Cartn_x')
-      atomStore.y = getFieldAsFloat32(atomSite, 'Cartn_y')
-      atomStore.z = getFieldAsFloat32(atomSite, 'Cartn_z')
-      atomStore.serial = atomSite.getField('id')!.toIntArray() as unknown as Int32Array
-      atomStore.bfactor = getFieldAsFloat32(atomSite, 'B_iso_or_equiv')
-      atomStore.occupancy = getFieldAsFloat32(atomSite, 'occupancy')
-      atomStore.altloc = atomSite.getField('label_alt_id')!.toIntArray({array: Uint8Array}) as unknown as Uint8Array
+      atomStore.x = getFieldAsFloat32(atomSite, 'Cartn_x', numAtoms)
+      atomStore.y = getFieldAsFloat32(atomSite, 'Cartn_y', numAtoms)
+      atomStore.z = getFieldAsFloat32(atomSite, 'Cartn_z', numAtoms)
+      atomStore.serial = atomSite.getField('id')!.toIntArray({start: 0, end: numAtoms}) as unknown as Int32Array
+      atomStore.bfactor = getFieldAsFloat32(atomSite, 'B_iso_or_equiv', numAtoms)
+      atomStore.occupancy = getFieldAsFloat32(atomSite, 'occupancy', numAtoms)
+      atomStore.altloc = atomSite.getField('label_alt_id')!.toIntArray({array: Uint8Array, start: 0, end: numAtoms}) as unknown as Uint8Array
 
       const atomnameField = atomSite.getField('label_atom_id')
       const elementField = atomSite.getField('type_symbol')
       const resnameField = atomSite.getField('label_comp_id')
-      const resnoField = atomSite.fieldNames.includes('auth_seq_id') ? atomSite.getField('auth_seq_id') : atomSite.getField('label_seq_id')
+      const resnoField = atomSite.getField('auth_seq_id') ?? atomSite.getField('label_seq_id')
       const inscodeField = atomSite.getField('pdbx_PDB_ins_code')
       const chainnameField = atomSite.getField('auth_asym_id')
       const chainidField = atomSite.getField('label_asym_id')
       const heteroField = atomSite.getField('group_PDB')
-      const modelNumField = atomSite.getField('pdbx_PDB_model_num')
       const entityIdField = atomSite.getField('label_entity_id')
+      
 
       for (let row = 0; row < numAtoms; row ++) {
         const modelNum = modelNumField?.int(row) ?? 1
@@ -977,6 +984,27 @@ class CifParser extends StructureParser {
         }
         chainIndexDict[ entityId ].add(s.chainStore.count - 1)
 
+      }
+
+      if (asTrajectory) {
+        const nbFrames = (atomSite.rowCount / numAtoms) | 0
+        const xField = atomSite.getField('Cartn_x')!
+        const yField = atomSite.getField('Cartn_y')!
+        const zField = atomSite.getField('Cartn_z')!
+        for (let f  = 0; f < nbFrames; f ++) {
+          currentFrame = new Float32Array(numAtoms * 3);
+          const start = f * numAtoms
+          const end = start + numAtoms
+          currentCoord = 0
+          for (let i = start; i < end; i++) {
+            currentFrame[ currentCoord + 0 ] = xField.float(i)
+            currentFrame[ currentCoord + 1 ] = yField.float(i)
+            currentFrame[ currentCoord + 2 ] = zField.float(i)
+
+            currentCoord += 3
+          }
+          frames.push(currentFrame)
+        }
       }
 
       const secStruct = processSecondaryStructure(models.categories, s, asymIdDict)
