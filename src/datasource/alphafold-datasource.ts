@@ -5,7 +5,6 @@
  */
 
 import { Log, DatasourceRegistry } from '../globals'
-import { getProtocol } from '../utils'
 import { getFileInfo } from '../loader/loader-utils'
 import Datasource from './datasource'
 
@@ -23,7 +22,7 @@ class AlphafoldDatasource extends Datasource {
             Log.warn('unsupported AF ext', info.ext)
             url = baseUrl + uniprotid + suffixURL
         }
-        return getProtocol() + url
+        return 'https://' + url
     }
 
     getExt (src: string) {
