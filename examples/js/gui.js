@@ -524,7 +524,9 @@ NGL.MenubarFileWidget = function (stage) {
 
   function onPdbInputKeyDown (e) {
     if (e.keyCode === 13) {
-      stage.loadFile('rcsb://' + e.target.value.trim(), {
+      const val = e.target.value.trim()
+      const protocol = val.startsWith('AF_') ? 'rcsb://' : 'pdbe://'
+      stage.loadFile(protocol + val, {
         defaultRepresentation: true
       })
       e.target.value = ''
