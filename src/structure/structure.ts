@@ -44,6 +44,7 @@ import AtomProxy from '../proxy/atom-proxy'
 import ResidueProxy from '../proxy/residue-proxy'
 import ChainProxy from '../proxy/chain-proxy'
 import ModelProxy from '../proxy/model-proxy'
+import ChemCompMap from '../store/chemcomp-map'
 
 interface Structure {
   signals: StructureSignals
@@ -83,6 +84,7 @@ interface Structure {
 
   atomMap: AtomMap
   residueMap: ResidueMap
+  chemCompMap?: ChemCompMap
 
   bondHash?: BondHash
   spatialHash?: SpatialHash
@@ -175,6 +177,7 @@ class Structure implements Structure{
 
     this.atomMap = new AtomMap(this)
     this.residueMap = new ResidueMap(this)
+    this.chemCompMap = undefined
 
     this.bondHash = undefined
     this.spatialHash = undefined

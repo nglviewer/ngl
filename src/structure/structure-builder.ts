@@ -28,6 +28,7 @@ class StructureBuilder {
     const atomStore = this.structure.atomStore
     const residueStore = this.structure.residueStore
     const residueMap = this.structure.residueMap
+    const cc = this.structure.chemCompMap?.dict[this.previousResname!]
 
     const count = residueStore.atomCount[ ri ]
     const offset = residueStore.atomOffset[ ri ]
@@ -35,8 +36,10 @@ class StructureBuilder {
     for (let i = 0; i < count; ++i) {
       atomTypeIdList[ i ] = atomStore.atomTypeId[ offset + i ]
     }
+    const chemCompType = cc?.chemCompType
+    const bonds = cc ? this.structure.chemCompMap?.getBonds(this.previousResname!, atomTypeIdList) : undefined
     residueStore.residueTypeId[ ri ] = residueMap.add(
-      this.previousResname!, atomTypeIdList, this.previousHetero!  // TODO
+      this.previousResname!, atomTypeIdList, this.previousHetero!, chemCompType, bonds
     )
   }
 

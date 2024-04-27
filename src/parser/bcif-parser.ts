@@ -21,6 +21,7 @@ import {
 import { Structure } from '../ngl';
 import StructureBuilder from '../structure/structure-builder';
 import { NumberArray } from '../types'
+import ChemCompMap from '../store/chemcomp-map'
 
 const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
 
@@ -34,6 +35,18 @@ const cif2dssp = {
   TURN_TY1_P: 't',    // Hydrogen bonded turn
   BEND: 's',          // Bend
   OTHER: ' ',         // Coil
+}
+
+const valueOrder2bondOrder: Record<string, number> = {
+  AROM: 1,      // Same as in Mol2Parser and SdfParser
+  DELO: 2,
+  DIRECTED: 0,  // Ignore
+  DOUB: 2,
+  PI: 0,        // Ignore
+  POLY: 0,      // Ignore
+  QUAD: 4,
+  SING: 1,
+  TRIP: 3
 }
 
 function trimQuotes (str: string) {
@@ -919,6 +932,7 @@ class CifParser extends StructureParser {
       const atomMap = s.atomMap
       const atomStore = s.atomStore
 
+      // Find atom count (depending on asTrajectory and firstModelOnly flags)
       const atomSite = models.categories.atom_site
       let numAtoms = atomSite.rowCount
       const modelNumField = atomSite.getField('pdbx_PDB_model_num')
@@ -931,6 +945,31 @@ class CifParser extends StructureParser {
             numAtoms = i
             break;
           }
+        }
+      }
+
+      // Collect chem_comp data for intra-residues connectivity if present
+      s.chemCompMap = new ChemCompMap(s)
+      const cc = models.categories.chem_comp
+      let resnameField = cc.getField('id')!
+      const ccTypeField = cc.getField('type')!
+
+      for (let i = 0; i < cc.rowCount; i++) {
+        s.chemCompMap.add(resnameField.str(i), ccTypeField.str(i).toUpperCase())
+      }
+
+      // "Updated" mmcif files from PDBe also contain connectivity from PDB chemcomp dictionary
+      if (models.categoryNames.includes('chem_comp_bond')) {
+        const ccb = models.categories.chem_comp_bond
+        resnameField = ccb.getField('comp_id')!
+        const atom1Field = ccb.getField('atom_id_1')!
+        const atom2Field = ccb.getField('atom_id_2')!
+        const bondOrderField = ccb.getField('value_order')!
+
+        for (let i = 0; i < ccb.rowCount; i++) {
+          const order = valueOrder2bondOrder[bondOrderField.str(i)]
+          if (!order) continue;
+          s.chemCompMap.addBond(resnameField.str(i), atom1Field.str(i), atom2Field.str(i), order)
         }
       }
 
@@ -953,7 +992,7 @@ class CifParser extends StructureParser {
 
       const atomnameField = atomSite.getField('label_atom_id')
       const elementField = atomSite.getField('type_symbol')
-      const resnameField = atomSite.getField('label_comp_id')
+      resnameField = atomSite.getField('label_comp_id')!
       const resnoField = atomSite.getField('auth_seq_id') ?? atomSite.getField('label_seq_id')
       const inscodeField = atomSite.getField('pdbx_PDB_ins_code')
       const chainnameField = atomSite.getField('auth_asym_id')
