@@ -1,5 +1,6 @@
 /**
- * @file Binary-cif Parser
+ * @file Cif Parser
+ * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @author Paul Pillot <paul.pillot@tandemai.com>
  * @private
  */
@@ -899,15 +900,15 @@ class CifParser extends StructureParser {
       throw parsed;
     }
 
-    const models = parsed.result.blocks[0]
+    const cif = parsed.result.blocks[0]
 
     // PDB chemcomp dictionary schema
     // (This is how the PDB dictionary for ligands is distributed)
-    if ('chem_comp' in models.categories 
-      && 'chem_comp_atom' in models.categories 
-      && !('struct' in models.categories)
+    if ('chem_comp' in cif.categories 
+      && 'chem_comp_atom' in cif.categories 
+      && !('struct' in cif.categories)
     ) {
-      parseChemComp(models.categories, s, sb)
+      parseChemComp(cif.categories, s, sb)
       sb.finalize()
       s.finalizeAtoms()
       s.finalizeBonds()
@@ -915,8 +916,8 @@ class CifParser extends StructureParser {
     } 
     // IUCr core CIF schema
     // (This format is used in IUCr publications, or databases such as COD)
-    else if ('atom_site_type_symbol' in models.categories && 'atom_site_label' in models.categories && 'atom_site_fract_x' in models.categories) {
-      parseCore(models, s, sb)
+    else if ('atom_site_type_symbol' in cif.categories && 'atom_site_label' in cif.categories && 'atom_site_fract_x' in cif.categories) {
+      parseCore(cif, s, sb)
       sb.finalize()
       s.finalizeAtoms()
       calculateBonds(s)
@@ -933,7 +934,7 @@ class CifParser extends StructureParser {
       const atomStore = s.atomStore
 
       // Find atom count (depending on asTrajectory and firstModelOnly flags)
-      const atomSite = models.categories.atom_site
+      const atomSite = cif.categories.atom_site
       let numAtoms = atomSite.rowCount
       const modelNumField = atomSite.getField('pdbx_PDB_model_num')
       const hasSingleModel = modelNumField?.areValuesEqual(0, numAtoms - 1) ?? true
@@ -950,7 +951,7 @@ class CifParser extends StructureParser {
 
       // Collect chem_comp data for intra-residues connectivity if present
       s.chemCompMap = new ChemCompMap(s)
-      const cc = models.categories.chem_comp
+      const cc = cif.categories.chem_comp
       let resnameField = cc.getField('id')!
       const ccTypeField = cc.getField('type')!
 
@@ -959,8 +960,8 @@ class CifParser extends StructureParser {
       }
 
       // "Updated" mmcif files from PDBe also contain connectivity from PDB chemcomp dictionary
-      if (models.categoryNames.includes('chem_comp_bond')) {
-        const ccb = models.categories.chem_comp_bond
+      if (cif.categoryNames.includes('chem_comp_bond')) {
+        const ccb = cif.categories.chem_comp_bond
         resnameField = ccb.getField('comp_id')!
         const atom1Field = ccb.getField('atom_id_1')!
         const atom2Field = ccb.getField('atom_id_2')!
@@ -1046,24 +1047,24 @@ class CifParser extends StructureParser {
         }
       }
 
-      const secStruct = processSecondaryStructure(models.categories, s, asymIdDict)
-      processSymmetry(models.categories, s, asymIdDict)
-      processConnections(models.categories, s, asymIdDict)
-      processEntities(models.categories, s, chainIndexDict)
+      const secStruct = processSecondaryStructure(cif.categories, s, asymIdDict)
+      processSymmetry(cif.categories, s, asymIdDict)
+      processConnections(cif.categories, s, asymIdDict)
+      processEntities(cif.categories, s, chainIndexDict)
 
       let field: CifField | undefined
       let valData: string | number | undefined
 
-      if (field = models.categories.struct?.getField('title')) {
+      if (field = cif.categories.struct?.getField('title')) {
         if (valData = field.str(0)) s.title = valData
       }
-      if (field = models.categories.entry?.getField('id')) {
+      if (field = cif.categories.entry?.getField('id')) {
         if (valData = field.str(0)) s.id = valData
       }
 
       // structure header (mimicking biojava)
-      if (models.categories.pdbx_audit_revision_history) {
-        if (field = models.categories.pdbx_audit_revision_history?.getField('revision_date')) {
+      if (cif.categories.pdbx_audit_revision_history) {
+        if (field = cif.categories.pdbx_audit_revision_history?.getField('revision_date')) {
           for (let i = 0; i < field.rowCount; i++) {
             if (valData = field.str(i)) {
               s.header.releaseDate = valData
@@ -1071,7 +1072,7 @@ class CifParser extends StructureParser {
             }
           }
         }
-        if (field = models.categories.pdbx_database_status?.getField('recvd_initial_deposition_date')) {
+        if (field = cif.categories.pdbx_database_status?.getField('recvd_initial_deposition_date')) {
           for (let i = 0; i < field.rowCount; i++) {
             if (valData = field.str(i)) {
               s.header.depositionDate = valData
@@ -1079,8 +1080,8 @@ class CifParser extends StructureParser {
             }
           }
         }
-      } else if (models.categories.database_PDB_rev) {
-        if (field = models.categories.database_PDB_rev?.getField('date')) {
+      } else if (cif.categories.database_PDB_rev) {
+        if (field = cif.categories.database_PDB_rev?.getField('date')) {
           for (let i = 0; i < field.rowCount; i++) {
             if (valData = field.str(i)) {
               s.header.releaseDate = valData
@@ -1088,7 +1089,7 @@ class CifParser extends StructureParser {
             }
           }
         }
-        if (field = models.categories.database_PDB_rev?.getField('date_original')) {
+        if (field = cif.categories.database_PDB_rev?.getField('date_original')) {
           for (let i = 0; i < field.rowCount; i++) {
             if (valData = field.str(i)) {
               s.header.depositionDate = valData
@@ -1098,25 +1099,25 @@ class CifParser extends StructureParser {
         }
       }
 
-      if (field = models.categories.reflns?.getField('d_resolution_high') ?? models.categories.refine?.getField('ls_d_res_high')) {
+      if (field = cif.categories.reflns?.getField('d_resolution_high') ?? cif.categories.refine?.getField('ls_d_res_high')) {
         if (Number.isFinite(valData = field.float(0))) {
           s.header.resolution = valData
         }
       }
 
-      if ( field = models.categories.refine?.getField('ls_R_factor_R_free')) {
+      if ( field = cif.categories.refine?.getField('ls_R_factor_R_free')) {
         if (Number.isFinite(valData = field.float(0))) {
           s.header.rFree = valData
         }
       }
 
-      if ( field = models.categories.refine?.getField('ls_R_factor_R_work')) {
+      if ( field = cif.categories.refine?.getField('ls_R_factor_R_work')) {
         if (Number.isFinite(valData = field.float(0))) {
           s.header.rFree = valData
         }
       }
 
-      if ( field = models.categories.exptl?.getField('method')) {
+      if ( field = cif.categories.exptl?.getField('method')) {
         s.header.experimentalMethods = field.toStringArray().slice()
       }
 
@@ -1132,7 +1133,7 @@ class CifParser extends StructureParser {
       }
       buildUnitcellAssembly(s)
 
-      s.extraData.cif = models
+      s.extraData.cif = cif
     }
 
     if (Debug) Log.timeEnd('CifParser._parse ' + this.name)
@@ -1146,6 +1147,7 @@ class BinaryCifParser extends CifParser {
 
 ParserRegistry.add('bcif', BinaryCifParser)
 ParserRegistry.add('cif', CifParser)
+ParserRegistry.add('mcif', CifParser)
 ParserRegistry.add('mmcif', CifParser)
 
 export default BinaryCifParser
