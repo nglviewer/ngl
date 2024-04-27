@@ -10,7 +10,7 @@ import { getFileInfo } from '../loader/loader-utils'
 import Datasource from './datasource'
 
 const baseUrl = '//alphafold.ebi.ac.uk/files/AF-'
-const suffixURL = '-F1-model_v2.pdb'
+const suffixURL = '-F1-model_v4.pdb'
 
 class AlphafoldDatasource extends Datasource {
     getUrl (src: string) {
