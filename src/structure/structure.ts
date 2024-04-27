@@ -6,6 +6,7 @@
 
 import { Vector3, Box3 } from 'three'
 import { Signal } from 'signals'
+import { CifBlock } from 'molstar/lib/mol-io/reader/cif'
 
 import { Debug, Log, ColormakerRegistry } from '../globals'
 import { defaults } from '../utils'
@@ -120,7 +121,7 @@ export type StructureHeader = {
 }
 
 export type StructureExtraData = {
-  cif?: object
+  cif?: CifBlock
   sdf?: object[]
 }
 
