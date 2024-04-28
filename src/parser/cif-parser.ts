@@ -887,10 +887,9 @@ class CifParser extends StructureParser {
     const frames = s.frames
     let currentFrame: NumberArray
     let currentCoord: number
-
     
     //
-    const data = this.isBinary ? CIF.parseBinary(this.streamer.data) : CIF.parseText(this.streamer.data)
+    const data = this.streamer.isBinary() ? CIF.parseBinary(this.streamer.data) : CIF.parseText(this.streamer.data)
     const parsed = await data.run()
     if (parsed.isError) {
       throw parsed;
@@ -1146,4 +1145,4 @@ ParserRegistry.add('cif', CifParser)
 ParserRegistry.add('mcif', CifParser)
 ParserRegistry.add('mmcif', CifParser)
 
-export default BinaryCifParser
+export default CifParser
