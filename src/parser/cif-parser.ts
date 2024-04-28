@@ -50,18 +50,6 @@ const valueOrder2bondOrder: Record<string, number> = {
   TRIP: 3
 }
 
-function trimQuotes (str: string) {
-  if (str && str[0] === str[ str.length - 1 ] && (str[0] === "'" || str[0] === '"')) {
-    return str.substring(1, str.length - 1)
-  } else {
-    return str
-  }
-}
-
-function hasValue (d: string) {
-  return d !== '?'
-}
-
 function getBondOrder (valueOrder: string) {
   switch (valueOrder.toLowerCase()) {
     case '?': // assume single bond
@@ -624,9 +612,8 @@ function processSymmetry (cif: CifCategories, structure: Structure, asymIdDict: 
   }
 
   if (cif.symmetry) {
-    unitcellDict.spacegroup = trimQuotes(
-      cif.symmetry.getField('space_group_name_H-M')!.str(0)
-    )
+    unitcellDict.spacegroup = cif.symmetry.getField('space_group_name_H-M')!.str(0)
+    
   }
 
   // origx
@@ -724,7 +711,6 @@ function processConnections (cif: CifCategories, structure: Structure, asymIdDic
 
   if (sc) {
     
-    const reDoubleQuote = /"/g
     const ap1 = structure.getAtomProxy()
     const ap2 = structure.getAtomProxy()
     const atomIndicesCache: {[k: string]: Uint32Array|undefined} = {}
