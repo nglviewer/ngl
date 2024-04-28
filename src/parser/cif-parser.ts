@@ -1081,20 +1081,20 @@ class CifParser extends StructureParser {
       }
 
       if (field = cif.categories.reflns?.getField('d_resolution_high') ?? cif.categories.refine?.getField('ls_d_res_high')) {
-        if (Number.isFinite(valData = field.float(0))) {
-          s.header.resolution = valData
+        if (field.valueKind(0) === 0) { // is value present?
+          s.header.resolution = field.float(0)
         }
       }
 
       if ( field = cif.categories.refine?.getField('ls_R_factor_R_free')) {
-        if (Number.isFinite(valData = field.float(0))) {
-          s.header.rFree = valData
+        if (field.valueKind(0) === 0) { // is value present?
+          s.header.rFree = field.float(0)
         }
       }
 
       if ( field = cif.categories.refine?.getField('ls_R_factor_R_work')) {
-        if (Number.isFinite(valData = field.float(0))) {
-          s.header.rFree = valData
+        if (field.valueKind(0) === 0) { // is value present?
+          s.header.rFree = field.float(0)
         }
       }
 
