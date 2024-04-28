@@ -636,18 +636,18 @@ function processSymmetry (cif: CifCategories, structure: Structure, asymIdDict: 
     const origxMat = cif.database_PDB_matrix
     const origxElms = origx.elements
 
-    const mat_1_1Field = origxMat.getField('matrix[1][1]')!
-    const mat_1_2Field = origxMat.getField('matrix[1][2]')!
-    const mat_1_3Field = origxMat.getField('matrix[1][3]')!
-    const mat_2_1Field = origxMat.getField('matrix[2][1]')!
-    const mat_2_2Field = origxMat.getField('matrix[2][2]')!
-    const mat_2_3Field = origxMat.getField('matrix[2][3]')!
-    const mat_3_1Field = origxMat.getField('matrix[3][1]')!
-    const mat_3_2Field = origxMat.getField('matrix[3][2]')!
-    const mat_3_3Field = origxMat.getField('matrix[3][3]')!
-    const vec1Field = origxMat.getField('vector[1]')!
-    const vec2Field = origxMat.getField('vector[2]')!
-    const vec3Field = origxMat.getField('vector[3]')!
+    const mat_1_1Field = origxMat.getField('origx[1][1]')!
+    const mat_1_2Field = origxMat.getField('origx[1][2]')!
+    const mat_1_3Field = origxMat.getField('origx[1][3]')!
+    const mat_2_1Field = origxMat.getField('origx[2][1]')!
+    const mat_2_2Field = origxMat.getField('origx[2][2]')!
+    const mat_2_3Field = origxMat.getField('origx[2][3]')!
+    const mat_3_1Field = origxMat.getField('origx[3][1]')!
+    const mat_3_2Field = origxMat.getField('origx[3][2]')!
+    const mat_3_3Field = origxMat.getField('origx[3][3]')!
+    const vec1Field = origxMat.getField('origx_vector[1]')!
+    const vec2Field = origxMat.getField('origx_vector[2]')!
+    const vec3Field = origxMat.getField('origx_vector[3]')!
 
     origxElms[ 0 ] = mat_1_1Field.float(0)
     origxElms[ 1 ] = mat_1_2Field.float(0)
