@@ -775,11 +775,11 @@ function processConnections (cif: CifCategories, structure: Structure, asymIdDic
       const inscode1 = ptnr1InsCodeField.str(i)
       const altloc1 = ptnr1AltLocField.str(i)
       const sele1 = (
-        ptnr1SeqIdField +
-        (hasValue(inscode1) ? ('^' + inscode1) : '') +
+        ptnr1SeqIdField.str(i) +
+        (inscode1 ? ('^' + inscode1) : '') +
         ':' + asymIdDict[ ptnr1AsymIdField.str(i) ] +
-        '.' + ptnr1AtomIdField.str(i).replace(reDoubleQuote, '') +
-        (hasValue(altloc1) ? ('%' + altloc1) : '')
+        '.' + ptnr1AtomIdField.str(i) +
+        (altloc1 ? ('%' + altloc1) : '')
       )
       let atomIndices1 = atomIndicesCache[ sele1 ]
       if (!atomIndices1) {
@@ -795,11 +795,11 @@ function processConnections (cif: CifCategories, structure: Structure, asymIdDic
       const inscode2 = ptnr2InsCodeField.str(i)
       const altloc2 = ptnr2AltLocField.str(i)
       const sele2 = (
-        ptnr2SeqIdField +
-        (hasValue(inscode2) ? ('^' + inscode2) : '') +
+        ptnr2SeqIdField.str(i) +
+        (inscode2 ? ('^' + inscode2) : '') +
         ':' + asymIdDict[ ptnr2AsymIdField.str(i) ] +
-        '.' + ptnr2AtomIdField.str(i).replace(reDoubleQuote, '') +
-        (hasValue(altloc2) ? ('%' + altloc2) : '')
+        '.' + ptnr2AtomIdField.str(i) +
+        (altloc2 ? ('%' + altloc2) : '')
       )
       let atomIndices2 = atomIndicesCache[ sele2 ]
       if (!atomIndices2) {
@@ -821,12 +821,8 @@ function processConnections (cif: CifCategories, structure: Structure, asymIdDic
       var l = atomIndices2!.length
 
       if (k > l) {
-        var tmpA = k
-        k = l
-        l = tmpA
-        var tmpB = atomIndices1
-        atomIndices1 = atomIndices2
-        atomIndices2 = tmpB
+        [ k , l ] = [ l , k ];
+        [atomIndices1, atomIndices2] = [atomIndices2, atomIndices1]
       }
 
       // console.log( k, l );
