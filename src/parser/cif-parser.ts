@@ -487,8 +487,9 @@ function processSymmetry (cif: CifCategories, structure: Structure, asymIdDict: 
       let md:{[k: string]: Matrix4} = {}
       let oe = operExpressionField.str(i).replace(/['"]\(|['"]/g, '')
 
+      // Example: '(1,2,6,10,23,24)' and '(X0)(1-60)' in 6CGV
       if (oe.includes(')(') || oe.indexOf('(') > 0) {
-        const [oe1, oe2] = oe.split('(')
+        const [oe1, oe2] = oe.split('(').filter(piece => !!piece)
 
         const md1 = getMatrixDict(oe1)
         const md2 = getMatrixDict(oe2)
