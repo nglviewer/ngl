@@ -979,8 +979,12 @@ class CifParser extends StructureParser {
       atomStore.serial = atomSite.getField('id')!.toIntArray({start: 0, end: numAtoms}) as unknown as Int32Array
       atomStore.bfactor = getFieldAsFloat32(atomSite, 'B_iso_or_equiv', numAtoms)
       atomStore.occupancy = getFieldAsFloat32(atomSite, 'occupancy', numAtoms)
-      atomStore.altloc = atomSite.getField('label_alt_id')!.toIntArray({array: Uint8Array, start: 0, end: numAtoms}) as unknown as Uint8Array
-
+      
+      const altlocField = atomSite.getField('label_alt_id')
+      if (altlocField?.isDefined) {
+        atomStore.altloc = Uint8Array.from(altlocField.toStringArray(), c => c.charCodeAt(0))
+      }
+      
       const atomnameField = atomSite.getField('label_atom_id')
       const elementField = atomSite.getField('type_symbol')
       resnameField = atomSite.getField('label_comp_id')!
