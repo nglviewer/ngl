@@ -23,6 +23,7 @@ import { Structure } from '../ngl';
 import StructureBuilder from '../structure/structure-builder';
 import { NumberArray } from '../types'
 import ChemCompMap from '../store/chemcomp-map'
+import { uint8ToString } from '../utils'
 
 const reAtomSymbol = /^\D{1,2}/ // atom symbol in atom_site_label
 
@@ -856,7 +857,7 @@ function processEntities (cif: CifCategories, structure: Structure, chainIndexDi
 
 class CifParser extends StructureParser {
   get type () { return 'cif' }
-  get isBinary () { return false}
+  get isBinary () { return false }
 
   async _parse () {
     // http://mmcif.wwpdb.org/
@@ -875,8 +876,15 @@ class CifParser extends StructureParser {
     let currentFrame: NumberArray
     let currentCoord: number
     
-    //
-    const data = this.streamer.isBinary() ? CIF.parseBinary(this.streamer.data) : CIF.parseText(this.streamer.data)
+    // CIF library expects a string for regular cif/mmCIF files and an ArrayBuffer for binary CIF files.
+    // As compressed CIF files are returned as an ArrayBuffer from Streamer.read(), they need to be 
+    // explicitly converted to a string.
+    const data = this.isBinary
+      ? CIF.parseBinary(this.streamer.data)
+      : CIF.parseText(this.streamer.compressed 
+        ? uint8ToString(this.streamer.data)
+        : this.streamer.data
+      )
     const parsed = await data.run()
     if (parsed.isError) {
       throw parsed;
@@ -1124,7 +1132,7 @@ class CifParser extends StructureParser {
 
 class BinaryCifParser extends CifParser {
   get type () { return 'bcif' }
-  get isBinary () { return true}
+  get isBinary () { return true }
 }
 
 ParserRegistry.add('bcif', BinaryCifParser)
