@@ -1,6 +1,6 @@
 /**
- * @file RCSB Datasource
- * @author Alexander Rose <alexander.rose@weirdbyte.de>
+ * @file PDB Europe Datasource
+ * @author Paul Pillot <paul.pillot@tandemai.com>
  * @private
  */
 
