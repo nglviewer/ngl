@@ -844,8 +844,9 @@ function processEntities (cif: CifCategories, structure: Structure, chainIndexDi
     const descriptionField = e.getField('pdbx_description')!
     const typeField = e.getField('type')!
     const n = e.rowCount
-    for (let i = 0; i < n; ++i) {
-      const chainIndexList: number[] = Array.from(chainIndexDict[ idField.int(i) ])
+    for (let i = 0; i < n; ++i) { 
+      // 7a4p has a missing entity in chainIndexDict (entity 20 has no coordinates)
+      const chainIndexList: number[] = Array.from(chainIndexDict[ idField.int(i) ] ?? [])
       structure.entityList[ i ] = new Entity(
         structure, i, descriptionField?.str(i), typeField.str(i) as EntityTypeString, chainIndexList
       )
