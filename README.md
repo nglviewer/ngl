@@ -45,7 +45,7 @@ Usage
 
 Since the NGL Viewer is a set of static files to be viewed in a web-browser there is not much of an installation needed. For development purposes it will be helpful to clone this repository and serve it locally (see below). When embedding the NGL Viewer as a library it is sufficient to include the self contained build [dist/ngl.js](dist/ngl.js). A full web application including a GUI can be found in the [examples](examples/) directory.
 
-To install the current release from npm do `npm install ngl`. To install a development release from npm do `npm install ngl@next` or `npm install ngl@ts2`.
+To install the current release from npm do `npm install ngl`.
 
 Acknowledgments
 ---------------
@@ -58,7 +58,7 @@ This project would not be possible without many fine open-source projects. Espec
 * [sprintf.js](https://github.com/alexei/sprintf.js) - for formatting text
 * [jsfeat](http://inspirit.github.io/jsfeat/) - the SVD code for the superposition method is from jsfeat
 * [ESDoc](https://esdoc.org/) - for documentation
-* [Jest](https://jest.io/) and [ts-jest](https://github.com/kulshekhar/ts-jest) - for unit testing
+* [Vitest](https://vitest.dev/) - for unit testing
 * [Chroma.js](https://github.com/gka/chroma.js) - for color handling
 * [FlexiColorPicker](https://github.com/DavidDurman/FlexiColorPicker) - for color picking
 * [Virtual DOM List](https://github.com/sergi/virtual-list)
@@ -68,7 +68,8 @@ This project would not be possible without many fine open-source projects. Espec
 * [pako - zlib port](https://github.com/nodeca/pako)
 * [Open Source PyMOL](http://sourceforge.net/projects/pymol/) - screen aligned cylinder shader
 * [VTK](http://www.vtk.org/) Quadric shader code from the PointSprite Plugin - quadric surface center calculation
-* [HyperBalls](http://sourceforge.net/projects/hyperballs/) - hyperball stick shader - Chavent, M., Vanel, A., Tek, A., Levy, B., Robert, S., Raffin, B., &amp; Baaden, M. (2011). GPU-accelerated atom and dynamic bond visualization using hyperballs: a unified algorithm for balls, sticks, and hyperboloids. Journal of Computational Chemistry, 32(13), 2924–35. [doi:10.1002/jcc.21861](https://dx.doi.org/10.1002/jcc.21861)
+* [HyperBalls](http://sourceforge.net/projects/hyperballs/) - hyperball stick shader - Chavent, M., Vanel, A., Tek, A., Levy, B., Robert, S., Raffin, B., &amp; Baaden, M. (2011). GPU-accelerated atom and dynamic bond visualization using hyperballs: a unified algorithm for balls, sticks, and hyperboloids. Journal of Computational Chemistry, 32(13), 2924–35. [doi:10.1002/jcc.21861](https://doi.org/10.1002/jcc.21861)
+* [Mol*](https://molstar.org) - for parsing CIF and binaryCIF files - David Sehnal, Sebastian Bittrich, Mandar Deshpande, Radka Svobodová, Karel Berka, Václav Bazgier, Sameer Velankar, Stephen K Burley, Jaroslav Koča, Alexander S Rose: Mol* Viewer: modern web app for 3D visualization and analysis of large biomolecular structures, Nucleic Acids Research, 2021. [doi:10.1093/nar/gkab31](https://doi.org/10.1093/nar/gkab31).
 
 
 Funding sources:

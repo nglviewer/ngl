@@ -1,6 +1,25 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.3.0]
+- Summary of changes from v2.2.2
+### Added
+ - Support binary CIF files
+ - Parse connectivity from PDBe updated mmCif format
+ - PDBe as new datasource
+### Changed
+ - RCSB provider now defaults to binary CIF download instead of deprecated MMTF format
+ - Upgrade Three.js dependency to v0.158. Upgrade dependencies to resolve issues reported by npm audit
+ - Dev: replace Jest test runner with Vitest
+### Removed
+ - .PLY parser has been removed due its reliance on primitives unavailable in newest Three.js versions
+
+## [v2.2.2]
+- Summary of changes from v2.2.0
+### Changed
+ - Fix coreCif (elements with charges), mmCif (handle chem_comp block) files parsing
+ - Fix Colormaker class after v2.2.0 change in bundling
+
 ## [v2.2.0]
 - Summary of changes from v2.1.1
 ### Added
