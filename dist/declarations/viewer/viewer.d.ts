@@ -4,7 +4,7 @@
  * @private
  */
 import { Signal } from 'signals';
-import { PerspectiveCamera, OrthographicCamera, Box3, Matrix4, Color, WebGLRenderer, WebGLRenderTarget, Scene, Group, TextureEncoding } from 'three';
+import { PerspectiveCamera, OrthographicCamera, Box3, Matrix4, Color, WebGLRenderer, WebGLRenderTarget, Scene, Group, ColorSpace } from 'three';
 import '../shader/BasicLine.vert';
 import '../shader/BasicLine.frag';
 import '../shader/Quad.vert';
@@ -37,7 +37,7 @@ export interface ViewerParameters {
     ambientColor: Color;
     ambientIntensity: number;
     sampleLevel: number;
-    rendererEncoding: TextureEncoding;
+    outputColorSpace: ColorSpace;
 }
 export interface BufferInstance {
     matrix: Matrix4;
@@ -68,7 +68,7 @@ export default class Viewer {
     width: number;
     height: number;
     scene: Scene;
-    private spotLight;
+    private directionalLight;
     private ambientLight;
     rotationGroup: Group;
     translationGroup: Group;
@@ -133,7 +133,7 @@ export default class Viewer {
      * In all cases, the output is always sRGB; this just affects how colors are computed internally.
      * Call this just after creating the viewer, before loading any models.
      */
-    setColorWorkflow(encoding: ColorWorkflow): void;
+    setColorWorkflow(colorspace: ColorSpace): void;
     setCamera(type: CameraType, fov?: number, eyeSep?: number): void;
     setClip(near: number, far: number, dist: number, clipMode?: string, clipScale?: string): void;
     setSize(width: number, height: number): void;

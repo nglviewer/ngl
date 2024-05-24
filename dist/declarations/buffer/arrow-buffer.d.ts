@@ -92,9 +92,9 @@ declare class ArrowBuffer {
     cylinderRadius: Float32Array;
     geometry: GeometryGroup;
     picking?: Picker;
-    group: Group;
-    wireframeGroup: Group;
-    pickingGroup: Group;
+    group: Group<import("three").Object3DEventMap>;
+    wireframeGroup: Group<import("three").Object3DEventMap>;
+    pickingGroup: Group<import("three").Object3DEventMap>;
     visible: boolean;
     /**
      * @param {Object} data - buffer data
@@ -113,9 +113,9 @@ declare class ArrowBuffer {
         cylinder: Partial<CylinderBufferData>;
         cone: Partial<ConeBufferData>;
     };
-    getMesh(): Group;
-    getWireframeMesh(): Group;
-    getPickingMesh(): Group;
+    getMesh(): Group<import("three").Object3DEventMap>;
+    getWireframeMesh(): Group<import("three").Object3DEventMap>;
+    getPickingMesh(): Group<import("three").Object3DEventMap>;
     setAttributes(data?: Partial<ArrowBufferData>): void;
     /**
      * Set buffer parameters

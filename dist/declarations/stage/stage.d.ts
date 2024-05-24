@@ -31,6 +31,7 @@ import Structure from '../structure/structure';
 import Surface from '../surface/surface';
 import Volume from '../surface/volume';
 import Shape from '../geometry/shape';
+import { GenericColor } from '../types';
 declare global {
     interface Document {
         mozFullScreen: boolean;
@@ -90,7 +91,7 @@ export declare const StageDefaultParameters: {
     quality: RenderQualityType;
     workerDefault: boolean;
     sampleLevel: number;
-    backgroundColor: string | number;
+    backgroundColor: GenericColor;
     rotateSpeed: number;
     zoomSpeed: number;
     panSpeed: number;
@@ -104,9 +105,9 @@ export declare const StageDefaultParameters: {
     cameraFov: number;
     cameraEyeSep: number;
     cameraType: "perspective" | "orthographic" | "stereo";
-    lightColor: string | number;
+    lightColor: GenericColor;
     lightIntensity: number;
-    ambientColor: string | number;
+    ambientColor: GenericColor;
     ambientIntensity: number;
     hoverTimeout: number;
     tooltip: boolean;
@@ -166,7 +167,7 @@ declare class Stage {
         quality: RenderQualityType;
         workerDefault: boolean;
         sampleLevel: number;
-        backgroundColor: string | number;
+        backgroundColor: GenericColor;
         rotateSpeed: number;
         zoomSpeed: number;
         panSpeed: number;
@@ -180,9 +181,9 @@ declare class Stage {
         cameraFov: number;
         cameraEyeSep: number;
         cameraType: "perspective" | "orthographic" | "stereo";
-        lightColor: string | number;
+        lightColor: GenericColor;
         lightIntensity: number;
-        ambientColor: string | number;
+        ambientColor: GenericColor;
         ambientIntensity: number;
         hoverTimeout: number;
         tooltip: boolean;

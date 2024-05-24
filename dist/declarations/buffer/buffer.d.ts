@@ -4,7 +4,7 @@
  * @private
  */
 import { Vector3, Matrix4, BufferGeometry, Uniform, Group, LineSegments, Points, Mesh, ShaderMaterial } from 'three';
-import { GenericColor, NumberArray } from '../types';
+import { GenericColor, TypedArray } from '../types';
 import { ShaderDefines } from '../shader/shader-utils';
 import { Picker } from '../utils/picker';
 export declare type BufferSide = 'front' | 'back' | 'double';
@@ -12,7 +12,7 @@ export declare type BufferTypes = 'picking' | 'background';
 export declare type BufferMaterials = 'material' | 'wireframeMaterial' | 'pickingMaterial';
 export interface _BufferAttribute {
     type: 'f' | 'v2' | 'v3' | 'c';
-    value?: NumberArray;
+    value?: TypedArray;
 }
 export declare type Uniforms = {
     [k: string]: Uniform | {
@@ -201,12 +201,12 @@ declare class Buffer {
     uniforms: Uniforms;
     pickingUniforms: Uniforms;
     private _positionDataSize;
-    geometry: BufferGeometry;
+    geometry: BufferGeometry<import("three").NormalBufferAttributes>;
     indexVersion: number;
     wireframeIndexVersion: number;
-    group: Group;
-    wireframeGroup: Group;
-    pickingGroup: Group;
+    group: Group<import("three").Object3DEventMap>;
+    wireframeGroup: Group<import("three").Object3DEventMap>;
+    pickingGroup: Group<import("three").Object3DEventMap>;
     vertexShader: string;
     fragmentShader: string;
     isImpostor: boolean;
@@ -245,10 +245,10 @@ declare class Buffer {
     makeWireframeIndex(): void;
     updateWireframeIndex(): void;
     getRenderOrder(): number;
-    _getMesh(materialName: BufferMaterials): LineSegments<BufferGeometry, ShaderMaterial> | Points<BufferGeometry, ShaderMaterial> | Mesh<BufferGeometry, ShaderMaterial>;
-    getMesh(): LineSegments<BufferGeometry, ShaderMaterial> | Points<BufferGeometry, ShaderMaterial> | Mesh<BufferGeometry, ShaderMaterial>;
-    getWireframeMesh(): LineSegments<BufferGeometry, ShaderMaterial>;
-    getPickingMesh(): LineSegments<BufferGeometry, ShaderMaterial> | Points<BufferGeometry, ShaderMaterial> | Mesh<BufferGeometry, ShaderMaterial>;
+    _getMesh(materialName: BufferMaterials): LineSegments<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Points<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Mesh<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial, import("three").Object3DEventMap>;
+    getMesh(): LineSegments<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Points<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Mesh<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial, import("three").Object3DEventMap>;
+    getWireframeMesh(): LineSegments<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial>;
+    getPickingMesh(): LineSegments<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Points<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial> | Mesh<BufferGeometry<import("three").NormalBufferAttributes>, ShaderMaterial, import("three").Object3DEventMap>;
     getShader(name: string, type?: BufferTypes): string;
     getVertexShader(type?: BufferTypes): string;
     getFragmentShader(type?: BufferTypes): string;

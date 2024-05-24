@@ -5,6 +5,7 @@
  */
 import { Vector3, Box3 } from 'three';
 import { Signal } from 'signals';
+import { CifBlock } from 'molstar/lib/mol-io/reader/cif';
 import BitArray from '../utils/bitarray';
 import PrincipalAxes from '../math/principal-axes';
 import SpatialHash from '../geometry/spatial-hash';
@@ -31,6 +32,7 @@ import AtomProxy from '../proxy/atom-proxy';
 import ResidueProxy from '../proxy/residue-proxy';
 import ChainProxy from '../proxy/chain-proxy';
 import ModelProxy from '../proxy/model-proxy';
+import ChemCompMap from '../store/chemcomp-map';
 interface Structure {
     signals: StructureSignals;
     name: string;
@@ -65,6 +67,7 @@ interface Structure {
     modelStore: ModelStore;
     atomMap: AtomMap;
     residueMap: ResidueMap;
+    chemCompMap?: ChemCompMap;
     bondHash?: BondHash;
     spatialHash?: SpatialHash;
     atomSet?: BitArray;
@@ -91,7 +94,7 @@ export declare type StructureHeader = {
     experimentalMethods?: string[];
 };
 export declare type StructureExtraData = {
-    cif?: object;
+    cif?: CifBlock;
     sdf?: object[];
 };
 export declare type StructureSignals = {

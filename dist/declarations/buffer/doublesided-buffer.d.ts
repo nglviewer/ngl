@@ -28,9 +28,9 @@ declare class DoubleSidedBuffer {
     wireframe: boolean;
     geometry: BufferGeometry;
     picking?: Picker;
-    group: Group;
-    wireframeGroup: Group;
-    pickingGroup: Group;
+    group: Group<import("three").Object3DEventMap>;
+    wireframeGroup: Group<import("three").Object3DEventMap>;
+    pickingGroup: Group<import("three").Object3DEventMap>;
     frontMeshes: (Mesh | LineSegments)[];
     backMeshes: (Mesh | LineSegments)[];
     buffer: Buffer;
@@ -71,9 +71,9 @@ declare class DoubleSidedBuffer {
         diffuse: import("../types").GenericColor;
         interiorColor: import("../types").GenericColor;
     };
-    getMesh(picking: boolean): Group;
-    getWireframeMesh(): LineSegments<BufferGeometry, import("three").ShaderMaterial>;
-    getPickingMesh(): Group;
+    getMesh(picking: boolean): Group<import("three").Object3DEventMap>;
+    getWireframeMesh(): LineSegments<BufferGeometry<import("three").NormalBufferAttributes>, import("three").ShaderMaterial>;
+    getPickingMesh(): Group<import("three").Object3DEventMap>;
     setAttributes(data: any): void;
     setParameters(data: any): void;
     setVisibility(value: boolean): void;

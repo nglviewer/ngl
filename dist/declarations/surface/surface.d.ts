@@ -3,7 +3,7 @@
  * @author Alexander Rose <alexander.rose@weirdbyte.de>
  * @private
  */
-import { Vector3, Box3, Geometry, BufferGeometry, Group } from 'three';
+import { Vector3, Box3, BufferGeometry, Group } from 'three';
 import { AtomPicker, SurfacePicker } from '../utils/picker';
 import { ColormakerParameters } from '../color/colormaker';
 import { Structure, Volume } from '../ngl';
@@ -63,7 +63,7 @@ declare class Surface {
      * @return {undefined}
      */
     set(position: Float32Array, index: Uint32Array | Uint16Array | undefined, normal: Float32Array | undefined, color: Float32Array | undefined, atomindex: Int32Array | undefined, contour?: boolean): void;
-    fromGeometry(geometry: Geometry | BufferGeometry | Group): void;
+    fromGeometry(geometry: BufferGeometry | Group): void;
     getPosition(): Float32Array;
     getColor(params: ColormakerParameters & {
         scheme: string;

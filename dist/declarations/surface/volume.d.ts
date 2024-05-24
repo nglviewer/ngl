@@ -38,7 +38,7 @@ declare class Volume {
     data: Float32Array;
     worker: Worker;
     workerPool: WorkerPool;
-    _position: Float32Array;
+    _position: Float32Array | undefined;
     _min: number | undefined;
     _max: number | undefined;
     _mean: number | undefined;
@@ -92,7 +92,7 @@ declare class Volume {
        */
     setAtomindex(atomindex?: Int32Array): void;
     getBox(center: Vector3, size: number, target: Box3): Box3;
-    _getBox(center: Vector3 | undefined, size: number): number[][] | undefined;
+    _getBox(center: Vector3 | undefined, size: number): import("three").Vector3Tuple[] | undefined;
     _makeSurface(sd: any, isolevel: number, smooth: number): Surface;
     getSurface(isolevel: number, smooth: number, center: Vector3, size: number, contour: boolean, wrap?: boolean): Surface;
     getSurfaceWorker(isolevel: number, smooth: number, center: Vector3, size: number, contour: boolean, wrap: boolean, callback: (s: Surface) => void): void;

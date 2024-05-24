@@ -66,7 +66,7 @@ declare class PointBuffer extends Buffer {
         };
         sortParticles: {};
         alphaTest: {
-            updateShader: boolean;
+            uniform: boolean;
         };
         useTexture: {
             updateShader: boolean;

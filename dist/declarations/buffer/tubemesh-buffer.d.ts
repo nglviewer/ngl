@@ -22,17 +22,7 @@ export declare const TubeMeshBufferDefaultParameters: {
     depthWrite: boolean;
     clipNear: number;
     clipRadius: number;
-    clipCenter: Vector3; /**
-     * @param  {Object} data - attribute object
-     * @param  {Float32Array} data.position - positions
-     * @param  {Float32Array} data.normal - normals
-     * @param  {Float32Array} data.binormal - binormals
-     * @param  {Float32Array} data.tangent - tangents
-     * @param  {Float32Array} data.color - colors
-     * @param  {Float32Array} data.size - sizes
-     * @param  {Picker} data.picking - picking ids
-     * @param  {BufferParameters} params - parameter object
-     */
+    clipCenter: Vector3;
     flatShaded: boolean;
     wireframe: boolean;
     roughness: number;
@@ -68,17 +58,7 @@ declare class TubeMeshBuffer extends MeshBuffer {
         depthWrite: boolean;
         clipNear: number;
         clipRadius: number;
-        clipCenter: Vector3; /**
-         * @param  {Object} data - attribute object
-         * @param  {Float32Array} data.position - positions
-         * @param  {Float32Array} data.normal - normals
-         * @param  {Float32Array} data.binormal - binormals
-         * @param  {Float32Array} data.tangent - tangents
-         * @param  {Float32Array} data.color - colors
-         * @param  {Float32Array} data.size - sizes
-         * @param  {Picker} data.picking - picking ids
-         * @param  {BufferParameters} params - parameter object
-         */
+        clipCenter: Vector3;
         flatShaded: boolean;
         wireframe: boolean;
         roughness: number;

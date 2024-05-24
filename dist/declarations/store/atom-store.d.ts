@@ -18,7 +18,7 @@ export default class AtomStore extends Store {
     altloc: Uint8Array;
     occupancy: Float32Array;
     partialCharge?: Float32Array;
-    formalCharge?: Uint8Array;
+    formalCharge?: Int8Array;
     get _defaultFields(): StoreField[];
     setAltloc(i: number, str: string): void;
     getAltloc(i: number): string;
