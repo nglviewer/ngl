@@ -181,6 +181,7 @@ import './utils/gzip-decompressor'
 //
 
 import './datasource/rcsb-datasource'
+import './datasource/pdbe-datasource'
 import './datasource/pubchem-datasource'
 import './datasource/passthrough-datasource'
 import './datasource/alphafold-datasource'

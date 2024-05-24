@@ -155,8 +155,8 @@ class Mol2Parser extends StructureParser {
           atomStore.x[ idx ] = x
           atomStore.y[ idx ] = y
           atomStore.z[ idx ] = z
-          atomStore.serial[ idx ] = serial
-          atomStore.partialCharge[ idx ] = partialCharge
+          atomStore.serial[ idx ] = + serial
+          atomStore.partialCharge![ idx ] = partialCharge
 
           sb.addAtom(modelIdx, '', '', resname, resno, true)
 

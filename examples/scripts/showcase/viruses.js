@@ -14,7 +14,7 @@ function createElement (name, properties, style) {
   return el
 }
 
-var pdbs = [ '1stm', '3nap', '1sid', '2ft1', '4cwu' ]
+var pdbs = [ '1stm', '3nap', '1sid', '2ft1', '6cgv' ]
 var colors = [ 'red', 'yellow', 'green', 'lightblue', 'violet' ]
 
 Promise.all(pdbs.map(function (id) {

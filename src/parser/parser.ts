@@ -35,10 +35,10 @@ class Parser {
   get isXml () { return false }
 
   parse () {
-    return this.streamer.read().then(() => {
-      this._beforeParse()
-      this._parse()
-      this._afterParse()
+    return this.streamer.read().then(async () => {
+      await this._beforeParse()
+      await this._parse()
+      await this._afterParse()
       return this[ this.__objName ]
     })
   }

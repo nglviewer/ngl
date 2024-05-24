@@ -5,12 +5,11 @@
  */
 
 import { Log, DatasourceRegistry } from '../globals'
-import { getProtocol } from '../utils'
 import { getFileInfo } from '../loader/loader-utils'
 import Datasource from './datasource'
 
 const baseUrl = '//alphafold.ebi.ac.uk/files/AF-'
-const suffixURL = '-F1-model_v2.pdb'
+const suffixURL = '-F1-model_v4.pdb'
 
 class AlphafoldDatasource extends Datasource {
     getUrl (src: string) {
@@ -23,7 +22,7 @@ class AlphafoldDatasource extends Datasource {
             Log.warn('unsupported AF ext', info.ext)
             url = baseUrl + uniprotid + suffixURL
         }
-        return getProtocol() + url
+        return 'https://' + url
     }
 
     getExt (src: string) {

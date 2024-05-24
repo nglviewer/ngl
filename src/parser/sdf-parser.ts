@@ -178,7 +178,7 @@ class SdfParser extends StructureParser {
           atomStore.y[ idx ] = y
           atomStore.z[ idx ] = z
           atomStore.serial[ idx ] = isV3000 ? atomindex : idx
-          atomStore.formalCharge[ idx ] = charge
+          atomStore.formalCharge![ idx ] = charge
 
           sb.addAtom(modelIdx, '', '', 'HET', 1, true)
 
@@ -191,8 +191,8 @@ class SdfParser extends StructureParser {
           if (asTrajectory && modelIdx > 0) continue
 
           if (isV3000) {
-            ap1.index = atomindexToStoreindex.get(parseInt(tokens[2]))
-            ap2.index = atomindexToStoreindex.get(parseInt(tokens[3]))
+            ap1.index = atomindexToStoreindex.get(parseInt(tokens[2]))!
+            ap2.index = atomindexToStoreindex.get(parseInt(tokens[3]))!
             order = parseInt(tokens[1])
           } else {
             ap1.index = parseInt(line.substr(0, 3)) - 1 + modelAtomIdxStart
@@ -207,7 +207,7 @@ class SdfParser extends StructureParser {
             const aToken = parseInt(line.substr(coffset, 3))
             const atomIdx = aToken - 1 + modelAtomIdxStart
             const cToken = parseInt(line.substr(coffset + 4, 3))
-            atomStore.formalCharge[ atomIdx ] = cToken
+            atomStore.formalCharge![ atomIdx ] = cToken
           }
         // eslint-disable-next-line no-cond-assign
         } else if (line.charAt(0) === '>' && (mItem = line.match(reItem))) {
