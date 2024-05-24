@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Vector3, ConeBufferGeometry } from 'three'
+import { Matrix4, Vector3, ConeGeometry } from 'three'
 
 import { BufferRegistry } from '../globals'
 import { defaults } from '../utils'
@@ -18,7 +18,7 @@ const target = new Vector3()
 const up = new Vector3(0, 1, 0)
 
 function getGeo (params: Partial<ConeBufferParameters> = {}) {
-  const geo = new ConeBufferGeometry(
+  const geo = new ConeGeometry(
     1,  // radius
     1,  // height
     defaults(params.radialSegments, 60),  // radialSegments

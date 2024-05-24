@@ -21,7 +21,7 @@ import { ShaderRegistry } from '../globals'
 export type ShaderDefine = (
   'NEAR_CLIP'|'RADIUS_CLIP'|'PICKING'|'NOLIGHT'|'FLAT_SHADED'|'OPAQUE_BACK'|
   'DIFFUSE_INTERIOR'|'USE_INTERIOR_COLOR'|
-  'USE_SIZEATTENUATION'|'USE_MAP'|'ALPHATEST'|'SDF'|'FIXED_SIZE'|
+  'USE_SIZEATTENUATION'|'USE_MAP'|'USE_ALPHATEST'|'SDF'|'FIXED_SIZE'|
   'CUBIC_INTERPOLATION'|'BSPLINE_FILTER'|'CATMULROM_FILTER'|'MITCHELL_FILTER'
 )
 export type ShaderDefines = {
@@ -60,7 +60,7 @@ export function getShader (name: string, defines: ShaderDefines = {}) {
     if (!shaderText) {
       throw new Error(`empty shader, '${name}'`)
     }
-    shaderText = shaderText.replace(reInclude, function (match, p1) {
+    shaderText = shaderText.replace(reInclude, function (match, p1: keyof typeof ShaderChunk) {
       const path = `shader/chunk/${p1}.glsl`
       const chunk = ShaderRegistry.get(path) || ShaderChunk[ p1 ]
       if (!chunk) {

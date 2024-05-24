@@ -122,7 +122,7 @@ class PrincipalAxes {
     const q = optionalTarget
     q.setFromRotationMatrix(this.getBasisMatrix(tmpMatrix))
 
-    return q.inverse()
+    return q.invert()
   }
 
   /**

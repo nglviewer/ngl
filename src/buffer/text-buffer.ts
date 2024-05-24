@@ -101,7 +101,7 @@ export class TextAtlas {
     canvas.width = maxWidth
     canvas.height = lineHeight
 
-    const ctx = this.context = this.canvas.getContext('2d')!
+    const ctx = this.context = this.canvas.getContext('2d', { willReadFrequently: true})!
     ctx.font = `${p.style} ${p.variant} ${p.weight} ${p.size}px ${p.font}`
     ctx.fillStyle = 'black'
     ctx.textAlign = 'left'

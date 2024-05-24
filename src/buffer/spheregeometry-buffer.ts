@@ -4,7 +4,7 @@
  * @private
  */
 
-import { IcosahedronBufferGeometry, Vector3, Matrix4 } from 'three'
+import { IcosahedronGeometry, Vector3, Matrix4 } from 'three'
 import { defaults } from '../utils'
 import GeometryBuffer from './geometry-buffer'
 import { SphereBufferData } from './sphere-buffer'
@@ -42,7 +42,7 @@ class SphereGeometryBuffer extends GeometryBuffer {
    * @param {BufferParameters} params - parameter object
    */
   constructor (data: SphereBufferData, params: Partial<SphereGeometryBufferParameters> = {}) {
-    super(data, params, new IcosahedronBufferGeometry(1, defaults(params.sphereDetail, 1)))
+    super(data, params, new IcosahedronGeometry(1, defaults(params.sphereDetail, 1)))
 
     this.setAttributes(data, true)
   }

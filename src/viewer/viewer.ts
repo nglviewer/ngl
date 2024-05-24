@@ -12,12 +12,12 @@ import {
   NearestFilter, LinearFilter, AdditiveBlending,
   RGBAFormat, FloatType, /*HalfFloatType, */UnsignedByteType,
   ShaderMaterial,
-  PlaneGeometry, Geometry,
+  PlaneGeometry,
   Scene, Mesh, Group, Object3D, Uniform,
-  Fog, SpotLight, AmbientLight,
+  Fog, DirectionalLight, AmbientLight,
   BufferGeometry, BufferAttribute,
-  LineSegments,
-  LinearEncoding, sRGBEncoding, TextureEncoding
+  LineSegments, ColorSpace,
+  HalfFloatType
 } from 'three'
 import '../shader/BasicLine.vert'
 import '../shader/BasicLine.frag'
@@ -54,7 +54,7 @@ const pixelOrder = [12,7,13,17,11,6,8,18,16,2,14,22,10,1,3,9,19,23,21,15,5,0,4,2
 
 const tmpMatrix = new Matrix4()
 
-function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera|OrthographicCamera, geometry: Geometry, material: ShaderMaterial/*, group */) {
+function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera|OrthographicCamera, geometry: BufferGeometry, material: ShaderMaterial/*, group */) {
   const u = material.uniforms
   const updateList = []
 
@@ -72,7 +72,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
   }
 
   if (u.modelViewMatrixInverse) {
-    u.modelViewMatrixInverse.value.getInverse(this.modelViewMatrix)
+    u.modelViewMatrixInverse.value.copy(this.modelViewMatrix).invert()
     updateList.push('modelViewMatrixInverse')
   }
 
@@ -83,7 +83,7 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
       ).transpose()
     } else {
       u.modelViewMatrixInverseTranspose.value
-        .getInverse(this.modelViewMatrix)
+        .copy(this.modelViewMatrix).invert()
         .transpose()
     }
     updateList.push('modelViewMatrixInverseTranspose')
@@ -101,15 +101,15 @@ function onBeforeRender (this: Object3D, renderer: WebGLRenderer, scene: Scene, 
       tmpMatrix.copy(
         u.modelViewProjectionMatrix.value
       )
-      u.modelViewProjectionMatrixInverse.value.getInverse(
-        tmpMatrix
+      u.modelViewProjectionMatrixInverse.value.copy(
+        tmpMatrix.invert()
       )
     } else {
       tmpMatrix.multiplyMatrices(
         camera.projectionMatrix, this.modelViewMatrix
       )
-      u.modelViewProjectionMatrixInverse.value.getInverse(
-        tmpMatrix
+      u.modelViewProjectionMatrixInverse.value.copy(
+        tmpMatrix.invert()
       )
     }
     updateList.push('modelViewProjectionMatrixInverse')
@@ -164,7 +164,7 @@ export interface ViewerParameters {
 
   sampleLevel: number
 
-  rendererEncoding: TextureEncoding // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
+  outputColorSpace: ColorSpace // default is three.LinearEncoding; three.sRGBEncoding gives more correct results
 }
 
 export interface BufferInstance {
@@ -204,7 +204,7 @@ export default class Viewer {
   height: number
 
   scene: Scene
-  private spotLight: SpotLight
+  private directionalLight: DirectionalLight
   private ambientLight: AmbientLight
   rotationGroup: Group
   translationGroup: Group
@@ -321,14 +321,14 @@ export default class Viewer {
       clipScale: 'relative',
 
       lightColor: new Color(0xdddddd),
-      lightIntensity: 1.0,
+      lightIntensity: 1.2,
       ambientColor: new Color(0xdddddd),
-      ambientIntensity: 0.2,
+      ambientIntensity: 0.3,
 
       sampleLevel: 0,
 
-      // output encoding: use sRGB for a linear internal workflow, linear for traditional sRGB workflow.
-      rendererEncoding: LinearEncoding,
+      // output encoding: use srgb for a linear internal workflow, srgb-linear for traditional sRGB workflow.
+      outputColorSpace: 'srgb-linear',
     }
   }
 
@@ -403,10 +403,10 @@ export default class Viewer {
 
     // light
 
-    this.spotLight = new SpotLight(
+    this.directionalLight = new DirectionalLight(
       this.parameters.lightColor.getHex(), this.parameters.lightIntensity
     )
-    this.scene.add(this.spotLight)
+    this.scene.add(this.directionalLight)
 
     this.ambientLight = new AmbientLight(
       this.parameters.ambientColor.getHex(), this.parameters.ambientIntensity
@@ -432,7 +432,8 @@ export default class Viewer {
     this.renderer.setSize(width, height)
     this.renderer.autoClear = false
     this.renderer.sortObjects = true
-    this.renderer.outputEncoding = this.parameters.rendererEncoding
+    this.renderer.outputColorSpace = this.parameters.outputColorSpace
+    this.renderer.useLegacyLights = true
 
     const gl = this.renderer.getContext()
     // console.log(gl.getContextAttributes().antialias)
@@ -505,7 +506,7 @@ export default class Viewer {
       }
     )
     this.pickingTarget.texture.generateMipmaps = false
-    this.pickingTarget.texture.encoding = this.parameters.rendererEncoding
+    this.pickingTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     // workaround to reset the gl state after using testTextureSupport
     // fixes some bug where nothing is rendered to the canvas
@@ -521,10 +522,13 @@ export default class Viewer {
       {
         minFilter: LinearFilter,
         magFilter: LinearFilter,
-        format: RGBAFormat
+        format: RGBAFormat,
+        type: this.supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        )
       }
     )
-    this.sampleTarget.texture.encoding = this.parameters.rendererEncoding
+    this.sampleTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.holdTarget = new WebGLRenderTarget(
       dprWidth, dprHeight,
@@ -532,14 +536,12 @@ export default class Viewer {
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         format: RGBAFormat,
-        type: UnsignedByteType
-        // using HalfFloatType or FloatType does not work on some Chrome 61 installations
-        // type: this.supportsHalfFloat ? HalfFloatType : (
-        //   SupportsReadPixelsFloat ? FloatType : UnsignedByteType
-        // )
+        type: this.supportsHalfFloat ? HalfFloatType : (
+          SupportsReadPixelsFloat ? FloatType : UnsignedByteType
+        )
       }
     )
-    this.holdTarget.texture.encoding = this.parameters.rendererEncoding
+    this.holdTarget.texture.colorSpace = this.parameters.outputColorSpace
 
     this.compositeUniforms = {
       'tForeground': new Uniform(this.sampleTarget.texture),
@@ -868,12 +870,12 @@ export default class Viewer {
    * `setColorEncoding(LinearEncoding)` to linearize colors on input.
    * @see setColorEncoding
    */
-  private setOutputEncoding (encoding: TextureEncoding) {
-    this.parameters.rendererEncoding = encoding
-    this.renderer.outputEncoding = encoding
-    this.pickingTarget.texture.encoding = encoding
-    this.sampleTarget.texture.encoding = encoding
-    this.holdTarget.texture.encoding = encoding
+  private setOutputEncoding (colorspace: ColorSpace) {
+    this.parameters.outputColorSpace = colorspace
+    this.renderer.outputColorSpace = colorspace
+    this.pickingTarget.texture.colorSpace = colorspace
+    this.sampleTarget.texture.colorSpace = colorspace
+    this.holdTarget.texture.colorSpace = colorspace
   }
 
   /**
@@ -883,11 +885,11 @@ export default class Viewer {
    * In all cases, the output is always sRGB; this just affects how colors are computed internally.
    * Call this just after creating the viewer, before loading any models.
    */
-  setColorWorkflow (encoding: ColorWorkflow) {
-    if (encoding != 'linear' && encoding != 'sRGB')
-      throw new Error(`setColorWorkflow: invalid color workflow ${encoding}`)
-    setColorSpace(encoding == 'linear' ? 'linear' : 'sRGB')
-    this.setOutputEncoding(encoding == 'linear' ? sRGBEncoding : LinearEncoding)
+  setColorWorkflow (colorspace: ColorSpace) {
+    if (colorspace != 'srgb-linear' && colorspace != 'srgb')
+      throw new Error(`setColorWorkflow: invalid color workflow ${colorspace}`)
+    setColorSpace(colorspace == 'srgb-linear' ? 'linear' : 'sRGB')
+    this.setOutputEncoding(colorspace == 'srgb-linear' ? 'srgb' : 'srgb-linear')
     // Note: this doesn't rebuild models, so existing geometry will have
     // the old color encoding.
     this.requestRender()
@@ -1226,11 +1228,11 @@ export default class Viewer {
   }
 
   private __updateLights () {
-    this.spotLight.color.set(this.parameters.lightColor)
-    this.spotLight.intensity = this.parameters.lightIntensity
+    this.directionalLight.color.set(this.parameters.lightColor)
+    this.directionalLight.intensity = this.parameters.lightIntensity
 
     this.distVector.copy(this.camera.position).setLength(this.boundingBoxLength * 100)
-    this.spotLight.position.copy(this.camera.position).add(this.distVector)
+    this.directionalLight.position.copy(this.camera.position).add(this.distVector)
 
     this.ambientLight.color.set(this.parameters.ambientColor)
     this.ambientLight.intensity = this.parameters.ambientIntensity

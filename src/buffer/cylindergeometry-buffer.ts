@@ -4,7 +4,7 @@
  * @private
  */
 
-import { Matrix4, Vector3, CylinderBufferGeometry } from 'three'
+import { Matrix4, Vector3, CylinderGeometry } from 'three'
 
 import { defaults } from '../utils'
 import { calculateCenterArray, serialBlockArray } from '../math/array-utils'
@@ -47,7 +47,7 @@ function getGeo (params: Partial<CylinderGeometryBufferParameters> = {}) {
   const openEnded = defaults(params.openEnded, true)
   const matrix = new Matrix4().makeRotationX(Math.PI / 2)
 
-  const geo = new CylinderBufferGeometry(
+  const geo = new CylinderGeometry(
     1,  // radiusTop,
     1,  // radiusBottom,
     1,  // height,

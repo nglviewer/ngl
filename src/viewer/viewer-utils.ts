@@ -6,7 +6,7 @@
 
 import {
   Vector2, Vector3, Matrix4, Points, Scene, Camera,
-  Object3D, WebGLRenderer
+  Object3D, WebGLRenderer, Color
 } from 'three'
 
 import { createParams } from '../utils'
@@ -138,7 +138,7 @@ export function makeImage (viewer: Viewer, params: Partial<ImageParameters> = {}
   const camera = viewer.camera
 
   const originalClearAlpha = renderer.getClearAlpha()
-  const backgroundColor = renderer.getClearColor()
+  const backgroundColor = renderer.getClearColor(new Color())
 
   function setLineWidthAndPixelSize (invert = false) {
     let _factor = factor
@@ -328,7 +328,7 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
   const ortho = camera.type === 'OrthographicCamera'
 
   resolution.set(size.width, size.height)
-  projectionMatrixInverse.getInverse(camera.projectionMatrix)
+  projectionMatrixInverse.copy(camera.projectionMatrix).invert()
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
   group.traverse(function (o: any) {
@@ -371,7 +371,7 @@ export function updateMaterialUniforms (group: Object3D, camera: Camera, rendere
 }
 
 export function updateCameraUniforms (group: Object3D, camera: Camera) {
-  projectionMatrixInverse.getInverse(camera.projectionMatrix)
+  projectionMatrixInverse.copy(camera.projectionMatrix).invert()
   projectionMatrixTranspose.copy(camera.projectionMatrix).transpose()
 
   group.traverse(function (o: any) {
