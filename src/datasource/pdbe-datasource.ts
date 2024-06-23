@@ -49,7 +49,7 @@ class PDBeDatasource extends Datasource {
 
   getExt (src: string) {
     const ext = getFileInfo(src).ext
-    return ext ? ext : 'mmtf'
+    return ext ? ext : 'bcif'
   }
 }
 
