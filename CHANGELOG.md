@@ -1,6 +1,13 @@
 # Change Log
 All notable changes to this project will be documented in this file, following the suggestions of [Keep a CHANGELOG](http://keepachangelog.com/). This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [v2.4.0]
+- Summary of changes from v2.3.0
+### Added
+ - Reinstated the PLY parser
+### Changed
+ - Default to bcif format instead of mmtf in RCSB and PDBe data providers
+
 ## [v2.3.0]
 - Summary of changes from v2.2.2
 ### Added
