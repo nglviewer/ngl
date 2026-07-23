@@ -149,7 +149,14 @@ void main(){
 
     matrix_near = mat4( i_near, i_far, focus, e3 );
 
-    // avoid clipping
-    gl_Position.z = 1.0;
+    // Pin the impostor box to a fixed clip-space depth so its faces are never
+    // z-clipped; the true per-pixel depth is written later via gl_FragDepthEXT.
+    // gl_Position.z is a raw clip coordinate while gl_Position.w still varies
+    // per corner, and a vertex is kept only while -w <= z <= w. The old value
+    // of 1.0 forced w >= 1.0, so on extreme zoom box corners still in front of
+    // the camera (small positive w) were clipped, taking whole bonds with them.
+    // Pinning to 0.0 only requires w > 0, keeping every corner that is in front
+    // of the camera. See CylinderImpostor.vert for the full explanation.
+    gl_Position.z = 0.0;
 
 }

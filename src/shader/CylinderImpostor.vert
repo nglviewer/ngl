@@ -124,8 +124,19 @@ void main(){
 
     gl_Position = projectionMatrix * w;
 
-    // avoid clipping (1.0 seems to induce flickering with some drivers)
-    // Is this required?
-    gl_Position.z = 0.99;
+    // Pin the impostor box to a fixed clip-space depth so its faces are never
+    // z-clipped; the true per-pixel depth is written later via gl_FragDepthEXT.
+    //
+    // The value matters: gl_Position.z is a raw clip coordinate while
+    // gl_Position.w still varies per box corner, and a vertex survives clipping
+    // only while -w <= z <= w. A value near the far plane (the old 0.99) forces
+    // w >= 0.99, so as the camera zooms in, box corners that are still well in
+    // front of it (small positive w) fail the far-plane test and get clipped -
+    // and because the box is only 4 triangles, losing a corner drops half, then
+    // all, of the cylinder. Pinning to 0.0 (the centre of the clip range) only
+    // requires w > 0, so corners are kept as long as they are in front of the
+    // camera. 0.0 is also the furthest from either clip boundary, avoiding the
+    // driver flickering that was seen at 1.0.
+    gl_Position.z = 0.0;
 
 }
