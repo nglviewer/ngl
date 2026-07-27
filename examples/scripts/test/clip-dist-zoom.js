@@ -11,6 +11,10 @@
 //
 // How to test: run the scene, then scroll-zoom hard onto a single bond.
 // Press 'c' to toggle clipDist between 0 (zoom freely) and 10 (default floor).
+// Press 'o' to toggle perspective / orthographic and check both camera modes.
+// (In orthographic mode zooming magnifies rather than moving the camera in,
+// and gl_Position.w is always 1, so the near-clipping the fix addresses does
+// not arise there - the toggle is here to confirm no regression.)
 
 stage.loadFile('data://1crn.pdb').then(function (o) {
   o.addRepresentation('licorice', { radius: 0.15 })
@@ -44,7 +48,9 @@ function updateDiv () {
   textDiv.innerHTML = [
     'Scroll to zoom hard onto a bond.',
     "Press 'c' to toggle clipDist (0 <-> 10).",
+    "Press 'o' to toggle perspective / orthographic.",
     '',
+    'camera:      ' + sp.cameraType,
     'clipDist:    ' + _f(sp.clipDist),
     'camera near: ' + _f(camera.near),
     'cDist:       ' + _f(stage.viewer.cDist),
@@ -57,5 +63,10 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'c') {
     var next = stage.getParameters().clipDist === 0 ? 10 : 0
     stage.setParameters({ clipDist: next })
+  } else if (e.key === 'o') {
+    var mode = stage.getParameters().cameraType === 'perspective'
+      ? 'orthographic'
+      : 'perspective'
+    stage.setParameters({ cameraType: mode })
   }
 })
