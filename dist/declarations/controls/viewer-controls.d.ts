@@ -32,10 +32,11 @@ declare class ViewerControls {
     get rotation(): Quaternion;
     /**
      * Trigger render and emit changed event
+     * @param {boolean} skipSignal - don't dispatch signal for a change
      * @emits {ViewerControls.signals.changed}
      * @return {undefined}
      */
-    changed(): void;
+    changed(skipSignal?: boolean): void;
     getPositionOnCanvas(position: Vector3, optionalTarget?: Vector2): any;
     getCanvasScaleFactor(z?: number): number;
     /**
@@ -47,9 +48,10 @@ declare class ViewerControls {
     /**
      * set scene orientation
      * @param {OrientationMatrix|Array} orientation - scene orientation
+     * @param {boolean} skipSignal - do not trigger a change signal when orienting
      * @return {undefined}
      */
-    orient(orientation?: Matrix4): void;
+    orient(orientation?: Matrix4, skipSignal?: boolean): void;
     /**
      * translate scene
      * @param  {Vector3|Array} vector - translation vector
